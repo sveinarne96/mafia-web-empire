@@ -124,6 +124,15 @@ export const registerPlayer = mutation({
       levelUpPending: false,
       skillPoints: 0,
       playerClass: args.playerClass,
+      prisonJob: undefined,
+      prisonGang: undefined,
+      cellLevel: 1,
+      solitaryTime: 0,
+      contraband: 0,
+      prisonCurrency: 0,
+      paroleEligible: false,
+      totalPrisonEscapes: 0,
+      totalPrisonJobs: 0,
     });
   },
 });
@@ -937,5 +946,327 @@ export const getWantedLevel = query({
       .unique();
     if (!player) return { wantedLevel: 0 };
     return { wantedLevel: player.wantedLevel ?? 0 };
+  },
+});
+
+// ===== PRISON FEATURES =====
+
+// 1. Bail - pay to get out of prison early
+export const payBail = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const bailCost = 2000 + (player.level ?? 1) * 200;
+    if ((player.money ?? 0) < bailCost) throw new Error(`Need $${bailCost.toLocaleString()} for bail!`);
+    await ctx.db.patch(player._id, { inPrison: false, prisonTime: 0, money: player.money - bailCost });
+    return { paid: bailCost };
+  },
+});
+
+// 2. Prison Escape
+export const prisonEscape = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const successChance = 0.2 + ((player.attack ?? 10) / 100) * 0.3;
+    const success = Math.random() < successChance;
+    if (success) {
+      await ctx.db.patch(player._id, { inPrison: false, prisonTime: 0, totalPrisonEscapes: (player.totalPrisonEscapes ?? 0) + 1, experience: (player.experience ?? 0) + 30 });
+    } else {
+      const solitary = Math.floor(Math.random() * 3) + 1;
+      await ctx.db.patch(player._id, { solitaryTime: (player.solitaryTime ?? 0) + solitary * 600000 });
+    }
+    return { success, solitaryAdded: success ? 0 : Math.floor(Math.random() * 3) + 1 };
+  },
+});
+
+// 3. Parole Hearing
+export const paroleHearing = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    if (player.solitaryTime > 0) throw new Error("Can't get parole while in solitary!");
+    const goodBehavior = (player.totalCrimes ?? 0) < 20;
+    if (goodBehavior) {
+      const reduction = Math.floor(player.prisonTime * 0.5);
+      await ctx.db.patch(player._id, { prisonTime: Math.max(0, player.prisonTime - reduction), paroleEligible: true });
+      return { granted: true, reduced: reduction };
+    }
+    return { granted: false, reduced: 0 };
+  },
+});
+
+// 4. Prison Jobs
+export const prisonJob = mutation({
+  args: { job: v.union(v.literal("kitchen"), v.literal("laundry"), v.literal("library"), v.literal("workshop")) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const rewards: Record<string, { money: number; timeReduced: number }> = {
+      kitchen: { money: 100, timeReduced: 600000 },
+      laundry: { money: 75, timeReduced: 300000 },
+      library: { money: 50, timeReduced: 1800000 },
+      workshop: { money: 150, timeReduced: 450000 },
+    };
+    const r = rewards[args.job];
+    await ctx.db.patch(player._id, {
+      prisonJob: args.job,
+      money: (player.money ?? 0) + r.money,
+      prisonTime: Math.max(0, (player.prisonTime ?? 0) - r.timeReduced),
+      prisonCurrency: (player.prisonCurrency ?? 0) + 5,
+      totalPrisonJobs: (player.totalPrisonJobs ?? 0) + 1,
+    });
+    return { money: r.money, timeReduced: r.timeReduced, prisonCurrency: 5 };
+  },
+});
+
+// 5. Prison Fight
+export const prisonFight = mutation({
+  args: { targetId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const target = await ctx.db.get(args.targetId);
+    if (!target) throw new Error("Target not found");
+    if (!target.inPrison) throw new Error("Target not in prison!");
+    const dmg = Math.floor((player.attack ?? 10) * (0.8 + Math.random() * 0.4));
+    const tDmg = Math.floor((target.attack ?? 10) * (0.8 + Math.random() * 0.4));
+    const won = dmg > tDmg;
+    if (won) {
+      await ctx.db.patch(player._id, { reputation: (player.reputation ?? 0) - 2, prisonCurrency: (player.prisonCurrency ?? 0) + 10 });
+    }
+    return { won, damage: dmg, taken: tDmg };
+  },
+});
+
+// 6. Prison Gang
+export const joinPrisonGang = mutation({
+  args: { gang: v.union(v.literal("Aryan Brotherhood"), v.literal("Mexican Mafia"), v.literal("Black Guerrilla"), v.literal("Italian Mafia"), v.literal("None")) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    await ctx.db.patch(player._id, { prisonGang: args.gang === "None" ? undefined : args.gang });
+    return { gang: args.gang };
+  },
+});
+
+// 7. Contraband
+export const smuggleContraband = mutation({
+  args: { type: v.union(v.literal("shank"), v.literal("phone"), v.literal("drugs"), v.literal("lockpick")) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const costs: Record<string, number> = { shank: 500, phone: 300, drugs: 200, lockpick: 400 };
+    const cost = costs[args.type];
+    if ((player.money ?? 0) < cost) throw new Error(`Need $${cost}!`);
+    const caught = Math.random() < 0.3;
+    if (caught) {
+      await ctx.db.patch(player._id, { money: player.money - cost, solitaryTime: (player.solitaryTime ?? 0) + 1800000 });
+      return { caught: true };
+    }
+    await ctx.db.patch(player._id, { money: player.money - cost, contraband: (player.contraband ?? 0) + 1 });
+    return { caught: false };
+  },
+});
+
+// 8. Cell Upgrade
+export const upgradeCell = mutation({
+  args: { level: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const cost = args.level * 1000;
+    if ((player.money ?? 0) < cost) throw new Error(`Need $${cost}!`);
+    if (args.level <= (player.cellLevel ?? 1)) throw new Error("Already at this level!");
+    await ctx.db.patch(player._id, { money: player.money - cost, cellLevel: args.level });
+    return { level: args.level };
+  },
+});
+
+// 9. Prison Transfer
+export const prisonTransfer = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("Not in prison!");
+    const cost = 500;
+    if ((player.money ?? 0) < cost) throw new Error(`Need $${cost}!`);
+    const prisons = ["Rikers Island", "ADX Florence", "Sing Sing", "Alcatraz"];
+    const newPrison = prisons[Math.floor(Math.random() * prisons.length)];
+    await ctx.db.patch(player._id, { money: player.money - cost, prisonTime: Math.floor(player.prisonTime * 0.8) });
+    return { prison: newPrison, timeReduced: Math.floor(player.prisonTime * 0.2) };
+  },
+});
+
+// 10. Solitary
+export const getPrisonStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return null;
+    return {
+      inPrison: player.inPrison,
+      prisonTime: player.prisonTime ?? 0,
+      solitaryTime: player.solitaryTime ?? 0,
+      cellLevel: player.cellLevel ?? 1,
+      prisonJob: player.prisonJob,
+      prisonGang: player.prisonGang,
+      contraband: player.contraband ?? 0,
+      prisonCurrency: player.prisonCurrency ?? 0,
+      paroleEligible: player.paroleEligible ?? false,
+    };
+  },
+});
+
+// ===== BOUNTY SYSTEM =====
+
+export const placeBounty = mutation({
+  args: { targetId: v.id("users"), reward: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if ((player.money ?? 0) < args.reward) throw new Error("Not enough money!");
+    if (args.reward < 500) throw new Error("Minimum bounty is $500!");
+    if (player._id === args.targetId) throw new Error("Can't bounty yourself!");
+    await ctx.db.insert("bounties", { placerId: player._id, targetId: args.targetId, reward: args.reward, active: true, createdAt: Date.now() });
+    await ctx.db.patch(player._id, { money: player.money - args.reward });
+    return { placed: true };
+  },
+});
+
+export const getActiveBounties = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("bounties").withIndex("by_active", (q) => q.eq("active", true)).collect();
+  },
+});
+
+export const claimBounty = mutation({
+  args: { bountyId: v.id("bounties") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const bounty = await ctx.db.get(args.bountyId);
+    if (!bounty || !bounty.active) throw new Error("Bounty not available!");
+    const target = await ctx.db.get(bounty.targetId);
+    if (!target) throw new Error("Target not found");
+    if (target.isDead) throw new Error("Target already dead!");
+    if (player._id === bounty.placerId) throw new Error("Can't claim your own bounty!");
+    const success = (player.attack ?? 10) > (target.defense ?? 10) + Math.random() * 20;
+    if (success) {
+      await ctx.db.patch(bounty.targetId, { isDead: true, life: 0 });
+      await ctx.db.patch(player._id, { money: (player.money ?? 0) + bounty.reward, totalKills: (player.totalKills ?? 0) + 1, experience: (player.experience ?? 0) + 50 });
+      await ctx.db.patch(args.bountyId, { active: false, claimedBy: player._id });
+    }
+    return { success, reward: success ? bounty.reward : 0 };
+  },
+});
+
+// ===== DUEL SYSTEM =====
+
+export const challengeDuel = mutation({
+  args: { targetId: v.id("users"), stake: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if ((player.money ?? 0) < args.stake) throw new Error("Not enough money!");
+    if (player._id === args.targetId) throw new Error("Can't duel yourself!");
+    const duelId = await ctx.db.insert("duels", { challengerId: player._id, defenderId: args.targetId, stake: args.stake, status: "pending", createdAt: Date.now() });
+    await ctx.db.patch(player._id, { money: player.money - args.stake });
+    return { duelId };
+  },
+});
+
+export const acceptDuel = mutation({
+  args: { duelId: v.id("duels") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const duel = await ctx.db.get(args.duelId);
+    if (!duel || duel.status !== "pending") throw new Error("Duel not available!");
+    if (duel.defenderId !== player._id) throw new Error("Not your duel!");
+    if ((player.money ?? 0) < duel.stake) throw new Error("Not enough money for stake!");
+    await ctx.db.patch(player._id, { money: player.money - duel.stake });
+    const challenger = await ctx.db.get(duel.challengerId);
+    if (!challenger) throw new Error("Challenger not found");
+    const cDmg = Math.floor((challenger.attack ?? 10) * (0.8 + Math.random() * 0.4));
+    const dDmg = Math.floor((player.attack ?? 10) * (0.8 + Math.random() * 0.4));
+    const challengerWins = cDmg > dDmg;
+    const winnerId = challengerWins ? duel.challengerId : player._id;
+    const winner = challengerWins ? challenger : player;
+    await ctx.db.patch(args.duelId, { status: "completed", winnerId });
+    await ctx.db.patch(winnerId, { money: (winner.money ?? 0) + duel.stake * 2, experience: (winner.experience ?? 0) + 25 });
+    return { winnerId, challengerWins, cDmg, dDmg };
+  },
+});
+
+export const getPendingDuels = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return [];
+    return await ctx.db.query("duels").withIndex("by_status", (q) => q.eq("status", "pending")).collect();
+  },
+});
+
+// ===== SPAR MODE =====
+
+export const sparPlayer = mutation({
+  args: { targetId: v.id("users") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if (player._id === args.targetId) throw new Error("Can't spar yourself!");
+    const target = await ctx.db.get(args.targetId);
+    if (!target) throw new Error("Target not found");
+    const dmg = Math.floor((player.attack ?? 10) * (0.8 + Math.random() * 0.4));
+    const tDmg = Math.floor((target.attack ?? 10) * (0.8 + Math.random() * 0.4));
+    const won = dmg > tDmg;
+    await ctx.db.patch(player._id, { experience: (player.experience ?? 0) + 10, life: Math.max(0, (player.life ?? 100) - tDmg) });
+    return { won, damage: dmg, taken: tDmg };
   },
 });

@@ -77,12 +77,45 @@ const schema = defineSchema(
       levelUpPending: v.boolean(),
       skillPoints: v.number(),
       playerClass: v.optional(v.string()),
+
+      // Prison features
+      prisonJob: v.optional(v.string()),
+      prisonGang: v.optional(v.string()),
+      cellLevel: v.number(),
+      solitaryTime: v.number(),
+      contraband: v.number(),
+      prisonCurrency: v.number(),
+      paroleEligible: v.boolean(),
+      totalPrisonEscapes: v.number(),
+      totalPrisonJobs: v.number(),
     })
       .index("by_email", ["email"])
       .index("by_nickname", ["nickname"])
       .index("by_location", ["location"])
       .index("by_family", ["familyId"])
       .index("by_level", ["level"]),
+
+    bounties: defineTable({
+      placerId: v.id("users"),
+      targetId: v.id("users"),
+      reward: v.number(),
+      active: v.boolean(),
+      claimedBy: v.optional(v.id("users")),
+      createdAt: v.number(),
+    })
+      .index("by_active", ["active"])
+      .index("by_target", ["targetId"]),
+
+    duels: defineTable({
+      challengerId: v.id("users"),
+      defenderId: v.id("users"),
+      stake: v.number(),
+      status: v.string(),
+      winnerId: v.optional(v.id("users")),
+      createdAt: v.number(),
+    })
+      .index("by_status", ["status"])
+      .index("by_defender", ["defenderId"]),
 
     families: defineTable({
       name: v.string(),

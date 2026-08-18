@@ -21,7 +21,8 @@ type GamePage =
   | "gambling_coin" | "gambling_horse" | "gambling_number"
   | "messages" | "inbox" | "notifications_page" | "forum_general"
   | "forum_sales" | "forum_offtopic" | "forum_shadows" | "forum_search"
-  | "city_overview" | "statistics" | "support" | "send_message" | "faq";
+  | "city_overview" | "statistics" | "support" | "send_message" | "faq"
+  | "bounty_board" | "duels" | "spar";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
 
@@ -46,6 +47,9 @@ const leftMenuSections = [
   { title: "Company", icon: Shield, page: "company" as GamePage },
   { title: "Family", icon: Users, page: "family" as GamePage },
   { title: "Kill", icon: Skull, page: "kill" as GamePage },
+  { title: "Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
+  { title: "Duels", icon: Swords, page: "duels" as GamePage },
+  { title: "Spar", icon: SwordsIcon, page: "spar" as GamePage },
   { title: "Gambling", icon: Dices, children: [
     { title: "Dice", icon: Dice1, page: "gambling_dice" as GamePage },
     { title: "Lotto", icon: Ticket, page: "gambling_lotto" as GamePage },
@@ -68,6 +72,7 @@ const rightMenuSections = [
     { title: "Search Posts", icon: Search, page: "forum_search" as GamePage },
   ]},
   { title: "City Overview", icon: MapPin, page: "city_overview" as GamePage },
+  { title: "Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
   { title: "Statistics", icon: BarChart3, page: "statistics" as GamePage },
   { title: "FAQ", icon: BookOpen, page: "faq" as GamePage },
   { title: "Support", icon: HelpCircle, page: "support" as GamePage },
@@ -658,19 +663,255 @@ function DailyRaidPage() {
 
 function PrisonPage() {
   const player = useQuery(api.game.getPlayer);
-  if (!player) return <LoadingPage />;
+  const prisonStatus = useQuery(api.game.getPrisonStatus);
+  const payBail = useMutation(api.game.payBail);
+  const prisonEscape = useMutation(api.game.prisonEscape);
+  const paroleHearing = useMutation(api.game.paroleHearing);
+  const doPrisonJob = useMutation(api.game.prisonJob);
+  const prisonFight = useMutation(api.game.prisonFight);
+  const joinGang = useMutation(api.game.joinPrisonGang);
+  const smuggleContraband = useMutation(api.game.smuggleContraband);
+  const upgradeCell = useMutation(api.game.upgradeCell);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState<"overview" | "jobs" | "gangs" | "contraband" | "cells" | "escape">("overview");
+
+  if (!player || !prisonStatus) return <LoadingPage />;
   if (!player.inPrison) return <EmptyPage icon={<Lock className="size-8 text-primary" />} title="Not in Prison" desc="You're a free man. Commit crimes to end up here..." />;
 
-  const remaining = player.prisonTime ? Math.max(0, Math.ceil((player.prisonTime - (Date.now() - (player.registeredAt ?? 0))) / 60000)) : 0;
+  const remaining = Math.max(0, Math.ceil((player.prisonTime ?? 0) / 60000));
+  const bailCost = 2000 + (player.level ?? 1) * 200;
+  const solLeft = Math.ceil((prisonStatus.solitaryTime ?? 0) / 60000);
+
+  const doAction = async (fn: () => Promise<unknown>, label: string) => { setLoading(true); setMsg(""); try { await fn(); setMsg(label); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); };
+
+  const tabs = [
+    { id: "overview" as const, label: "Overview" },
+    { id: "escape" as const, label: "Escape" },
+    { id: "jobs" as const, label: "Jobs" },
+    { id: "gangs" as const, label: "Gangs" },
+    { id: "contraband" as const, label: "Contraband" },
+    { id: "cells" as const, label: "Cells" },
+  ];
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center gap-3"><Lock className="size-7 text-destructive" /><h2 className="text-2xl font-bold">Prison</h2></div>
-      <div className="mafia-card rounded-xl p-6 text-center border-destructive/30 border">
-        <Lock className="size-12 mx-auto mb-3 text-destructive/50" />
-        <p className="text-muted-foreground mb-2">You're behind bars. Serve your time or try to escape.</p>
-        <div className="text-2xl font-bold text-destructive">{remaining > 0 ? `${remaining} min remaining` : "Release pending..."}</div>
+
+      {/* Status Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatBox label="Time Left" value={`${remaining} min`} color="text-destructive" />
+        <StatBox label="Cell Level" value={`Lv.${prisonStatus.cellLevel ?? 1}`} />
+        <StatBox label="Prison $" value={(prisonStatus.prisonCurrency ?? 0).toString()} color="text-yellow-400" />
+        <StatBox label="Contraband" value={(prisonStatus.contraband ?? 0).toString()} color="text-purple-400" />
       </div>
+
+      {solLeft > 0 && <div className="mafia-card rounded-lg p-3 border-destructive/30 border text-sm text-destructive">🔒 Solitary: {solLeft} min remaining</div>}
+
+      {/* Tabs */}
+      <div className="flex gap-1 bg-background/50 rounded-lg p-1 overflow-x-auto">
+        {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${tab === t.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>{t.label}</button>)}
+      </div>
+
+      {tab === "overview" && (
+        <div className="space-y-3">
+          <button onClick={() => doAction(async () => { const r = await payBail(); }, `Paid $${bailCost.toLocaleString()} bail!`)} disabled={loading || (player.money ?? 0) < bailCost}
+            className="w-full mafia-card rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-all disabled:opacity-40">
+            <div className="flex items-center gap-3"><CircleDollarSign className="size-5 text-green-400" /><span className="font-semibold text-sm">Pay Bail</span></div>
+            <span className="text-xs text-muted-foreground">${bailCost.toLocaleString()}</span>
+          </button>
+          <button onClick={() => doAction(async () => { await paroleHearing(); }, "Parole hearing requested!")} disabled={loading || solLeft > 0}
+            className="w-full mafia-card rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-all disabled:opacity-40">
+            <div className="flex items-center gap-3"><Shield className="size-5 text-blue-400" /><span className="font-semibold text-sm">Parole Hearing</span></div>
+            <span className="text-xs text-muted-foreground">50% time reduction</span>
+          </button>
+          {prisonStatus.prisonJob && <div className="mafia-card rounded-lg p-3 text-xs text-muted-foreground">Working as: <span className="text-primary font-bold capitalize">{prisonStatus.prisonJob}</span></div>}
+          {prisonStatus.prisonGang && <div className="mafia-card rounded-lg p-3 text-xs text-muted-foreground">Gang: <span className="text-red-400 font-bold">{prisonStatus.prisonGang}</span></div>}
+        </div>
+      )}
+
+      {tab === "escape" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-5 text-center">
+            <div className="text-4xl mb-3">🏃</div>
+            <p className="text-sm text-muted-foreground mb-3">Attempt to escape prison. Success chance based on your ATK.</p>
+            <button onClick={() => doAction(async () => { const r = await prisonEscape(); if (!r.success) setMsg("Escape failed! Added to solitary."); }, "Escaped!")} disabled={loading || solLeft > 0}
+              className="px-8 py-3 bg-destructive text-white font-bold rounded-lg hover:opacity-90 disabled:opacity-50">Attempt Escape</button>
+          </div>
+        </div>
+      )}
+
+      {tab === "jobs" && (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Work to earn money, prison currency, and reduce your sentence.</p>
+          {[{ id: "kitchen" as const, icon: "🍳", name: "Kitchen", money: "$100", time: "-10min" }, { id: "laundry" as const, icon: "👕", name: "Laundry", money: "$75", time: "-5min" }, { id: "library" as const, icon: "📚", name: "Library", money: "$50", time: "-30min" }, { id: "workshop" as const, icon: "🔨", name: "Workshop", money: "$150", time: "-7.5min" }].map(j => (
+            <button key={j.id} onClick={() => doAction(async () => { await doPrisonJob({ job: j.id }); }, `Worked ${j.name}!`)} disabled={loading || solLeft > 0}
+              className="w-full mafia-card rounded-lg p-3 flex items-center justify-between hover:border-primary/30 transition-all disabled:opacity-40">
+              <div className="flex items-center gap-2"><span>{j.icon}</span><span className="text-sm font-semibold">{j.name}</span></div>
+              <div className="text-xs text-muted-foreground"><span className="text-green-400">{j.money}</span> • <span className="text-blue-400">{j.time}</span></div>
+            </button>
+          ))}
+          <div className="mafia-card rounded-lg p-3"><p className="text-xs text-muted-foreground mb-2">Fight other inmates:</p>
+            <button onClick={() => doAction(async () => { await prisonFight({ targetId: player._id }); }, "Prison fight complete!")} disabled={loading || solLeft > 0}
+              className="px-4 py-2 bg-destructive/10 text-destructive text-xs font-semibold rounded-lg hover:bg-destructive/20 transition-colors disabled:opacity-40">Prison Fight</button>
+          </div>
+        </div>
+      )}
+
+      {tab === "gangs" && (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Join a prison gang for protection and perks.</p>
+          {["Aryan Brotherhood", "Mexican Mafia", "Black Guerrilla", "Italian Mafia"].map(g => (
+            <button key={g} onClick={() => doAction(async () => { await joinGang({ gang: g as never }); }, `Joined ${g}!`)} disabled={loading || solLeft > 0}
+              className={`w-full mafia-card rounded-lg p-3 flex items-center justify-between hover:border-primary/30 transition-all disabled:opacity-40 ${prisonStatus.prisonGang === g ? "border-primary" : ""}`}>
+              <span className="text-sm font-semibold">{g}</span>
+              {prisonStatus.prisonGang === g && <span className="text-xs text-primary">✓ Joined</span>}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "contraband" && (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Smuggle items into prison. 30% chance of getting caught!</p>
+          {[{ type: "shank" as const, icon: "🔪", name: "Shank", cost: 500 }, { type: "phone" as const, icon: "📱", name: "Phone", cost: 300 }, { type: "drugs" as const, icon: "💊", name: "Drugs", cost: 200 }, { type: "lockpick" as const, icon: "🔑", name: "Lockpick", cost: 400 }].map(i => (
+            <button key={i.type} onClick={() => doAction(async () => { const r = await smuggleContraband({ type: i.type }); if (r.caught) setMsg("Caught smuggling! Sent to solitary."); }, `Smuggled ${i.name}!`)} disabled={loading || (player.money ?? 0) < i.cost || solLeft > 0}
+              className="w-full mafia-card rounded-lg p-3 flex items-center justify-between hover:border-primary/30 transition-all disabled:opacity-40">
+              <div className="flex items-center gap-2"><span>{i.icon}</span><span className="text-sm font-semibold">{i.name}</span></div>
+              <span className="text-xs text-muted-foreground">${i.cost}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {tab === "cells" && (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground">Upgrade your cell for better conditions.</p>
+          {[1, 2, 3, 4, 5].map(l => (
+            <button key={l} onClick={() => doAction(async () => { await upgradeCell({ level: l }); }, `Upgraded to Cell Lv.${l}!`)} disabled={loading || l <= (prisonStatus.cellLevel ?? 1) || (player.money ?? 0) < l * 1000}
+              className={`w-full mafia-card rounded-lg p-3 flex items-center justify-between hover:border-primary/30 transition-all disabled:opacity-40 ${(prisonStatus.cellLevel ?? 1) >= l ? "border-green-800/50" : ""}`}>
+              <span className="text-sm font-semibold">Cell Level {l}</span>
+              <span className="text-xs text-muted-foreground">${(l * 1000).toLocaleString()}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {msg && <div className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in">✓ {msg}</div>}
+    </div>
+  );
+}
+
+function BountyBoardPage() {
+  const player = useQuery(api.game.getPlayer);
+  const bounties = useQuery(api.game.getActiveBounties);
+  const placeBounty = useMutation(api.game.placeBounty);
+  const claimBounty = useMutation(api.game.claimBounty);
+  const [targetId, setTargetId] = useState("");
+  const [amount, setAmount] = useState(1000);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!player) return <LoadingPage />;
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3"><Skull className="size-7 text-destructive" /><h2 className="text-2xl font-bold">Bounty Board</h2></div>
+      <div className="mafia-card rounded-xl p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Place a Bounty</h3>
+        <input value={targetId} onChange={e => setTargetId(e.target.value)} placeholder="Target Player ID" className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
+        <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} placeholder="Reward" className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
+        <button onClick={async () => { setLoading(true); try { await placeBounty({ targetId: targetId as never, reward: amount }); setMsg("Bounty placed!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading || (player.money ?? 0) < amount}
+          className="w-full py-2.5 bg-destructive text-white font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 text-sm">Place Bounty</button>
+        {msg && <div className="text-xs text-primary">✓ {msg}</div>}
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Active Bounties</h3>
+        {bounties && bounties.length === 0 && <EmptyPage icon={<Skull className="size-8 text-muted-foreground" />} title="No Bounties" desc="No active bounties on the board." />}
+        {bounties?.filter(b => b.placerId !== player._id).map(b => (
+          <div key={b._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
+            <div><div className="text-sm font-semibold">Bounty on {b.targetId.slice(0, 8)}...</div><div className="text-xs text-muted-foreground">Placed {new Date(b.createdAt).toLocaleDateString()}</div></div>
+            <div className="flex items-center gap-3"><span className="text-primary font-bold">${b.reward.toLocaleString()}</span>
+              <button onClick={async () => { setLoading(true); try { const r = await claimBounty({ bountyId: b._id }); setMsg(r.success ? `Claimed $${r.reward}!` : "Claim failed!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading}
+                className="px-3 py-1.5 bg-destructive/10 text-destructive text-xs font-semibold rounded-lg hover:bg-destructive/20 transition-colors disabled:opacity-40">Claim</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DuelPage() {
+  const player = useQuery(api.game.getPlayer);
+  const duels = useQuery(api.game.getPendingDuels);
+  const challengeDuel = useMutation(api.game.challengeDuel);
+  const acceptDuel = useMutation(api.game.acceptDuel);
+  const [targetId, setTargetId] = useState("");
+  const [stake, setStake] = useState(500);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!player) return <LoadingPage />;
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3"><Swords className="size-7 text-primary" /><h2 className="text-2xl font-bold">Duels</h2></div>
+      <div className="mafia-card rounded-xl p-5 space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Challenge a Player</h3>
+        <input value={targetId} onChange={e => setTargetId(e.target.value)} placeholder="Target Player ID" className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
+        <input type="number" value={stake} onChange={e => setStake(Number(e.target.value))} placeholder="Stake" className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
+        <button onClick={async () => { setLoading(true); try { await challengeDuel({ targetId: targetId as never, stake }); setMsg("Duel challenged!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading || (player.money ?? 0) < stake}
+          className="w-full py-2.5 bg-primary text-primary-foreground font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 text-sm">Send Challenge</button>
+        {msg && <div className="text-xs text-primary">✓ {msg}</div>}
+      </div>
+      <div className="space-y-2">
+        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Pending Duels</h3>
+        {duels && duels.length === 0 && <EmptyPage icon={<Swords className="size-8 text-muted-foreground" />} title="No Duels" desc="No pending duels." />}
+        {duels?.filter(d => d.defenderId === player._id).map(d => (
+          <div key={d._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
+            <div><div className="text-sm font-semibold">Duel Challenge</div><div className="text-xs text-muted-foreground">Stake: ${d.stake.toLocaleString()}</div></div>
+            <button onClick={async () => { setLoading(true); try { await acceptDuel({ duelId: d._id }); setMsg("Duel completed!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading}
+              className="px-4 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40">Accept</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SparPage() {
+  const player = useQuery(api.game.getPlayer);
+  const sparPlayer = useMutation(api.game.sparPlayer);
+  const players = useQuery(api.game.getPlayersInLocation, { location: player?.location ?? "New York" });
+  const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  if (!player) return <LoadingPage />;
+  const opponents = players?.filter(p => p._id !== player._id) ?? [];
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3"><Swords className="size-7 text-blue-400" /><h2 className="text-2xl font-bold">Spar</h2></div>
+      <p className="text-sm text-muted-foreground">Fight friends for XP without losing money. No cash at stake.</p>
+      {opponents.length === 0 ? <EmptyPage icon={<Swords className="size-8 text-blue-400" />} title="No Sparring Partners" desc="No players in your city." /> : (
+        <div className="space-y-2">{opponents.map(p => (
+          <div key={p._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="size-9 rounded-full bg-blue-500/10 flex items-center justify-center"><Swords className="size-4 text-blue-400" /></div>
+              <div><div className="font-semibold text-sm">{p.nickname ?? "Unknown"}</div><div className="text-[10px] text-muted-foreground">Lv.{p.level ?? 1} • ATK {p.attack ?? 0}</div></div>
+            </div>
+            <button onClick={async () => { setLoading(true); setResult(null); try { const r = await sparPlayer({ targetId: p._id as never }); setResult(r as unknown as Record<string, unknown>); } catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); } setLoading(false); }} disabled={loading}
+              className="px-4 py-1.5 bg-blue-500/10 text-blue-400 text-xs font-semibold rounded-lg hover:bg-blue-500/20 transition-colors disabled:opacity-40">SPAR</button>
+          </div>
+        ))}</div>
+      )}
+      {result && !result.error && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`mafia-card rounded-xl p-4 text-sm border ${result.won ? "border-blue-800/50" : "border-orange-800/50"}`}>
+          <div className={`font-bold text-lg ${result.won ? "text-blue-400" : "text-orange-400"}`}>{result.won ? "SPAR WON!" : "SPAR LOST"}</div>
+          <div className="text-muted-foreground">Dealt {result.damage as number} • Took {result.taken as number} • +10 XP</div>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -1110,7 +1351,7 @@ export default function Dashboard() {
   if (!isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
 
   const pageNames: Record<string, string> = {
-    headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club",
+    headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar",
     garage: "Garage", items: "My Items", prison: "Prison", airport: "Airport",
     organized_crime: "Organized Crime", missions: "Missions", daily_raid: "Daily Raid",
     company: "Company", family: "Family", kill: "Kill", messages: "Messages",
@@ -1141,6 +1382,9 @@ export default function Dashboard() {
       case "company": return <EmptyPage icon={<Shield className="size-8 text-primary" />} title="Company" desc="Run a legitimate front business. Earn passive income." />;
       case "family": return <FamilyPage />;
       case "kill": return <KillPage />;
+      case "bounty_board": return <BountyBoardPage />;
+      case "duels": return <DuelPage />;
+      case "spar": return <SparPage />;
       case "gambling_dice": return <GamblingPage type="dice" title="Dice" icon="🎲" />;
       case "gambling_lotto": return <EmptyPage icon={<Ticket className="size-8 text-yellow-400" />} title="Lotto" desc="Buy lottery tickets for a chance to win big." />;
       case "gambling_blackjack": return <EmptyPage icon={<Wallet className="size-8 text-primary" />} title="Blackjack" desc="Play blackjack against the house. Get to 21 without going over." />;
