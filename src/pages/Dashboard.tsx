@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
 import { UndergroundEconomyPage } from "../components/UndergroundEconomy";
+import { PointsShopPage, GaragePage, MyItemsPage, MissionsPage, OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage, LegacyPage, ForumSearchPage, SupportPage } from "../components/GamePages";
 
 type GamePage =
   | "headquarters" | "bank" | "hospital" | "points" | "crime_car" | "crime_burglarize"
@@ -1195,7 +1196,22 @@ const faqSections = [
   { q: "What are points used for?", a: "Earned through crimes, fights, and missions. Points can be used in the shop for exclusive items and upgrades." },
   { q: "How does the leaderboard work?", a: "Players are ranked by level and experience. Check the Statistics page to see the top players and global game stats." },
   { q: "Can I change my character class?", a: "No. Your class is permanent when you register. Choose wisely based on your preferred playstyle." },
-  { q: "What are the forums for?", a: "General discussion, Sales & Wanted (buy/sell items and services), Off-Topic (casual chat), and Shadows (clandestine discussions)." },
+  { q: "How does Blackjack work?", a: "Play against the dealer to get as close to 21 as possible without going over. Bet, deal cards, then Hit or Stand. Blackjack (21) pays 1.5x your bet!" },
+  { q: "How do I buy lottery tickets?", a: "Visit the Lotto page. Choose daily ($100, 5 numbers 1-30), weekly ($500, 5 numbers 1-30), or mega ($5,000, 6 numbers 1-50). Match numbers to win big!" },
+  { q: "How does the Garage work?", a: "Buy vehicles from the Garage shop for speed and storage bonuses. You can also steal vehicles (risky - may get arrested). Sell vehicles for 60% of purchase price." },
+  { q: "How do I equip items?", a: "Buy items from the Points Shop using your points. Go to My Items and click Equip on weapons (ATK boost) or armor (DEF boost). Items affect your combat stats." },
+  { q: "How do missions work?", a: "Accept missions from the Missions page. Each mission has a level requirement and reward. Accept, complete, and claim your money and points rewards." },
+  { q: "What is Organized Crime?", a: "Family-only operations. Join a Family first, then participate in family heists for big payouts. Higher levels unlock more profitable operations." },
+  { q: "How do businesses work?", a: "Buy businesses in the Company page. Each generates daily income. Upgrade businesses to increase earnings. Collect income anytime from the Collect button." },
+  { q: "What is the Legacy system?", a: "When you die and respawn, your heir inherits 10% of your total wealth. Your lifetime stats, titles, and achievements are preserved." },
+  { q: "How do I search forums?", a: "Use the Search Posts page to search across all forums by keyword. Results show post titles, bodies, and which forum they belong to." },
+  { q: "How do I contact support?", a: "Use the Support page to submit a ticket. Enter a subject and description of your issue. Our team will respond to your messages." },
+  { q: "What is the Underground Economy?", a: "A separate section with advanced criminal operations: counterfeiting, smuggling, drug trafficking, arson, racketeering, gambling dens, and more. Higher risk, higher reward." },
+  { q: "How does the bounty system work?", a: "Place bounties on other players (min $500). Other players can claim the bounty by killing the target. Check the Bounty Board for active bounties." },
+  { q: "How do duels work?", a: "Challenge a player to a formal 1v1 duel. Both players stake money. Winner takes both stakes. No random matchmaking - you choose your opponent." },
+  { q: "What is the stock market?", a: "Invest in 5 company stocks. Prices fluctuate randomly. Buy low, sell high. Check your holdings and sell anytime for the current price." },
+  { q: "How does insurance work?", a: "Buy insurance plans to protect your cash from robberies and kills. Basic ($500/week) protects up to $10K, Premium ($2K/week) protects up to $50K." },
+  { q: "How do loans work?", a: "Borrow money from underground banks. Interest accrues - pay back fast or face debt collectors. You can only have one active loan at a time." },
 ];
 
 function FAQPage() {
@@ -1388,17 +1404,17 @@ export default function Dashboard() {
       case "headquarters": return <HeadquartersPage />;
       case "bank": return <BankPage />;
       case "hospital": return <HospitalPage />;
-      case "points": return <EmptyPage icon={<Trophy className="size-8 text-yellow-400" />} title="Points" desc="Earn points through crimes, fights, and missions. Use them in the shop for exclusive items." />;
+      case "points": return <PointsShopPage />;
       case "crime_car": case "crime_burglarize": case "crime_rob": return <CrimePage type={{ crime_car: "car_theft", crime_burglarize: "burglarize", crime_rob: "rob_player" }[activePage]} />;
       case "fight_club": return <FightClubPage />;
-      case "garage": return <EmptyPage icon={<Car className="size-8 text-primary" />} title="Garage" desc="Store and manage your vehicles. Armored cars, getaway vehicles, and more." />;
-      case "items": return <EmptyPage icon={<Package className="size-8 text-primary" />} title="My Items" desc="View your inventory. Equip weapons and armor to boost your stats." />;
+      case "garage": return <GaragePage />;
+      case "items": return <MyItemsPage />;
       case "prison": return <PrisonPage />;
       case "airport": return <AirportPage />;
-      case "organized_crime": return <EmptyPage icon={<Group className="size-8 text-primary" />} title="Organized Crime" desc="Family-only operations. Bank heists, drug runs, and major scores." />;
-      case "missions": return <EmptyPage icon={<Target className="size-8 text-primary" />} title="Missions" desc="Complete daily and story missions for rewards. New missions every day." />;
+      case "organized_crime": return <OrganizedCrimePage />;
+      case "missions": return <MissionsPage />;
       case "daily_raid": return <DailyRaidPage />;
-      case "company": return <EmptyPage icon={<Shield className="size-8 text-primary" />} title="Company" desc="Run a legitimate front business. Earn passive income." />;
+      case "company": return <CompanyPage />;
       case "family": return <FamilyPage />;
       case "kill": return <KillPage />;
       case "bounty_board": return <BountyBoardPage />;
@@ -1413,11 +1429,11 @@ export default function Dashboard() {
       case "auction_house": return <AuctionHousePage />;
       case "insurance": return <InsurancePage />;
       case "loans": return <LoansPage />;
-      case "legacy": return <EmptyPage icon={<Crown className="size-8 text-yellow-400" />} title="Legacy" desc="Your heir inherits your legacy when you pass on." />;
+      case "legacy": return <LegacyPage />;
       case "underground": return <UndergroundEconomyPage />;
       case "gambling_dice": return <GamblingPage type="dice" title="Dice" icon="🎲" />;
-      case "gambling_lotto": return <EmptyPage icon={<Ticket className="size-8 text-yellow-400" />} title="Lotto" desc="Buy lottery tickets for a chance to win big." />;
-      case "gambling_blackjack": return <EmptyPage icon={<Wallet className="size-8 text-primary" />} title="Blackjack" desc="Play blackjack against the house. Get to 21 without going over." />;
+      case "gambling_lotto": return <LottoPage />;
+      case "gambling_blackjack": return <BlackjackPage />;
       case "gambling_coin": return <GamblingPage type="coin" title="Coin Toss" icon="🪙" />;
       case "gambling_horse": return <GamblingPage type="horse" title="Horse Racing" icon="🐴" />;
       case "gambling_number": return <GamblingPage type="number" title="Number Game" icon="🔢" />;
@@ -1425,11 +1441,11 @@ export default function Dashboard() {
       case "send_message": return <SendMessagePage />;
       case "notifications_page": return <NotificationsPage />;
       case "forum_general": case "forum_sales": case "forum_offtopic": case "forum_shadows": return <ForumPage forum={activePage.replace("forum_", "")} />;
-      case "forum_search": return <EmptyPage icon={<Search className="size-8 text-primary" />} title="Search Posts" desc="Search across all forums." />;
+      case "forum_search": return <ForumSearchPage />;
       case "city_overview": return <CityOverviewPage />;
       case "statistics": return <StatisticsPage />;
       case "faq": return <FAQPage />;
-      case "support": return <EmptyPage icon={<HelpCircle className="size-8 text-primary" />} title="Support" desc="Need help? Check the FAQ or contact support." />;
+      case "support": return <SupportPage />;
       default: return <HeadquartersPage />;
     }
   };

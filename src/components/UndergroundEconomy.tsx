@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Flame, Eye, FileText, Package, Pill, Building, UserX, Handcuffs,
+  Flame, Eye, FileText, Package, Pill, Building, Link2,
   Crosshair, ShieldAlert, Receipt, DollarSign, Radio, Swords, Anchor,
-  Loader2, AlertTriangle, CheckCircle, XCircle, Banknote, Skull, Target,
+  Loader2, CheckCircle, XCircle, Banknote, Skull, Target,
 } from "lucide-react";
 
 export function UndergroundEconomyPage() {
@@ -21,7 +21,6 @@ export function UndergroundEconomyPage() {
   const [drugQty, setDrugQty] = useState(1);
   const [drugCity, setDrugCity] = useState("Chicago");
   const [arsonTarget, setArsonTarget] = useState("");
-  const [ransomAmount, setRansomAmount] = useState(5000);
   const [armsQty, setArmsQty] = useState(1);
   const [armsAction, setArmsAction] = useState<"buy" | "sell">("buy");
   const [taxAmount, setTaxAmount] = useState(1000);
@@ -41,11 +40,7 @@ export function UndergroundEconomyPage() {
 
   const withLoading = async (fn: () => Promise<unknown>) => {
     setLoading(true);
-    try {
-      await fn();
-    } catch (e: unknown) {
-      show((e as Error).message, "error");
-    }
+    try { await fn(); } catch (e: unknown) { show((e as Error).message, "error"); }
     setLoading(false);
   };
 
@@ -53,7 +48,6 @@ export function UndergroundEconomyPage() {
   const smuggleMut = useMutation(api.underground.runSmuggling);
   const drugMut = useMutation(api.underground.drugTrafficking);
   const arsonMut = useMutation(api.underground.commitArson);
-  const kidnapMut = useMutation(api.underground.kidnapPlayer);
   const cargoMut = useMutation(api.underground.commitCargoTheft);
   const armsMut = useMutation(api.underground.commitArmsDeal);
   const witnessMut = useMutation(api.underground.witnessIntimidation);
@@ -72,7 +66,7 @@ export function UndergroundEconomyPage() {
     { id: "drugs", label: "Drug Trafficking", icon: <Pill className="size-4" /> },
     { id: "arson", label: "Arson", icon: <Flame className="size-4" /> },
     { id: "identity", label: "Identity Theft", icon: <Eye className="size-4" /> },
-    { id: "kidnap", label: "Kidnapping", icon: <Handcuffs className="size-4" /> },
+    { id: "kidnap", label: "Kidnapping", icon: <Link2 className="size-4" /> },
     { id: "cargo", label: "Cargo Theft", icon: <Anchor className="size-4" /> },
     { id: "arms", label: "Arms Dealing", icon: <Crosshair className="size-4" /> },
     { id: "witness", label: "Witness Intimidation", icon: <ShieldAlert className="size-4" /> },
@@ -127,7 +121,7 @@ export function UndergroundEconomyPage() {
       <div className="bg-card border border-border rounded-lg p-4">
         {activeTab === "overview" && (
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Your underground empire stats. Each crime has a chance of arrest based on your wanted level.</p>
+            <p className="text-sm text-muted-foreground">Your underground empire stats.</p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {crimeStats.map(s => (
                 <div key={s.label} className="bg-muted/30 border border-border rounded p-2 text-center">
@@ -142,13 +136,11 @@ export function UndergroundEconomyPage() {
         {activeTab === "launder" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Money Laundering</h3>
-            <p className="text-xs text-muted-foreground">Clean dirty money through shell companies. 30% fee applies. Reduces reputation.</p>
-            <div className="text-xs text-muted-foreground">Dirty money available: <span className="text-red-400 font-bold">${(player.dirtyMoney ?? 0).toLocaleString()}</span></div>
+            <p className="text-xs text-muted-foreground">Clean dirty money. 30% fee.</p>
+            <div className="text-xs text-muted-foreground">Dirty money: <span className="text-red-400 font-bold">${(player.dirtyMoney ?? 0).toLocaleString()}</span></div>
             <div className="flex gap-2">
               <input type="number" value={launderAmt} onChange={e => setLaunderAmt(+e.target.value)} className="flex-1 bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
-              <button disabled={loading || (player.dirtyMoney ?? 0) < launderAmt} onClick={() => withLoading(async () => { const r = await launderMut({ amount: launderAmt }); show(`Cleaned $${r.cleanAmount.toLocaleString()} (fee: $${r.fee.toLocaleString()})`, "success"); })} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
-                {loading ? <Loader2 className="size-4 animate-spin" /> : "Launder"}
-              </button>
+              <button disabled={loading || (player.dirtyMoney ?? 0) < launderAmt} onClick={() => withLoading(async () => { const r = await launderMut({ amount: launderAmt }); show(`Cleaned $${r.cleanAmount.toLocaleString()} (fee: $${r.fee.toLocaleString()})`, "success"); })} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold text-white">Launder</button>
             </div>
           </div>
         )}
@@ -156,7 +148,7 @@ export function UndergroundEconomyPage() {
         {activeTab === "counterfeit" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Counterfeiting</h3>
-            <p className="text-xs text-muted-foreground">Produce fake currency. Higher quality = more profit but higher arrest risk.</p>
+            <p className="text-xs text-muted-foreground">Produce fake currency. Higher quality = more profit but higher risk.</p>
             <div className="grid grid-cols-3 gap-2">
               {(["low", "medium", "high"] as const).map(q => (
                 <button key={q} onClick={() => setCounterfeitQuality(q)} className={`p-3 rounded border text-center transition-colors ${counterfeitQuality === q ? "bg-primary/20 border-primary" : "bg-muted/30 border-border hover:border-primary/50"}`}>
@@ -167,7 +159,7 @@ export function UndergroundEconomyPage() {
                 </button>
               ))}
             </div>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await mutate({ quality: counterfeitQuality }); if (r.success) show(`Earned $${r.earned.toLocaleString()} (+$${r.dirty} dirty)`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await mutate({ quality: counterfeitQuality }); if (r.success) show(`Earned $${(r.earned ?? 0).toLocaleString()}`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Start Printing"}
             </button>
           </div>
@@ -176,7 +168,7 @@ export function UndergroundEconomyPage() {
         {activeTab === "smuggle" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Smuggling Runs</h3>
-            <p className="text-xs text-muted-foreground">Transport contraband between cities. Higher wanted level = higher risk of being caught.</p>
+            <p className="text-xs text-muted-foreground">Transport contraband between cities.</p>
             <div className="grid grid-cols-2 gap-2">
               <select value={smuggleType} onChange={e => setSmuggleType(e.target.value)} className="bg-muted border border-border rounded px-3 py-2 text-sm text-foreground">
                 <option value="drugs">Drugs ($200/unit)</option>
@@ -191,9 +183,8 @@ export function UndergroundEconomyPage() {
             <div className="flex gap-2 items-center">
               <span className="text-xs text-muted-foreground">Qty:</span>
               <input type="number" min={1} max={10} value={smuggleQty} onChange={e => setSmuggleQty(+e.target.value)} className="w-20 bg-muted border border-border rounded px-2 py-1 text-sm text-foreground" />
-              <span className="text-xs text-muted-foreground">Cost: ${(smuggleQty * ({ drugs: 200, weapons: 500, electronics: 150, luxury: 300 }[smuggleType] ?? 200)).toLocaleString()}</span>
             </div>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await smuggleMut({ destCity: smuggleCity, contrabandType: smuggleType, quantity: smugggleQty }); if (r.success) show(`Smuggled to ${r.destination}! Profit: $${r.profit.toLocaleString()}`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await smuggleMut({ destCity: smuggleCity, contrabandType: smuggleType, quantity: smuggleQty }); if (r.success) show(`Profit: $${(r.profit ?? 0).toLocaleString()}`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Run Smuggling"}
             </button>
           </div>
@@ -202,7 +193,7 @@ export function UndergroundEconomyPage() {
         {activeTab === "drugs" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Drug Trafficking</h3>
-            <p className="text-xs text-muted-foreground">Buy low, sell high in different cities. Prices fluctuate randomly. High arrest risk.</p>
+            <p className="text-xs text-muted-foreground">Buy low, sell high. High arrest risk.</p>
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-xs text-muted-foreground">Quantity</label>
@@ -215,8 +206,7 @@ export function UndergroundEconomyPage() {
                 </select>
               </div>
             </div>
-            <div className="text-xs text-muted-foreground">Cost: <span className="text-yellow-400">${(drugQty * 150).toLocaleString()}</span> | Potential profit: <span className="text-green-400">~${Math.floor(drugQty * 150 * 2.5).toLocaleString()}</span></div>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await drugMut({ destCity: drugCity, quantity: drugQty }); if (r.success) show(`Drug deal complete! Profit: $${r.profit.toLocaleString()}`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await drugMut({ destCity: drugCity, quantity: drugQty }); if (r.success) show(`Profit: $${(r.profit ?? 0).toLocaleString()}`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Ship Drugs"}
             </button>
           </div>
@@ -225,9 +215,9 @@ export function UndergroundEconomyPage() {
         {activeTab === "arson" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Arson</h3>
-            <p className="text-xs text-muted-foreground">Burn buildings for insurance fraud. Cost: $5,000. Potential payout: $10,000-$25,000. 25% arrest risk.</p>
-            <input value={arsonTarget} onChange={e => setArsonTarget(e.target.value)} placeholder="Building name (e.g. Warehouse, Shop)" className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
-            <button disabled={loading || !arsonTarget} onClick={() => withLoading(async () => { const r = await arsonMut({ targetName: arsonTarget }); if (r.success) show(`Arson successful! Insurance payout: $${r.insurancePayout.toLocaleString()}`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <p className="text-xs text-muted-foreground">Burn buildings for insurance fraud. Cost: $5,000. 25% arrest risk.</p>
+            <input value={arsonTarget} onChange={e => setArsonTarget(e.target.value)} placeholder="Building name" className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
+            <button disabled={loading || !arsonTarget} onClick={() => withLoading(async () => { const r = await arsonMut({ targetName: arsonTarget }); if (r.success) show(`Payout: $${(r.insurancePayout ?? 0).toLocaleString()}`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "🔥 Commit Arson"}
             </button>
           </div>
@@ -236,39 +226,24 @@ export function UndergroundEconomyPage() {
         {activeTab === "identity" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Identity Theft</h3>
-            <p className="text-xs text-muted-foreground">Steal a player's identity to access their bank. Higher counterfeit skill = higher success rate.</p>
-            <div className="text-xs text-muted-foreground">Success chance: <span className="text-yellow-400">{Math.min(95, 30 + (player.counterfeitSkill ?? 0) * 2)}%</span></div>
-            <button disabled={loading} onClick={() => withLoading(async () => {
-              const players = await import("../convex/_generated/api").then(m => fetch("/api/query")).catch(() => null);
-              show("Use the Kill page to select a target, then come back.", "error");
-            })} className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
-              Identity Theft
-            </button>
-            <p className="text-[10px] text-muted-foreground">Note: Requires selecting a target player ID. Visit the Kill page to find targets.</p>
+            <p className="text-xs text-muted-foreground">Steal a player&apos;s identity to access their bank.</p>
+            <button disabled={loading} onClick={() => show("Use the Kill page to select a target first.", "error")} className="w-full py-2 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded text-sm font-semibold text-white">Identity Theft</button>
           </div>
         )}
 
         {activeTab === "kidnap" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Kidnapping</h3>
-            <p className="text-xs text-muted-foreground">Hold players for ransom. Must be in the same city. 20% arrest risk.</p>
-            <div className="flex gap-2 items-center">
-              <span className="text-xs text-muted-foreground">Ransom: $</span>
-              <input type="number" min={1000} step={1000} value={ransomAmount} onChange={e => setRansomAmount(+e.target.value)} className="flex-1 bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
-            </div>
-            <button disabled={loading} onClick={() => show("Select a target from the Kill page to kidnap.", "error")} className="w-full py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
-              Kidnap Player
-            </button>
-            <p className="text-[10px] text-muted-foreground">Note: Requires a victim ID from the same city.</p>
+            <p className="text-xs text-muted-foreground">Hold players for ransom. 20% arrest risk.</p>
+            <button disabled={loading} onClick={() => show("Select a target from the Kill page.", "error")} className="w-full py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 rounded text-sm font-semibold text-white">Kidnap Player</button>
           </div>
         )}
 
         {activeTab === "cargo" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Cargo Theft</h3>
-            <p className="text-xs text-muted-foreground">Hijack shipments at the docks. Available in: Miami, New York, LA, Chicago, Dallas. Profit: $3,000-$10,000. 20% arrest risk.</p>
-            <div className="text-xs text-muted-foreground">Current location: <span className="text-foreground font-semibold">{player.location}</span></div>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await cargoMut({}); if (r.success) show(`Cargo stolen! Profit: $${r.profit.toLocaleString()}`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <p className="text-xs text-muted-foreground">Hijack shipments at the docks. 20% arrest risk.</p>
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await cargoMut({}); if (r.success) show(`Profit: $${(r.profit ?? 0).toLocaleString()}`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "🏴‍☠️ Steal Cargo"}
             </button>
           </div>
@@ -279,15 +254,14 @@ export function UndergroundEconomyPage() {
             <h3 className="text-sm font-semibold text-foreground">Arms Dealing</h3>
             <p className="text-xs text-muted-foreground">Buy weapons (+2 ATK each for $800) or sell for profit ($1,200 each).</p>
             <div className="flex gap-2">
-              <button onClick={() => setArmsAction("buy")} className={`flex-1 py-2 rounded text-sm font-semibold transition-colors ${armsAction === "buy" ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground"}`}>Buy ($800/unit)</button>
-              <button onClick={() => setArmsAction("sell")} className={`flex-1 py-2 rounded text-sm font-semibold transition-colors ${armsAction === "sell" ? "bg-green-600 text-white" : "bg-muted/50 text-muted-foreground"}`}>Sell ($1,200/unit)</button>
+              <button onClick={() => setArmsAction("buy")} className={`flex-1 py-2 rounded text-sm font-semibold ${armsAction === "buy" ? "bg-blue-600 text-white" : "bg-muted/50 text-muted-foreground"}`}>Buy ($800/unit)</button>
+              <button onClick={() => setArmsAction("sell")} className={`flex-1 py-2 rounded text-sm font-semibold ${armsAction === "sell" ? "bg-green-600 text-white" : "bg-muted/50 text-muted-foreground"}`}>Sell ($1,200/unit)</button>
             </div>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-muted-foreground">Qty:</span>
               <input type="number" min={1} max={10} value={armsQty} onChange={e => setArmsQty(+e.target.value)} className="w-20 bg-muted border border-border rounded px-2 py-1 text-sm text-foreground" />
-              <span className="text-xs text-muted-foreground">{armsAction === "buy" ? `Total: $${(armsQty * 800).toLocaleString()}` : `Profit: $${(armsQty * 1200).toLocaleString()}`}</span>
             </div>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await armsMut({ action: armsAction, quantity: armsQty }); show(r.message ?? `Profit: $${r.profit?.toLocaleString()}`, r.success ? "success" : "error"); })} className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await armsMut({ action: armsAction, quantity: armsQty }); show(r.message ?? "Done", r.success ? "success" : "error"); })} className="w-full py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : armsAction === "buy" ? "Buy Weapons" : "Sell Weapons"}
             </button>
           </div>
@@ -296,9 +270,8 @@ export function UndergroundEconomyPage() {
         {activeTab === "witness" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Witness Intimidation</h3>
-            <p className="text-xs text-muted-foreground">Scare witnesses to reduce wanted level. Cost: wanted level x $1,000. 60% success rate.</p>
-            <div className="text-xs text-muted-foreground">Current wanted: <span className="text-red-400 font-bold">{player.wantedLevel}</span> | Cost: <span className="text-yellow-400">${(player.wantedLevel * 1000).toLocaleString()}</span></div>
-            <button disabled={loading || (player.wantedLevel ?? 0) <= 0} onClick={() => withLoading(async () => { const r = await witnessMut({}); show(r.message, r.success ? "success" : "error"); })} className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <p className="text-xs text-muted-foreground">Reduce wanted level. 60% success rate.</p>
+            <button disabled={loading || (player.wantedLevel ?? 0) <= 0} onClick={() => withLoading(async () => { const r = await witnessMut({}); show(r.message ?? "Done", r.success ? "success" : "error"); })} className="w-full py-2 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Intimidate Witnesses"}
             </button>
           </div>
@@ -307,10 +280,10 @@ export function UndergroundEconomyPage() {
         {activeTab === "tax" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Tax Evasion</h3>
-            <p className="text-xs text-muted-foreground">Hide income from the system. 30% savings but risk of audit (fine = 2x amount). Higher amounts = higher audit risk.</p>
+            <p className="text-xs text-muted-foreground">Hide income. 30% savings but risk of audit.</p>
             <div className="flex gap-2">
               <input type="number" min={100} step={100} value={taxAmount} onChange={e => setTaxAmount(+e.target.value)} className="flex-1 bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
-              <button disabled={loading} onClick={() => withLoading(async () => { const r = await taxMut({ amount: taxAmount }); show(r.success ? `Saved $${r.saved.toLocaleString()}` : r.message, r.success ? "success" : "error"); })} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+              <button disabled={loading} onClick={() => withLoading(async () => { const r = await taxMut({ amount: taxAmount }); show(r.success ? `Saved $${(r.saved ?? 0).toLocaleString()}` : r.message ?? "Failed", r.success ? "success" : "error"); })} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : "Evade"}
               </button>
             </div>
@@ -320,9 +293,9 @@ export function UndergroundEconomyPage() {
         {activeTab === "racket" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Racketeering</h3>
-            <p className="text-xs text-muted-foreground">Extort businesses for weekly protection money. 15% arrest risk.</p>
+            <p className="text-xs text-muted-foreground">Extort businesses. 15% arrest risk.</p>
             <input value={racketBusiness} onChange={e => setRacketBusiness(e.target.value)} placeholder="Business name" className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
-            <button disabled={loading || !racketBusiness} onClick={() => withLoading(async () => { const r = await racketMut({ targetBusiness: racketBusiness }); if (r.success) show(`Collected $${r.protectionPay.toLocaleString()} protection money!`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading || !racketBusiness} onClick={() => withLoading(async () => { const r = await racketMut({ targetBusiness: racketBusiness }); if (r.success) show(`Collected $${(r.protectionPay ?? 0).toLocaleString()}!`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-yellow-600 hover:bg-yellow-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Extort Business"}
             </button>
           </div>
@@ -331,10 +304,10 @@ export function UndergroundEconomyPage() {
         {activeTab === "den" && (
           <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Gambling Den</h3>
-            <p className="text-xs text-muted-foreground">Run an underground casino. House edge = 10-30% of pool. 10% raid risk.</p>
+            <p className="text-xs text-muted-foreground">Run an underground casino. 10% raid risk.</p>
             <div className="flex gap-2">
               <input type="number" min={100} step={100} value={denPool} onChange={e => setDenPool(+e.target.value)} className="flex-1 bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
-              <button disabled={loading} onClick={() => withLoading(async () => { const r = await denMut({ betPool: denPool }); if (r.success) show(`Den earned $${r.revenue.toLocaleString()}!`, "success"); else show(r.message, "error"); })} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+              <button disabled={loading} onClick={() => withLoading(async () => { const r = await denMut({ betPool: denPool }); if (r.success) show(`Revenue: $${(r.revenue ?? 0).toLocaleString()}!`, "success"); else show(r.message ?? "Failed", "error"); })} className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
                 {loading ? <Loader2 className="size-4 animate-spin" /> : "Open Den"}
               </button>
             </div>
@@ -342,7 +315,7 @@ export function UndergroundEconomyPage() {
         )}
 
         {activeTab === "protection" && (
-          <div className="space-3">
+          <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Protection Racket</h3>
             <p className="text-xs text-muted-foreground">Force businesses to pay weekly fees. 12% arrest risk.</p>
             <input value={protTarget} onChange={e => setProtTarget(e.target.value)} placeholder="Target business" className="w-full bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
@@ -350,39 +323,38 @@ export function UndergroundEconomyPage() {
               <span className="text-xs text-muted-foreground">Weekly fee: $</span>
               <input type="number" min={100} step={100} value={protFee} onChange={e => setProtFee(+e.target.value)} className="flex-1 bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
             </div>
-            <button disabled={loading || !protTarget} onClick={() => withLoading(async () => { const r = await protMut({ targetName: protTarget, weeklyFee: protFee }); if (r.success) show(`Collected $${r.collected.toLocaleString()}!`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading || !protTarget} onClick={() => withLoading(async () => { const r = await protMut({ targetName: protTarget, weeklyFee: protFee }); if (r.success) show(`Collected $${(r.collected ?? 0).toLocaleString()}!`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "Collect Protection Fee"}
             </button>
           </div>
         )}
 
         {activeTab === "loan" && (
-          <div className="space-3">
+          <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Loan Sharking</h3>
-            <p className="text-xs text-muted-foreground">Lend money at 30% interest. Requires a target player and their trust.</p>
-            <p className="text-[10px] text-muted-foreground">Visit the Loans page to manage your loans. Loan sharking requires lending to specific players via their ID.</p>
+            <p className="text-xs text-muted-foreground">Lend money at 30% interest. Visit the Loans page.</p>
           </div>
         )}
 
         {activeTab === "radio" && (
-          <div className="space-3">
+          <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Pirate Radio</h3>
-            <p className="text-xs text-muted-foreground">Broadcast propaganda to boost family reputation. Cost: $1,000. 10% FCC shutdown risk.</p>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await pirateMut({}); if (r.success) show(`Broadcast boosted reputation by ${r.reputationBoost}!`, "success"); else show(r.message, "error"); })} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <p className="text-xs text-muted-foreground">Broadcast propaganda to boost reputation. 10% shutdown risk.</p>
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await pirateMut({}); if (r.success) show(`Reputation +${r.reputationBoost ?? 0}!`, "success"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "📻 Start Broadcast"}
             </button>
           </div>
         )}
 
         {activeTab === "boxing" && (
-          <div className="space-3">
+          <div className="space-y-3">
             <h3 className="text-sm font-semibold text-foreground">Illegal Boxing</h3>
-            <p className="text-xs text-muted-foreground">Host underground fights. Win = 3x entry fee + house cut. Lose = lose entry + 20 HP. 8% police raid risk.</p>
+            <p className="text-xs text-muted-foreground">Host underground fights. Win = 3x entry fee. 8% raid risk.</p>
             <div className="flex gap-2 items-center">
               <span className="text-xs text-muted-foreground">Entry fee: $</span>
               <input type="number" min={100} step={100} value={boxingFee} onChange={e => setBoxingFee(+e.target.value)} className="flex-1 bg-muted border border-border rounded px-3 py-2 text-sm text-foreground" />
             </div>
-            <button disabled={loading} onClick={() => withLoading(async () => { const r = await boxingMut({ entryFee: boxingFee }); if (r.won) show(`Won! Prize: $${r.prime?.toLocaleString() ?? r.prize?.toLocaleString()}`, "success"); else if (r.success) show(`Lost. Took ${r.damage} damage.`, "error"); else show(r.message, "error"); })} className="w-full py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded text-sm font-semibold text-white transition-colors">
+            <button disabled={loading} onClick={() => withLoading(async () => { const r = await boxingMut({ entryFee: boxingFee }); if (r.won) show(`Won! Prize: $${(r.prize ?? 0).toLocaleString()}`, "success"); else if (r.success) show(`Lost. Took ${r.damage ?? 0} damage.`, "error"); else show(r.message ?? "Failed", "error"); })} className="w-full py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 rounded text-sm font-semibold text-white">
               {loading ? <Loader2 className="size-4 animate-spin mx-auto" /> : "🥊 Start Fight"}
             </button>
           </div>
