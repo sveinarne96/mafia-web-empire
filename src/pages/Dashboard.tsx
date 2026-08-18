@@ -320,14 +320,14 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
               <div className="flex justify-between text-[10px] text-sidebar-foreground/60 mb-0.5">
                 <span>Life</span>
                 <span>
-                  {player.life}/{player.maxLife}
+                  {player.life ?? 0}/{player.maxLife ?? 100}
                 </span>
               </div>
               <div className="stat-bar stat-bar-life">
                 <div
                   className="stat-bar-fill"
                   style={{
-                    width: `${(player.life / player.maxLife) * 100}%`,
+                    width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%`,
                   }}
                 />
               </div>
@@ -337,14 +337,14 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
               <div className="flex justify-between text-[10px] text-sidebar-foreground/60 mb-0.5">
                 <span>Energy</span>
                 <span>
-                  {player.energy}/{player.maxEnergy}
+                  {player.energy ?? 0}/{player.maxEnergy ?? 100}
                 </span>
               </div>
               <div className="stat-bar stat-bar-energy">
                 <div
                   className="stat-bar-fill"
                   style={{
-                    width: `${(player.energy / player.maxEnergy) * 100}%`,
+                    width: `${((player.energy ?? 0) / (player.maxEnergy ?? 100)) * 100}%`,
                   }}
                 />
               </div>
@@ -352,19 +352,19 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
 
             <div className="grid grid-cols-2 gap-1 text-[10px]">
               <div className="text-sidebar-foreground/50">
-                💰 ${player.money.toLocaleString()}
+                💰 ${(player.money ?? 0).toLocaleString()}
               </div>
               <div className="text-sidebar-foreground/50">
-                🏦 ${player.bank.toLocaleString()}
+                🏦 ${(player.bank ?? 0).toLocaleString()}
               </div>
               <div className="text-sidebar-foreground/50">
-                ⚔️ ATK {player.attack}
+                ⚔️ ATK {player.attack ?? 0}
               </div>
               <div className="text-sidebar-foreground/50">
-                🛡️ DEF {player.defense}
+                🛡️ DEF {player.defense ?? 0}
               </div>
               <div className="text-sidebar-foreground/50">
-                ⭐ Lv.{player.level}
+                ⭐ Lv.{player.level ?? 1}
               </div>
               <div className="text-sidebar-foreground/50">
                 📍 {player.location}
@@ -451,26 +451,26 @@ function HeadquartersPage() {
       </h2>
       <div className="mafia-card rounded-xl p-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <StatBox label="Level" value={`Lv.${player.level}`} />
-          <StatBox label="Money" value={`$${player.money.toLocaleString()}`} />
+          <StatBox label="Level" value={`Lv.${player.level ?? 1}`} />
+          <StatBox label="Money" value={`$${(player.money ?? 0).toLocaleString()}`} />
           <StatBox
             label="Bank"
-            value={`$${player.bank.toLocaleString()}`}
+            value={`$${(player.bank ?? 0).toLocaleString()}`}
           />
-          <StatBox label="Points" value={player.points.toString()} />
+          <StatBox label="Points" value={(player.points ?? 0).toString()} />
         </div>
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>Life</span>
               <span>
-                {player.life}/{player.maxLife}
+                {player.life ?? 0}/{player.maxLife ?? 100}
               </span>
             </div>
             <div className="stat-bar stat-bar-life">
               <div
                 className="stat-bar-fill"
-                style={{ width: `${(player.life / player.maxLife) * 100}%` }}
+                style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }}
               />
             </div>
           </div>
@@ -478,14 +478,14 @@ function HeadquartersPage() {
             <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>Energy</span>
               <span>
-                {player.energy}/{player.maxEnergy}
+                {player.energy ?? 0}/{player.maxEnergy ?? 100}
               </span>
             </div>
             <div className="stat-bar stat-bar-energy">
               <div
                 className="stat-bar-fill"
                 style={{
-                  width: `${(player.energy / player.maxEnergy) * 100}%`,
+                  width: `${((player.energy ?? 0) / (player.maxEnergy ?? 100)) * 100}%`,
                 }}
               />
             </div>
@@ -495,19 +495,19 @@ function HeadquartersPage() {
           <div>
             <SwordsIcon className="size-5 mx-auto mb-1 text-primary" />
             <div className="font-bold text-foreground">
-              {player.totalFights}
+              {player.totalFights ?? 0}
             </div>
             Fights
           </div>
           <div>
             <UserMinus className="size-5 mx-auto mb-1 text-destructive" />
-            <div className="font-bold text-foreground">{player.totalKills}</div>
+            <div className="font-bold text-foreground">{player.totalKills ?? 0}</div>
             Kills
           </div>
           <div>
             <Target className="size-5 mx-auto mb-1 text-chart-2" />
             <div className="font-bold text-foreground">
-              {player.totalCrimes}
+              {player.totalCrimes ?? 0}
             </div>
             Crimes
           </div>
@@ -558,7 +558,7 @@ function BankPage() {
               Cash
             </div>
             <div className="text-2xl font-bold text-primary mt-1">
-              ${player.money.toLocaleString()}
+              ${(player.money ?? 0).toLocaleString()}
             </div>
           </div>
           <div className="text-center p-4 bg-background/50 rounded-lg">
@@ -566,7 +566,7 @@ function BankPage() {
               Bank Balance
             </div>
             <div className="text-2xl font-bold mt-1">
-              ${player.bank.toLocaleString()}
+              ${(player.bank ?? 0).toLocaleString()}
             </div>
           </div>
         </div>
@@ -734,7 +734,7 @@ function GamblingPage({
         <div className="text-sm text-muted-foreground">
           Balance:{" "}
           <span className="text-primary font-bold">
-            ${player.money.toLocaleString()}
+            ${(player.money ?? 0).toLocaleString()}
           </span>
         </div>
       )}
@@ -913,7 +913,7 @@ function FamilyPage() {
             <StatBox label="Tag" value={family.tag} />
             <StatBox label="Level" value={`Lv.${family.level}`} />
             <StatBox label="Members" value={`${family.memberCount}/${family.maxMembers}`} />
-            <StatBox label="Treasury" value={`$${family.treasury.toLocaleString()}`} />
+            <StatBox label="Treasury" value={`$${(family.treasury ?? 0).toLocaleString()}`} />
           </div>
           <p className="text-sm text-muted-foreground mb-4">{family.description}</p>
           <h3 className="font-bold text-sm mb-2">Members</h3>
