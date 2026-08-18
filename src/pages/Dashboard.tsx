@@ -333,23 +333,6 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-[10px] text-sidebar-foreground/60 mb-0.5">
-                <span>Energy</span>
-                <span>
-                  {player.energy ?? 0}/{player.maxEnergy ?? 100}
-                </span>
-              </div>
-              <div className="stat-bar stat-bar-energy">
-                <div
-                  className="stat-bar-fill"
-                  style={{
-                    width: `${((player.energy ?? 0) / (player.maxEnergy ?? 100)) * 100}%`,
-                  }}
-                />
-              </div>
-            </div>
-
             <div className="grid grid-cols-2 gap-1 text-[10px]">
               <div className="text-sidebar-foreground/50">
                 💰 ${(player.money ?? 0).toLocaleString()}
@@ -473,24 +456,7 @@ function HeadquartersPage() {
                 style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }}
               />
             </div>
-          </div>
-          <div>
-            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-              <span>Energy</span>
-              <span>
-                {player.energy ?? 0}/{player.maxEnergy ?? 100}
-              </span>
-            </div>
-            <div className="stat-bar stat-bar-energy">
-              <div
-                className="stat-bar-fill"
-                style={{
-                  width: `${((player.energy ?? 0) / (player.maxEnergy ?? 100)) * 100}%`,
-                }}
-              />
-            </div>
-          </div>
-        </div>
+          </div>        </div>
         <div className="mt-6 grid grid-cols-3 gap-4 text-center text-xs text-muted-foreground">
           <div>
             <SwordsIcon className="size-5 mx-auto mb-1 text-primary" />
@@ -1241,11 +1207,11 @@ function ForumPage({ forum }: { forum: string }) {
 
 type PlayerClass = "hitter" | "thief" | "enforcer" | "hustler";
 
-const classInfo: Record<PlayerClass, { name: string; icon: string; desc: string; attack: number; defense: number; life: number; energy: number; money: number }> = {
-  hitter:    { name: "Hitter",    icon: "🥊", desc: "Brutal enforcer. High attack power but lower survivability. For players who like to deal damage.",     attack: 18, defense: 6,  life: 80,  energy: 110, money: 800 },
-  thief:     { name: "Thief",     icon: "🕵️", desc: "Stealthy and fast. Balanced stats with extra energy and starting cash.",                           attack: 10, defense: 8,  life: 90,  energy: 120, money: 1500 },
-  enforcer:  { name: "Enforcer",  icon: "🛡️", desc: "Tough as nails. High defense and life, built to absorb punishment and keep going.",              attack: 12, defense: 16, life: 120, energy: 90,  money: 700 },
-  hustler:   { name: "Hustler",   icon: "💰", desc: "Street-smart con artist. Starts with the most cash but lower combat stats.",                  attack: 8,  defense: 10, life: 90,  energy: 100, money: 2500 },
+const classInfo: Record<PlayerClass, { name: string; icon: string; desc: string; attack: number; defense: number; life: number; money: number }> = {
+  hitter:    { name: "Hitter",    icon: "🥊", desc: "Brutal enforcer. High attack power but lower survivability. For players who like to deal damage.",     attack: 18, defense: 6,  life: 80,  money: 800 },
+  thief:     { name: "Thief",     icon: "🕵️", desc: "Stealthy and fast. Balanced stats with extra starting cash.",                           attack: 10, defense: 8,  life: 90,  money: 1500 },
+  enforcer:  { name: "Enforcer",  icon: "🛡️", desc: "Tough as nails. High defense and life, built to absorb punishment and keep going.",              attack: 12, defense: 16, life: 120, money: 700 },
+  hustler:   { name: "Hustler",   icon: "💰", desc: "Street-smart con artist. Starts with the most cash but lower combat stats.",                  attack: 8,  defense: 10, life: 90,  money: 2500 },
 };
 
 function PlayerRegistration({ onRegistered }: { onRegistered: () => void }) {
@@ -1380,8 +1346,6 @@ function PlayerRegistration({ onRegistered }: { onRegistered: () => void }) {
                     <span className="font-bold">❤️ {cls.life}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Energy</span>
-                    <span className="font-bold">⚡ {cls.energy}</span>
                   </div>
                   <div className="flex justify-between col-span-2">
                     <span className="text-muted-foreground">Starting Cash</span>
@@ -1542,7 +1506,7 @@ export default function Dashboard() {
           <GenericPage
             title="Kill"
             icon="💀"
-            description="Target another player for elimination. High energy cost, high stakes. Permadeath risk."
+            description="Target another player for elimination. High stakes. Permadeath risk."
           />
         );
       case "gambling_dice":

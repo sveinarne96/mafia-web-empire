@@ -56,11 +56,11 @@ export const checkNickname = query({
   },
 });
 
-const classStats: Record<string, { attack: number; defense: number; life: number; energy: number; money: number }>= {
-  hitter:    { attack: 18, defense: 6,  life: 80,  energy: 110, money: 800 },
-  thief:     { attack: 10, defense: 8,  life: 90,  energy: 120, money: 1500 },
-  enforcer:  { attack: 12, defense: 16, life: 120, energy: 90,  money: 700 },
-  hustler:   { attack: 8,  defense: 10, life: 90,  energy: 100, money: 2500 },
+const classStats: Record<string, { attack: number; defense: number; life: number; money: number }>= {
+  hitter:    { attack: 18, defense: 6,  life: 80,  money: 800 },
+  thief:     { attack: 10, defense: 8,  life: 90,  money: 1500 },
+  enforcer:  { attack: 12, defense: 16, life: 120, money: 700 },
+  hustler:   { attack: 8,  defense: 10, life: 90,  money: 2500 },
 };
 
 export const registerPlayer = mutation({
@@ -100,8 +100,6 @@ export const registerPlayer = mutation({
       points: 0,
       life: stats.life,
       maxLife: stats.life,
-      energy: stats.energy,
-      maxEnergy: stats.energy,
       defense: stats.defense,
       attack: stats.attack,
       level: 1,
@@ -132,12 +130,10 @@ export const changeLocation = mutation({
       .unique();
     if (!player) throw new Error("Player not found");
     if (player.inPrison) throw new Error("You are in prison!");
-    if (player.energy < 10) throw new Error("Not enough energy to travel!");
     if (player.location === args.location) throw new Error("Already there!");
 
     await ctx.db.patch(player._id, {
       location: args.location,
-      energy: player.energy - 10,
     });
   },
 });
@@ -163,7 +159,6 @@ export const commitCrime = mutation({
     if (!player) throw new Error("Player not found");
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.isDead) throw new Error("You are dead!");
-    if (player.energy < 15) throw new Error("Not enough energy!");
 
     let moneyEarned = 0;
     let pointsEarned = 0;
@@ -220,7 +215,7 @@ export const commitCrime = mutation({
       money: success ? player.money + moneyEarned : player.money,
       points: player.points + pointsEarned,
       life: newLife,
-      energy: player.energy - 15,
+
       totalCrimes: player.totalCrimes + 1,
       experience: player.experience + (success ? 10 : 3),
       inPrison: arrested,
@@ -297,7 +292,6 @@ export const fightPlayer = mutation({
     if (!attacker) throw new Error("Player not found");
     if (attacker.isDead) throw new Error("You are dead!");
     if (attacker.inPrison) throw new Error("You are in prison!");
-    if (attacker.energy < 20) throw new Error("Not enough energy!");
     if (attacker._id === args.defenderId) throw new Error("Can't fight yourself!");
 
     const defender = await ctx.db.get(args.defenderId);
@@ -332,7 +326,7 @@ export const fightPlayer = mutation({
 
     await ctx.db.patch(attacker._id, {
       life: Math.max(0, attacker.life - dDmg),
-      energy: attacker.energy - 20,
+
       totalFights: attacker.totalFights + 1,
       totalKills: attackerWins ? attacker.totalKills + 1 : attacker.totalKills,
       money: attackerWins
@@ -619,7 +613,6 @@ export const dailyRaid = mutation({
     if (player.isDead) throw new Error("You are dead!");
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.dailyRaidUsed >= 5) throw new Error("No raids left today!");
-    if (player.energy < 25) throw new Error("Not enough energy!");
 
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Target not found");
@@ -638,7 +631,6 @@ export const dailyRaid = mutation({
 
     await ctx.db.patch(player._id, {
       money: success ? player.money + moneyStolen : player.money,
-      energy: player.energy - 25,
       dailyRaidUsed: player.dailyRaidUsed + 1,
       experience: player.experience + (success ? 20 : 5),
     });
@@ -724,7 +716,6 @@ export const killPlayer = mutation({
     if (!player) throw new Error("Player not found");
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.isDead) throw new Error("You are dead!");
-    if (player.energy < 50) throw new Error("Not enough energy (50)!");
     if (player._id === args.targetId) throw new Error("Can't kill yourself!");
 
     const target = await ctx.db.get(args.targetId);
@@ -740,7 +731,6 @@ export const killPlayer = mutation({
       await ctx.db.patch(player._id, {
         totalKills: player.totalKills + 1,
         experience: player.experience + 50,
-        energy: player.energy - 50,
       });
       await ctx.db.insert("notifications", {
         userId: args.targetId,
@@ -753,7 +743,6 @@ export const killPlayer = mutation({
       const damage = Math.floor(Math.random() * 40) + 10;
       await ctx.db.patch(player._id, {
         life: Math.max(0, player.life - damage),
-        energy: player.energy - 50,
         experience: player.experience + 10,
       });
     }
