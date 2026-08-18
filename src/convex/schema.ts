@@ -98,6 +98,27 @@ const schema = defineSchema(
       // Economy
       insuranceActive: v.boolean(),
       loanAmount: v.number(),
+
+      // Underground economy
+      dirtyMoney: v.number(),
+      counterfeitSkill: v.number(),
+      smugglingRuns: v.number(),
+      drugDeals: v.number(),
+      racketeeringIncome: v.number(),
+      loanSharkDebts: v.number(),
+      witnessIntimidations: v.number(),
+      identityThefts: v.number(),
+      kidnappings: v.number(),
+      arsons: v.number(),
+      cargoThefts: v.number(),
+      armsDeals: v.number(),
+      illegalBoxingEvents: v.number(),
+      pirateRadioBoost: v.number(),
+      prostitutionRings: v.number(),
+      gamblingDens: v.number(),
+      protectionRackets: v.number(),
+      lastBlackMarketRefresh: v.number(),
+      totalLaundered: v.number(),
       loanDueAt: v.number(),
     })
       .index("by_email", ["email"])
@@ -432,6 +453,63 @@ const schema = defineSchema(
     })
       .index("by_seller", ["sellerId"])
       .index("by_active", ["active"]),
+
+    // Smuggling runs
+    smugglingRuns: defineTable({
+      runnerId: v.id("users"),
+      originCity: v.string(),
+      destCity: v.string(),
+      contrabandType: v.string(),
+      quantity: v.number(),
+      buyPrice: v.number(),
+      sellPrice: v.number(),
+      profit: v.number(),
+      riskLevel: v.number(),
+      success: v.boolean(),
+      timestamp: v.number(),
+    })
+      .index("by_runner", ["runnerId"])
+      .index("by_timestamp", ["timestamp"]),
+
+    // Kidnappings
+    kidnappings: defineTable({
+      kidnapperId: v.id("users"),
+      victimId: v.id("users"),
+      ransom: v.number(),
+      ransomPaid: v.boolean(),
+      released: v.boolean(),
+      createdAt: v.number(),
+    })
+      .index("by_victim", ["victimId"])
+      .index("by_kidnapper", ["kidnapperId"]),
+
+    // Illegal businesses (gambling dens, prostitution, arms dealing)
+    illegalBusinesses: defineTable({
+      ownerId: v.id("users"),
+      type: v.string(),
+      name: v.string(),
+      city: v.string(),
+      level: v.number(),
+      income: v.number(),
+      riskLevel: v.number(),
+      raided: v.boolean(),
+      lastCollected: v.number(),
+    })
+      .index("by_owner", ["ownerId"])
+      .index("by_city", ["city"]),
+
+    // Black market items
+    blackMarketItems: defineTable({
+      name: v.string(),
+      type: v.string(),
+      price: v.number(),
+      rarity: v.string(),
+      statBonus: v.number(),
+      available: v.boolean(),
+      expiresAt: v.number(),
+    })
+      .index("by_type", ["type"])
+      .index("by_available", ["available"]),
   },
   {
     schemaValidation: false,
