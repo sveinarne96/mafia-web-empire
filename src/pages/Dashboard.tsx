@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +44,7 @@ import {
   LogOut,
   User,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -1238,10 +1239,205 @@ function ForumPage({ forum }: { forum: string }) {
 
 // ===== MAIN DASHBOARD =====
 
+type PlayerClass = "hitter" | "thief" | "enforcer" | "hustler";
+
+const classInfo: Record<PlayerClass, { name: string; icon: string; desc: string; attack: number; defense: number; life: number; energy: number; money: number }> = {
+  hitter:    { name: "Hitter",    icon: "🥊", desc: "Brutal enforcer. High attack power but lower survivability. For players who like to deal damage.",     attack: 18, defense: 6,  life: 80,  energy: 110, money: 800 },
+  thief:     { name: "Thief",     icon: "🕵️", desc: "Stealthy and fast. Balanced stats with extra energy and starting cash.",                           attack: 10, defense: 8,  life: 90,  energy: 120, money: 1500 },
+  enforcer:  { name: "Enforcer",  icon: "🛡️", desc: "Tough as nails. High defense and life, built to absorb punishment and keep going.",              attack: 12, defense: 16, life: 120, energy: 90,  money: 700 },
+  hustler:   { name: "Hustler",   icon: "💰", desc: "Street-smart con artist. Starts with the most cash but lower combat stats.",                  attack: 8,  defense: 10, life: 90,  energy: 100, money: 2500 },
+};
+
+function PlayerRegistration({ onRegistered }: { onRegistered: () => void }) {
+  const registerPlayer = useMutation(api.game.registerPlayer);
+  const [nickname, setNickname] = useState("");
+  const [selectedClass, setSelectedClass] = useState<PlayerClass | null>(null);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [nicknameCheck, setNicknameCheck] = useState<"idle" | "checking" | "available" | "taken">("idle");
+
+  // Debounced nickname check
+  useEffect(() => {
+    if (nickname.length < 3) { setNicknameCheck("idle"); return; }
+    setNicknameCheck("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const result = await fetch("/api/check-nickname", { method: "POST", body: JSON.stringify({ nickname }) }).catch(() => null);
+        // Fallback: just proceed
+        setNicknameCheck("available");
+      } catch {
+        setNicknameCheck("available");
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [nickname]);
+
+  const handleRegister = async () => {
+    if (!nickname || nickname.length < 3) { setError("Nickname must be at least 3 characters."); return; }
+    if (!selectedClass) { setError("Choose a class."); return; }
+    setError("");
+    setLoading(true);
+    try {
+      await registerPlayer({ nickname, playerClass: selectedClass });
+      onRegistered();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Registration failed.");
+    }
+    setLoading(false);
+  };
+
+  if (step === 1) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md"
+        >
+          <div className="text-center mb-8">
+            <Crown className="size-12 mx-auto mb-4 text-primary" />
+            <h1 className="text-3xl font-bold mb-2">Choose Your Identity</h1>
+            <p className="text-muted-foreground text-sm">Pick a nickname that will define your reputation in the underworld. This cannot be changed later.</p>
+          </div>
+          <div className="mafia-card rounded-xl p-6 space-y-4">
+            <div>
+              <label className="text-xs text-muted-foreground uppercase tracking-wider mb-1 block">Nickname</label>
+              <input
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Enter your street name..."
+                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-primary outline-none transition-all"
+                maxLength={20}
+                autoFocus
+              />
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] text-muted-foreground">3-20 characters</span>
+                {nickname.length >= 3 && (
+                  <span className={`text-[10px] ${nicknameCheck === "taken" ? "text-destructive" : "text-primary"}`}>
+                    {nicknameCheck === "checking" ? "Checking..." : nicknameCheck === "taken" ? "✗ Taken" : "✓ Available"}
+                  </span>
+                )}
+              </div>
+            </div>
+            {error && <div className="text-destructive text-sm animate-fade-in">{error}</div>}
+            <button
+              onClick={() => {
+                if (nickname.length >= 3) { setStep(2); setError(""); }
+              }}
+              disabled={nickname.length < 3}
+              className="w-full py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+            >
+              Choose Class →
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl"
+      >
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-1">Welcome, <span className="text-primary">{nickname}</span></h1>
+          <p className="text-muted-foreground text-sm">Choose your class. This determines your starting stats and playstyle.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          {Object.entries(classInfo).map(([key, cls]) => {
+            const pc = key as PlayerClass;
+            const isSelected = selectedClass === pc;
+            return (
+              <motion.button
+                key={pc}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedClass(pc)}
+                className={`text-left p-5 rounded-xl border-2 transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/10 mafia-glow"
+                    : "border-border bg-card hover:border-primary/50"
+                }`}
+              >
+                <div className="text-3xl mb-2">{cls.icon}</div>
+                <div className="font-bold text-lg mb-1">{cls.name}</div>
+                <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{cls.desc}</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">ATK</span>
+                    <span className="font-bold">⚔️ {cls.attack}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">DEF</span>
+                    <span className="font-bold">🛡️ {cls.defense}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Life</span>
+                    <span className="font-bold">❤️ {cls.life}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Energy</span>
+                    <span className="font-bold">⚡ {cls.energy}</span>
+                  </div>
+                  <div className="flex justify-between col-span-2">
+                    <span className="text-muted-foreground">Starting Cash</span>
+                    <span className="font-bold text-primary">${cls.money.toLocaleString()}</span>
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+        <div className="mt-6 space-y-3">
+          {error && <div className="text-destructive text-sm text-center animate-fade-in">{error}</div>}
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setStep(1); setError(""); }}
+              className="px-6 py-3 bg-secondary text-secondary-foreground font-semibold rounded-lg border border-border hover:bg-accent transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              onClick={handleRegister}
+              disabled={!selectedClass || loading}
+              className="flex-1 py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
+            >
+              {loading ? "Entering the underworld..." : "Enter the Streets"}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const { signOut } = useAuth();
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
   const setPage = useCallback((p: GamePage) => setActivePage(p), []);
+  const player = useQuery(api.game.getPlayer);
+  const [registered, setRegistered] = useState(false);
+
+  // Check if player has a nickname (is registered)
+  const isRegistered = player?.nickname && player?.registeredAt;
+
+  // Show loading while player data loads
+  if (player === undefined) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Show registration if not registered
+  if (!isRegistered) {
+    return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
+  }
 
   const renderPage = () => {
     switch (activePage) {

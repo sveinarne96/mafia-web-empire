@@ -45,8 +45,34 @@ export const getPlayersInLocation = query({
 
 // ===== PLAYER MUTATIONS =====
 
-export const registerPlayer = mutation({
+export const checkNickname = query({
   args: { nickname: v.string() },
+  handler: async (ctx, args) => {
+    const taken = await ctx.db
+      .query("users")
+      .withIndex("by_nickname", (q) => q.eq("nickname", args.nickname))
+      .unique();
+    return { taken: !!taken };
+  },
+});
+
+const classStats: Record<string, { attack: number; defense: number; life: number; energy: number; money: number }>= {
+  hitter:    { attack: 18, defense: 6,  life: 80,  energy: 110, money: 800 },
+  thief:     { attack: 10, defense: 8,  life: 90,  energy: 120, money: 1500 },
+  enforcer:  { attack: 12, defense: 16, life: 120, energy: 90,  money: 700 },
+  hustler:   { attack: 8,  defense: 10, life: 90,  energy: 100, money: 2500 },
+};
+
+export const registerPlayer = mutation({
+  args: {
+    nickname: v.string(),
+    playerClass: v.union(
+      v.literal("hitter"),
+      v.literal("thief"),
+      v.literal("enforcer"),
+      v.literal("hustler"),
+    ),
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
@@ -58,17 +84,26 @@ export const registerPlayer = mutation({
     if (!existing) throw new Error("User not found");
     if (existing.nickname) throw new Error("Already registered");
 
+    // Check nickname uniqueness
+    const nicknameTaken = await ctx.db
+      .query("users")
+      .withIndex("by_nickname", (q) => q.eq("nickname", args.nickname))
+      .unique();
+    if (nicknameTaken) throw new Error("Nickname already taken!");
+
+    const stats = classStats[args.playerClass];
+
     await ctx.db.patch(existing._id, {
       nickname: args.nickname,
-      money: 1000,
+      money: stats.money,
       bank: 0,
       points: 0,
-      life: 100,
-      maxLife: 100,
-      energy: 100,
-      maxEnergy: 100,
-      defense: 10,
-      attack: 10,
+      life: stats.life,
+      maxLife: stats.life,
+      energy: stats.energy,
+      maxEnergy: stats.energy,
+      defense: stats.defense,
+      attack: stats.attack,
       level: 1,
       experience: 0,
       location: "New York",
