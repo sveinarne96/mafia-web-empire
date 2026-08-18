@@ -133,6 +133,13 @@ export const registerPlayer = mutation({
       paroleEligible: false,
       totalPrisonEscapes: 0,
       totalPrisonJobs: 0,
+      activeTitle: undefined,
+      totalEarned: stats.money,
+      highestLevel: 1,
+      totalPlaytime: 0,
+      insuranceActive: false,
+      loanAmount: 0,
+      loanDueAt: 0,
     });
   },
 });
@@ -1268,5 +1275,358 @@ export const sparPlayer = mutation({
     const won = dmg > tDmg;
     await ctx.db.patch(player._id, { experience: (player.experience ?? 0) + 10, life: Math.max(0, (player.life ?? 100) - tDmg) });
     return { won, damage: dmg, taken: tDmg };
+  },
+});
+
+// ===== ACHIEVEMENT SYSTEM =====
+
+export const getAchievements = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("achievements").collect();
+  },
+});
+
+export const getPlayerAchievements = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return [];
+    return await ctx.db.query("playerAchievements").withIndex("by_player", (q) => q.eq("playerId", player._id)).collect();
+  },
+});
+
+export const checkAchievements = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return [];
+    const achievements = await ctx.db.query("achievements").collect();
+    const unlocked = await ctx.db.query("playerAchievements").withIndex("by_player", (q) => q.eq("playerId", player._id)).collect();
+    const unlockedIds = new Set(unlocked.map(u => u.achievementId));
+    const newUnlocks: string[] = [];
+    for (const a of achievements) {
+      if (unlockedIds.has(a._id)) continue;
+      let met = false;
+      if (a.category === "crimes" && (player.totalCrimes ?? 0) >= a.requirement) met = true;
+      if (a.category === "fights" && (player.totalFights ?? 0) >= a.requirement) met = true;
+      if (a.category === "kills" && (player.totalKills ?? 0) >= a.requirement) met = true;
+      if (a.category === "level" && (player.level ?? 0) >= a.requirement) met = true;
+      if (a.category === "money" && (player.totalEarned ?? 0) >= a.requirement) met = true;
+      if (met) {
+        await ctx.db.insert("playerAchievements", { playerId: player._id, achievementId: a._id, unlockedAt: Date.now() });
+        await ctx.db.patch(player._id, { money: (player.money ?? 0) + a.reward });
+        newUnlocks.push(a.name);
+      }
+    }
+    return { unlocked: newUnlocks };
+  },
+});
+
+// ===== TITLE SYSTEM =====
+
+export const getTitles = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return [];
+    return await ctx.db.query("playerTitles").withIndex("by_player", (q) => q.eq("playerId", player._id)).collect();
+  },
+});
+
+export const checkTitles = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return [];
+    const existing = await ctx.db.query("playerTitles").withIndex("by_player", (q) => q.eq("playerId", player._id)).collect();
+    const have = new Set(existing.map(t => t.title));
+    const newTitles: string[] = [];
+    const titleChecks: { title: string; check: boolean }[] = [
+      { title: "The Butcher", check: (player.totalKills ?? 0) >= 50 },
+      { title: "Ghost", check: (player.totalPrisonEscapes ?? 0) >= 3 },
+      { title: "The Kingpin", check: (player.level ?? 0) >= 25 },
+      { title: "Street Rat", check: (player.totalCrimes ?? 0) >= 100 },
+      { title: "Iron Fist", check: (player.totalFights ?? 0) >= 200 },
+      { title: "Untouchable", check: (player.totalKills ?? 0) >= 100 && (player.totalDeaths ?? 0) < 5 },
+      { title: "The Don", check: (player.level ?? 0) >= 50 },
+      { title: "Snake", check: (player.totalCrimes ?? 0) >= 500 },
+      { title: "Warlord", check: (player.totalKills ?? 0) >= 250 },
+      { title: "Prestige I", check: (player.prestige ?? 0) >= 1 },
+    ];
+    for (const t of titleChecks) {
+      if (t.check && !have.has(t.title)) {
+        await ctx.db.insert("playerTitles", { playerId: player._id, title: t.title, active: false, unlockedAt: Date.now() });
+        newTitles.push(t.title);
+      }
+    }
+    return { newTitles };
+  },
+});
+
+export const setActiveTitle = mutation({
+  args: { title: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    await ctx.db.patch(player._id, { activeTitle: args.title === "none" ? undefined : args.title });
+    return { title: args.title };
+  },
+});
+
+// ===== STOCK MARKET =====
+
+export const getStocks = query({
+  args: {},
+  handler: async (ctx) => await ctx.db.query("stocks").collect(),
+});
+
+export const buyStock = mutation({
+  args: { stockId: v.id("stocks"), shares: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const stock = await ctx.db.get(args.stockId);
+    if (!stock) throw new Error("Stock not found");
+    const cost = stock.price * args.shares;
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money!");
+    await ctx.db.insert("playerStocks", { playerId: player._id, stockId: args.stockId, shares: args.shares, buyPrice: stock.price });
+    await ctx.db.patch(player._id, { money: player.money - cost });
+    return { bought: args.shares, cost };
+  },
+});
+
+export const sellStock = mutation({
+  args: { holdingId: v.id("playerStocks") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const holding = await ctx.db.get(args.holdingId);
+    if (!holding || holding.playerId !== player._id) throw new Error("Not your stock!");
+    const stock = await ctx.db.get(holding.stockId);
+    if (!stock) throw new Error("Stock not found");
+    const payout = stock.price * holding.shares;
+    await ctx.db.delete(args.holdingId);
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) + payout });
+    return { payout };
+  },
+});
+
+export const tickStockMarket = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const stocks = await ctx.db.query("stocks").collect();
+    for (const s of stocks) {
+      const change = (Math.random() - 0.48) * s.price * 0.1;
+      const newPrice = Math.max(1, Math.round(s.price + change));
+      const history = [...(s.history ?? []).slice(-29), newPrice];
+      await ctx.db.patch(s._id, { price: newPrice, change: newPrice - s.price, history });
+    }
+    return { updated: stocks.length };
+  },
+});
+
+// ===== REAL ESTATE =====
+
+export const getProperties = query({
+  args: { city: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    if (args.city) return await ctx.db.query("properties").withIndex("by_city", (q) => q.eq("city", args.city!)).collect();
+    return await ctx.db.query("properties").collect();
+  },
+});
+
+export const buyProperty = mutation({
+  args: { propertyId: v.id("properties") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const prop = await ctx.db.get(args.propertyId);
+    if (!prop) throw new Error("Property not found");
+    if (prop.ownerId) throw new Error("Already owned!");
+    if ((player.money ?? 0) < prop.price) throw new Error("Not enough money!");
+    await ctx.db.patch(args.propertyId, { ownerId: player._id });
+    await ctx.db.patch(player._id, { money: player.money - prop.price });
+    return { bought: prop.name };
+  },
+});
+
+export const collectPropertyIncome = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const props = await ctx.db.query("properties").withIndex("by_owner", (q) => q.eq("ownerId", player._id)).collect();
+    const totalIncome = props.reduce((sum, p) => sum + p.income, 0);
+    if (totalIncome > 0) await ctx.db.patch(player._id, { money: (player.money ?? 0) + totalIncome });
+    return { income: totalIncome, properties: props.length };
+  },
+});
+
+// ===== BUSINESSES =====
+
+export const getBusinesses = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) return [];
+    return await ctx.db.query("businesses").withIndex("by_owner", (q) => q.eq("ownerId", player._id)).collect();
+  },
+});
+
+export const buyBusiness = mutation({
+  args: { name: v.string(), type: v.string(), city: v.string(), price: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if ((player.money ?? 0) < args.price) throw new Error("Not enough money!");
+    const income = Math.floor(args.price * 0.05);
+    await ctx.db.insert("businesses", { name: args.name, type: args.type, city: args.city, price: args.price, income, level: 1, ownerId: player._id });
+    await ctx.db.patch(player._id, { money: player.money - args.price });
+    return { bought: args.name };
+  },
+});
+
+export const upgradeBusiness = mutation({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const biz = await ctx.db.get(args.businessId);
+    if (!biz || biz.ownerId !== player._id) throw new Error("Not your business!");
+    const cost = biz.price * (biz.level + 1);
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money!");
+    await ctx.db.patch(args.businessId, { level: biz.level + 1, income: Math.floor(biz.income * 1.5) });
+    await ctx.db.patch(player._id, { money: player.money - cost });
+    return { level: biz.level + 1 };
+  },
+});
+
+export const collectBusinessIncome = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const bizs = await ctx.db.query("businesses").withIndex("by_owner", (q) => q.eq("ownerId", player._id)).collect();
+    const totalIncome = bizs.reduce((sum, b) => sum + b.income, 0);
+    if (totalIncome > 0) await ctx.db.patch(player._id, { money: (player.money ?? 0) + totalIncome });
+    return { income: totalIncome, businesses: bizs.length };
+  },
+});
+
+// ===== INSURANCE =====
+
+export const buyInsurance = mutation({
+  args: { type: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const costs: Record<string, number> = { basic: 500, premium: 2000 };
+    const cost = costs[args.type] ?? 500;
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money!");
+    await ctx.db.insert("playerInsurance", { playerId: player._id, type: args.type, expiresAt: Date.now() + 86400000 * 7, premium: cost });
+    await ctx.db.patch(player._id, { money: player.money - cost, insuranceActive: true });
+    return { type: args.type };
+  },
+});
+
+// ===== LOANS =====
+
+export const takeLoan = mutation({
+  args: { amount: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if ((player.loanAmount ?? 0) > 0) throw new Error("Already have a loan!");
+    if (args.amount <= 0 || args.amount > 100000) throw new Error("Invalid amount!");
+    const interest = Math.floor(args.amount * 0.1);
+    await ctx.db.insert("loans", { borrowerId: player._id, amount: args.amount, interest, dueAt: Date.now() + 86400000 * 7, paid: false });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) + args.amount, loanAmount: args.amount + interest, loanDueAt: Date.now() + 86400000 * 7 });
+    return { amount: args.amount, interest };
+  },
+});
+
+export const repayLoan = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    if ((player.loanAmount ?? 0) <= 0) throw new Error("No loan to repay!");
+    if ((player.money ?? 0) < (player.loanAmount ?? 0)) throw new Error("Not enough money!");
+    await ctx.db.patch(player._id, { money: player.money - (player.loanAmount ?? 0), loanAmount: 0, loanDueAt: 0 });
+    return { repaid: player.loanAmount };
+  },
+});
+
+// ===== AUCTION HOUSE =====
+
+export const getAuctions = query({
+  args: {},
+  handler: async (ctx) => await ctx.db.query("auctions").withIndex("by_active", (q) => q.eq("active", true)).collect(),
+});
+
+export const createAuction = mutation({
+  args: { itemName: v.string(), description: v.string(), startingBid: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    await ctx.db.insert("auctions", { sellerId: player._id, itemName: args.itemName, description: args.description, startingBid: args.startingBid, currentBid: args.startingBid, endTime: Date.now() + 3600000, active: true });
+    return { listed: args.itemName };
+  },
+});
+
+export const placeBid = mutation({
+  args: { auctionId: v.id("auctions"), amount: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    if (!player) throw new Error("Player not found");
+    const auction = await ctx.db.get(args.auctionId);
+    if (!auction || !auction.active) throw new Error("Auction not active!");
+    if (auction.sellerId === player._id) throw new Error("Can't bid on your own item!");
+    if (args.amount <= auction.currentBid) throw new Error("Bid must be higher!");
+    if ((player.money ?? 0) < args.amount) throw new Error("Not enough money!");
+    await ctx.db.patch(args.auctionId, { currentBid: args.amount, currentBidder: player._id });
+    await ctx.db.patch(player._id, { money: player.money - args.amount });
+    if (auction.currentBidder) {
+      const prev = await ctx.db.get(auction.currentBidder);
+      if (prev) await ctx.db.patch(auction.currentBidder, { money: (prev.money ?? 0) + auction.currentBid });
+    }
+    return { bid: args.amount };
   },
 });

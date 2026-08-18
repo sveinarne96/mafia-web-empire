@@ -12,6 +12,7 @@ import {
   ShieldCheck, Skull, TrophyIcon, BookOpen,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
 
 type GamePage =
   | "headquarters" | "bank" | "hospital" | "points" | "crime_car" | "crime_burglarize"
@@ -22,7 +23,8 @@ type GamePage =
   | "messages" | "inbox" | "notifications_page" | "forum_general"
   | "forum_sales" | "forum_offtopic" | "forum_shadows" | "forum_search"
   | "city_overview" | "statistics" | "support" | "send_message" | "faq"
-  | "bounty_board" | "duels" | "spar";
+  | "bounty_board" | "duels" | "spar" | "tournament"
+  | "stock_market" | "real_estate" | "businesses" | "auction_house" | "insurance" | "loans" | "achievements" | "titles" | "legacy";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
 
@@ -50,6 +52,20 @@ const leftMenuSections = [
   { title: "Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
   { title: "Duels", icon: Swords, page: "duels" as GamePage },
   { title: "Spar", icon: SwordsIcon, page: "spar" as GamePage },
+  { title: "Tournament", icon: Trophy, page: "tournament" as GamePage },
+  { title: "Economy", icon: Banknote, children: [
+    { title: "Stock Market", icon: BarChart3, page: "stock_market" as GamePage },
+    { title: "Real Estate", icon: Building2, page: "real_estate" as GamePage },
+    { title: "Businesses", icon: Shield, page: "businesses" as GamePage },
+    { title: "Auction House", icon: Banknote, page: "auction_house" as GamePage },
+    { title: "Insurance", icon: ShieldCheck, page: "insurance" as GamePage },
+    { title: "Loans", icon: Landmark, page: "loans" as GamePage },
+  ]},
+  { title: "Progression", icon: Trophy, children: [
+    { title: "Achievements", icon: Trophy, page: "achievements" as GamePage },
+    { title: "Titles", icon: Crown, page: "titles" as GamePage },
+    { title: "Legacy", icon: BookOpen, page: "legacy" as GamePage },
+  ]},
   { title: "Gambling", icon: Dices, children: [
     { title: "Dice", icon: Dice1, page: "gambling_dice" as GamePage },
     { title: "Lotto", icon: Ticket, page: "gambling_lotto" as GamePage },
@@ -1351,7 +1367,7 @@ export default function Dashboard() {
   if (!isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
 
   const pageNames: Record<string, string> = {
-    headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar",
+    headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar", tournament: "Tournament",
     garage: "Garage", items: "My Items", prison: "Prison", airport: "Airport",
     organized_crime: "Organized Crime", missions: "Missions", daily_raid: "Daily Raid",
     company: "Company", family: "Family", kill: "Kill", messages: "Messages",
@@ -1362,6 +1378,7 @@ export default function Dashboard() {
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
     forum_shadows: "Shadows", forum_search: "Search Posts",
+    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy",
   };
 
   const renderPage = () => {
@@ -1385,6 +1402,16 @@ export default function Dashboard() {
       case "bounty_board": return <BountyBoardPage />;
       case "duels": return <DuelPage />;
       case "spar": return <SparPage />;
+      case "tournament": return <TournamentPage />;
+      case "achievements": return <AchievementsPage />;
+      case "titles": return <TitlesPage />;
+      case "stock_market": return <StockMarketPage />;
+      case "real_estate": return <RealEstatePage />;
+      case "businesses": return <BusinessesPage />;
+      case "auction_house": return <AuctionHousePage />;
+      case "insurance": return <InsurancePage />;
+      case "loans": return <LoansPage />;
+      case "legacy": return <EmptyPage icon={<Crown className="size-8 text-yellow-400" />} title="Legacy" desc="Your heir inherits your legacy when you pass on." />;
       case "gambling_dice": return <GamblingPage type="dice" title="Dice" icon="🎲" />;
       case "gambling_lotto": return <EmptyPage icon={<Ticket className="size-8 text-yellow-400" />} title="Lotto" desc="Buy lottery tickets for a chance to win big." />;
       case "gambling_blackjack": return <EmptyPage icon={<Wallet className="size-8 text-primary" />} title="Blackjack" desc="Play blackjack against the house. Get to 21 without going over." />;

@@ -88,6 +88,17 @@ const schema = defineSchema(
       paroleEligible: v.boolean(),
       totalPrisonEscapes: v.number(),
       totalPrisonJobs: v.number(),
+
+      // Legacy & Titles
+      activeTitle: v.optional(v.string()),
+      totalEarned: v.number(),
+      highestLevel: v.number(),
+      totalPlaytime: v.number(),
+
+      // Economy
+      insuranceActive: v.boolean(),
+      loanAmount: v.number(),
+      loanDueAt: v.number(),
     })
       .index("by_email", ["email"])
       .index("by_nickname", ["nickname"])
@@ -116,6 +127,120 @@ const schema = defineSchema(
     })
       .index("by_status", ["status"])
       .index("by_defender", ["defenderId"]),
+
+    // Tournament system
+    tournaments: defineTable({
+      name: v.string(),
+      status: v.string(),
+      maxParticipants: v.number(),
+      participants: v.array(v.id("users")),
+      brackets: v.optional(v.string()),
+      prizePool: v.number(),
+      winnerId: v.optional(v.id("users")),
+      startTime: v.number(),
+      endTime: v.number(),
+    })
+      .index("by_status", ["status"]),
+
+    // Achievement system
+    achievements: defineTable({
+      name: v.string(),
+      description: v.string(),
+      icon: v.string(),
+      category: v.string(),
+      requirement: v.number(),
+      reward: v.number(),
+    }),
+
+    playerAchievements: defineTable({
+      playerId: v.id("users"),
+      achievementId: v.id("achievements"),
+      unlockedAt: v.number(),
+    })
+      .index("by_player", ["playerId"]),
+
+    // Title system
+    playerTitles: defineTable({
+      playerId: v.id("users"),
+      title: v.string(),
+      active: v.boolean(),
+      unlockedAt: v.number(),
+    })
+      .index("by_player", ["playerId"]),
+
+    // Stock market
+    stocks: defineTable({
+      name: v.string(),
+      symbol: v.string(),
+      price: v.number(),
+      change: v.number(),
+      history: v.array(v.number()),
+    })
+      .index("by_symbol", ["symbol"]),
+
+    playerStocks: defineTable({
+      playerId: v.id("users"),
+      stockId: v.id("stocks"),
+      shares: v.number(),
+      buyPrice: v.number(),
+    })
+      .index("by_player", ["playerId"]),
+
+    // Real estate
+    properties: defineTable({
+      name: v.string(),
+      type: v.string(),
+      city: v.string(),
+      price: v.number(),
+      income: v.number(),
+      ownerId: v.optional(v.id("users")),
+    })
+      .index("by_city", ["city"])
+      .index("by_owner", ["ownerId"]),
+
+    // Businesses
+    businesses: defineTable({
+      name: v.string(),
+      type: v.string(),
+      city: v.string(),
+      price: v.number(),
+      income: v.number(),
+      level: v.number(),
+      ownerId: v.id("users"),
+    })
+      .index("by_owner", ["ownerId"]),
+
+    // Auction house
+    auctions: defineTable({
+      sellerId: v.id("users"),
+      itemName: v.string(),
+      description: v.string(),
+      startingBid: v.number(),
+      currentBid: v.number(),
+      currentBidder: v.optional(v.id("users")),
+      endTime: v.number(),
+      active: v.boolean(),
+    })
+      .index("by_active", ["active"]),
+
+    // Insurance
+    playerInsurance: defineTable({
+      playerId: v.id("users"),
+      type: v.string(),
+      expiresAt: v.number(),
+      premium: v.number(),
+    })
+      .index("by_player", ["playerId"]),
+
+    // Loans
+    loans: defineTable({
+      borrowerId: v.id("users"),
+      amount: v.number(),
+      interest: v.number(),
+      dueAt: v.number(),
+      paid: v.boolean(),
+    })
+      .index("by_borrower", ["borrowerId"]),
 
     families: defineTable({
       name: v.string(),
