@@ -14,7 +14,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 
 type GamePage =
-  | "headquarters" | "bank" | "points" | "crime_car" | "crime_burglarize"
+  | "headquarters" | "bank" | "hospital" | "points" | "crime_car" | "crime_burglarize"
   | "crime_rob" | "fight_club" | "garage" | "items" | "prison" | "airport"
   | "organized_crime" | "missions" | "daily_raid" | "company" | "family"
   | "kill" | "gambling_dice" | "gambling_lotto" | "gambling_blackjack"
@@ -28,6 +28,7 @@ const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Det
 const leftMenuSections = [
   { title: "Headquarters", icon: Building2, page: "headquarters" as GamePage },
   { title: "Bank", icon: Landmark, page: "bank" as GamePage },
+  { title: "Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
   { title: "Points", icon: Trophy, page: "points" as GamePage },
   { title: "Crime", icon: AlertTriangle, children: [
     { title: "Car Theft", icon: Car, page: "crime_car" as GamePage },
@@ -223,10 +224,25 @@ function EmptyPage({ icon, title, desc }: { icon: React.ReactNode; title: string
 
 function HeadquartersPage() {
   const player = useQuery(api.game.getPlayer);
+  const regenHealth = useMutation(api.game.regenHealth);
+  const [regenMsg, setRegenMsg] = useState("");
   if (!player) return <LoadingPage />;
+
+  const xpNeeded = (player.level ?? 1) * 100;
+  const xpPercent = Math.min(100, ((player.experience ?? 0) / xpNeeded) * 100);
+  const wantedStars = player.wantedLevel ?? 0;
+  const rep = player.reputation ?? 0;
+  const alignment = player.reputationAlignment ?? "neutral";
+  const prestige = player.prestige ?? 0;
+
+  const doRegen = async () => { try { const r = await regenHealth(); setRegenMsg(`+${r.healed} HP`); } catch (e: unknown) { setRegenMsg(e instanceof Error ? e.message : ""); } };
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Building2 className="size-7 text-primary" /><h2 className="text-2xl font-bold">Headquarters</h2></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3"><Building2 className="size-7 text-primary" /><h2 className="text-2xl font-bold">Headquarters</h2></div>
+        {prestige > 0 && <div className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-xs font-bold text-yellow-400">⭐ Prestige {prestige}</div>}
+      </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatBox label="Level" value={`Lv.${player.level ?? 1}`} color="text-primary" />
         <StatBox label="Cash" value={`$${(player.money ?? 0).toLocaleString()}`} color="text-green-400" />
@@ -238,6 +254,24 @@ function HeadquartersPage() {
         <div>
           <div className="flex justify-between text-xs text-muted-foreground mb-1"><span>Life</span><span>{player.life ?? 0}/{player.maxLife ?? 100}</span></div>
           <div className="h-2 rounded-full bg-background/60 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400 transition-all" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }} /></div>
+        </div>
+        <div>
+          <div className="flex justify-between text-xs text-muted-foreground mb-1"><span>XP</span><span>{player.experience ?? 0}/{xpNeeded}</span></div>
+          <div className="h-2 rounded-full bg-background/60 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all" style={{ width: `${xpPercent}%` }} /></div>
+        </div>
+        <div className="flex gap-3">
+          <button onClick={doRegen} className="flex-1 py-2 bg-green-500/10 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-500/20 transition-colors border border-green-500/20">💚 Heal (+1 HP / 5min)</button>
+        </div>
+        {regenMsg && <div className="text-xs text-green-400 animate-fade-in">✓ {regenMsg}</div>}
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className={`p-2.5 rounded-lg border ${wantedStars > 0 ? "bg-red-950/30 border-red-800/50" : "bg-background/40 border-border/50"}`}>
+            <div className="text-muted-foreground mb-0.5">Wanted</div>
+            <div className="font-bold">{wantedStars > 0 ? "🔴".repeat(Math.min(wantedStars, 5)) : "—"}</div>
+          </div>
+          <div className={`p-2.5 rounded-lg border ${alignment === "evil" ? "bg-red-950/30 border-red-800/50" : alignment === "good" ? "bg-green-950/30 border-green-800/50" : "bg-background/40 border-border/50"}`}>
+            <div className="text-muted-foreground mb-0.5">Reputation</div>
+            <div className="font-bold">{alignment === "evil" ? "😈 Evil" : alignment === "good" ? "😇 Good" : "😐 Neutral"} ({rep})</div>
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-4 text-center text-xs text-muted-foreground pt-2 border-t border-border/50">
           <div><SwordsIcon className="size-5 mx-auto mb-1 text-primary" /><div className="font-bold text-foreground">{player.totalFights ?? 0}</div>Fights</div>
@@ -319,6 +353,89 @@ function CrimePage({ type }: { type: string }) {
         )}
         {result?.error ? <div className="mt-4 text-destructive text-sm">{String(result.error)}</div> : null}
       </div>
+    </div>
+  );
+}
+
+function HospitalPage() {
+  const player = useQuery(api.game.getPlayer);
+  const healAtHospital = useMutation(api.game.healAtHospital);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  if (!player) return <LoadingPage />;
+
+  const heal = async (speed: "standard" | "premium") => {
+    setLoading(true); setMsg("");
+    try { const r = await healAtHospital({ speed }); setMsg(`Healed ${r.healed} HP for $${r.cost}`); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3"><span className="text-2xl">🏥</span><h2 className="text-2xl font-bold">Hospital</h2></div>
+      <div className="mafia-card rounded-xl p-5 text-sm text-muted-foreground">
+        Current HP: <span className="text-primary font-bold">{player.life ?? 0}/{player.maxLife ?? 100}</span>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <button onClick={() => heal("standard")} disabled={loading || (player.money ?? 0) < 100}
+          className="mafia-card rounded-xl p-5 text-center hover:border-green-500/30 transition-all disabled:opacity-40">
+          <div className="text-2xl mb-2">💚</div>
+          <div className="font-bold text-sm">Standard Care</div>
+          <div className="text-[10px] text-muted-foreground mt-1">+20 HP • $100</div>
+        </button>
+        <button onClick={() => heal("premium")} disabled={loading || (player.money ?? 0) < 500}
+          className="mafia-card rounded-xl p-5 text-center hover:border-yellow-500/30 transition-all disabled:opacity-40">
+          <div className="text-2xl mb-2">⭐</div>
+          <div className="font-bold text-sm">Premium Care</div>
+          <div className="text-[10px] text-muted-foreground mt-1">+50 HP • $500</div>
+        </button>
+      </div>
+      {msg && <div className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in">✓ {msg}</div>}
+    </div>
+  );
+}
+
+function LevelUpModal({ player, onDone }: { player: { _id: string; level?: number; attack?: number; defense?: number; maxLife?: number }; onDone: () => void }) {
+  const levelUp = useMutation(api.game.levelUp);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const choose = async (stat: "attack" | "defense" | "maxLife") => {
+    setLoading(true); setError("");
+    try { await levelUp({ stat }); onDone(); }
+    catch (e: unknown) { setError(e instanceof Error ? e.message : "Error"); setLoading(false); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm">
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+        className="mafia-card rounded-2xl p-8 max-w-md w-full text-center space-y-5 border-primary/30 border">
+        <div className="text-5xl">🎉</div>
+        <h2 className="text-2xl font-bold">Level Up!</h2>
+        <p className="text-muted-foreground text-sm">You reached <span className="text-primary font-bold">Lv.{(player.level ?? 1) + 1}</span>! Choose a stat bonus:</p>
+        <div className="grid grid-cols-3 gap-3">
+          <button onClick={() => choose("attack")} disabled={loading}
+            className="p-4 rounded-xl border-2 border-border hover:border-red-500/50 hover:bg-red-500/5 transition-all">
+            <div className="text-2xl mb-1">⚔️</div>
+            <div className="font-bold text-sm">+3 ATK</div>
+            <div className="text-[10px] text-muted-foreground">{(player.attack ?? 10) + 3}</div>
+          </button>
+          <button onClick={() => choose("defense")} disabled={loading}
+            className="p-4 rounded-xl border-2 border-border hover:border-blue-500/50 hover:bg-blue-500/5 transition-all">
+            <div className="text-2xl mb-1">🛡️</div>
+            <div className="font-bold text-sm">+3 DEF</div>
+            <div className="text-[10px] text-muted-foreground">{(player.defense ?? 10) + 3}</div>
+          </button>
+          <button onClick={() => choose("maxLife")} disabled={loading}
+            className="p-4 rounded-xl border-2 border-border hover:border-green-500/50 hover:bg-green-500/5 transition-all">
+            <div className="text-2xl mb-1">❤️</div>
+            <div className="font-bold text-sm">+20 HP</div>
+            <div className="text-[10px] text-muted-foreground">{(player.maxLife ?? 100) + 20}</div>
+          </button>
+        </div>
+        {error && <div className="text-destructive text-sm">{error}</div>}
+      </motion.div>
     </div>
   );
 }
@@ -935,6 +1052,48 @@ function PlayerRegistration({ onRegistered }: { onRegistered: () => void }) {
   );
 }
 
+// ===== DEATH SCREEN =====
+
+function DeathScreen() {
+  const respawn = useMutation(api.game.respawn);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ keptMoney: number } | null>(null);
+
+  const doRespawn = async () => {
+    setLoading(true);
+    try { const r = await respawn(); setResult(r as unknown as { keptMoney: number }); }
+    catch (e: unknown) { alert(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  if (result) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-4">
+          <div className="text-6xl">💀</div>
+          <h1 className="text-3xl font-bold">Respawned</h1>
+          <p className="text-muted-foreground">You kept <span className="text-primary font-bold">${"$"}{result.keptMoney.toLocaleString()}</span> (10% of your wealth)</p>
+          <p className="text-xs text-muted-foreground/60">Refresh to continue...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center space-y-4">
+        <div className="text-6xl">💀</div>
+        <h1 className="text-4xl font-bold text-destructive">YOU DIED</h1>
+        <p className="text-muted-foreground">You were eliminated from the underworld.</p>
+        <button onClick={doRespawn} disabled={loading}
+          className="px-8 py-3 bg-primary text-primary-foreground font-bold rounded-lg hover:opacity-90 disabled:opacity-50">
+          {loading ? "Respawning..." : "Respawn (Keep 10% Cash)"}
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 // ===== MAIN DASHBOARD =====
 
 export default function Dashboard() {
@@ -946,11 +1105,12 @@ export default function Dashboard() {
 
   const isRegistered = (player?.nickname && player?.registeredAt) || registered;
 
-  if (player === undefined) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+  if (!player) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+  if (player.isDead) return <DeathScreen />;
   if (!isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
 
   const pageNames: Record<string, string> = {
-    headquarters: "Headquarters", bank: "Bank", points: "Points", fight_club: "Fight Club",
+    headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club",
     garage: "Garage", items: "My Items", prison: "Prison", airport: "Airport",
     organized_crime: "Organized Crime", missions: "Missions", daily_raid: "Daily Raid",
     company: "Company", family: "Family", kill: "Kill", messages: "Messages",
@@ -967,6 +1127,7 @@ export default function Dashboard() {
     switch (activePage) {
       case "headquarters": return <HeadquartersPage />;
       case "bank": return <BankPage />;
+      case "hospital": return <HospitalPage />;
       case "points": return <EmptyPage icon={<Trophy className="size-8 text-yellow-400" />} title="Points" desc="Earn points through crimes, fights, and missions. Use them in the shop for exclusive items." />;
       case "crime_car": case "crime_burglarize": case "crime_rob": return <CrimePage type={{ crime_car: "car_theft", crime_burglarize: "burglarize", crime_rob: "rob_player" }[activePage]} />;
       case "fight_club": return <FightClubPage />;
@@ -1004,13 +1165,18 @@ export default function Dashboard() {
       <LeftSidebar activePage={activePage} setPage={setPage} />
       <main className="flex-1 flex flex-col min-w-0">
         <header className="h-12 border-b border-border flex items-center justify-between px-5 bg-card/30 shrink-0 backdrop-blur-sm">
-          <div className="text-sm font-semibold text-foreground/80">{pageNames[activePage] ?? activePage}</div>
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-semibold text-foreground/80">{pageNames[activePage] ?? activePage}</div>
+            {(player.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-400 font-bold">🔴 {(player.wantedLevel ?? 0)} Wanted</span>}
+            {(player.reputationAlignment ?? "neutral") !== "neutral" && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${player.reputationAlignment === "evil" ? "bg-red-950/50 border-red-800/50 text-red-400" : "bg-green-950/50 border-green-800/50 text-green-400"}`}>{player.reputationAlignment === "evil" ? "😈 Evil" : "😇 Good"}</span>}
+          </div>
           <button onClick={() => signOut()} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
             <LogOut className="size-3.5" /> Sign Out
           </button>
         </header>
         <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">{renderPage()}</div>
       </main>
+      {player.levelUpPending ? <LevelUpModal player={player as unknown as { _id: string; level?: number; attack?: number; defense?: number; maxLife?: number }} onDone={() => {}} /> : null}
       <RightPanel setPage={setPage} />
     </div>
   );

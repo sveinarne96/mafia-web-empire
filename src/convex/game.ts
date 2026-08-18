@@ -115,6 +115,15 @@ export const registerPlayer = mutation({
       dailyRaidUsed: 0,
       lastDailyRaid: Date.now(),
       registeredAt: Date.now(),
+      lastRegenAt: Date.now(),
+      wantedLevel: 0,
+      reputation: 0,
+      reputationAlignment: "neutral",
+      prestige: 0,
+      prestigeMultiplier: 1,
+      levelUpPending: false,
+      skillPoints: 0,
+      playerClass: args.playerClass,
     });
   },
 });
@@ -211,15 +220,22 @@ export const commitCrime = mutation({
 
     const newLife = Math.max(0, player.life - damageTaken);
 
+    const xpGain = success ? 10 : 3;
+    const newXP = (player.experience ?? 0) + xpGain;
+    const xpNeeded = (player.level ?? 1) * 100;
+    const levelUpNow = newXP >= xpNeeded && !arrested;
+    const newWanted = Math.min(10, (player.wantedLevel ?? 0) + (success ? 1 : 0));
+
     await ctx.db.patch(player._id, {
       money: success ? player.money + moneyEarned : player.money,
       points: player.points + pointsEarned,
       life: newLife,
-
       totalCrimes: player.totalCrimes + 1,
-      experience: player.experience + (success ? 10 : 3),
+      experience: levelUpNow ? 0 : newXP,
+      levelUpPending: levelUpNow ? true : player.levelUpPending,
       inPrison: arrested,
       prisonTime: arrested ? 3600000 : player.prisonTime,
+      wantedLevel: arrested ? 0 : newWanted,
     });
 
     if (arrested) {
@@ -748,5 +764,178 @@ export const killPlayer = mutation({
     }
 
     return { success };
+  },
+});
+
+// ===== CORE GAMEPLAY FEATURES =====
+
+// 1. Permadeath - Respawn after death
+export const respawn = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email))
+      .unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.isDead) throw new Error("You are not dead!");
+
+    const keepMoney = Math.floor(player.money * 0.1);
+    await ctx.db.patch(player._id, {
+      isDead: false,
+      life: 100,
+      maxLife: 100,
+      money: keepMoney,
+      bank: 0,
+      attack: 10,
+      defense: 10,
+      level: 1,
+      experience: 0,
+      location: "New York",
+      inPrison: false,
+      totalDeaths: (player.totalDeaths ?? 0) + 1,
+      wantedLevel: 0,
+      reputation: 0,
+      reputationAlignment: "neutral",
+    });
+    return { keptMoney: keepMoney };
+  },
+});
+
+// 3. Health Regeneration
+export const regenHealth = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email))
+      .unique();
+    if (!player) throw new Error("Player not found");
+    if (player.isDead) throw new Error("You are dead!");
+    if (player.inPrison) throw new Error("You are in prison!");
+
+    const now = Date.now();
+    const lastRegen = player.lastRegenAt ?? now;
+    const elapsed = now - lastRegen;
+    const minutesPassed = Math.floor(elapsed / 300000); // 5 minutes per HP
+    if (minutesPassed < 1) throw new Error("No health to regenerate yet!");
+
+    const hpToHeal = Math.min(minutesPassed, (player.maxLife ?? 100) - player.life);
+    if (hpToHeal <= 0) throw new Error("Already at full health!");
+
+    await ctx.db.patch(player._id, {
+      life: Math.min(player.maxLife ?? 100, player.life + hpToHeal),
+      lastRegenAt: now,
+    });
+    return { healed: hpToHeal };
+  },
+});
+
+// 4. Hospital
+export const healAtHospital = mutation({
+  args: { speed: v.union(v.literal("standard"), v.literal("premium")) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email))
+      .unique();
+    if (!player) throw new Error("Player not found");
+    if (player.isDead) throw new Error("You are dead!");
+
+    const cost = args.speed === "premium" ? 500 : 100;
+    const healAmount = args.speed === "premium" ? 50 : 20;
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money!");
+
+    const healed = Math.min(healAmount, (player.maxLife ?? 100) - player.life);
+    if (healed <= 0) throw new Error("Already at full health!");
+
+    await ctx.db.patch(player._id, {
+      life: player.life + healed,
+      money: player.money - cost,
+    });
+    return { healed, cost };
+  },
+});
+
+// 5. Level Up - Choose stat bonus
+export const levelUp = mutation({
+  args: { stat: v.union(v.literal("attack"), v.literal("defense"), v.literal("maxLife")) },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email))
+      .unique();
+    if (!player) throw new Error("Player not found");
+    if (!player.levelUpPending) throw new Error("No level up pending!");
+
+    const updates: Record<string, unknown> = {
+      levelUpPending: false,
+      level: (player.level ?? 1) + 1,
+    };
+    if (args.stat === "attack") updates.attack = (player.attack ?? 10) + 3;
+    else if (args.stat === "defense") updates.defense = (player.defense ?? 10) + 3;
+    else updates.maxLife = (player.maxLife ?? 100) + 20;
+
+    await ctx.db.patch(player._id, updates);
+    return { newLevel: (player.level ?? 1) + 1, stat: args.stat };
+  },
+});
+
+// 7. Reputation System
+export const updateReputation = mutation({
+  args: { action: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+    const player = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email))
+      .unique();
+    if (!player) throw new Error("Player not found");
+
+    let repChange = 0;
+    switch (args.action) {
+      case "crime_success": repChange = -1; break;
+      case "crime_fail": repChange = 1; break;
+      case "fight_win": repChange = -1; break;
+      case "fight_lose": repChange = 1; break;
+      case "help_player": repChange = 5; break;
+      case "kill_player": repChange = -10; break;
+      default: repChange = 0;
+    }
+
+    const newRep = Math.max(-100, Math.min(100, (player.reputation ?? 0) + repChange));
+    let alignment = "neutral";
+    if (newRep < -30) alignment = "evil";
+    else if (newRep > 30) alignment = "good";
+
+    await ctx.db.patch(player._id, {
+      reputation: newRep,
+      reputationAlignment: alignment,
+    });
+    return { reputation: newRep, alignment };
+  },
+});
+
+// 8. Wanted Level
+export const getWantedLevel = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { wantedLevel: 0 };
+    const player = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", identity.email))
+      .unique();
+    if (!player) return { wantedLevel: 0 };
+    return { wantedLevel: player.wantedLevel ?? 0 };
   },
 });

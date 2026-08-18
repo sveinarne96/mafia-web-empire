@@ -66,6 +66,17 @@ const schema = defineSchema(
       dailyRaidUsed: v.number(),
       lastDailyRaid: v.number(),
       registeredAt: v.number(),
+
+      // Core Gameplay features
+      lastRegenAt: v.number(),
+      wantedLevel: v.number(),
+      reputation: v.number(),
+      reputationAlignment: v.string(),
+      prestige: v.number(),
+      prestigeMultiplier: v.number(),
+      levelUpPending: v.boolean(),
+      skillPoints: v.number(),
+      playerClass: v.optional(v.string()),
     })
       .index("by_email", ["email"])
       .index("by_nickname", ["nickname"])
