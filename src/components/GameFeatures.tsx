@@ -1,7 +1,8 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";import { Swords, FileText, Shield, Target, Timer, Scroll,
+import { motion, AnimatePresence } from "framer-motion";
+import { EpicActionResult, CooldownBar, useCooldown, EpicButton } from "@/components/EpicAction";import { Swords, FileText, Shield, Target, Timer, Scroll,
   DollarSign, Home, Store, TrendingUp,
   Flame, UserX, Crosshair, EyeOff, Receipt, Banknote,
   Coins, Truck, Trophy, Bomb, Dog, Car,
@@ -689,9 +690,9 @@ export function HitListPage() {
 // ===== CRIME CATEGORY PAGE =====
 export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const player = useQuery(api.game.getPlayer);
-  const [selectedCrime, setSelectedCrime] = useState<Crime | null>(null);
   const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
   const [loading, setLoading] = useState(false);
+  const cooldown = useCooldown(90);
 
   const category = crimeCategories.find(c => c.id === categoryId);
 
@@ -700,6 +701,7 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const executeCrime = async (crime: Crime) => {
     if ((player?.level ?? 0) < crime.levelRequired) return;
     if ((player?.money ?? 0) < 100) return;
+    if (cooldown.onCooldown) return;
     setLoading(true);
     setResult(null);
     try {
@@ -708,6 +710,7 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
       const money = succeeded ? crime.reward + Math.floor(Math.random() * crime.reward * 0.2) : -Math.floor(Math.random() * 500 + 100);
       const xp = succeeded ? crime.xp : Math.floor(crime.xp * 0.1);
       setResult({ success: succeeded, money, xp });
+      cooldown.startCooldown();
     } catch (e) {
       setResult({ success: false, money: 0, xp: 0 });
     }
@@ -715,7 +718,22 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   };
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-5">
+      {/* RESULT AT TOP */}
+      <AnimatePresence>
+        {result && (
+          <EpicActionResult
+            success={result.success}
+            money={result.money}
+            xp={result.xp}
+            onClose={() => setResult(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* COOLDOWN TIMER AT TOP */}
+      <CooldownBar cooldown={cooldown} />
+
       <div className="flex items-center gap-3">
         <span className="text-3xl">{category.icon}</span>
         <div>
@@ -726,7 +744,6 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
 
       <div className="space-y-2">
         {category.crimes.map((crime) => {
-          const canAfford = (player?.money ?? 0) >= 100;
           const hasLevel = (player?.level ?? 0) >= crime.levelRequired;
           const isLocked = !hasLevel;
 
@@ -735,28 +752,33 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
               key={crime.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`mafia-card rounded-lg p-4 transition-all ${isLocked ? "opacity-50" : "hover:border-primary/30 cursor-pointer"}`}
-              onClick={() => !isLocked && !loading && executeCrime(crime)}
+              whileHover={!isLocked ? { scale: 1.01, borderColor: "rgba(228,130,51,0.3)" } : undefined}
+              className={`mafia-card rounded-xl p-4 transition-all ${isLocked ? "opacity-40" : "hover:border-primary/30 cursor-pointer"} ${loading || cooldown.onCooldown ? "pointer-events-none opacity-60" : ""}`}
+              onClick={() => !isLocked && !loading && !cooldown.onCooldown && executeCrime(crime)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-sm">{crime.name}</span>
-                    {isLocked && <span className="text-[10px] bg-red-950/50 text-red-400 px-2 py-0.5 rounded-full">Lv.{crime.levelRequired}</span>}
+                    {isLocked && <span className="text-[10px] bg-red-950/50 text-red-400 px-2 py-0.5 rounded-full font-bold">🔒 Lv.{crime.levelRequired}</span>}
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{crime.description}</p>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className={`text-[10px] font-semibold ${getCrimeTypeColor(crime.risk)}`}>
-                      Risk: {crime.risk}%
+                    <span className={`text-[10px] font-bold ${getCrimeTypeColor(crime.risk)}`}>
+                      ⚠️ Risk: {crime.risk}%
                     </span>
-                    <span className="text-[10px] text-green-400">Reward: ${crime.reward.toLocaleString()}</span>
-                    <span className="text-[10px] text-blue-400">+{crime.xp} XP</span>
+                    <span className="text-[10px] font-bold text-green-400">💰 ${crime.reward.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-blue-400">⭐ +{crime.xp} XP</span>
                   </div>
                 </div>
                 {!isLocked && (
                   <div className="ml-4">
                     {loading ? (
-                      <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                        className="size-5 border-2 border-primary border-t-transparent rounded-full"
+                      />
                     ) : (
                       <ChevronRight className="size-5 text-muted-foreground" />
                     )}
@@ -767,26 +789,6 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
           );
         })}
       </div>
-
-      {result && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-xl border ${result.success ? "bg-green-950/30 border-green-800/50" : "bg-red-950/30 border-red-800/50"}`}
-        >
-          <div className={`font-bold text-lg ${result.success ? "text-green-400" : "text-red-400"}`}>
-            {result.success ? "SUCCESS!" : "FAILED!"}
-          </div>
-          <div className="mt-2 space-y-1">
-            {result.money !== 0 && (
-              <div className={`text-sm ${result.money > 0 ? "text-green-400" : "text-red-400"}`}>
-                {result.money > 0 ? "💰 +" : "💸 "}${Math.abs(result.money).toLocaleString()}
-              </div>
-            )}
-            {result.xp > 0 && <div className="text-sm text-blue-400">⭐ +{result.xp} XP</div>}
-          </div>
-        </motion.div>
-      )}
     </div>
   );
 }
