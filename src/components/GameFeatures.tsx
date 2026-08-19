@@ -12,6 +12,7 @@ import { motion } from "framer-motion";import { Swords, FileText, Shield, Target
   AlertTriangle, ChevronRight, ChevronDown, ShoppingBag, Gem,
 } from "lucide-react";
 import { crimeCategories, getCrimeTypeColor, getCrimeTypeBg, type CrimeCategory, type Crime } from "@/data/crimes";
+import { getDailyLegendaryCrimes, getTimeUntilReset, RARITY_CONFIG, type LegendaryCrime } from "@/data/legendaryCrimes";
 import { useEffect } from "react";
 
 // ===== #20 PRISON TIME DISPLAY =====
@@ -851,6 +852,215 @@ export function CrimesOverviewPage() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ===== LEGENDARY CRIMES =====
+export function LegendaryCrimePage() {
+  const dailyCrimes = useMemo(() => getDailyLegendaryCrimes(), []);
+  const [resetTimer, setResetTimer] = useState(getTimeUntilReset());
+  const [selectedCrime, setSelectedCrime] = useState<LegendaryCrime | null>(null);
+  const [executing, setExecuting] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; message: string; loot?: string } | null>(null);
+  const player = useQuery(api.game.getPlayer);
+  const executeCrime = useMutation(api.gameExtended.commitLegendaryCrime);
+
+  useEffect(() => {
+    const interval = setInterval(() => setResetTimer(getTimeUntilReset()), 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleExecute = async (crime: LegendaryCrime) => {
+    if (executing || !player) return;
+    if (player.level < crime.levelRequired) return;
+    setExecuting(true);
+    setResult(null);
+    try {
+      const res = await executeCrime({ crimeId: crime.id, reward: crime.reward, xp: crime.xp, risk: crime.risk });
+      if (res.success) {
+        const lootDrop = crime.loot?.filter((l) => Math.random() * 100 < l.chance);
+        const lootStr = lootDrop && lootDrop.length > 0 ? lootDrop.map(l => l.name).join(', ') : undefined;
+        setResult({ success: true, message: `SUCCESS! You earned $${crime.reward.toLocaleString()} and ${crime.xp.toLocaleString()} XP!`, loot: lootStr });
+      } else {
+        setResult({ success: false, message: `FAILED! You lost $${Math.floor(crime.reward * 0.3).toLocaleString()} and took damage.` });
+      }
+    } catch {
+      setResult({ success: false, message: "Something went wrong. The crime failed." });
+    } finally {
+      setExecuting(false);
+    }
+  };
+
+  const config = (r: string) => RARITY_CONFIG[r as keyof typeof RARITY_CONFIG] || RARITY_CONFIG.epic;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="relative overflow-hidden rounded-xl border border-yellow-500/30 bg-gradient-to-r from-gray-900 via-red-950 to-gray-900 p-6">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZG90cyIgd2lkdGg9IjIwIiBoZWlnaHQ9IjIwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48Y2lyY2xlIGN4PSIxMCIgY3k9IjEwIiByPSIxIiBmaWxsPSJyZ2JhKDI1NSwyMTUsMCwwLjEpIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2RvdHMpIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIvPjwvc3ZnPg==')] opacity-40" />
+        <div className="relative z-10">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-yellow-400">⚡ LEGENDARY CRIMES</h2>
+              <p className="text-sm text-yellow-200/60">Once-per-day crimes with massive rewards. Miss today and they're gone forever.</p>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-yellow-200/40 uppercase tracking-widest">Resets in</div>
+              <div className="font-mono text-2xl font-black text-yellow-400">{resetTimer}</div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Crime Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {dailyCrimes.map((crime, i) => {
+          const rc = config(crime.rarity);
+          const canAfford = player && player.money >= crime.reward * 0.1;
+          const canLevel = player && player.level >= crime.levelRequired;
+          return (
+            <motion.div
+              key={crime.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ scale: 1.03, y: -4 }}
+              onClick={() => canLevel && setSelectedCrime(crime)}
+              className={`relative overflow-hidden rounded-xl border-2 ${rc.border} bg-gray-900/90 backdrop-blur cursor-pointer transition-all hover:shadow-lg hover:${rc.glow} ${!canLevel ? 'opacity-40 cursor-not-allowed' : ''}`}
+            >
+              {/* Rarity glow */}
+              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${rc.gradient}`} />
+              
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="text-4xl">{crime.icon}</div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-black ${rc.badge} uppercase tracking-wider`}>\n                    {rc.particle} {rc.label}
+                  </span>
+                </div>
+                
+                <h3 className="text-lg font-black text-white mb-1">{crime.name}</h3>
+                <p className="text-xs text-gray-400 italic mb-3">"{crime.flavor}"</p>
+                <p className="text-sm text-gray-300 mb-4 line-clamp-2">{crime.description}</p>
+                
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                    <div className="text-xs text-gray-500">Reward</div>
+                    <div className="text-sm font-bold text-yellow-400">${crime.reward.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                    <div className="text-xs text-gray-500">XP</div>
+                    <div className="text-sm font-bold text-blue-400">+{crime.xp.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                    <div className="text-xs text-gray-500">Risk</div>
+                    <div className={`text-sm font-bold ${crime.risk >= 90 ? 'text-red-400' : crime.risk >= 70 ? 'text-orange-400' : 'text-yellow-400'}`}>{crime.risk}%</div>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-2 text-center">
+                    <div className="text-xs text-gray-500">Crew</div>
+                    <div className="text-sm font-bold text-purple-400">{crime.crewRequired}+</div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Lv. {crime.levelRequired} required</span>
+                  {!canLevel && <span className="text-xs text-red-400 font-bold">LOCKED</span>}
+                  {canLevel && <span className="text-xs text-green-400 font-bold">READY</span>}
+                </div>
+
+                {crime.loot && crime.loot.length > 0 && (
+                  <div className="mt-3 border-t border-gray-700/50 pt-3">
+                    <div className="text-xs text-gray-500 mb-1">Potential Loot:</div>
+                    <div className="flex flex-wrap gap-1">
+                      {crime.loot.map((l, j) => (
+                        <span key={j} className="text-[10px] bg-gray-800/80 rounded-full px-2 py-0.5 text-gray-300">
+                          {l.name} ({l.chance}%) - ${l.value.toLocaleString()}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Execution Modal */}
+      {selectedCrime && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} className="bg-gray-900 border-2 border-yellow-500/50 rounded-2xl max-w-lg w-full p-6 relative overflow-hidden">
+            <div className={`absolute top-0 left-0 right-0 h-2 bg-gradient-to-r ${config(selectedCrime.rarity).gradient}`} />
+            
+            <button onClick={() => { setSelectedCrime(null); setResult(null); }} className="absolute top-4 right-4 text-gray-500 hover:text-white text-xl">✕</button>
+            
+            <div className="text-center mb-6">
+              <div className="text-6xl mb-3">{selectedCrime.icon}</div>
+              <span className={`inline-block px-4 py-1 rounded-full text-xs font-black ${config(selectedCrime.rarity).badge} mb-3`}>\n                {config(selectedCrime.rarity).particle} {config(selectedCrime.rarity).label}\n              </span>
+              <h2 className="text-2xl font-black text-white">{selectedCrime.name}</h2>
+              <p className="text-sm text-gray-400 italic mt-1">"{selectedCrime.flavor}"</p>
+            </div>
+
+            <p className="text-sm text-gray-300 text-center mb-6">{selectedCrime.description}</p>
+
+            <div className="grid grid-cols-4 gap-3 mb-6">
+              <div className="bg-gray-800 rounded-lg p-3 text-center">
+                <div className="text-xs text-gray-500">Reward</div>
+                <div className="text-lg font-black text-yellow-400">${selectedCrime.reward.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-3 text-center">
+                <div className="text-xs text-gray-500">XP</div>
+                <div className="text-lg font-black text-blue-400">+{selectedCrime.xp.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-3 text-center">
+                <div className="text-xs text-gray-500">Risk</div>
+                <div className="text-lg font-black text-red-400">{selectedCrime.risk}%</div>
+              </div>
+              <div className="bg-gray-800 rounded-lg p-3 text-center">
+                <div className="text-xs text-gray-500">Crew</div>
+                <div className="text-lg font-black text-purple-400">{selectedCrime.crewRequired}</div>
+              </div>
+            </div>
+
+            {selectedCrime.loot && (
+              <div className="mb-6">
+                <div className="text-sm font-bold text-gray-300 mb-2">💰 Potential Loot Drops:</div>
+                <div className="space-y-2">
+                  {selectedCrime.loot.map((l, j) => (
+                    <div key={j} className="flex items-center justify-between bg-gray-800/50 rounded-lg p-3">
+                      <span className="text-sm text-white">{l.name}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-yellow-400">${l.value.toLocaleString()}</span>
+                        <span className="text-xs bg-gray-700 rounded-full px-2 py-0.5 text-gray-300">{l.chance}% chance</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {result && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`rounded-xl p-4 mb-4 ${result.success ? 'bg-green-900/30 border border-green-500/30' : 'bg-red-900/30 border border-red-500/30'}`}>
+                <div className={`text-center font-bold ${result.success ? 'text-green-400' : 'text-red-400'}`}>{result.message}</div>
+                {result.loot && <div className="text-center text-sm text-yellow-300 mt-2">🎒 Loot: {result.loot}</div>}
+              </motion.div>
+            )}
+
+            <div className="flex gap-3">
+              <button onClick={() => { setSelectedCrime(null); setResult(null); }} className="flex-1 px-4 py-3 rounded-xl bg-gray-800 text-gray-400 font-bold hover:bg-gray-700 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={() => handleExecute(selectedCrime)}
+                disabled={executing || (player ? player.money < selectedCrime.reward * 0.1 : true)}
+                className={`flex-1 px-4 py-3 rounded-xl font-black text-lg transition-all ${executing ? 'bg-gray-700 text-gray-500 cursor-wait' : 'bg-gradient-to-r from-yellow-600 to-orange-600 text-white hover:from-yellow-500 hover:to-orange-500 shadow-lg shadow-orange-500/20'}`}
+              >
+                {executing ? '⏳ Executing...' : '⚡ EXECUTE CRIME'}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }

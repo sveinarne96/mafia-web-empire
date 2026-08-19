@@ -1,4 +1,4 @@
-import { CrimesOverviewPage, BossFightsPage, CrimeEmpirePage, HeistPlanningPage, WorldEventsPage, CriminalPetsPage, BlackMarketPage, CrimeFamePage } from "../components/GameFeatures";
+import { CrimesOverviewPage, BossFightsPage, CrimeEmpirePage, HeistPlanningPage, WorldEventsPage, CriminalPetsPage, BlackMarketPage, CrimeFamePage, LegendaryCrimePage } from "../components/GameFeatures";
 import { SkillTreePage, DailyChallengesPage, ColosseumPage, SafeHousesPage, CrimeSpreePage, WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage, PrisonBreakPage } from "../components/EpicFeatures";
 import { useState, useCallback } from "react";
 import { useMutation, useQuery } from "convex/react";
@@ -39,13 +39,14 @@ type GamePage =
   | "death_match" | "season_rankings" | "combat_log" | "fighting_styles" | "armor"
   | "roulette" | "slots" | "russian_roulette" | "dog_fighting" | "street_racing" | "gambling_dens"
   | "gifting" | "hit_list" | "crimes" | "boss_fights" | "crime_empire" | "heist_planning" | "world_events" | "criminal_pets"
-  | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum"
+  | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
   | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation" | "prison_break";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
 
 const leftMenuSections = [
   { title: "Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
+  { title: "Legendary Crimes", icon: Flame, page: "legendary_crimes" as GamePage },
   { title: "Boss Fights", icon: Skull, page: "boss_fights" as GamePage },
   { title: "Crime Empire", icon: MapPinned, page: "crime_empire" as GamePage },
   { title: "Heist Planning", icon: Target, page: "heist_planning" as GamePage },
@@ -1434,7 +1435,7 @@ export default function Dashboard() {
   if (player.isDead) return <DeathScreen />;
 
   const pageNames: Record<string, string> = {
-    crimes: "Crimes", boss_fights: "Boss Fights", crime_empire: "Crime Empire", heist_planning: "Heist Planning", world_events: "World Events", criminal_pets: "Criminal Pets", headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar", tournament: "Tournament",
+    crimes: "Crimes", legendary_crimes: "Legendary Crimes", boss_fights: "Boss Fights", crime_empire: "Crime Empire", heist_planning: "Heist Planning", world_events: "World Events", criminal_pets: "Criminal Pets", headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar", tournament: "Tournament",
     garage: "Garage", items: "My Items", prison: "Prison", airport: "Airport",
     organized_crime: "Organized Crime", missions: "Missions", daily_raid: "Daily Raid",
     company: "Company", family: "Family", kill: "Kill", messages: "Messages",
@@ -1451,6 +1452,7 @@ export default function Dashboard() {
   const renderPage = () => {
     switch (activePage) {
       case "crimes": return <CrimesOverviewPage />;
+      case "legendary_crimes": return <LegendaryCrimePage />;
       case "boss_fights": return <BossFightsPage />;
       case "crime_empire": return <CrimeEmpirePage />;
       case "heist_planning": return <HeistPlanningPage />;

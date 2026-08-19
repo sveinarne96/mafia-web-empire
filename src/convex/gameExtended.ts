@@ -462,3 +462,34 @@ export const getOnlinePlayers = query({
     return players.map((p) => ({ _id: p._id, nickname: p.nickname, level: p.level, location: p.location }));
   },
 });
+
+export const commitLegendaryCrime = mutation({
+  args: {
+    crimeId: v.string(),
+    reward: v.number(),
+    xp: v.number(),
+    risk: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    if (player.inPrison) throw new Error("You are in prison!");
+    if (player.isDead) throw new Error("You are dead!");
+
+    const success = Math.random() * 100 > args.risk;
+    if (success) {
+      await ctx.db.patch(player._id, {
+        money: player.money + args.reward,
+        experience: (player.experience ?? 0) + args.xp,
+      });
+      return { success: true, message: `SUCCESS! You earned $${args.reward.toLocaleString()} and ${args.xp.toLocaleString()} XP!` };
+    } else {
+      const penalty = Math.floor(args.reward * 0.3);
+      await ctx.db.patch(player._id, {
+        money: Math.max(0, player.money - penalty),
+        life: Math.max(0, (player.life ?? 100) - 30),
+      });
+      return { success: false, message: `FAILED! You lost $${penalty.toLocaleString()} and took 30 damage.` };
+    }
+  },
+});
