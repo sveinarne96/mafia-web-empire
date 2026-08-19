@@ -18,6 +18,33 @@ export interface CrimeCategory {
 
 export const crimeCategories: CrimeCategory[] = [
   // ═══════════════════════════════════════════
+  // 🔪 STREET CRIMES — Available from Level 1
+  // ═══════════════════════════════════════════
+  {
+    id: "street",
+    name: "Street Crimes",
+    icon: "🔪",
+    description: "Basic street-level crimes open from your first day on the block",
+    crimes: [
+      { id: "pickpocket", name: "Pickpocketing", description: "Lift wallets from unsuspecting pedestrians.", reward: 200, risk: 10, xp: 5, levelRequired: 1 },
+      { id: "mugging", name: "Street Mugging", description: "Confront pedestrians and take their cash.", reward: 400, risk: 20, xp: 10, levelRequired: 1 },
+      { id: "shoplift", name: "Shoplifting", description: "Steal merchandise from retail stores.", reward: 300, risk: 15, xp: 8, levelRequired: 1 },
+      { id: "bicycle_theft", name: "Bicycle Theft", description: "Swipe unlocked bikes from the sidewalk.", reward: 150, risk: 8, xp: 4, levelRequired: 1 },
+      { id: "purse_snatch", name: "Purse Snatching", description: "Grab a bag and run.", reward: 350, risk: 18, xp: 8, levelRequired: 1 },
+      { id: "car_breakin", name: "Car Break-In", description: "Smash a car window and grab valuables.", reward: 500, risk: 25, xp: 12, levelRequired: 1 },
+      { id: "drug_deal_skip", name: "Drug Deal Gone Wrong", description: "Rip off a small-time dealer and run.", reward: 600, risk: 30, xp: 15, levelRequired: 1 },
+      { id: "phone_theft", name: "Phone Snatching", description: "Grab a phone from someone's hand and bolt.", reward: 250, risk: 12, xp: 6, levelRequired: 1 },
+      { id: "garbage_scavenge", name: "Garbage Scavenging", description: "Dig through trash for sellable items.", reward: 100, risk: 3, xp: 2, levelRequired: 1 },
+      { id: "sneak_bus", name: "Sneak onto the Bus", description: "Ride public transit without paying.", reward: 50, risk: 5, xp: 2, levelRequired: 1 },
+      { id: "panhandle_hustle", name: "Panhandle Hustle", description: "Work the corner with a sob story.", reward: 180, risk: 2, xp: 3, levelRequired: 1 },
+      { id: "petty_vandalism", name: "Petty Vandalism", description: "Tag walls and smash mailboxes for thrills.", reward: 120, risk: 10, xp: 4, levelRequired: 1 },
+      { id: "dumpster_dive", name: "Dumpster Diving", description: "Find valuables thrown out by businesses.", reward: 80, risk: 2, xp: 2, levelRequired: 1 },
+      { id: "ticket_scalp", name: "Ticket Scalping", description: "Buy event tickets and resell at markup.", reward: 450, risk: 10, xp: 10, levelRequired: 1 },
+      { id: "scam_call", name: "Scam Phone Call", description: "Run a quick phone scam on mark.", reward: 300, risk: 8, xp: 7, levelRequired: 1 },
+    ],
+  },
+
+  // ═══════════════════════════════════════════
   // 🔐 HEISTS & ROBBERIES (25 crimes)
   // ═══════════════════════════════════════════
   {
