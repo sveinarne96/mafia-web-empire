@@ -17,9 +17,7 @@ import { UndergroundEconomyPage } from "../components/UndergroundEconomy";
 import { PointsShopPage, GaragePage, MyItemsPage, MissionsPage, OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage, LegacyPage, ForumSearchPage, SupportPage } from "../components/GamePages";
 import {
   DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
-  FightingStylesPage, ArmorPage, CounterfeitingPage, DrugTraffickingPage,
-  ArsonPage, IdentityTheftPage, ArmsDealPage, WitnessPage, TaxEvasionPage,
-  RacketeeringPage, GamblingDenPage, LoanSharkPage, CargoTheftPage,
+  FightingStylesPage, ArmorPage, GamblingDenPage,
   RoulettePage, SlotsPage, RussianRoulettePage, DogFightPage, StreetRacingPage,
   GiftingPage, HitListPage,
 } from "../components/GameFeatures";
@@ -36,9 +34,7 @@ type GamePage =
   | "bounty_board" | "duels" | "spar" | "tournament"
   | "stock_market" | "real_estate" | "businesses" | "auction_house" | "insurance" | "loans" | "achievements" | "titles" | "legacy" | "underground"
   | "death_match" | "season_rankings" | "combat_log" | "fighting_styles" | "armor"
-  | "counterfeiting" | "drug_trafficking" | "arson" | "identity_theft" | "arms_dealing"
-  | "witness_intimidation" | "tax_evasion" | "racketeering" | "gambling_dens" | "loan_sharking"
-  | "cargo_theft" | "roulette" | "slots" | "russian_roulette" | "dog_fighting" | "street_racing"
+  | "roulette" | "slots" | "russian_roulette" | "dog_fighting" | "street_racing" | "gambling_dens"
   | "gifting" | "hit_list";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
@@ -48,11 +44,7 @@ const leftMenuSections = [
   { title: "Bank", icon: Landmark, page: "bank" as GamePage },
   { title: "Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
   { title: "Points", icon: Trophy, page: "points" as GamePage },
-  { title: "Crime", icon: AlertTriangle, children: [
-    { title: "Car Theft", icon: Car, page: "crime_car" as GamePage },
-    { title: "Burglarize Houses", icon: Home, page: "crime_burglarize" as GamePage },
-    { title: "Rob Player", icon: UserMinus, page: "crime_rob" as GamePage },
-  ]},
+
   { title: "Fight Club", icon: Swords, page: "fight_club" as GamePage },
   { title: "Garage", icon: Wrench, page: "garage" as GamePage },
   { title: "My Items", icon: Package, page: "items" as GamePage },
@@ -89,6 +81,12 @@ const leftMenuSections = [
     { title: "Coin Toss", icon: Coins, page: "gambling_coin" as GamePage },
     { title: "Horse Racing", icon: LandmarkIcon, page: "gambling_horse" as GamePage },
     { title: "Number Game", icon: Hash, page: "gambling_number" as GamePage },
+    { title: "Gambling Dens", icon: Coins, page: "gambling_dens" as GamePage },
+    { title: "Roulette", icon: Coins, page: "roulette" as GamePage },
+    { title: "Slots", icon: Coins, page: "slots" as GamePage },
+    { title: "Russian Roulette", icon: Skull, page: "russian_roulette" as GamePage },
+    { title: "Dog Fighting", icon: SwordsIcon, page: "dog_fighting" as GamePage },
+    { title: "Street Racing", icon: Car, page: "street_racing" as GamePage },
   ]},
   { title: "PvP & Combat", icon: Swords, children: [
     { title: "Death Match", icon: Skull, page: "death_match" as GamePage },
@@ -98,26 +96,8 @@ const leftMenuSections = [
     { title: "Season Rankings", icon: Trophy, page: "season_rankings" as GamePage },
     { title: "Hit List", icon: Skull, page: "hit_list" as GamePage },
   ]},
-  { title: "Crime Ops", icon: Skull, children: [
-    { title: "Counterfeiting", icon: Coins, page: "counterfeiting" as GamePage },
-    { title: "Drug Trafficking", icon: Zap, page: "drug_trafficking" as GamePage },
-    { title: "Arson", icon: Zap, page: "arson" as GamePage },
-    { title: "Identity Theft", icon: User, page: "identity_theft" as GamePage },
-    { title: "Arms Dealing", icon: Swords, page: "arms_dealing" as GamePage },
-    { title: "Witness Intimidation", icon: Skull, page: "witness_intimidation" as GamePage },
-    { title: "Tax Evasion", icon: Landmark, page: "tax_evasion" as GamePage },
-    { title: "Racketeering", icon: Banknote, page: "racketeering" as GamePage },
-    { title: "Gambling Dens", icon: Coins, page: "gambling_dens" as GamePage },
-    { title: "Loan Sharking", icon: Coins, page: "loan_sharking" as GamePage },
-    { title: "Cargo Theft", icon: Truck, page: "cargo_theft" as GamePage },
-  ]},
-  { title: "Extra Games", icon: Dices, children: [
-    { title: "Roulette", icon: Coins, page: "roulette" as GamePage },
-    { title: "Slots", icon: Coins, page: "slots" as GamePage },
-    { title: "Russian Roulette", icon: Skull, page: "russian_roulette" as GamePage },
-    { title: "Dog Fighting", icon: SwordsIcon, page: "dog_fighting" as GamePage },
-    { title: "Street Racing", icon: Car, page: "street_racing" as GamePage },
-  ]},
+
+
   { title: "Social", icon: Users, children: [
     { title: "Gifting", icon: Crown, page: "gifting" as GamePage },
   ]},
@@ -1435,7 +1415,7 @@ export default function Dashboard() {
     company: "Company", family: "Family", kill: "Kill", messages: "Messages",
     inbox: "Inbox", notifications_page: "Notifications", city_overview: "City Overview",
     statistics: "Statistics", support: "Support", send_message: "Send Message", faq: "FAQ",
-    crime_car: "Car Theft", crime_burglarize: "Burglarize", crime_rob: "Rob Player",
+  
     gambling_dice: "Dice", gambling_lotto: "Lotto", gambling_blackjack: "Blackjack",
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
@@ -1449,7 +1429,6 @@ export default function Dashboard() {
       case "bank": return <BankPage />;
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
-      case "crime_car": case "crime_burglarize": case "crime_rob": return <CrimePage type={{ crime_car: "car_theft", crime_burglarize: "burglarize", crime_rob: "rob_player" }[activePage]} />;
       case "fight_club": return <FightClubPage />;
       case "garage": return <GaragePage />;
       case "items": return <MyItemsPage />;
@@ -1495,17 +1474,7 @@ export default function Dashboard() {
       case "combat_log": return <CombatLogPage />;
       case "fighting_styles": return <FightingStylesPage />;
       case "armor": return <ArmorPage />;
-      case "counterfeiting": return <CounterfeitingPage />;
-      case "drug_trafficking": return <DrugTraffickingPage />;
-      case "arson": return <ArsonPage />;
-      case "identity_theft": return <IdentityTheftPage />;
-      case "arms_dealing": return <ArmsDealPage />;
-      case "witness_intimidation": return <WitnessPage />;
-      case "tax_evasion": return <TaxEvasionPage />;
-      case "racketeering": return <RacketeeringPage />;
       case "gambling_dens": return <GamblingDenPage />;
-      case "loan_sharking": return <LoanSharkPage />;
-      case "cargo_theft": return <CargoTheftPage />;
       case "roulette": return <RoulettePage />;
       case "slots": return <SlotsPage />;
       case "russian_roulette": return <RussianRoulettePage />;
