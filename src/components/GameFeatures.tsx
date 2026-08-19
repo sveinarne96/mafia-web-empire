@@ -1,9 +1,7 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
-import {
-  Swords, FileText, Shield, Target, Timer, Scroll,
+import { motion } from "framer-motion";import { Swords, FileText, Shield, Target, Timer, Scroll,
   DollarSign, Home, Store, TrendingUp,
   Flame, UserX, Crosshair, EyeOff, Receipt, Banknote,
   Coins, Truck, Trophy, Bomb, Dog, Car,
@@ -11,7 +9,7 @@ import {
   Gift, Vote, Globe, Skull, Lock, ArrowUp,
   Map, Clock, Award, Briefcase, Heart, Zap,
   BarChart3, CircleDot, Landmark, Swords as SwordsIcon,
-  AlertTriangle, ChevronRight, ChevronDown,
+  AlertTriangle, ChevronRight, ChevronDown, ShoppingBag, Gem,
 } from "lucide-react";
 import { crimeCategories, getCrimeTypeColor, getCrimeTypeBg, type CrimeCategory, type Crime } from "@/data/crimes";
 import { useEffect } from "react";
