@@ -45,14 +45,12 @@ const leftMenuSections = [
   { title: "Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
   { title: "Points", icon: Trophy, page: "points" as GamePage },
 
-  { title: "Fight Club", icon: Swords, page: "fight_club" as GamePage },
   { title: "Garage", icon: Wrench, page: "garage" as GamePage },
   { title: "My Items", icon: Package, page: "items" as GamePage },
   { title: "Prison", icon: Lock, page: "prison" as GamePage },
   { title: "Airport", icon: Plane, page: "airport" as GamePage },
   { title: "Organized Crime", icon: Group, page: "organized_crime" as GamePage },
   { title: "Missions", icon: Target, page: "missions" as GamePage },
-  { title: "Daily Raid", icon: Calendar, page: "daily_raid" as GamePage },
   { title: "Company", icon: Shield, page: "company" as GamePage },
   { title: "Family", icon: Users, page: "family" as GamePage },
   { title: "Kill", icon: Skull, page: "kill" as GamePage },
@@ -1429,14 +1427,12 @@ export default function Dashboard() {
       case "bank": return <BankPage />;
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
-      case "fight_club": return <FightClubPage />;
       case "garage": return <GaragePage />;
       case "items": return <MyItemsPage />;
       case "prison": return <PrisonPage />;
       case "airport": return <AirportPage />;
       case "organized_crime": return <OrganizedCrimePage />;
       case "missions": return <MissionsPage />;
-      case "daily_raid": return <DailyRaidPage />;
       case "company": return <CompanyPage />;
       case "family": return <FamilyPage />;
       case "kill": return <KillPage />;
