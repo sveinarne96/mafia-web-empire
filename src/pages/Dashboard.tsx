@@ -18,6 +18,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
 import { UndergroundEconomyPage } from "../components/UndergroundEconomy";
+import { EpicActionResult, CooldownBar, useCooldown, EpicButton } from "@/components/EpicAction";
 import { PointsShopPage, GaragePage, MyItemsPage, MissionsPage, OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage, LegacyPage, ForumSearchPage, SupportPage } from "../components/GamePages";
 import {
   DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
@@ -560,12 +561,14 @@ function FightClubPage() {
   const players = useQuery(api.game.getPlayersInLocation, { location: player?.location ?? "New York" });
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
+  const cooldown = useCooldown(90);
 
   if (!player) return <LoadingPage />;
 
   const fight = async (targetId: string) => {
+    if (cooldown.onCooldown) return;
     setLoading(true); setResult(null);
-    try { const res = await fightPlayer({ defenderId: targetId as never }); setResult(res as unknown as Record<string, unknown>); }
+    try { const res = await fightPlayer({ defenderId: targetId as never }); setResult(res as unknown as Record<string, unknown>); cooldown.startCooldown(); }
     catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); }
     setLoading(false);
   };
@@ -573,7 +576,20 @@ function FightClubPage() {
   const opponents = players?.filter(p => p._id !== player._id) ?? [];
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-5">
+      <AnimatePresence>
+        {result && !result.error && (
+          <EpicActionResult
+            success={!!result.attackerWins}
+            title={result.attackerWins ? "🥊 VICTORY!" : "💀 DEFEATED!"}
+            money={result.moneyStolen as number}
+            message={`You dealt ${(result.attackerDamage as number)} damage — Took ${(result.defenderDamage as number)} damage`}
+            onClose={() => setResult(null)}
+          />
+        )}
+      </AnimatePresence>
+      {result?.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">🚨 {String(result.error as string)}</motion.div>}
+      <CooldownBar cooldown={cooldown} />
       <div className="flex items-center gap-3"><Swords className="size-7 text-primary" /><h2 className="text-2xl font-bold">Fight Club</h2></div>
       <p className="text-muted-foreground text-sm">Challenge players in your city. Winner takes 5% of the loser's cash.</p>
       {opponents.length === 0 ? (
@@ -581,7 +597,7 @@ function FightClubPage() {
       ) : (
         <div className="space-y-2">
           {opponents.map(p => (
-            <div key={p._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
+            <motion.div key={p._id} whileHover={{ scale: 1.01 }} className="mafia-card rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-9 rounded-full bg-destructive/10 flex items-center justify-center"><User className="size-4 text-destructive" /></div>
                 <div>
@@ -589,27 +605,13 @@ function FightClubPage() {
                   <div className="text-[10px] text-muted-foreground">Lv.{p.level ?? 1} • ATK {p.attack ?? 0} • DEF {p.defense ?? 0}</div>
                 </div>
               </div>
-              <button onClick={() => fight(p._id)} disabled={loading || player.inPrison}
-                className="px-4 py-1.5 bg-destructive/10 text-destructive text-xs font-semibold rounded-lg hover:bg-destructive/20 transition-colors disabled:opacity-40">
-                FIGHT
-              </button>
-            </div>
+              <EpicButton onClick={() => fight(p._id)} disabled={loading || player.inPrison || cooldown.onCooldown} loading={loading} cooldown={cooldown} variant="danger">
+                ⚔️ FIGHT
+              </EpicButton>
+            </motion.div>
           ))}
         </div>
       )}
-      {result && !result.error && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className={`mafia-card rounded-xl p-4 text-sm border ${result.attackerWins ? "border-green-800/50" : "border-red-800/50"}`}>
-          <div className={`font-bold text-lg ${result.attackerWins ? "text-green-400" : "text-red-400"}`}>
-            {result.attackerWins ? "VICTORY!" : "DEFEATED!"}
-          </div>
-          <div className="mt-1 text-muted-foreground">
-            You dealt {(result.attackerDamage as number)} damage — Took {(result.defenderDamage as number)} damage
-            {result.moneyStolen ? <>, Stole ${(result.moneyStolen as number).toLocaleString()}</> : null}
-          </div>
-        </motion.div>
-      )}
-      {result?.error ? <div className="mafia-card rounded-lg p-3 text-destructive text-sm">{String(result.error)}</div> : null}
     </div>
   );
 }
@@ -620,12 +622,14 @@ function KillPage() {
   const players = useQuery(api.game.getPlayersInLocation, { location: player?.location ?? "New York" });
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
+  const cooldown = useCooldown(90);
 
   if (!player) return <LoadingPage />;
 
   const kill = async (targetId: string) => {
+    if (cooldown.onCooldown) return;
     setLoading(true); setResult(null);
-    try { const res = await killPlayer({ targetId: targetId as never }); setResult(res as unknown as Record<string, unknown>); }
+    try { const res = await killPlayer({ targetId: targetId as never }); setResult(res as unknown as Record<string, unknown>); cooldown.startCooldown(); }
     catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); }
     setLoading(false);
   };
@@ -633,7 +637,19 @@ function KillPage() {
   const targets = players?.filter(p => p._id !== player._id) ?? [];
 
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-5">
+      <AnimatePresence>
+        {result && !result.error && (
+          <EpicActionResult
+            success={!!result.success}
+            title={result.success ? "💀 TARGET ELIMINATED" : "🚨 ATTEMPT FAILED"}
+            message={result.success ? "Your target has been permanently eliminated." : "Your target survived. You took damage in the process."}
+            onClose={() => setResult(null)}
+          />
+        )}
+      </AnimatePresence>
+      {result?.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">🚨 {String(result.error as string)}</motion.div>}
+      <CooldownBar cooldown={cooldown} />
       <div className="flex items-center gap-3"><Skull className="size-7 text-destructive" /><h2 className="text-2xl font-bold">Kill</h2></div>
       <div className="mafia-card rounded-xl p-4 border-destructive/30 border text-sm text-muted-foreground">
         ⚠️ Kill attempts are high-risk. If you fail, you take heavy damage. Only the strong survive.
@@ -643,7 +659,7 @@ function KillPage() {
       ) : (
         <div className="space-y-2">
           {targets.map(p => (
-            <div key={p._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
+            <motion.div key={p._id} whileHover={{ scale: 1.01 }} className="mafia-card rounded-xl p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="size-9 rounded-full bg-destructive/10 flex items-center justify-center"><Skull className="size-4 text-destructive" /></div>
                 <div>
@@ -651,24 +667,13 @@ function KillPage() {
                   <div className="text-[10px] text-muted-foreground">Lv.{p.level ?? 1} • ATK {p.attack ?? 0} • DEF {p.defense ?? 0}</div>
                 </div>
               </div>
-              <button onClick={() => kill(p._id)} disabled={loading || player.inPrison}
-                className="px-4 py-1.5 bg-destructive text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40">
-                KILL
-              </button>
-            </div>
+              <EpicButton onClick={() => kill(p._id)} disabled={loading || player.inPrison || cooldown.onCooldown} loading={loading} cooldown={cooldown} variant="danger">
+                💀 KILL
+              </EpicButton>
+            </motion.div>
           ))}
         </div>
       )}
-      {result && !result.error && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className={`mafia-card rounded-xl p-4 text-sm border ${result.success ? "border-red-800/50" : "border-orange-800/50"}`}>
-          <div className={`font-bold text-lg ${result.success ? "text-red-400" : "text-orange-400"}`}>
-            {result.success ? "TARGET ELIMINATED" : "ATTEMPT FAILED"}
-          </div>
-          <div className="mt-1 text-muted-foreground">{result.success ? "Your target has been permanently eliminated." : "Your target survived. You took damage in the process."}</div>
-        </motion.div>
-      )}
-      {result?.error ? <div className="mafia-card rounded-lg p-3 text-destructive text-sm">{String(result.error)}</div> : null}
     </div>
   );
 }
@@ -1046,6 +1051,7 @@ function GamblingPage({ type, title, icon }: { type: string; title: string; icon
   const player = useQuery(api.game.getPlayer);
   const [bet, setBet] = useState(100);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
+  const cooldown = useCooldown(90);
 
   const doDice = async (g: "high" | "low" | "seven") => { try { setResult(await diceRoll({ amount: bet, guess: g }) as unknown as Record<string, unknown>); } catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); } };
   const doCoin = async (g: "heads" | "tails") => { try { setResult(await coinToss({ amount: bet, guess: g }) as unknown as Record<string, unknown>); } catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); } };
@@ -1054,6 +1060,19 @@ function GamblingPage({ type, title, icon }: { type: string; title: string; icon
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center gap-3"><span className="text-2xl">{icon}</span><h2 className="text-2xl font-bold">{title}</h2></div>
       {player && <div className="text-sm text-muted-foreground">Balance: <span className="text-primary font-bold">${(player.money ?? 0).toLocaleString()}</span></div>}
+      <AnimatePresence>
+        {result && !result.error && (
+          <EpicActionResult
+            success={!!result.won}
+            title={result.won ? "WIN!" : "LOSS!"}
+            money={result.winnings ? (result.winnings as number) : (result.won ? bet * 2 : -bet)}
+            message={result.message as string}
+            onClose={() => setResult(null)}
+          />
+        )}
+      </AnimatePresence>
+      {result?.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">{String(result.error)}</motion.div>}
+      <CooldownBar cooldown={cooldown} />
       <div className="mafia-card rounded-xl p-6 space-y-4">
         <input type="number" value={bet} onChange={e => setBet(Number(e.target.value))} placeholder="Bet amount"
           className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none" />
@@ -1083,15 +1102,6 @@ function GamblingPage({ type, title, icon }: { type: string; title: string; icon
                 className="py-2.5 bg-secondary text-secondary-foreground text-sm rounded-lg border border-border hover:bg-accent font-bold">{n}</button>
             ))}</div>
           </div>
-        )}
-        {result && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mafia-card rounded-lg p-4 text-sm">
-            {result.error ? <div className="text-destructive">{String(result.error)}</div> : result.die1 ? (
-              <div><div className="text-lg font-bold">🎲 {(result.die1 as number)} + {(result.die2 as number)} = {(result.total as number)}</div>
-                <div className={result.won ? "text-primary font-bold" : "text-destructive"}>{result.won ? `WON $${(result.winnings as number).toLocaleString()}!` : "Lost!"}</div></div>
-            ) : result.result ? (<div><div className="text-lg font-bold capitalize">{result.result as string}</div><div className={result.won ? "text-primary font-bold" : "text-destructive"}>{result.won ? "WON!" : "Lost!"}</div></div>
-            ) : <div>{result.message as string}</div>}
-          </motion.div>
         )}
       </div>
     </div>
