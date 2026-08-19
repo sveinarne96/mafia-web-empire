@@ -1565,3 +1565,115 @@ export const placeBid = mutation({
     return { bid: args.amount };
   },
 });
+
+// ===== GENERIC CATEGORY CRIME COMMIT =====
+// Used by the CrimeCategoryPage - awards money/xp server-side
+export const commitCategoryCrime = mutation({
+  args: {
+    crimeId: v.string(),
+    reward: v.number(),
+    risk: v.number(),
+    xp: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    if (player.inPrison) throw new Error("You are in prison!");
+    if (player.isDead) throw new Error("You are dead!");
+
+    const roll = Math.random() * 100;
+    const succeeded = roll > args.risk;
+    const moneyEarned = succeeded
+      ? args.reward + Math.floor(Math.random() * args.reward * 0.2)
+      : -Math.floor(Math.random() * 500 + 100);
+    const xpEarned = succeeded ? args.xp : Math.floor(args.xp * 0.1);
+    const lifeDamage = succeeded ? 0 : Math.floor(Math.random() * 20 + 5);
+    const newLife = Math.max(0, player.life - lifeDamage);
+
+    const currentXP = player.experience ?? 0;
+    const newXP = currentXP + xpEarned;
+    const xpNeeded = (player.level ?? 1) * 100;
+    const levelUpNow = newXP >= xpNeeded && succeeded;
+    const arrested = !succeeded && Math.random() > 0.6;
+
+    const newMoney = Math.max(0, (player.money ?? 0) + moneyEarned);
+    const newWanted = Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0));
+
+    await ctx.db.patch(player._id, {
+      money: newMoney,
+      life: newLife,
+      totalCrimes: (player.totalCrimes ?? 0) + 1,
+      experience: levelUpNow ? 0 : newXP,
+      levelUpPending: levelUpNow ? true : player.levelUpPending,
+      inPrison: arrested,
+      prisonTime: arrested ? 3600000 : player.prisonTime,
+      wantedLevel: arrested ? 0 : newWanted,
+    });
+
+    await ctx.db.insert("crimes", {
+      userId: player._id,
+      type: args.crimeId,
+      target: "environment",
+      success: succeeded,
+      moneyEarned: succeeded ? moneyEarned : 0,
+      pointsEarned: xpEarned,
+      damageTaken: lifeDamage,
+      timestamp: Date.now(),
+    });
+
+    if (arrested) {
+      await ctx.db.insert("notifications", {
+        userId: player._id,
+        type: "prison",
+        message: "You were arrested during a crime!",
+        read: false,
+        timestamp: Date.now(),
+      });
+    }
+
+    return {
+      success: succeeded,
+      moneyEarned,
+      xpEarned,
+      damageTaken: lifeDamage,
+      arrested,
+      newMoney,
+      newLife,
+      newXP: levelUpNow ? 0 : newXP,
+      levelUp: levelUpNow,
+    };
+  },
+});
+
+// ===== BOSS FIGHT =====
+export const defeatBoss = mutation({
+  args: {
+    bossId: v.string(),
+    reward: v.number(),
+    xp: v.number(),
+    won: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    if (player.isDead) throw new Error("You are dead!");
+
+    if (args.won) {
+      const xpNeeded = (player.level ?? 1) * 100;
+      const newXP = (player.experience ?? 0) + args.xp;
+      const levelUpNow = newXP >= xpNeeded;
+
+      await ctx.db.patch(player._id, {
+        money: (player.money ?? 0) + args.reward,
+        experience: levelUpNow ? 0 : newXP,
+        levelUpPending: levelUpNow ? true : player.levelUpPending,
+        totalCrimes: (player.totalCrimes ?? 0) + 1,
+      });
+      return { moneyEarned: args.reward, xpEarned: args.xp, levelUp: levelUpNow };
+    }
+    const damage = Math.floor(Math.random() * 30 + 10);
+    const newLife = Math.max(0, player.life - damage);
+    await ctx.db.patch(player._id, { life: newLife, isDead: newLife <= 0 });
+    return { moneyEarned: 0, xpEarned: 0, damageTaken: damage };
+  },
+});

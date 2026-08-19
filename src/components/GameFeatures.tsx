@@ -693,6 +693,7 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const cooldown = useCooldown(90);
+  const commitCrime = useMutation(api.game.commitCategoryCrime);
 
   const category = crimeCategories.find(c => c.id === categoryId);
 
@@ -705,11 +706,13 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
     setLoading(true);
     setResult(null);
     try {
-      const successChance = Math.random() * 100;
-      const succeeded = successChance > crime.risk;
-      const money = succeeded ? crime.reward + Math.floor(Math.random() * crime.reward * 0.2) : -Math.floor(Math.random() * 500 + 100);
-      const xp = succeeded ? crime.xp : Math.floor(crime.xp * 0.1);
-      setResult({ success: succeeded, money, xp });
+      const res = await commitCrime({
+        crimeId: crime.id,
+        reward: crime.reward,
+        risk: crime.risk,
+        xp: crime.xp,
+      });
+      setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
       cooldown.startCooldown();
     } catch (e) {
       setResult({ success: false, money: 0, xp: 0 });

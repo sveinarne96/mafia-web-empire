@@ -588,7 +588,7 @@ function FightClubPage() {
           />
         )}
       </AnimatePresence>
-      {result?.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">🚨 {String(result.error as string)}</motion.div>}
+      {result && 'error' in result && !!result.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">🚨 {String((result as Record<string, unknown>).error)}</motion.div>}
       <CooldownBar cooldown={cooldown} />
       <div className="flex items-center gap-3"><Swords className="size-7 text-primary" /><h2 className="text-2xl font-bold">Fight Club</h2></div>
       <p className="text-muted-foreground text-sm">Challenge players in your city. Winner takes 5% of the loser's cash.</p>
@@ -648,7 +648,7 @@ function KillPage() {
           />
         )}
       </AnimatePresence>
-      {result?.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">🚨 {String(result.error as string)}</motion.div>}
+      {result && 'error' in result && !!result.error && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-xl border border-red-800/50 bg-red-950/30 p-4 text-sm text-red-400 font-bold">🚨 {String((result as Record<string, unknown>).error)}</motion.div>}
       <CooldownBar cooldown={cooldown} />
       <div className="flex items-center gap-3"><Skull className="size-7 text-destructive" /><h2 className="text-2xl font-bold">Kill</h2></div>
       <div className="mafia-card rounded-xl p-4 border-destructive/30 border text-sm text-muted-foreground">
