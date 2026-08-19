@@ -164,6 +164,16 @@ export const registerPlayer = mutation({
       protectionRackets: 0,
       lastBlackMarketRefresh: 0,
       totalLaundered: 0,
+      armorDurability: 0,
+      weaponProficiency: 0,
+      killsThisSeason: 0,
+      deathsThisSeason: 0,
+      retaliationUntil: 0,
+      lastDeathAt: 0,
+      isKidnapped: false,
+      betrayalCount: 0,
+      totalGifting: 0,
+      totalMentoring: 0,
     });
   },
 });
