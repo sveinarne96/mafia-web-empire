@@ -612,6 +612,14 @@ export const createFamily = mutation({
       maxMembers: 10,
       createdAt: Date.now(),
       rank: 0,
+      infamy: 0,
+      territories: [],
+      allianceId: undefined,
+      warTargetId: undefined,
+      warStartedAt: undefined,
+      electionActive: false,
+      electionEndAt: 0,
+      electionCandidateIds: [],
     });
 
     await ctx.db.patch(player._id, {

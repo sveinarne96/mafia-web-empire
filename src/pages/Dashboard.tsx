@@ -15,6 +15,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
 import { UndergroundEconomyPage } from "../components/UndergroundEconomy";
 import { PointsShopPage, GaragePage, MyItemsPage, MissionsPage, OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage, LegacyPage, ForumSearchPage, SupportPage } from "../components/GamePages";
+import {
+  DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
+  FightingStylesPage, ArmorPage, CounterfeitingPage, DrugTraffickingPage,
+  ArsonPage, IdentityTheftPage, ArmsDealPage, WitnessPage, TaxEvasionPage,
+  RacketeeringPage, GamblingDenPage, LoanSharkPage, CargoTheftPage,
+  RoulettePage, SlotsPage, RussianRoulettePage, DogFightPage, StreetRacingPage,
+  GiftingPage, HitListPage,
+} from "../components/GameFeatures";
 
 type GamePage =
   | "headquarters" | "bank" | "hospital" | "points" | "crime_car" | "crime_burglarize"
@@ -26,7 +34,12 @@ type GamePage =
   | "forum_sales" | "forum_offtopic" | "forum_shadows" | "forum_search"
   | "city_overview" | "statistics" | "support" | "send_message" | "faq"
   | "bounty_board" | "duels" | "spar" | "tournament"
-  | "stock_market" | "real_estate" | "businesses" | "auction_house" | "insurance" | "loans" | "achievements" | "titles" | "legacy" | "underground";
+  | "stock_market" | "real_estate" | "businesses" | "auction_house" | "insurance" | "loans" | "achievements" | "titles" | "legacy" | "underground"
+  | "death_match" | "season_rankings" | "combat_log" | "fighting_styles" | "armor"
+  | "counterfeiting" | "drug_trafficking" | "arson" | "identity_theft" | "arms_dealing"
+  | "witness_intimidation" | "tax_evasion" | "racketeering" | "gambling_dens" | "loan_sharking"
+  | "cargo_theft" | "roulette" | "slots" | "russian_roulette" | "dog_fighting" | "street_racing"
+  | "gifting" | "hit_list";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
 

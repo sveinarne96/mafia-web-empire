@@ -15,18 +15,9 @@ export const roleValidator = v.union(
 );
 export type Role = Infer<typeof roleValidator>;
 
-// Location types
-export const locations = [
-  "New York",
-  "Chicago",
-  "Las Vegas",
-  "Miami",
-  "Los Angeles",
-  "Detroit",
-  "Philadelphia",
-  "Boston",
-  "Atlanta",
-  "Dallas",
+const locations = [
+  "New York", "Chicago", "Las Vegas", "Miami", "Los Angeles",
+  "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas",
 ] as const;
 
 const schema = defineSchema(
@@ -67,7 +58,7 @@ const schema = defineSchema(
       lastDailyRaid: v.number(),
       registeredAt: v.number(),
 
-      // Core Gameplay features
+      // Core Gameplay
       lastRegenAt: v.number(),
       wantedLevel: v.number(),
       reputation: v.number(),
@@ -78,7 +69,7 @@ const schema = defineSchema(
       skillPoints: v.number(),
       playerClass: v.optional(v.string()),
 
-      // Prison features
+      // Prison
       prisonJob: v.optional(v.string()),
       prisonGang: v.optional(v.string()),
       cellLevel: v.number(),
@@ -99,7 +90,7 @@ const schema = defineSchema(
       insuranceActive: v.boolean(),
       loanAmount: v.number(),
 
-      // Underground economy
+      // Underground
       dirtyMoney: v.number(),
       counterfeitSkill: v.number(),
       smugglingRuns: v.number(),
@@ -120,6 +111,27 @@ const schema = defineSchema(
       lastBlackMarketRefresh: v.number(),
       totalLaundered: v.number(),
       loanDueAt: v.number(),
+
+      // NEW: Combat & PvP
+      fightingStyle: v.optional(v.string()),
+      armorEquipped: v.optional(v.string()),
+      armorDurability: v.number(),
+      weaponProficiency: v.number(),
+      killsThisSeason: v.number(),
+      deathsThisSeason: v.number(),
+      retaliationUntil: v.number(),
+      lastDeathAt: v.number(),
+      isKidnapped: v.boolean(),
+      bodyguardId: v.optional(v.id("users")),
+      mentorId: v.optional(v.id("users")),
+      crewId: v.optional(v.string()),
+      familyRank: v.optional(v.string()),
+
+      // NEW: Family social
+      familyRole: v.optional(v.string()),
+      betrayalCount: v.number(),
+      totalGifting: v.number(),
+      totalMentoring: v.number(),
     })
       .index("by_email", ["email"])
       .index("by_nickname", ["nickname"])
@@ -149,7 +161,6 @@ const schema = defineSchema(
       .index("by_status", ["status"])
       .index("by_defender", ["defenderId"]),
 
-    // Tournament system
     tournaments: defineTable({
       name: v.string(),
       status: v.string(),
@@ -160,10 +171,8 @@ const schema = defineSchema(
       winnerId: v.optional(v.id("users")),
       startTime: v.number(),
       endTime: v.number(),
-    })
-      .index("by_status", ["status"]),
+    }).index("by_status", ["status"]),
 
-    // Achievement system
     achievements: defineTable({
       name: v.string(),
       description: v.string(),
@@ -177,37 +186,30 @@ const schema = defineSchema(
       playerId: v.id("users"),
       achievementId: v.id("achievements"),
       unlockedAt: v.number(),
-    })
-      .index("by_player", ["playerId"]),
+    }).index("by_player", ["playerId"]),
 
-    // Title system
     playerTitles: defineTable({
       playerId: v.id("users"),
       title: v.string(),
       active: v.boolean(),
       unlockedAt: v.number(),
-    })
-      .index("by_player", ["playerId"]),
+    }).index("by_player", ["playerId"]),
 
-    // Stock market
     stocks: defineTable({
       name: v.string(),
       symbol: v.string(),
       price: v.number(),
       change: v.number(),
       history: v.array(v.number()),
-    })
-      .index("by_symbol", ["symbol"]),
+    }).index("by_symbol", ["symbol"]),
 
     playerStocks: defineTable({
       playerId: v.id("users"),
       stockId: v.id("stocks"),
       shares: v.number(),
       buyPrice: v.number(),
-    })
-      .index("by_player", ["playerId"]),
+    }).index("by_player", ["playerId"]),
 
-    // Real estate
     properties: defineTable({
       name: v.string(),
       type: v.string(),
@@ -219,7 +221,6 @@ const schema = defineSchema(
       .index("by_city", ["city"])
       .index("by_owner", ["ownerId"]),
 
-    // Businesses
     businesses: defineTable({
       name: v.string(),
       type: v.string(),
@@ -228,10 +229,8 @@ const schema = defineSchema(
       income: v.number(),
       level: v.number(),
       ownerId: v.id("users"),
-    })
-      .index("by_owner", ["ownerId"]),
+    }).index("by_owner", ["ownerId"]),
 
-    // Auction house
     auctions: defineTable({
       sellerId: v.id("users"),
       itemName: v.string(),
@@ -241,27 +240,22 @@ const schema = defineSchema(
       currentBidder: v.optional(v.id("users")),
       endTime: v.number(),
       active: v.boolean(),
-    })
-      .index("by_active", ["active"]),
+    }).index("by_active", ["active"]),
 
-    // Insurance
     playerInsurance: defineTable({
       playerId: v.id("users"),
       type: v.string(),
       expiresAt: v.number(),
       premium: v.number(),
-    })
-      .index("by_player", ["playerId"]),
+    }).index("by_player", ["playerId"]),
 
-    // Loans
     loans: defineTable({
       borrowerId: v.id("users"),
       amount: v.number(),
       interest: v.number(),
       dueAt: v.number(),
       paid: v.boolean(),
-    })
-      .index("by_borrower", ["borrowerId"]),
+    }).index("by_borrower", ["borrowerId"]),
 
     families: defineTable({
       name: v.string(),
@@ -275,6 +269,15 @@ const schema = defineSchema(
       maxMembers: v.number(),
       createdAt: v.number(),
       rank: v.number(),
+      // NEW family fields
+      infamy: v.number(),
+      territories: v.array(v.string()),
+      allianceId: v.optional(v.string()),
+      warTargetId: v.optional(v.id("families")),
+      warStartedAt: v.optional(v.number()),
+      electionActive: v.boolean(),
+      electionEndAt: v.number(),
+      electionCandidateIds: v.array(v.id("users")),
     })
       .index("by_leader", ["leaderId"])
       .index("by_level", ["level"])
@@ -311,8 +314,7 @@ const schema = defineSchema(
       armored: v.boolean(),
       stolen: v.boolean(),
       purchasePrice: v.number(),
-    })
-      .index("by_user", ["userId"]),
+    }).index("by_user", ["userId"]),
 
     crimes: defineTable({
       userId: v.id("users"),
@@ -417,8 +419,7 @@ const schema = defineSchema(
       participantsRequired: v.number(),
       levelRequired: v.number(),
       successRate: v.number(),
-    })
-      .index("by_family", ["familyId"]),
+    }).index("by_family", ["familyId"]),
 
     lotteries: defineTable({
       type: v.string(),
@@ -454,7 +455,6 @@ const schema = defineSchema(
       .index("by_seller", ["sellerId"])
       .index("by_active", ["active"]),
 
-    // Smuggling runs
     smugglingRuns: defineTable({
       runnerId: v.id("users"),
       originCity: v.string(),
@@ -471,7 +471,6 @@ const schema = defineSchema(
       .index("by_runner", ["runnerId"])
       .index("by_timestamp", ["timestamp"]),
 
-    // Kidnappings
     kidnappings: defineTable({
       kidnapperId: v.id("users"),
       victimId: v.id("users"),
@@ -483,7 +482,6 @@ const schema = defineSchema(
       .index("by_victim", ["victimId"])
       .index("by_kidnapper", ["kidnapperId"]),
 
-    // Illegal businesses (gambling dens, prostitution, arms dealing)
     illegalBusinesses: defineTable({
       ownerId: v.id("users"),
       type: v.string(),
@@ -498,7 +496,6 @@ const schema = defineSchema(
       .index("by_owner", ["ownerId"])
       .index("by_city", ["city"]),
 
-    // Black market items
     blackMarketItems: defineTable({
       name: v.string(),
       type: v.string(),
@@ -510,6 +507,187 @@ const schema = defineSchema(
     })
       .index("by_type", ["type"])
       .index("by_available", ["available"]),
+
+    // ============ NEW TABLES FOR 75+ FEATURES ============
+
+    // #32 Territory Control
+    territories: defineTable({
+      name: v.string(),
+      city: v.string(),
+      ownerId: v.optional(v.id("families")),
+      income: v.number(),
+      defenseLevel: v.number(),
+      contestedBy: v.optional(v.id("families")),
+      lastAttackedAt: v.number(),
+    })
+      .index("by_city", ["city"])
+      .index("by_owner", ["ownerId"]),
+
+    // #33 Assassination Contracts
+    contracts: defineTable({
+      posterId: v.id("users"),
+      targetId: v.id("users"),
+      reward: v.number(),
+      status: v.string(), // open, accepted, completed, failed
+      acceptedBy: v.optional(v.id("users")),
+      expiresAt: v.number(),
+      createdAt: v.number(),
+    })
+      .index("by_status", ["status"])
+      .index("by_target", ["targetId"]),
+
+    // #34 Bodyguards
+    bodyguards: defineTable({
+      employerId: v.id("users"),
+      guardId: v.id("users"),
+      payPerDay: v.number(),
+      active: v.boolean(),
+      hiredAt: v.number(),
+    })
+      .index("by_employer", ["employerId"])
+      .index("by_guard", ["guardId"]),
+
+    // #35 Ambushes
+    ambushes: defineTable({
+      ambusherId: v.id("users"),
+      location: v.string(),
+      reward: v.number(),
+      active: v.boolean(),
+      createdAt: v.number(),
+    }).index("by_location", ["location"]),
+
+    // #37 Combat Log
+    combatLogs: defineTable({
+      attackerId: v.id("users"),
+      defenderId: v.id("users"),
+      type: v.string(), // fight, kill, ambush, duel, spar, contract
+      attackerDamage: v.number(),
+      defenderDamage: v.number(),
+      winnerId: v.optional(v.id("users")),
+      moneyStolen: v.number(),
+      location: v.string(),
+      timestamp: v.number(),
+    })
+      .index("by_attacker", ["attackerId"])
+      .index("by_defender", ["defenderId"])
+      .index("by_timestamp", ["timestamp"]),
+
+    // #84 Family Wars
+    familyWars: defineTable({
+      attackerFamilyId: v.id("families"),
+      defenderFamilyId: v.id("families"),
+      status: v.string(), // active, ceasefire, ended
+      startedAt: v.number(),
+      endedAt: v.optional(v.number()),
+      attackerKills: v.number(),
+      defenderKills: v.number(),
+      winnerId: v.optional(v.id("families")),
+    })
+      .index("by_status", ["status"]),
+
+    // #85 Family Alliances
+    familyAlliances: defineTable({
+      family1Id: v.id("families"),
+      family2Id: v.id("families"),
+      status: v.string(), // pending, active, dissolved
+      createdAt: v.number(),
+    })
+      .index("by_family1", ["family1Id"])
+      .index("by_family2", ["family2Id"]),
+
+    // #92 Rivalries
+    rivalries: defineTable({
+      player1Id: v.id("users"),
+      player2Id: v.id("users"),
+      p1Kills: v.number(),
+      p2Kills: v.number(),
+      startedAt: v.number(),
+      active: v.boolean(),
+    })
+      .index("by_player1", ["player1Id"])
+      .index("by_player2", ["player2Id"]),
+
+    // #93 Gifting
+    gifts: defineTable({
+      senderId: v.id("users"),
+      receiverId: v.id("users"),
+      type: v.string(), // money, item
+      amount: v.number(),
+      itemId: v.optional(v.id("items")),
+      message: v.string(),
+      timestamp: v.number(),
+      claimed: v.boolean(),
+    }).index("by_receiver", ["receiverId"]),
+
+    // #96 Hit Lists
+    hitLists: defineTable({
+      posterId: v.id("users"),
+      targetId: v.id("users"),
+      reward: v.number(),
+      status: v.string(), // active, claimed, completed
+      claimedBy: v.optional(v.id("users")),
+      createdAt: v.number(),
+    }).index("by_status", ["status"]),
+
+    // #66 Poker
+    pokerGames: defineTable({
+      creatorId: v.id("users"),
+      players: v.array(v.id("users")),
+      pot: v.number(),
+      blind: v.number(),
+      status: v.string(), // waiting, playing, finished
+      currentRound: v.number(),
+      communityCards: v.array(v.string()),
+      createdAt: v.number(),
+    }).index("by_status", ["status"]),
+
+    // #78 Dog Fighting
+    dogFights: defineTable({
+      player1Id: v.id("users"),
+      player2Id: v.id("users"),
+      bet: v.number(),
+      winnerId: v.optional(v.id("users")),
+      dog1Name: v.string(),
+      dog2Name: v.string(),
+      dog1Stats: v.number(),
+      dog2Stats: v.number(),
+      status: v.string(),
+      timestamp: v.number(),
+    }).index("by_status", ["status"]),
+
+    // #79 Street Racing
+    streetRaces: defineTable({
+      creatorId: v.id("users"),
+      participants: v.array(v.id("users")),
+      entryFee: v.number(),
+      prizePool: v.number(),
+      status: v.string(),
+      winnerId: v.optional(v.id("users")),
+      track: v.string(),
+      createdAt: v.number(),
+    }).index("by_status", ["status"]),
+
+    // #98 Leadership Elections
+    familyElections: defineTable({
+      familyId: v.id("families"),
+      candidates: v.array(v.id("users")),
+      votes: v.array(v.object({ voterId: v.id("users"), candidateId: v.id("users") })),
+      status: v.string(),
+      startedAt: v.number(),
+      endsAt: v.number(),
+    }).index("by_family", ["familyId"]),
+
+    // #100 Ambassador system
+    ambassadors: defineTable({
+      familyId: v.id("families"),
+      ambassadorId: v.id("users"),
+      targetFamilyId: v.id("families"),
+      message: v.string(),
+      status: v.string(), // pending, accepted, rejected
+      createdAt: v.number(),
+    })
+      .index("by_family", ["familyId"])
+      .index("by_target", ["targetFamilyId"]),
   },
   {
     schemaValidation: false,
