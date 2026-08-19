@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   Swords, FileText, Shield, Target, Timer, Scroll,
@@ -11,7 +11,9 @@ import {
   Gift, Vote, Globe, Skull, Lock, ArrowUp,
   Map, Clock, Award, Briefcase, Heart, Zap,
   BarChart3, CircleDot, Landmark, Swords as SwordsIcon,
+  AlertTriangle, ChevronRight, ChevronDown,
 } from "lucide-react";
+import { crimeCategories, getCrimeTypeColor, getCrimeTypeBg, type CrimeCategory, type Crime } from "@/data/crimes";
 
 // ===== #20 PRISON TIME DISPLAY =====
 export function PrisonTimeDisplay() {
@@ -680,6 +682,176 @@ export function HitListPage() {
         <h3 className="font-bold text-sm">Active Bounties</h3>
         {hits.map((h: any) => <div key={h._id} className="mafia-card rounded-lg p-3 flex justify-between"><span className="text-sm">Target hit</span><span className="text-green-400 font-bold">${h.reward.toLocaleString()}</span></div>)}
       </div>}
+    </div>
+  );
+}
+
+// ===== CRIME CATEGORY PAGE =====
+export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
+  const player = useQuery(api.game.getPlayer);
+  const [selectedCrime, setSelectedCrime] = useState<Crime | null>(null);
+  const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const category = crimeCategories.find(c => c.id === categoryId);
+
+  if (!category) return <div className="text-center py-12 text-muted-foreground">Category not found.</div>;
+
+  const executeCrime = async (crime: Crime) => {
+    if ((player?.level ?? 0) < crime.levelRequired) return;
+    if ((player?.money ?? 0) < 100) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const successChance = Math.random() * 100;
+      const succeeded = successChance > crime.risk;
+      const money = succeeded ? crime.reward + Math.floor(Math.random() * crime.reward * 0.2) : -Math.floor(Math.random() * 500 + 100);
+      const xp = succeeded ? crime.xp : Math.floor(crime.xp * 0.1);
+      setResult({ success: succeeded, money, xp });
+    } catch (e) {
+      setResult({ success: false, money: 0, xp: 0 });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">{category.icon}</span>
+        <div>
+          <h2 className="text-2xl font-bold">{category.name}</h2>
+          <p className="text-sm text-muted-foreground">{category.description}</p>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {category.crimes.map((crime) => {
+          const canAfford = (player?.money ?? 0) >= 100;
+          const hasLevel = (player?.level ?? 0) >= crime.levelRequired;
+          const isLocked = !hasLevel;
+
+          return (
+            <motion.div
+              key={crime.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mafia-card rounded-lg p-4 transition-all ${isLocked ? "opacity-50" : "hover:border-primary/30 cursor-pointer"}`}
+              onClick={() => !isLocked && !loading && executeCrime(crime)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm">{crime.name}</span>
+                    {isLocked && <span className="text-[10px] bg-red-950/50 text-red-400 px-2 py-0.5 rounded-full">Lv.{crime.levelRequired}</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{crime.description}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className={`text-[10px] font-semibold ${getCrimeTypeColor(crime.risk)}`}>
+                      Risk: {crime.risk}%
+                    </span>
+                    <span className="text-[10px] text-green-400">Reward: ${crime.reward.toLocaleString()}</span>
+                    <span className="text-[10px] text-blue-400">+{crime.xp} XP</span>
+                  </div>
+                </div>
+                {!isLocked && (
+                  <div className="ml-4">
+                    {loading ? (
+                      <div className="size-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <ChevronRight className="size-5 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`p-4 rounded-xl border ${result.success ? "bg-green-950/30 border-green-800/50" : "bg-red-950/30 border-red-800/50"}`}
+        >
+          <div className={`font-bold text-lg ${result.success ? "text-green-400" : "text-red-400"}`}>
+            {result.success ? "SUCCESS!" : "FAILED!"}
+          </div>
+          <div className="mt-2 space-y-1">
+            {result.money !== 0 && (
+              <div className={`text-sm ${result.money > 0 ? "text-green-400" : "text-red-400"}`}>
+                {result.money > 0 ? "💰 +" : "💸 "}${Math.abs(result.money).toLocaleString()}
+              </div>
+            )}
+            {result.xp > 0 && <div className="text-sm text-blue-400">⭐ +{result.xp} XP</div>}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+// ===== CRIME OVERVIEW PAGE =====
+export function CrimesOverviewPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  if (selectedCategory) {
+    return (
+      <div>
+        <button
+          onClick={() => setSelectedCategory(null)}
+          className="mb-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          ← Back to Crimes
+        </button>
+        <CrimeCategoryPage categoryId={selectedCategory} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <AlertTriangle className="size-7 text-red-400" />
+        <div>
+          <h2 className="text-2xl font-bold">Crimes</h2>
+          <p className="text-sm text-muted-foreground">Choose a category to commit crimes. Higher risk = higher reward.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {crimeCategories.map((category) => {
+          const avgRisk = Math.round(category.crimes.reduce((sum, c) => sum + c.risk, 0) / category.crimes.length);
+          const maxReward = Math.max(...category.crimes.map(c => c.reward));
+
+          return (
+            <motion.button
+              key={category.id}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`text-left p-5 rounded-xl border-2 transition-all ${getCrimeTypeBg(avgRisk)} hover:shadow-lg hover:shadow-primary/5`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{category.icon}</span>
+                  <div>
+                    <div className="font-bold text-sm">{category.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{category.crimes.length} crimes</div>
+                  </div>
+                </div>
+                <ChevronRight className="size-5 text-muted-foreground" />
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">{category.description}</p>
+              <div className="flex gap-4 text-[10px]">
+                <span className={getCrimeTypeColor(avgRisk)}>Avg Risk: {avgRisk}%</span>
+                <span className="text-green-400">Max Reward: ${maxReward.toLocaleString()}</span>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
     </div>
   );
 }

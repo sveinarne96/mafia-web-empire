@@ -1,3 +1,4 @@
+import { CrimesOverviewPage } from "../components/GameFeatures";
 import { useState, useCallback } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -35,11 +36,12 @@ type GamePage =
   | "stock_market" | "real_estate" | "businesses" | "auction_house" | "insurance" | "loans" | "achievements" | "titles" | "legacy" | "underground"
   | "death_match" | "season_rankings" | "combat_log" | "fighting_styles" | "armor"
   | "roulette" | "slots" | "russian_roulette" | "dog_fighting" | "street_racing" | "gambling_dens"
-  | "gifting" | "hit_list";
+  | "gifting" | "hit_list" | "crimes";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
 
 const leftMenuSections = [
+  { title: "Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
   { title: "Headquarters", icon: Building2, page: "headquarters" as GamePage },
   { title: "Bank", icon: Landmark, page: "bank" as GamePage },
   { title: "Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
@@ -1407,7 +1409,7 @@ export default function Dashboard() {
   if (player.isDead) return <DeathScreen />;
 
   const pageNames: Record<string, string> = {
-    headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar", tournament: "Tournament",
+    crimes: "Crimes", headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar", tournament: "Tournament",
     garage: "Garage", items: "My Items", prison: "Prison", airport: "Airport",
     organized_crime: "Organized Crime", missions: "Missions", daily_raid: "Daily Raid",
     company: "Company", family: "Family", kill: "Kill", messages: "Messages",
@@ -1423,6 +1425,7 @@ export default function Dashboard() {
 
   const renderPage = () => {
     switch (activePage) {
+      case "crimes": return <CrimesOverviewPage />;
       case "headquarters": return <HeadquartersPage />;
       case "bank": return <BankPage />;
       case "hospital": return <HospitalPage />;
