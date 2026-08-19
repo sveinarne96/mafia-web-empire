@@ -14,6 +14,7 @@ import {
   AlertTriangle, ChevronRight, ChevronDown,
 } from "lucide-react";
 import { crimeCategories, getCrimeTypeColor, getCrimeTypeBg, type CrimeCategory, type Crime } from "@/data/crimes";
+import { useEffect } from "react";
 
 // ===== #20 PRISON TIME DISPLAY =====
 export function PrisonTimeDisplay() {
@@ -849,6 +850,423 @@ export function CrimesOverviewPage() {
                 <span className="text-green-400">Max Reward: ${maxReward.toLocaleString()}</span>
               </div>
             </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ===== LEGENDARY BOSS FIGHTS =====
+import { legendaryBosses, getBossById } from "@/data/bosses";
+
+export function BossFightsPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [selectedBoss, setSelectedBoss] = useState<string | null>(null);
+  const [battleLog, setBattleLog] = useState<string[]>([]);
+  const [playerHp, setPlayerHp] = useState(0);
+  const [bossHp, setBossHp] = useState(0);
+  const [inCombat, setInCombat] = useState(false);
+  const [combatResult, setCombatResult] = useState<"win" | "lose" | null>(null);
+
+  const boss = selectedBoss ? getBossById(selectedBoss) : null;
+
+  useEffect(() => {
+    if (player) {
+      setPlayerHp(player.life ?? 100);
+    }
+  }, [player]);
+
+  const startBattle = (bossId: string) => {
+    const b = getBossById(bossId);
+    if (!b || !player) return;
+    setSelectedBoss(bossId);
+    setPlayerHp(player.life ?? 100);
+    setBossHp(b.health);
+    setBattleLog(["Battle started!"]);
+    setInCombat(true);
+    setCombatResult(null);
+  };
+
+  const attack = () => {
+    if (!boss || !inCombat || combatResult) return;
+
+    const playerDmg = Math.max(1, (player?.attack ?? 10) - Math.floor(boss.defense * 0.3) + Math.floor(Math.random() * 20));
+    const bossDmg = Math.max(1, boss.attack - Math.floor((player?.defense ?? 10) * 0.3) + Math.floor(Math.random() * 15));
+
+    const newBossHp = Math.max(0, bossHp - playerDmg);
+    const newPlayerHp = Math.max(0, playerHp - bossDmg);
+
+    setBossHp(newBossHp);
+    setPlayerHp(newPlayerHp);
+
+    setBattleLog(prev => [
+      ...prev,
+      `You dealt ${playerDmg} damage!`,
+      `${boss.name} dealt ${bossDmg} damage!`,
+    ]);
+
+    if (newBossHp <= 0) {
+      setCombatResult("win");
+      setBattleLog(prev => [...prev, "🎉 VICTORY! You defeated the boss!"]);
+    } else if (newPlayerHp <= 0) {
+      setCombatResult("lose");
+      setBattleLog(prev => [...prev, "💀 DEFEAT! You were eliminated."]);
+    }
+  };
+
+  if (selectedBoss && boss) {
+    return (
+      <div className="animate-fade-in space-y-6">
+        <button onClick={() => { setSelectedBoss(null); setInCombat(false); }}
+          className="text-sm text-muted-foreground hover:text-foreground">← Back to Bosses</button>
+
+        <div className="mafia-card rounded-xl p-6 space-y-4">
+          <div className="text-center">
+            <div className="text-5xl mb-2">{boss.icon}</div>
+            <h2 className="text-2xl font-bold">{boss.name}</h2>
+            <p className="text-sm text-muted-foreground">{boss.title}</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-1">Your HP</div>
+              <div className="h-3 rounded-full bg-background/60 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all"
+                  style={{ width: `${(playerHp / (player?.maxLife ?? 100)) * 100}%` }} />
+              </div>
+              <div className="text-sm font-bold mt-1">{playerHp}/{player?.maxLife ?? 100}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground mb-1">{boss.name} HP</div>
+              <div className="h-3 rounded-full bg-background/60 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400 transition-all"
+                  style={{ width: `${(bossHp / boss.health) * 100}%` }} />
+              </div>
+              <div className="text-sm font-bold mt-1">{bossHp}/{boss.health}</div>
+            </div>
+          </div>
+
+          {!combatResult && inCombat && (
+            <button onClick={attack}
+              className="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-lg rounded-lg hover:from-red-500 hover:to-red-400 transition-all shadow-lg shadow-red-900/20">
+              ⚔️ ATTACK
+            </button>
+          )}
+
+          {combatResult && (
+            <div className={`p-4 rounded-xl text-center ${combatResult === "win" ? "bg-green-950/50 border border-green-800/50" : "bg-red-950/50 border border-red-800/50"}`}>
+              <div className={`text-2xl font-bold ${combatResult === "win" ? "text-green-400" : "text-red-400"}`}>
+                {combatResult === "win" ? "🎉 VICTORY!" : "💀 DEFEAT"}
+              </div>
+              {combatResult === "win" && (
+                <div className="mt-2 space-y-1">
+                  <div className="text-green-400">💰 +${boss.reward.toLocaleString()}</div>
+                  <div className="text-blue-400">⭐ +{boss.xpReward} XP</div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="mafia-card rounded-xl p-4">
+          <h3 className="text-sm font-semibold mb-2">Battle Log</h3>
+          <div className="space-y-1 max-h-48 overflow-y-auto">
+            {battleLog.map((log, i) => (
+              <div key={i} className="text-xs text-muted-foreground">{log}</div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">⚔️</span>
+        <div>
+          <h2 className="text-2xl font-bold">Legendary Boss Fights</h2>
+          <p className="text-sm text-muted-foreground">Challenge the most powerful crime bosses in the underworld.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {legendaryBosses.map(boss => {
+          const canFight = (player?.level ?? 0) >= boss.levelRequired;
+          return (
+            <motion.div
+              key={boss.id}
+              whileHover={canFight ? { scale: 1.02 } : {}}
+              className={`mafia-card rounded-xl p-5 transition-all ${canFight ? "hover:border-red-500/30 cursor-pointer" : "opacity-50"}`}
+              onClick={() => canFight && startBattle(boss.id)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">{boss.icon}</div>
+                <div className="flex-1">
+                  <div className="font-bold">{boss.name}</div>
+                  <div className="text-xs text-muted-foreground">{boss.title}</div>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-[10px] text-red-400">ATK {boss.attack}</span>
+                    <span className="text-[10px] text-blue-400">DEF {boss.defense}</span>
+                    <span className="text-[10px] text-green-400">HP {boss.health}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-green-400">${boss.reward.toLocaleString()}</div>
+                  {!canFight && <div className="text-[10px] text-red-400">Lv.{boss.levelRequired}</div>}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ===== CRIME EMPIRE MAP =====
+export function CrimeEmpirePage() {
+  const player = useQuery(api.game.getPlayer);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+
+  const cities = [
+    { name: "New York", icon: "🗽", territories: 5, control: 60 },
+    { name: "Chicago", icon: "🏙️", territories: 4, control: 45 },
+    { name: "Las Vegas", icon: "🎰", territories: 6, control: 80 },
+    { name: "Miami", icon: "🌴", territories: 3, control: 30 },
+    { name: "Los Angeles", icon: "🎬", territories: 5, control: 55 },
+    { name: "Detroit", icon: "🏭", territories: 4, control: 40 },
+    { name: "Philadelphia", icon: "🔔", territories: 3, control: 25 },
+    { name: "Boston", icon: "📚", territories: 3, control: 35 },
+    { name: "Atlanta", icon: "🍑", territories: 4, control: 50 },
+    { name: "Dallas", icon: "🌵", territories: 3, control: 20 },
+  ];
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">🗺️</span>
+        <div>
+          <h2 className="text-2xl font-bold">Crime Empire</h2>
+          <p className="text-sm text-muted-foreground">Expand your influence across the city. Control territories for passive income.</p>
+        </div>
+      </div>
+
+      <div className="mafia-card rounded-xl p-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+          <div><div className="text-2xl font-bold text-primary">{cities.length}</div><div className="text-xs text-muted-foreground">Cities</div></div>
+          <div><div className="text-2xl font-bold text-green-400">6</div><div className="text-xs text-muted-foreground">Controlled</div></div>
+          <div><div className="text-2xl font-bold text-yellow-400">42%</div><div className="text-xs text-muted-foreground">Total Control</div></div>
+          <div><div className="text-2xl font-bold text-blue-400">$12,500</div><div className="text-xs text-muted-foreground">Daily Income</div></div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {cities.map(city => (
+          <motion.div
+            key={city.name}
+            whileHover={{ scale: 1.05 }}
+            className="mafia-card rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-all"
+            onClick={() => setSelectedCity(city.name)}
+          >
+            <div className="text-3xl mb-2">{city.icon}</div>
+            <div className="font-bold text-sm">{city.name}</div>
+            <div className="mt-2">
+              <div className="h-2 rounded-full bg-background/60 overflow-hidden">
+                <div className="h-full rounded-full bg-gradient-to-r from-primary to-primary/50 transition-all"
+                  style={{ width: `${city.control}%` }} />
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">{city.control}% control</div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== HEIST PLANNING =====
+export function HeistPlanningPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [selectedHeist, setSelectedHeist] = useState<string | null>(null);
+
+  const heists = [
+    { id: "bank_vault", name: "National Bank Vault", icon: "🏦", difficulty: "Hard", reward: 50000, time: "3 hours", members: 4, level: 20 },
+    { id: "casino_royal", name: "Casino Royale", icon: "🎰", difficulty: "Extreme", reward: 100000, time: "5 hours", members: 6, level: 25 },
+    { id: "diamond_mine", name: "Diamond Mine", icon: "💎", difficulty: "Medium", reward: 30000, time: "2 hours", members: 3, level: 15 },
+    { id: "art_museum", name: "National Art Museum", icon: "🖼️", difficulty: "Hard", reward: 40000, time: "4 hours", members: 5, level: 18 },
+    { id: "government", name: "Government Building", icon: "🏛️", difficulty: "Legendary", reward: 200000, time: "8 hours", members: 8, level: 30 },
+  ];
+
+  const getDifficultyColor = (d: string) => {
+    switch (d) {
+      case "Easy": return "text-green-400";
+      case "Medium": return "text-yellow-400";
+      case "Hard": return "text-orange-400";
+      case "Extreme": return "text-red-400";
+      case "Legendary": return "text-purple-400";
+      default: return "text-gray-400";
+    }
+  };
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">📋</span>
+        <div>
+          <h2 className="text-2xl font-bold">Heist Planning</h2>
+          <p className="text-sm text-muted-foreground">Plan and execute high-stakes heists with your crew.</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {heists.map(h => {
+          const canHeist = (player?.level ?? 0) >= h.level;
+          return (
+            <motion.div
+              key={h.id}
+              whileHover={canHeist ? { scale: 1.01 } : {}}
+              className={`mafia-card rounded-xl p-5 transition-all ${canHeist ? "hover:border-primary/30 cursor-pointer" : "opacity-50"}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="text-4xl">{h.icon}</div>
+                  <div>
+                    <div className="font-bold">{h.name}</div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className={`text-xs font-semibold ${getDifficultyColor(h.difficulty)}`}>{h.difficulty}</span>
+                      <span className="text-xs text-muted-foreground">⏱️ {h.time}</span>
+                      <span className="text-xs text-muted-foreground">👥 {h.members} members</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-bold text-green-400">${h.reward.toLocaleString()}</div>
+                  {!canHeist && <div className="text-[10px] text-red-400">Lv.{h.level} required</div>}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ===== DYNAMIC WORLD EVENTS =====
+import { worldEvents, getEventTypeColor, getEventTypeBg } from "@/data/events";
+
+export function WorldEventsPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [activeEvents] = useState(worldEvents.slice(0, 5)); // Simulate active events
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">⚡</span>
+        <div>
+          <h2 className="text-2xl font-bold">World Events</h2>
+          <p className="text-sm text-muted-foreground">Real-time events that affect all players. Act fast!</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {activeEvents.map(event => (
+          <motion.div
+            key={event.id}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className={`rounded-xl p-5 border ${getEventTypeBg(event.type)}`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">{event.icon}</div>
+                <div>
+                  <div className="font-bold">{event.name}</div>
+                  <p className="text-xs text-muted-foreground mt-1">{event.description}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className={`text-[10px] font-semibold ${getEventTypeColor(event.type)}`}>
+                      {event.type.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">⏱️ {event.duration}h remaining</span>
+                    {event.multiplier > 1 && (
+                      <span className="text-[10px] text-yellow-400">🔥 {event.multiplier}x rewards</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                {event.rewards.money > 0 && <div className="text-sm text-green-400">+${event.rewards.money.toLocaleString()}</div>}
+                {event.rewards.xp > 0 && <div className="text-xs text-blue-400">+{event.rewards.xp} XP</div>}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ===== CRIMINAL PETS =====
+import { criminalPets, getPetRarityColor, getPetRarityBg } from "@/data/pets";
+
+export function CriminalPetsPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [selectedPet, setSelectedPet] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+
+  const filteredPets = filter === "all" ? criminalPets : criminalPets.filter(p => p.rarity === filter);
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">🐾</span>
+        <div>
+          <h2 className="text-2xl font-bold">Criminal Pets</h2>
+          <p className="text-sm text-muted-foreground">Companion animals with unique abilities to aid your crimes.</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {["all", "common", "uncommon", "rare", "epic", "legendary"].map(r => (
+          <button key={r} onClick={() => setFilter(r)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
+              filter === r ? "bg-primary text-primary-foreground" : "bg-background/50 text-muted-foreground hover:text-foreground"
+            }`}>
+            {r.charAt(0).toUpperCase() + r.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {filteredPets.map(pet => {
+          const canBuy = (player?.level ?? 0) >= pet.levelRequired && (player?.money ?? 0) >= pet.price;
+          return (
+            <motion.div
+              key={pet.id}
+              whileHover={canBuy ? { scale: 1.02 } : {}}
+              className={`rounded-xl p-4 border transition-all ${getPetRarityBg(pet.rarity)} ${canBuy ? "cursor-pointer hover:shadow-lg" : "opacity-50"}`}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="text-4xl">{pet.icon}</div>
+                <div>
+                  <div className="font-bold">{pet.name}</div>
+                  <div className={`text-xs ${getPetRarityColor(pet.rarity)}`}>{pet.rarity}</div>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">{pet.description}</p>
+              <div className="flex justify-between items-center">
+                <div className="text-sm font-bold text-green-400">${pet.price.toLocaleString()}</div>
+                {!canBuy && <div className="text-[10px] text-red-400">Lv.{pet.levelRequired}</div>}
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground">
+                <span className="text-red-400">+{pet.attackBonus} ATK</span> • <span className="text-blue-400">+{pet.defenseBonus} DEF</span>
+              </div>
+              <div className="mt-1 text-[10px] text-primary">
+                ✨ {pet.specialAbility}: {pet.abilityDescription}
+              </div>
+            </motion.div>
           );
         })}
       </div>
