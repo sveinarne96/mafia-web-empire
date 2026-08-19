@@ -493,3 +493,39 @@ export const commitLegendaryCrime = mutation({
     }
   },
 });
+
+export const claimDailyReward = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+
+    const now = Date.now();
+    const oneDayMs = 86400000;
+    const lastClaim = (player as any).lastDailyClaim ?? 0;
+    const streak = (player as any).dailyStreak ?? 0;
+
+    if (lastClaim && (now - lastClaim) < oneDayMs) {
+      return { success: false, message: "You already claimed today's reward! Come back tomorrow." };
+    }
+
+    const newStreak = (lastClaim && (now - lastClaim) < oneDayMs * 2) ? streak + 1 : 1;
+    const dayIndex = ((newStreak - 1) % 7);
+    const rewards = [500, 1000, 2000, 3500, 5000, 7500, 15000];
+    const reward = rewards[dayIndex];
+    const isBonusDay = dayIndex === 6;
+
+    await ctx.db.patch(player._id, {
+      money: player.money + reward,
+      lastDailyClaim: now,
+      dailyStreak: newStreak,
+    } as any);
+
+    return {
+      success: true,
+      message: isBonusDay
+        ? `🎁 DAY 7 BONUS! You earned $${reward.toLocaleString()} + a Legendary Item! Streak resets!`
+        : `🎁 Day ${newStreak}! You earned $${reward.toLocaleString()}! Come back tomorrow for more!`,
+    };
+  },
+});

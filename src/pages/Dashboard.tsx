@@ -1,4 +1,5 @@
 import { CrimesOverviewPage, BossFightsPage, CrimeEmpirePage, HeistPlanningPage, WorldEventsPage, CriminalPetsPage, BlackMarketPage, CrimeFamePage, LegendaryCrimePage } from "../components/GameFeatures";
+import { DailyLoginPage, CrewSystemPage, RankedPvpPage } from "../components/NewFeatures";
 import { SkillTreePage, DailyChallengesPage, ColosseumPage, SafeHousesPage, CrimeSpreePage, WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage, PrisonBreakPage } from "../components/EpicFeatures";
 import { useState, useCallback } from "react";
 import { useMutation, useQuery } from "convex/react";
@@ -12,7 +13,7 @@ import {
   SwordsIcon, Dices, Banknote, ChevronDown, LogOut, User,
   AlertTriangle, Loader2, CircleDollarSign, Zap, MapPinned,
   ShieldCheck, Skull, TrophyIcon, BookOpen,
-  Brain, Award, Flame, ShoppingBag, Globe,
+  Brain, Award, Flame, ShoppingBag, Globe, Gift,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
@@ -40,6 +41,7 @@ type GamePage =
   | "roulette" | "slots" | "russian_roulette" | "dog_fighting" | "street_racing" | "gambling_dens"
   | "gifting" | "hit_list" | "crimes" | "boss_fights" | "crime_empire" | "heist_planning" | "world_events" | "criminal_pets"
   | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
+  | "daily_login" | "crew_system" | "ranked_pvp"
   | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation" | "prison_break";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
@@ -47,6 +49,7 @@ const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Det
 const leftMenuSections = [
   { title: "Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
   { title: "Legendary Crimes", icon: Flame, page: "legendary_crimes" as GamePage },
+  { title: "Daily Login Rewards", icon: Gift, page: "daily_login" as GamePage },
   { title: "Boss Fights", icon: Skull, page: "boss_fights" as GamePage },
   { title: "Crime Empire", icon: MapPinned, page: "crime_empire" as GamePage },
   { title: "Heist Planning", icon: Target, page: "heist_planning" as GamePage },
@@ -65,8 +68,10 @@ const leftMenuSections = [
   { title: "Missions", icon: Target, page: "missions" as GamePage },
   { title: "Company", icon: Shield, page: "company" as GamePage },
   { title: "Family", icon: Users, page: "family" as GamePage },
+  { title: "Crew System", icon: Users, page: "crew_system" as GamePage },
   { title: "Kill", icon: Skull, page: "kill" as GamePage },
   { title: "Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
+  { title: "Ranked PvP", icon: Trophy, page: "ranked_pvp" as GamePage },
   { title: "Duels", icon: Swords, page: "duels" as GamePage },
   { title: "Spar", icon: SwordsIcon, page: "spar" as GamePage },
   { title: "Tournament", icon: Trophy, page: "tournament" as GamePage },
@@ -1446,7 +1451,7 @@ export default function Dashboard() {
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
     forum_shadows: "Shadows", forum_search: "Search Posts",
-    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", prison_break: "Prison Break",
+    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", prison_break: "Prison Break", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
   };
 
   const renderPage = () => {
@@ -1525,6 +1530,9 @@ export default function Dashboard() {
       case "cartel": return <CartelPage />;
       case "reputation": return <ReputationPage />;
       case "prison_break": return <PrisonBreakPage />;
+      case "daily_login": return <DailyLoginPage />;
+      case "crew_system": return <CrewSystemPage />;
+      case "ranked_pvp": return <RankedPvpPage />;
       default: return <HeadquartersPage />;
     }
   };
