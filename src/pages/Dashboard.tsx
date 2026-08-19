@@ -1380,9 +1380,9 @@ export default function Dashboard() {
 
   const isRegistered = (player?.nickname && player?.registeredAt) || registered;
 
-  if (!player) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+  if (player === undefined) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+  if (!player || !isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
   if (player.isDead) return <DeathScreen />;
-  if (!isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
 
   const pageNames: Record<string, string> = {
     headquarters: "Headquarters", bank: "Bank", hospital: "Hospital", points: "Points", fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", spar: "Spar", tournament: "Tournament",

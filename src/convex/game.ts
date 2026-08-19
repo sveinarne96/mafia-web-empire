@@ -8,10 +8,15 @@ export const getPlayer = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
+    if (!identity.email) return null;
     const player = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", identity.email))
       .unique();
+    if (!player) return null;
+    // Only return fully registered game players.
+    // Auth-only rows lack required game fields and would fail client validation.
+    if (!player.nickname || player.money === undefined) return null;
     return player;
   },
 });
