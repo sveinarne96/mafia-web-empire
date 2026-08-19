@@ -1081,6 +1081,8 @@ export function BossFightsPage() {
   const [bossHp, setBossHp] = useState(0);
   const [inCombat, setInCombat] = useState(false);
   const [combatResult, setCombatResult] = useState<"win" | "lose" | null>(null);
+  const [bossPersisted, setBossPersisted] = useState(false);
+  const defeatBossMut = useMutation(api.game.defeatBoss);
 
   const boss = selectedBoss ? getBossById(selectedBoss) : null;
 
@@ -1099,9 +1101,10 @@ export function BossFightsPage() {
     setBattleLog(["Battle started!"]);
     setInCombat(true);
     setCombatResult(null);
+    setBossPersisted(false);
   };
 
-  const attack = () => {
+  const attack = async () => {
     if (!boss || !inCombat || combatResult) return;
 
     const playerDmg = Math.max(1, (player?.attack ?? 10) - Math.floor(boss.defense * 0.3) + Math.floor(Math.random() * 20));
@@ -1122,9 +1125,17 @@ export function BossFightsPage() {
     if (newBossHp <= 0) {
       setCombatResult("win");
       setBattleLog(prev => [...prev, "🎉 VICTORY! You defeated the boss!"]);
+      if (!bossPersisted) {
+        setBossPersisted(true);
+        try { await defeatBossMut({ bossId: boss.id, reward: boss.reward, xp: boss.xpReward, won: true }); } catch {}
+      }
     } else if (newPlayerHp <= 0) {
       setCombatResult("lose");
       setBattleLog(prev => [...prev, "💀 DEFEAT! You were eliminated."]);
+      if (!bossPersisted) {
+        setBossPersisted(true);
+        try { await defeatBossMut({ bossId: boss.id, reward: 0, xp: 0, won: false }); } catch {}
+      }
     }
   };
 
