@@ -1,15 +1,13 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Helper: get authenticated player
+// Helper: get authenticated player by auth userId (works with all auth providers)
 async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity || !identity.email) throw new Error("Not authenticated");
-  const player = await ctx.db
-    .query("users")
-    .withIndex("by_email", (q) => q.eq("email", identity.email))
-    .unique();
+  const userId = await getAuthUserId(ctx);
+  if (!userId) throw new Error("Not authenticated");
+  const player = await ctx.db.get(userId);
   if (!player) throw new Error("Player not found");
   return player;
 }

@@ -227,7 +227,7 @@ export function OrganizedCrimePage() {
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center gap-3"><Group className="size-7 text-red-400" /><h2 className="text-2xl font-bold">Organized Crime</h2></div>
-      <div className="mafia-card rounded-xl p-4 text-sm text-muted-foreground">Family: <span className="text-primary font-bold">{family.name}</span> [{family.tag}]</div>
+      <div className="mafia-card rounded-xl p-4 text-sm text-muted-foreground">Family: <span className="text-primary font-bold">{(family as any).name}</span> [{(family as any).tag}]</div>
       {(crimes ?? []).length === 0 ? <div className="text-center py-10 text-muted-foreground text-sm">No operations available.</div> :
         <div className="space-y-2">{crimes?.map(c => (
           <div key={c._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">

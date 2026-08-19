@@ -991,15 +991,15 @@ function FamilyPage() {
   if (family) {
     return (
       <div className="animate-fade-in space-y-6">
-        <div className="flex items-center gap-3"><Users className="size-7 text-primary" /><h2 className="text-2xl font-bold">{family.name} <span className="text-muted-foreground font-normal text-base">[{family.tag}]</span></h2></div>
+        <div className="flex items-center gap-3"><Users className="size-7 text-primary" /><h2 className="text-2xl font-bold">{(family as any).name} <span className="text-muted-foreground font-normal text-base">[{(family as any).tag}]</span></h2></div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatBox label="Level" value={`Lv.${family.level}`} color="text-primary" />
-          <StatBox label="Members" value={`${family.memberCount}/${family.maxMembers}`} />
-          <StatBox label="Treasury" value={`$${(family.treasury ?? 0).toLocaleString()}`} color="text-green-400" />
-          <StatBox label="XP" value={(family.experience ?? 0).toLocaleString()} color="text-yellow-400" />
+          <StatBox label="Level" value={`Lv.${(family as any).level}`} color="text-primary" />
+          <StatBox label="Members" value={`${(family as any).memberCount}/${(family as any).maxMembers}`} />
+          <StatBox label="Treasury" value={`$${((family as any).treasury ?? 0).toLocaleString()}`} color="text-green-400" />
+          <StatBox label="XP" value={((family as any).experience ?? 0).toLocaleString()} color="text-yellow-400" />
         </div>
         <div className="mafia-card rounded-xl p-5">
-          <p className="text-sm text-muted-foreground mb-4">{family.description}</p>
+          <p className="text-sm text-muted-foreground mb-4">{(family as any).description}</p>
           <h3 className="font-bold text-sm mb-3 uppercase tracking-wider text-muted-foreground">Members</h3>
           <div className="space-y-2">
             {members?.map(m => (

@@ -1,5 +1,13 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+// Helper: get current auth user
+async function getCurrentUser(ctx: { auth: any; db: any }) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) return null;
+  return await ctx.db.get(userId);
+}
 
 // ===== BLACKJACK =====
 
@@ -46,7 +54,7 @@ export const blackjackDeal = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.isDead) throw new Error("You are dead!");
@@ -89,7 +97,7 @@ export const blackjackStand = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
 
     const dHand = dealerPlay([shuffleDeck().pop()!, shuffleDeck().pop()!]);
@@ -115,7 +123,7 @@ export const buyLottoTicket = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.inPrison) throw new Error("You are in prison!");
     const costs: Record<string, number> = { daily: 100, weekly: 500, mega: 5000 };
@@ -159,7 +167,7 @@ export const getGarage = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) return [];
     return await ctx.db.query("vehicles").withIndex("by_user", (q) => q.eq("userId", player._id)).collect();
   },
@@ -170,7 +178,7 @@ export const buyVehicle = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if ((player.money ?? 0) < args.price) throw new Error("Not enough money!");
     await ctx.db.insert("vehicles", { userId: player._id, name: args.name, type: args.type, speed: args.speed, storage: args.storage, armored: args.armored, stolen: false, purchasePrice: args.price });
@@ -184,7 +192,7 @@ export const sellVehicle = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const vehicle = await ctx.db.get(args.vehicleId);
     if (!vehicle || vehicle.userId !== player._id) throw new Error("Not your vehicle!");
@@ -200,7 +208,7 @@ export const stealVehicle = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.isDead) throw new Error("You are dead!");
@@ -228,7 +236,7 @@ export const getInventory = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) return [];
     const inv = await ctx.db.query("inventory").withIndex("by_user", (q) => q.eq("userId", player._id)).collect();
     const result = [];
@@ -245,7 +253,7 @@ export const buyItem = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const item = await ctx.db.get(args.itemId);
     if (!item) throw new Error("Item not found");
@@ -267,7 +275,7 @@ export const equipItem = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const entry = await ctx.db.get(args.inventoryId);
     if (!entry || entry.userId !== player._id) throw new Error("Not your item!");
@@ -289,7 +297,7 @@ export const buyItemWithPoints = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if ((player.points ?? 0) < args.cost) throw new Error("Not enough points!");
     const itemId = await ctx.db.insert("items", {
@@ -314,7 +322,7 @@ export const getPlayerMissions = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) return [];
     return await ctx.db.query("playerMissions").withIndex("by_user", (q) => q.eq("userId", player._id)).collect();
   },
@@ -325,7 +333,7 @@ export const acceptMission = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const mission = await ctx.db.get(args.missionId);
     if (!mission) throw new Error("Mission not found");
@@ -343,7 +351,7 @@ export const completeMission = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const pm = await ctx.db.get(args.playerMissionId);
     if (!pm || pm.userId !== player._id) throw new Error("Not your mission!");
@@ -363,7 +371,7 @@ export const getOrganizedCrimes = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player || !player.familyId) return [];
     return await ctx.db.query("organizedCrimes").withIndex("by_family", (q) => q.eq("familyId", player.familyId!)).collect();
   },
@@ -374,7 +382,7 @@ export const joinOrganizedCrime = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (!player.familyId) throw new Error("Join a family first!");
     const crime = await ctx.db.get(args.crimeId);
@@ -398,7 +406,7 @@ export const getMyBusinesses = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) return [];
     return await ctx.db.query("businesses").withIndex("by_owner", (q) => q.eq("ownerId", player._id)).collect();
   },
@@ -434,7 +442,7 @@ export const submitSupportTicket = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     await ctx.db.insert("messages", { senderId: player._id, receiverId: player._id, subject: `[SUPPORT] ${args.subject}`, body: args.body, read: false, timestamp: Date.now() });
     return { submitted: true };
@@ -448,7 +456,7 @@ export const getOnlinePlayers = query({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return [];
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) return [];
     const players = await ctx.db.query("users").withIndex("by_location", (q) => q.eq("location", player.location ?? "New York")).collect();
     return players.map((p) => ({ _id: p._id, nickname: p.nickname, level: p.level, location: p.location }));

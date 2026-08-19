@@ -1,5 +1,13 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { getAuthUserId } from "@convex-dev/auth/server";
+
+// Helper: get current auth user
+async function getCurrentUser(ctx: { auth: any; db: any }) {
+  const userId = await getAuthUserId(ctx);
+  if (!userId) return null;
+  return await ctx.db.get(userId);
+}
 
 export const getBlackMarketItems = query({
   args: {},
@@ -13,7 +21,7 @@ export const refreshBlackMarket = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (Date.now() - (player.lastBlackMarketRefresh ?? 0) < 3600000) throw new Error("Black market refreshes every hour.");
     await ctx.db.patch(player._id, { lastBlackMarketRefresh: Date.now() });
@@ -26,7 +34,7 @@ export const buyBlackMarketItem = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const item = await ctx.db.get(args.itemId);
     if (!item || !item.available) throw new Error("Item not available");
@@ -42,7 +50,7 @@ export const launderMoney = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const dirty = player.dirtyMoney ?? 0;
     if (dirty < args.amount) throw new Error("Not enough dirty money");
@@ -66,7 +74,7 @@ export const counterfeiting = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const costs: Record<string, number> = { low: 500, medium: 1500, high: 4000 };
     const rewards: Record<string, number> = { low: 800, medium: 3000, high: 8000 };
@@ -101,7 +109,7 @@ export const runSmuggling = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.location === args.destCity) throw new Error("Already in that city");
     const baseCost: Record<string, number> = { drugs: 200, weapons: 500, electronics: 150, luxury: 300 };
@@ -140,7 +148,7 @@ export const drugTrafficking = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const cost = 150 * args.quantity;
     if (player.money < cost) throw new Error("Not enough money");
@@ -174,7 +182,7 @@ export const commitArson = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const cost = 5000;
     if (player.money < cost) throw new Error("Not enough money");
@@ -204,7 +212,7 @@ export const commitIdentityTheft = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Target not found");
@@ -238,7 +246,7 @@ export const kidnapPlayer = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const victim = await ctx.db.get(args.victimId);
     if (!victim) throw new Error("Victim not found");
@@ -267,7 +275,7 @@ export const payRansom = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const k = await ctx.db.get(args.kidnappingId);
     if (!k || k.victimId !== player._id) throw new Error("Not your kidnapping");
@@ -286,7 +294,7 @@ export const commitCargoTheft = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const dockCities = ["Miami", "New York", "Los Angeles", "Chicago", "Dallas"];
     if (!dockCities.includes(player.location)) throw new Error("Must be in a dock city");
@@ -317,7 +325,7 @@ export const commitArmsDeal = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (args.action === "buy") {
       const cost = 800 * args.quantity;
@@ -348,7 +356,7 @@ export const witnessIntimidation = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if ((player.wantedLevel ?? 0) <= 0) throw new Error("No wanted level");
     const cost = player.wantedLevel * 1000;
@@ -376,7 +384,7 @@ export const commitTaxEvasion = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.money < args.amount) throw new Error("Not enough money");
     const auditChance = 0.1 + (args.amount / 100000) * 0.3;
@@ -403,7 +411,7 @@ export const runRacketeering = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (Math.random() < 0.15) {
       const prisonTime = 120;
@@ -432,7 +440,7 @@ export const runGamblingDen = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.money < args.betPool) throw new Error("Not enough money");
     const revenue = Math.floor(args.betPool * (0.1 + Math.random() * 0.2));
@@ -457,7 +465,7 @@ export const runProtectionRacket = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (Math.random() < 0.12) {
       const prisonTime = 180;
@@ -485,7 +493,7 @@ export const runLoanSharking = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.money < args.amount) throw new Error("Not enough money");
     await ctx.db.patch(player._id, {
@@ -505,7 +513,7 @@ export const runPirateRadio = mutation({
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.money < 1000) throw new Error("Not enough money");
     if (Math.random() < 0.1) {
@@ -530,7 +538,7 @@ export const runIllegalBoxing = mutation({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
-    const player = await ctx.db.query("users").withIndex("by_email", (q) => q.eq("email", identity.email)).unique();
+    const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     if (player.money < args.entryFee) throw new Error("Not enough money");
     if (Math.random() < 0.08) {
