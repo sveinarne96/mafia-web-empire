@@ -3,7 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Crown, Building2, Landmark, Trophy, Car, Home, Users, Swords,
+  Crown, Building2, Landmark, Trophy, Car, Home, Users, Swords, Truck,
   Wrench, Package, Lock, Plane, Group, Target, Calendar, Shield,
   UserMinus, Dice1, Ticket, Wallet, Coins, LandmarkIcon, Hash, Send,
   Inbox, Bell, MessageSquare, Search, BarChart3, HelpCircle, MapPin,
@@ -89,6 +89,37 @@ const leftMenuSections = [
     { title: "Coin Toss", icon: Coins, page: "gambling_coin" as GamePage },
     { title: "Horse Racing", icon: LandmarkIcon, page: "gambling_horse" as GamePage },
     { title: "Number Game", icon: Hash, page: "gambling_number" as GamePage },
+  ]},
+  { title: "PvP & Combat", icon: Swords, children: [
+    { title: "Death Match", icon: Skull, page: "death_match" as GamePage },
+    { title: "Combat Log", icon: SwordsIcon, page: "combat_log" as GamePage },
+    { title: "Fighting Styles", icon: Swords, page: "fighting_styles" as GamePage },
+    { title: "Armor", icon: Shield, page: "armor" as GamePage },
+    { title: "Season Rankings", icon: Trophy, page: "season_rankings" as GamePage },
+    { title: "Hit List", icon: Skull, page: "hit_list" as GamePage },
+  ]},
+  { title: "Crime Ops", icon: Skull, children: [
+    { title: "Counterfeiting", icon: Coins, page: "counterfeiting" as GamePage },
+    { title: "Drug Trafficking", icon: Zap, page: "drug_trafficking" as GamePage },
+    { title: "Arson", icon: Zap, page: "arson" as GamePage },
+    { title: "Identity Theft", icon: User, page: "identity_theft" as GamePage },
+    { title: "Arms Dealing", icon: Swords, page: "arms_dealing" as GamePage },
+    { title: "Witness Intimidation", icon: Skull, page: "witness_intimidation" as GamePage },
+    { title: "Tax Evasion", icon: Landmark, page: "tax_evasion" as GamePage },
+    { title: "Racketeering", icon: Banknote, page: "racketeering" as GamePage },
+    { title: "Gambling Dens", icon: Coins, page: "gambling_dens" as GamePage },
+    { title: "Loan Sharking", icon: Coins, page: "loan_sharking" as GamePage },
+    { title: "Cargo Theft", icon: Truck, page: "cargo_theft" as GamePage },
+  ]},
+  { title: "Extra Games", icon: Dices, children: [
+    { title: "Roulette", icon: Coins, page: "roulette" as GamePage },
+    { title: "Slots", icon: Coins, page: "slots" as GamePage },
+    { title: "Russian Roulette", icon: Skull, page: "russian_roulette" as GamePage },
+    { title: "Dog Fighting", icon: SwordsIcon, page: "dog_fighting" as GamePage },
+    { title: "Street Racing", icon: Car, page: "street_racing" as GamePage },
+  ]},
+  { title: "Social", icon: Users, children: [
+    { title: "Gifting", icon: Crown, page: "gifting" as GamePage },
   ]},
 ];
 
@@ -1409,7 +1440,7 @@ export default function Dashboard() {
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
     forum_shadows: "Shadows", forum_search: "Search Posts",
-    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy",
+    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List",
   };
 
   const renderPage = () => {
@@ -1459,6 +1490,29 @@ export default function Dashboard() {
       case "statistics": return <StatisticsPage />;
       case "faq": return <FAQPage />;
       case "support": return <SupportPage />;
+      case "death_match": return <DeathMatchPage />;
+      case "season_rankings": return <SeasonRankingsPage />;
+      case "combat_log": return <CombatLogPage />;
+      case "fighting_styles": return <FightingStylesPage />;
+      case "armor": return <ArmorPage />;
+      case "counterfeiting": return <CounterfeitingPage />;
+      case "drug_trafficking": return <DrugTraffickingPage />;
+      case "arson": return <ArsonPage />;
+      case "identity_theft": return <IdentityTheftPage />;
+      case "arms_dealing": return <ArmsDealPage />;
+      case "witness_intimidation": return <WitnessPage />;
+      case "tax_evasion": return <TaxEvasionPage />;
+      case "racketeering": return <RacketeeringPage />;
+      case "gambling_dens": return <GamblingDenPage />;
+      case "loan_sharking": return <LoanSharkPage />;
+      case "cargo_theft": return <CargoTheftPage />;
+      case "roulette": return <RoulettePage />;
+      case "slots": return <SlotsPage />;
+      case "russian_roulette": return <RussianRoulettePage />;
+      case "dog_fighting": return <DogFightPage />;
+      case "street_racing": return <StreetRacingPage />;
+      case "gifting": return <GiftingPage />;
+      case "hit_list": return <HitListPage />;
       default: return <HeadquartersPage />;
     }
   };
