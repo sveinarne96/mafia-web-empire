@@ -1271,3 +1271,157 @@ export function CriminalPetsPage() {
     </div>
   );
 }
+
+// ===== BLACK MARKET DEALER =====
+import { blackMarketItems, getBlackMarketRarityColor, getBlackMarketRarityBg } from "@/data/blackmarket";
+
+export function BlackMarketPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [filter, setFilter] = useState<string>("all");
+  const [purchased, setPurchased] = useState<string | null>(null);
+
+  const filtered = filter === "all" ? blackMarketItems : blackMarketItems.filter(i => i.rarity === filter);
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">🏴‍☠️</span>
+        <div>
+          <h2 className="text-2xl font-bold">Black Market Dealer</h2>
+          <p className="text-sm text-muted-foreground">Rare and powerful items from the shadows. New stock rotates every 24 hours.</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {["all", "common", "uncommon", "rare", "epic", "legendary"].map(r => (
+          <button key={r} onClick={() => setFilter(r)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-colors ${
+              filter === r ? "bg-primary text-primary-foreground" : "bg-background/50 text-muted-foreground hover:text-foreground"
+            }`}>
+            {r.charAt(0).toUpperCase() + r.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        {filtered.map(item => {
+          const canBuy = (player?.money ?? 0) >= item.price;
+          return (
+            <motion.div
+              key={item.id}
+              whileHover={canBuy ? { scale: 1.01 } : {}}
+              className={`rounded-xl p-4 border transition-all ${getBlackMarketRarityBg(item.rarity)} ${canBuy ? "cursor-pointer hover:shadow-lg hover:shadow-primary/10" : "opacity-60"}`}
+              onClick={() => {
+                if (canBuy) {
+                  setPurchased(item.id);
+                  setTimeout(() => setPurchased(null), 2000);
+                }
+              }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">{item.icon}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm">{item.name}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${getBlackMarketRarityColor(item.rarity)}`}>{item.rarity}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="text-[10px] text-primary">✨ {item.effect}</span>
+                    {item.duration && <span className="text-[10px] text-yellow-400">⏱️ {item.duration}h</span>}
+                    {item.stackable && <span className="text-[10px] text-muted-foreground">Stack: {item.maxStack}</span>}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold text-green-400">${item.price.toLocaleString()}</div>
+                  {purchased === item.id && <div className="text-[10px] text-green-400">✅ Bought!</div>}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ===== CRIME FAME SYSTEM =====
+import { fameTitles, getFameTierColor, getFameTierBg } from "@/data/fame";
+
+export function CrimeFamePage() {
+  const player = useQuery(api.game.getPlayer);
+  const [filter, setFilter] = useState<string>("all");
+
+  const filtered = filter === "all" ? fameTitles : fameTitles.filter(t => t.tier === filter);
+  const tierOrder = ["bronze", "silver", "gold", "platinum", "diamond"];
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">🏆</span>
+        <div>
+          <h2 className="text-2xl font-bold">Crime Fame</h2>
+          <p className="text-sm text-muted-foreground">Earn titles based on your criminal accomplishments. Each tier grants powerful bonuses.</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-5 gap-2">
+        {tierOrder.map(tier => {
+          const count = fameTitles.filter(t => t.tier === tier).length;
+          return (
+            <button key={tier} onClick={() => setFilter(tier)}
+              className={`p-2 rounded-lg text-center transition-all ${
+                filter === tier ? getFameTierBg(tier) : "bg-background/50"
+              }`}>
+              <div className={`text-xs font-bold capitalize ${filter === tier ? getFameTierColor(tier) : "text-muted-foreground"}`}>{tier}</div>
+              <div className="text-[10px] text-muted-foreground">{count} titles</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {filter !== "all" && (
+        <button onClick={() => setFilter("all")} className="text-xs text-muted-foreground hover:text-foreground">
+          ← Show all tiers
+        </button>
+      )}
+
+      <div className="space-y-3">
+        {filtered.map(title => {
+          const bonuses = [
+            title.bonuses.attack ? `+${title.bonuses.attack} ATK` : null,
+            title.bonuses.defense ? `+${title.bonuses.defense} DEF` : null,
+            title.bonuses.money ? `+$${title.bonuses.money.toLocaleString()} Money` : null,
+            title.bonuses.xp ? `+${title.bonuses.xp} XP` : null,
+          ].filter(Boolean);
+
+          return (
+            <motion.div
+              key={title.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`rounded-xl p-4 border transition-all ${getFameTierBg(title.tier)}`}
+            >
+              <div className="flex items-center gap-4">
+                <div className="text-4xl">{title.icon}</div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm">{title.name}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full capitalize ${getFameTierColor(title.tier)}`}>{title.tier}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{title.description}</p>
+                  <div className="text-[10px] text-yellow-400 mt-1">📋 {title.requirement}</div>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {bonuses.map((b, i) => (
+                      <span key={i} className="text-[10px] text-green-400 bg-green-950/30 px-2 py-0.5 rounded-full">{b}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
