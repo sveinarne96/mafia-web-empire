@@ -173,6 +173,9 @@ export function MyItemsPage() {
 }
 
 // ===== MISSIONS =====
+const missionTypeIcons: Record<string, string> = { crime: "🔥", heist: "🎯", transport: "🚛", gambling: "🎰", explore: "🏢", travel: "✈️", business: "🏪", social: "👨‍👩‍👦", pvp: "⚔️", combat: "💀", progression: "🧠", empire: "👑" };
+const missionTypeColors: Record<string, string> = { crime: "bg-red-950/30 text-red-400 border-red-800/30", heist: "bg-purple-950/30 text-purple-400 border-purple-800/30", transport: "bg-orange-950/30 text-orange-400 border-orange-800/30", gambling: "bg-yellow-950/30 text-yellow-400 border-yellow-800/30", explore: "bg-blue-950/30 text-blue-400 border-blue-800/30", travel: "bg-cyan-950/30 text-cyan-400 border-cyan-800/30", business: "bg-green-950/30 text-green-400 border-green-800/30", social: "bg-pink-950/30 text-pink-400 border-pink-800/30", pvp: "bg-red-950/30 text-red-300 border-red-700/30", combat: "bg-red-950/40 text-red-300 border-red-700/40", progression: "bg-indigo-950/30 text-indigo-400 border-indigo-800/30", empire: "bg-yellow-950/30 text-yellow-300 border-yellow-700/30" };
+
 export function MissionsPage() {
   const player = useQuery(api.game.getPlayer);
   const missions = useQuery(api.gameExtended.getMissions);
@@ -181,30 +184,73 @@ export function MissionsPage() {
   const completeM = useMutation(api.gameExtended.completeMission);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState<string>("all");
   if (!player) return <LoadingPage />;
   const pmMap = new Map((playerMissions ?? []).map(pm => [pm.missionId, pm]));
+  const completedCount = (playerMissions ?? []).filter(pm => pm.completed).length;
+  const totalMissions = (missions ?? []).length;
+  const filtered = filter === "all" ? missions : (missions ?? []).filter(m => {
+    if (filter === "available") return !pmMap.has(m._id) && (player.level ?? 1) >= m.levelRequired;
+    if (filter === "active") return pmMap.has(m._id) && !pmMap.get(m._id)?.completed;
+    if (filter === "done") return pmMap.get(m._id)?.completed;
+    return true;
+  });
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Target className="size-7 text-primary" /><h2 className="text-2xl font-bold">Missions</h2></div>
-      {(missions ?? []).length === 0 ? <div className="text-center py-10 text-muted-foreground text-sm">No missions available.</div> :
-        <div className="space-y-3">{missions?.map((m) => {
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3"><Target className="size-7 text-primary" /><h2 className="text-2xl font-bold">📋 Missions</h2></div>
+        <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary">{completedCount}/{totalMissions} Done</div>
+      </div>
+      <div className="mafia-card rounded-xl p-4">
+        <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5"><span>Mission Progress</span><span>{totalMissions > 0 ? Math.round((completedCount / totalMissions) * 100) : 0}%</span></div>
+        <div className="h-2 rounded-full bg-background/60 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all" style={{ width: `${totalMissions > 0 ? (completedCount / totalMissions) * 100 : 0}%` }} /></div>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1">{["all", "available", "active", "done"].map(f => (
+        <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize whitespace-nowrap transition-colors ${filter === f ? "bg-primary text-primary-foreground" : "bg-background/40 text-muted-foreground border border-border/50"}`}>{f}</button>
+      ))}</div>
+      {(filtered ?? []).length === 0 ? <div className="text-center py-10 text-muted-foreground text-sm">No missions found.</div> :
+        <div className="space-y-3">{(filtered ?? []).map((m) => {
           const pm = pmMap.get(m._id);
+          const icon = missionTypeIcons[m.type] || "📋";
+          const colorClass = missionTypeColors[m.type] || "bg-background/40 text-muted-foreground border-border/50";
+          const locked = (player.level ?? 1) < m.levelRequired;
           return (
-            <div key={m._id} className={`mafia-card rounded-xl p-4 ${pm?.completed ? "opacity-60" : ""}`}>
-              <div className="flex items-start justify-between">
-                <div><div className="font-bold text-sm">{m.title}</div><div className="text-xs text-muted-foreground">{m.description}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">Lv.{m.levelRequired} • 💰${m.reward.toLocaleString()} • ⭐{m.pointsReward} pts</div></div>
-                <div>{!pm ? (
-                  <button onClick={async () => { setLoading(true); try { await acceptM({ missionId: m._id }); setMsg("Accepted!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading || (player.level ?? 1) < m.levelRequired} className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg disabled:opacity-40">Accept</button>
-                ) : pm.completed ? <span className="text-xs text-green-400 font-bold">✓ Done</span> : (
-                  <button onClick={async () => { setLoading(true); try { const r = await completeM({ playerMissionId: pm._id }); setMsg(`+$${r.reward} +${r.points}pts`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg disabled:opacity-40">Complete</button>
-                )}</div>
+            <motion.div key={m._id} whileHover={{ scale: 1.005 }} className={`mafia-card rounded-xl p-4 transition-all ${pm?.completed ? "opacity-60" : locked ? "opacity-40" : ""}`}>
+              <div className="flex items-start gap-3">
+                <div className="text-2xl mt-0.5">{icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-sm">{m.title}</span>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${colorClass}`}>{(m.type as string).toUpperCase()}</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">{m.description}</p>
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span>📍 {m.location ?? "Any"}</span>
+                    <span>⭐ Lv.{m.levelRequired}</span>
+                    <span className="text-green-400 font-bold">💰 ${m.reward.toLocaleString()}</span>
+                    <span className="text-yellow-400 font-bold">🏆 {m.pointsReward} pts</span>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {!pm && !locked && (
+                    <button onClick={async () => { setLoading(true); try { await acceptM({ missionId: m._id }); setMsg(`Accepted: ${m.title}!`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-40">Accept</button>
+                  )}
+                  {!pm && locked && (
+                    <span className="text-[10px] text-muted-foreground">🔒 Lv.{m.levelRequired}</span>
+                  )}
+                  {pm && !pm.completed && (
+                    <button onClick={async () => { setLoading(true); try { const r = await completeM({ playerMissionId: pm._id }); setMsg(`✅ Completed! +$${r.reward} +${r.points}pts`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-500 disabled:opacity-40">Complete</button>
+                  )}
+                  {pm?.completed && (
+                    <span className="text-xs text-green-400 font-bold">✅ Done</span>
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           );
         })}</div>
       }
-      {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}
+      {msg && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in">✓ {msg}</motion.div>}
     </div>
   );
 }

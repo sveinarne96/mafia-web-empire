@@ -272,7 +272,7 @@ export const commitCrime = mutation({
       experience: levelUpNow ? 0 : newXP,
       levelUpPending: levelUpNow ? true : player.levelUpPending,
       inPrison: arrested,
-      prisonTime: arrested ? 30000 : player.prisonTime,
+      prisonTime: arrested ? 15000 : player.prisonTime,
       wantedLevel: arrested ? 0 : newWanted,
     });
 
@@ -1608,7 +1608,7 @@ export const commitCategoryCrime = mutation({
       experience: levelUpNow ? 0 : newXP,
       levelUpPending: levelUpNow ? true : player.levelUpPending,
       inPrison: arrested,
-      prisonTime: arrested ? 30000 : player.prisonTime,
+      prisonTime: arrested ? 15000 : player.prisonTime,
       wantedLevel: arrested ? 0 : newWanted,
     });
 

@@ -1,7 +1,7 @@
 import { CrimesOverviewPage, BossFightsPage, CrimeEmpirePage, HeistPlanningPage, WorldEventsPage, CriminalPetsPage, BlackMarketPage, CrimeFamePage, LegendaryCrimePage } from "../components/GameFeatures";
 import { DailyLoginPage, CrewSystemPage, RankedPvpPage } from "../components/NewFeatures";
 import { SkillTreePage, DailyChallengesPage, ColosseumPage, SafeHousesPage, CrimeSpreePage, WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage, PrisonBreakPage } from "../components/EpicFeatures";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,6 +23,8 @@ import { PointsShopPage, GaragePage, MyItemsPage, MissionsPage, OrganizedCrimePa
 import { AdminPanel } from "../components/AdminPanel";
 import { OnlineList } from "../components/OnlineList";
 import { BecomeAdminPage } from "../components/BecomeAdmin";
+import { MyProfilePage } from "../components/MyProfile";
+import { SeasonPassPage } from "../components/SeasonPass";
 import {
   DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
   FightingStylesPage, ArmorPage, GamblingDenPage,
@@ -47,115 +49,130 @@ type GamePage =
   | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
   | "daily_login" | "crew_system" | "ranked_pvp"
   | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation"
-  | "admin_panel" | "online_list" | "become_admin";
+  | "admin_panel" | "online_list" | "become_admin" | "my_profile" | "season_pass";
 
-const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
+const cities = [
+  { name: "New York", emoji: "🗽", crime: "high", boost: 1.2, murderCity: true, drugRun: true },
+  { name: "Los Angeles", emoji: "🌴", crime: "high", boost: 1.15, murderCity: true, drugRun: true },
+  { name: "Chicago", emoji: "🌃", crime: "high", boost: 1.1, murderCity: true, drugRun: true },
+  { name: "Miami", emoji: "🏖️", crime: "medium", boost: 1.0, drugRun: true, taxFraud: true },
+  { name: "Las Vegas", emoji: "🎰", crime: "medium", boost: 1.0 },
+  { name: "Detroit", emoji: "🏭", crime: "high", boost: 1.25 },
+  { name: "Houston", emoji: "🤠", crime: "medium", boost: 1.05, drugRun: true },
+  { name: "Phoenix", emoji: "🌵", crime: "low", boost: 0.95, taxFraud: true },
+  { name: "Philadelphia", emoji: "🔔", crime: "medium", boost: 1.05 },
+  { name: "Boston", emoji: "🏛️", crime: "low", boost: 0.95, taxFraud: true },
+  { name: "Atlanta", emoji: "🍑", crime: "medium", boost: 1.1, drugRun: true },
+  { name: "Dallas", emoji: "🐎", crime: "low", boost: 1.0 },
+];
 
 const leftMenuSections = [
-  { title: "Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
-  { title: "Legendary Crimes", icon: Flame, page: "legendary_crimes" as GamePage },
-  { title: "Daily Login Rewards", icon: Gift, page: "daily_login" as GamePage },
-  { title: "Boss Fights", icon: Skull, page: "boss_fights" as GamePage },
-  { title: "Crime Empire", icon: MapPinned, page: "crime_empire" as GamePage },
-  { title: "Heist Planning", icon: Target, page: "heist_planning" as GamePage },
-  { title: "World Events", icon: Zap, page: "world_events" as GamePage },
-  { title: "Criminal Pets", icon: Users, page: "criminal_pets" as GamePage },
-  { title: "Headquarters", icon: Building2, page: "headquarters" as GamePage },
-  { title: "Bank", icon: Landmark, page: "bank" as GamePage },
-  { title: "Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
-  { title: "Points", icon: Trophy, page: "points" as GamePage },
+  { title: "👤 My Profile", icon: User, page: "my_profile" as GamePage },
+  { title: "🛡️ Season Pass", icon: Shield, page: "season_pass" as GamePage },
+  { title: "🔥 Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
+  { title: "⭐ Legendary Crimes", icon: Flame, page: "legendary_crimes" as GamePage },
+  { title: "🎁 Daily Login Rewards", icon: Gift, page: "daily_login" as GamePage },
+  { title: "💀 Boss Fights", icon: Skull, page: "boss_fights" as GamePage },
+  { title: "🗺️ Crime Empire", icon: MapPinned, page: "crime_empire" as GamePage },
+  { title: "🎯 Heist Planning", icon: Target, page: "heist_planning" as GamePage },
+  { title: "⚡ World Events", icon: Zap, page: "world_events" as GamePage },
+  { title: "🐾 Criminal Pets", icon: Users, page: "criminal_pets" as GamePage },
+  { title: "🏢 Headquarters", icon: Building2, page: "headquarters" as GamePage },
+  { title: "🏦 Bank", icon: Landmark, page: "bank" as GamePage },
+  { title: "🏥 Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
+  { title: "🏆 Points", icon: Trophy, page: "points" as GamePage },
 
-  { title: "Garage", icon: Wrench, page: "garage" as GamePage },
-  { title: "My Items", icon: Package, page: "items" as GamePage },
-  { title: "Airport", icon: Plane, page: "airport" as GamePage },
-  { title: "Organized Crime", icon: Group, page: "organized_crime" as GamePage },
-  { title: "Missions", icon: Target, page: "missions" as GamePage },
-  { title: "Company", icon: Shield, page: "company" as GamePage },
-  { title: "Family", icon: Users, page: "family" as GamePage },
-  { title: "Crew System", icon: Users, page: "crew_system" as GamePage },
-  { title: "Kill", icon: Skull, page: "kill" as GamePage },
-  { title: "Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
-  { title: "Ranked PvP", icon: Trophy, page: "ranked_pvp" as GamePage },
-  { title: "Duels", icon: Swords, page: "duels" as GamePage },
-  { title: "Spar", icon: SwordsIcon, page: "spar" as GamePage },
-  { title: "Tournament", icon: Trophy, page: "tournament" as GamePage },
-  { title: "Underground", icon: Skull, page: "underground" as GamePage },
-  { title: "Economy", icon: Banknote, children: [
-    { title: "Stock Market", icon: BarChart3, page: "stock_market" as GamePage },
-    { title: "Real Estate", icon: Building2, page: "real_estate" as GamePage },
-    { title: "Businesses", icon: Shield, page: "businesses" as GamePage },
-    { title: "Auction House", icon: Banknote, page: "auction_house" as GamePage },
-    { title: "Insurance", icon: ShieldCheck, page: "insurance" as GamePage },
-    { title: "Loans", icon: Landmark, page: "loans" as GamePage },
+  { title: "🚗 Garage", icon: Wrench, page: "garage" as GamePage },
+  { title: "🎒 My Items", icon: Package, page: "items" as GamePage },
+  { title: "✈️ Airport", icon: Plane, page: "airport" as GamePage },
+  { title: "👥 Organized Crime", icon: Group, page: "organized_crime" as GamePage },
+  { title: "📋 Missions", icon: Target, page: "missions" as GamePage },
+  { title: "💼 Company", icon: Shield, page: "company" as GamePage },
+  { title: "👨‍👩‍👦 Family", icon: Users, page: "family" as GamePage },
+  { title: "🤝 Crew System", icon: Users, page: "crew_system" as GamePage },
+  { title: "🔪 Kill", icon: Skull, page: "kill" as GamePage },
+  { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
+  { title: "⚔️ Ranked PvP", icon: Trophy, page: "ranked_pvp" as GamePage },
+  { title: "🗡️ Duels", icon: Swords, page: "duels" as GamePage },
+  { title: "🥊 Spar", icon: SwordsIcon, page: "spar" as GamePage },
+  { title: "🏆 Tournament", icon: Trophy, page: "tournament" as GamePage },
+  { title: "🕵️ Underground", icon: Skull, page: "underground" as GamePage },
+  { title: "💰 Economy", icon: Banknote, children: [
+    { title: "📈 Stock Market", icon: BarChart3, page: "stock_market" as GamePage },
+    { title: "🏠 Real Estate", icon: Building2, page: "real_estate" as GamePage },
+    { title: "🏪 Businesses", icon: Shield, page: "businesses" as GamePage },
+    { title: "🏷️ Auction House", icon: Banknote, page: "auction_house" as GamePage },
+    { title: "🛡️ Insurance", icon: ShieldCheck, page: "insurance" as GamePage },
+    { title: "💳 Loans", icon: Landmark, page: "loans" as GamePage },
   ]},
-  { title: "Progression", icon: Trophy, children: [
-    { title: "Achievements", icon: Trophy, page: "achievements" as GamePage },
-    { title: "Titles", icon: Crown, page: "titles" as GamePage },
-    { title: "Legacy", icon: BookOpen, page: "legacy" as GamePage },
+  { title: "📊 Progression", icon: Trophy, children: [
+    { title: "🏅 Achievements", icon: Trophy, page: "achievements" as GamePage },
+    { title: "👑 Titles", icon: Crown, page: "titles" as GamePage },
+    { title: "📜 Legacy", icon: BookOpen, page: "legacy" as GamePage },
   ]},
-  { title: "Gambling", icon: Dices, children: [
-    { title: "Dice", icon: Dice1, page: "gambling_dice" as GamePage },
-    { title: "Lotto", icon: Ticket, page: "gambling_lotto" as GamePage },
-    { title: "Blackjack", icon: Wallet, page: "gambling_blackjack" as GamePage },
-    { title: "Coin Toss", icon: Coins, page: "gambling_coin" as GamePage },
-    { title: "Horse Racing", icon: LandmarkIcon, page: "gambling_horse" as GamePage },
-    { title: "Number Game", icon: Hash, page: "gambling_number" as GamePage },
-    { title: "Gambling Dens", icon: Coins, page: "gambling_dens" as GamePage },
-    { title: "Roulette", icon: Coins, page: "roulette" as GamePage },
-    { title: "Slots", icon: Coins, page: "slots" as GamePage },
-    { title: "Russian Roulette", icon: Skull, page: "russian_roulette" as GamePage },
-    { title: "Dog Fighting", icon: SwordsIcon, page: "dog_fighting" as GamePage },
-    { title: "Street Racing", icon: Car, page: "street_racing" as GamePage },
+  { title: "🎲 Gambling", icon: Dices, children: [
+    { title: "🎲 Dice", icon: Dice1, page: "gambling_dice" as GamePage },
+    { title: "🎟️ Lotto", icon: Ticket, page: "gambling_lotto" as GamePage },
+    { title: "🃏 Blackjack", icon: Wallet, page: "gambling_blackjack" as GamePage },
+    { title: "🪙 Coin Toss", icon: Coins, page: "gambling_coin" as GamePage },
+    { title: "🐴 Horse Racing", icon: LandmarkIcon, page: "gambling_horse" as GamePage },
+    { title: "🔢 Number Game", icon: Hash, page: "gambling_number" as GamePage },
+    { title: "🎲 Gambling Dens", icon: Coins, page: "gambling_dens" as GamePage },
+    { title: "🔴 Roulette", icon: Coins, page: "roulette" as GamePage },
+    { title: "🎰 Slots", icon: Coins, page: "slots" as GamePage },
+    { title: "💀 Russian Roulette", icon: Skull, page: "russian_roulette" as GamePage },
+    { title: "🐕 Dog Fighting", icon: SwordsIcon, page: "dog_fighting" as GamePage },
+    { title: "🏎️ Street Racing", icon: Car, page: "street_racing" as GamePage },
   ]},
-  { title: "PvP & Combat", icon: Swords, children: [
-    { title: "Death Match", icon: Skull, page: "death_match" as GamePage },
-    { title: "Combat Log", icon: SwordsIcon, page: "combat_log" as GamePage },
-    { title: "Fighting Styles", icon: Swords, page: "fighting_styles" as GamePage },
-    { title: "Armor", icon: Shield, page: "armor" as GamePage },
-    { title: "Season Rankings", icon: Trophy, page: "season_rankings" as GamePage },
-    { title: "Hit List", icon: Skull, page: "hit_list" as GamePage },
+  { title: "⚔️ PvP & Combat", icon: Swords, children: [
+    { title: "☠️ Death Match", icon: Skull, page: "death_match" as GamePage },
+    { title: "📝 Combat Log", icon: SwordsIcon, page: "combat_log" as GamePage },
+    { title: "🥋 Fighting Styles", icon: Swords, page: "fighting_styles" as GamePage },
+    { title: "🛡️ Armor", icon: Shield, page: "armor" as GamePage },
+    { title: "🏆 Season Rankings", icon: Trophy, page: "season_rankings" as GamePage },
+    { title: "🎯 Hit List", icon: Skull, page: "hit_list" as GamePage },
   ]},
 
 
-  { title: "Social", icon: Users, children: [
-    { title: "Gifting", icon: Crown, page: "gifting" as GamePage },
-    { title: "Crime Fame", icon: Trophy, page: "crime_fame" as GamePage },
+  { title: "💌 Social", icon: Users, children: [
+    { title: "🎁 Gifting", icon: Crown, page: "gifting" as GamePage },
+    { title: "🌟 Crime Fame", icon: Trophy, page: "crime_fame" as GamePage },
   ]},
-  { title: "Underworld", icon: Globe, children: [
-    { title: "Black Market", icon: Package, page: "black_market" as GamePage },
-    { title: "Wanted Board", icon: AlertTriangle, page: "wanted_board" as GamePage },
-    { title: "Smuggling Routes", icon: Truck, page: "smuggling_routes" as GamePage },
-    { title: "Crime Spree", icon: Flame, page: "crime_spree" as GamePage },
+  { title: "🌐 Underworld", icon: Globe, children: [
+    { title: "🖤 Black Market", icon: Package, page: "black_market" as GamePage },
+    { title: "🔴 Wanted Board", icon: AlertTriangle, page: "wanted_board" as GamePage },
+    { title: "🚛 Smuggling Routes", icon: Truck, page: "smuggling_routes" as GamePage },
+    { title: "🔥 Crime Spree", icon: Flame, page: "crime_spree" as GamePage },
   ]},
-  { title: "Empire", icon: Crown, children: [
-    { title: "Skill Tree", icon: Brain, page: "skill_tree" as GamePage },
-    { title: "Daily Challenges", icon: Calendar, page: "daily_challenges" as GamePage },
-    { title: "Colosseum", icon: Swords, page: "colosseum" as GamePage },
-    { title: "Safe Houses", icon: Home, page: "safe_houses" as GamePage },
-    { title: "Cartel", icon: Users, page: "cartel" as GamePage },
-    { title: "Reputation", icon: Globe, page: "reputation" as GamePage },
+  { title: "👑 Empire", icon: Crown, children: [
+    { title: "🧠 Skill Tree", icon: Brain, page: "skill_tree" as GamePage },
+    { title: "📅 Daily Challenges", icon: Calendar, page: "daily_challenges" as GamePage },
+    { title: "🏟️ Colosseum", icon: Swords, page: "colosseum" as GamePage },
+    { title: "🏠 Safe Houses", icon: Home, page: "safe_houses" as GamePage },
+    { title: "🤝 Cartel", icon: Users, page: "cartel" as GamePage },
+    { title: "🌍 Reputation", icon: Globe, page: "reputation" as GamePage },
   ]},
 ];
 
 const rightMenuSections = [
-  { title: "Messages", icon: MessageSquare, page: "messages" as GamePage },
-  { title: "Inbox", icon: Inbox, page: "inbox" as GamePage },
-  { title: "Notifications", icon: Bell, page: "notifications_page" as GamePage },
-  { title: "Forums", icon: MessageSquare, children: [
-    { title: "General", icon: MessageSquare, page: "forum_general" as GamePage },
-    { title: "Sales & Wanted", icon: Banknote, page: "forum_sales" as GamePage },
-    { title: "Off-Topic", icon: MessageSquare, page: "forum_offtopic" as GamePage },
-    { title: "Shadows", icon: MessageSquare, page: "forum_shadows" as GamePage },
-    { title: "Search Posts", icon: Search, page: "forum_search" as GamePage },
+  { title: "📩 Messages", icon: MessageSquare, page: "messages" as GamePage },
+  { title: "📥 Inbox", icon: Inbox, page: "inbox" as GamePage },
+  { title: "🔔 Notifications", icon: Bell, page: "notifications_page" as GamePage },
+  { title: "💬 Forums", icon: MessageSquare, children: [
+    { title: "📢 General", icon: MessageSquare, page: "forum_general" as GamePage },
+    { title: "💰 Sales & Wanted", icon: Banknote, page: "forum_sales" as GamePage },
+    { title: "💭 Off-Topic", icon: MessageSquare, page: "forum_offtopic" as GamePage },
+    { title: "🌑 Shadows", icon: MessageSquare, page: "forum_shadows" as GamePage },
+    { title: "🔍 Search Posts", icon: Search, page: "forum_search" as GamePage },
   ]},
-  { title: "City Overview", icon: MapPin, page: "city_overview" as GamePage },
-  { title: "Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
-  { title: "Statistics", icon: BarChart3, page: "statistics" as GamePage },
-  { title: "FAQ", icon: BookOpen, page: "faq" as GamePage },
-  { title: "Support", icon: HelpCircle, page: "support" as GamePage },
-  { title: "Online Players", icon: Wifi, page: "online_list" as GamePage },
-  { title: "Admin Panel", icon: Shield, page: "admin_panel" as GamePage },
-  { title: "Become Admin", icon: Key, page: "become_admin" as GamePage },
+  { title: "🏙️ City Overview", icon: MapPin, page: "city_overview" as GamePage },
+  { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
+  { title: "📊 Statistics", icon: BarChart3, page: "statistics" as GamePage },
+  { title: "❓ FAQ", icon: BookOpen, page: "faq" as GamePage },
+  { title: "🆘 Support", icon: HelpCircle, page: "support" as GamePage },
+  { title: "🟢 Online Players", icon: Wifi, page: "online_list" as GamePage },
+  { title: "⚙️ Admin Panel", icon: Shield, page: "admin_panel" as GamePage },
+  { title: "🔑 Become Admin", icon: Key, page: "become_admin" as GamePage },
 ];
 
 function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (p: GamePage) => void }) {
@@ -537,35 +554,78 @@ function LevelUpModal({ player, onDone }: { player: { _id: string; level?: numbe
 
 function AirportPage() {
   const player = useQuery(api.game.getPlayer);
+  const commitCrime = useMutation(api.game.commitCrime);
   const changeLocation = useMutation(api.game.changeLocation);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [cityActivity, setCityActivity] = useState<string | null>(null);
+  const cooldown = useCooldown(90);
 
   if (!player) return <LoadingPage />;
 
   const travel = async (loc: string) => {
     setLoading(true); setMsg("");
-    try { await changeLocation({ location: loc }); setMsg(`Traveled to ${loc}!`); }
+    try { await changeLocation({ location: loc }); setMsg(`✈️ Flew to ${loc}!`); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doDrugRun = async (city: string) => {
+    if (cooldown.onCooldown) return;
+    setLoading(true); setMsg("");
+    try {
+      const res = await commitCrime({ type: "car_theft" });
+      const data = res as unknown as Record<string, unknown>;
+      if (data.success) { setMsg(`💊 Drug run in ${city} successful! +$${(data.moneyEarned as number ?? 0).toLocaleString()} (+50% XP boost)`); }
+      else { setMsg(`💀 Drug run in ${city} failed!`); }
+      cooldown.startCooldown();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
     setLoading(false);
   };
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Plane className="size-7 text-primary" /><h2 className="text-2xl font-bold">Airport</h2></div>
+      <div className="flex items-center gap-3"><Plane className="size-7 text-primary" /><h2 className="text-2xl font-bold">✈️ International Airport</h2></div>
       <div className="mafia-card rounded-xl p-4 text-sm text-muted-foreground">
-        Current location: <span className="text-primary font-bold">{player.location ?? "Unknown"}</span>
+        📍 Current location: <span className="text-primary font-bold">{player.location ?? "Unknown"}</span>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {cities.filter(c => c !== player.location).map(c => (
-          <button key={c} onClick={() => travel(c)} disabled={loading || player.inPrison}
-            className="mafia-card rounded-xl p-4 text-left hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all group disabled:opacity-40">
-            <div className="flex items-center gap-2 mb-1"><MapPinned className="size-4 text-primary group-hover:scale-110 transition-transform" /><span className="font-semibold text-sm">{c}</span></div>
-            <div className="text-[10px] text-muted-foreground">Click to travel</div>
-          </button>
+      <CooldownBar cooldown={cooldown} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {cities.filter(c => c.name !== player.location).map(c => (
+          <motion.div key={c.name} whileHover={{ scale: 1.01 }} className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{c.emoji}</span>
+                <div>
+                  <div className="font-bold text-sm">{c.name}</div>
+                  <div className="flex gap-1.5 mt-0.5">
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${c.crime === "high" ? "bg-red-950/50 text-red-400 border border-red-800/50" : c.crime === "medium" ? "bg-yellow-950/50 text-yellow-400 border border-yellow-800/50" : "bg-green-950/50 text-green-400 border border-green-800/50"}`}>{c.crime.toUpperCase()} CRIME</span>
+                    {c.boost !== 1.0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">+{Math.round((c.boost - 1) * 100)}% BOOST</span>}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {c.murderCity && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-950/30 text-red-300 border border-red-800/30">🔥 24/7 MURDERS +50% XP</span>}
+              {c.drugRun && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-950/30 text-purple-300 border border-purple-800/30">💊 DRUG RUNS</span>}
+              {c.taxFraud && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-950/30 text-orange-300 border border-orange-800/30">📋 TAX FRAUD</span>}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => travel(c.name)} disabled={loading || player.inPrison}
+                className="flex-1 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-40">
+                ✈️ Travel
+              </button>
+              {c.drugRun && (
+                <button onClick={() => doDrugRun(c.name)} disabled={loading || player.inPrison || cooldown.onCooldown}
+                  className="flex-1 py-2 bg-purple-600/20 text-purple-400 text-xs font-semibold rounded-lg hover:bg-purple-600/30 border border-purple-600/30 disabled:opacity-40">
+                  💊 Drug Run
+                </button>
+              )}
+            </div>
+          </motion.div>
         ))}
       </div>
-      {msg && <div className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in">✈️ {msg}</div>}
+      {msg && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in">{msg}</motion.div>}
     </div>
   );
 }
@@ -769,6 +829,13 @@ function PrisonPage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"overview" | "jobs" | "gangs" | "contraband" | "cells" | "escape">("overview");
+
+  // Auto-reload when prison sentence is over
+  useEffect(() => {
+    if (player && !player.inPrison) {
+      window.location.reload();
+    }
+  }, [player?.inPrison]);
 
   if (!player || !prisonStatus) return <LoadingPage />;
   if (!player.inPrison) return <EmptyPage icon={<Lock className="size-8 text-primary" />} title="Not in Prison" desc="You're a free man. Commit crimes to end up here..." />;
@@ -1476,7 +1543,7 @@ export default function Dashboard() {
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
     forum_shadows: "Shadows", forum_search: "Search Posts",
-    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", prison_break: "Prison Break", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
+    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", my_profile: "My Profile", season_pass: "Season Pass", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
   };
 
   const renderPage = () => {
@@ -1556,6 +1623,8 @@ export default function Dashboard() {
       case "daily_login": return <DailyLoginPage />;
       case "crew_system": return <CrewSystemPage />;
       case "ranked_pvp": return <RankedPvpPage />;
+      case "my_profile": return <MyProfilePage />;
+      case "season_pass": return <SeasonPassPage />;
       case "admin_panel": return <AdminPanel />;
       case "online_list": return <OnlineList />;
       case "become_admin": return <BecomeAdminPage />;
