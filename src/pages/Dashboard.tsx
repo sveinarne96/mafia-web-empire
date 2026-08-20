@@ -230,6 +230,16 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
                 <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-400 transition-all" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }} />
               </div>
             </div>
+            <div>
+              {(() => { const xpNeeded = (player.level ?? 1) * 100; const xp = player.experience ?? 0; const pct = Math.min(100, (xp / xpNeeded) * 100); const rank = (player.level ?? 1) >= 50 ? "Godfather" : (player.level ?? 1) >= 30 ? "Don" : (player.level ?? 1) >= 20 ? "Capo" : (player.level ?? 1) >= 10 ? "Soldier" : "Associate"; return (
+              <>
+                <div className="flex justify-between text-[10px] text-sidebar-foreground/50 mb-0.5"><span className="flex items-center gap-1"><Trophy className="size-2.5 text-yellow-400" />{rank}</span><span>XP {xp}/{xpNeeded}</span></div>
+                <div className="h-1.5 rounded-full bg-sidebar-accent overflow-hidden">
+                  <div className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-amber-400 transition-all" style={{ width: `${pct}%` }} />
+                </div>
+              </>
+              ); })()}
+            </div>
             <div className="grid grid-cols-2 gap-1.5 text-[10px]">
               <div className="bg-sidebar-accent/50 rounded px-2 py-1 text-sidebar-foreground/60">💰 ${(player.money ?? 0).toLocaleString()}</div>
               <div className="bg-sidebar-accent/50 rounded px-2 py-1 text-sidebar-foreground/60">🏦 ${(player.bank ?? 0).toLocaleString()}</div>
