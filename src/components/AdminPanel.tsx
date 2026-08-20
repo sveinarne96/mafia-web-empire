@@ -12,7 +12,7 @@ import {
 export function AdminPanel() {
   const isAdmin = useQuery(api.admin.isAdminCheck);
   const stats = useQuery(api.admin.getGameStats);
-  const players = useQuery(api.admin.getAllPlayers);
+  const players = useQuery(api.admin.getAllPlayers, isAdmin ? {} : "skip");
   const [tab, setTab] = useState<"stats" | "players" | "broadcast">("stats");
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [actionPanel, setActionPanel] = useState<string | null>(null);
