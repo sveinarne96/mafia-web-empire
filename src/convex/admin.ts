@@ -110,8 +110,10 @@ export const isAdminCheck = query({
 export const getAllPlayers = query({
   args: {},
   handler: async (ctx) => {
-    const player = await getAuthPlayer(ctx);
-    if (!isAdmin(player)) throw new Error("Admin only!");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
+    const player = await ctx.db.get(userId);
+    if (!player || !isAdmin(player)) return [];
     const all = await ctx.db.query("users").collect();
     return all
       .filter((u: any) => u.nickname)
