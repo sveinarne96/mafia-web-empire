@@ -1246,3 +1246,208 @@ export const seedProperties = mutation({
     return { seeded: true };
   },
 });
+
+// ===== SKILL TREE SYSTEM =====
+const SKILL_TREE = {
+  combat: {
+    name: "Combat",
+    skills: [
+      { id: "combat_1", name: "Street Fighter", desc: "+5 ATK", cost: 1, stat: "attack", bonus: 5 },
+      { id: "combat_2", name: "Iron Fist", desc: "+10 ATK", cost: 2, stat: "attack", bonus: 10 },
+      { id: "combat_3", name: "Killer Instinct", desc: "+15 ATK", cost: 3, stat: "attack", bonus: 15 },
+      { id: "combat_4", name: "Death Strike", desc: "+25 ATK", cost: 5, stat: "attack", bonus: 25 },
+    ],
+  },
+  defense: {
+    name: "Defense",
+    skills: [
+      { id: "def_1", name: "Iron Skin", desc: "+5 DEF", cost: 1, stat: "defense", bonus: 5 },
+      { id: "def_2", name: "Body Armor", desc: "+10 DEF", cost: 2, stat: "defense", bonus: 10 },
+      { id: "def_3", name: "Tank", desc: "+15 DEF", cost: 3, stat: "defense", bonus: 15 },
+      { id: "def_4", name: "Unbreakable", desc: "+25 DEF", cost: 5, stat: "defense", bonus: 25 },
+    ],
+  },
+  health: {
+    name: "Vitality",
+    skills: [
+      { id: "hp_1", name: "Thick Blood", desc: "+20 Max HP", cost: 1, stat: "maxLife", bonus: 20 },
+      { id: "hp_2", name: "Adrenaline", desc: "+40 Max HP", cost: 2, stat: "maxLife", bonus: 40 },
+      { id: "hp_3", name: "Rage", desc: "+60 Max HP", cost: 3, stat: "maxLife", bonus: 60 },
+      { id: "hp_4", name: "Undying", desc: "+100 Max HP", cost: 5, stat: "maxLife", bonus: 100 },
+    ],
+  },
+  criminal: {
+    name: "Criminal",
+    skills: [
+      { id: "crime_1", name: "Pickpocket Master", desc: "+10% crime success", cost: 1, stat: "crimeBonus", bonus: 10 },
+      { id: "crime_2", name: "Safe Cracker", desc: "+15% crime success", cost: 2, stat: "crimeBonus", bonus: 15 },
+      { id: "crime_3", name: "Phantom", desc: "+20% crime success", cost: 3, stat: "crimeBonus", bonus: 20 },
+      { id: "crime_4", name: "Ghost", desc: "+30% crime success", cost: 5, stat: "crimeBonus", bonus: 30 },
+    ],
+  },
+};
+
+export const getSkillTree = query({
+  args: {},
+  handler: async (ctx) => {
+    return SKILL_TREE;
+  },
+});
+
+export const getPlayerSkills = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { skillPoints: 0, unlockedSkills: [] as string[] };
+    const player = await ctx.db.get(userId);
+    if (!player) return { skillPoints: 0, unlockedSkills: [] as string[] };
+    return {
+      skillPoints: player.skillPoints ?? 0,
+      unlockedSkills: (player as any).unlockedSkills ?? [],
+    };
+  },
+});
+
+export const unlockSkill = mutation({
+  args: { skillId: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getAuthPlayer(ctx);
+    if (player.inPrison) throw new Error("You are in prison!");
+
+    const allSkills = Object.values(SKILL_TREE).flatMap(branch => branch.skills);
+    const skill = allSkills.find(s => s.id === args.skillId);
+    if (!skill) throw new Error("Skill not found!");
+
+    const unlocked = (player as any).unlockedSkills ?? [];
+    if (unlocked.includes(args.skillId)) throw new Error("Already unlocked!");
+    if ((player.skillPoints ?? 0) < skill.cost) throw new Error("Not enough skill points!");
+
+    const updates: Record<string, unknown> = {
+      skillPoints: (player.skillPoints ?? 0) - skill.cost,
+      unlockedSkills: [...unlocked, args.skillId],
+    };
+
+    // Apply stat bonus
+    if (skill.stat === "attack") updates.attack = (player.attack ?? 10) + skill.bonus;
+    else if (skill.stat === "defense") updates.defense = (player.defense ?? 10) + skill.bonus;
+    else if (skill.stat === "maxLife") updates.maxLife = (player.maxLife ?? 100) + skill.bonus;
+
+    await ctx.db.patch(player._id, updates);
+    return { skill: skill.name, bonus: skill.bonus };
+  },
+});
+
+// ===== DAILY LOGIN REWARDS =====
+const DAILY_REWARDS = [
+  { day: 1, money: 500, xp: 10, bonus: null },
+  { day: 2, money: 1000, xp: 20, bonus: "Small Health Pack" },
+  { day: 3, money: 1500, xp: 30, bonus: null },
+  { day: 4, money: 2000, xp: 50, bonus: "Copper Key" },
+  { day: 5, money: 3000, xp: 75, bonus: null },
+  { day: 6, money: 5000, xp: 100, bonus: "Silver Key" },
+  { day: 7, money: 10000, xp: 250, bonus: "Gold Key + Loot Box" },
+];
+
+export const getDailyLoginStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const player = await ctx.db.get(userId);
+    if (!player) return null;
+    const lastLogin = (player as any).lastDailyLogin ?? 0;
+    const streak = (player as any).dailyLoginStreak ?? 0;
+    const now = Date.now();
+    const lastDay = new Date(lastLogin).toDateString();
+    const today = new Date(now).toDateString();
+    const claimed = lastDay === today;
+    const lastMidnight = new Date(now).setHours(0, 0, 0, 0);
+    const missedDay = lastLogin < lastMidnight && lastLogin > 0;
+    const resetStreak = missedDay && (now - lastLogin > 172800000); // 48 hours
+    const currentDay = resetStreak ? 1 : (claimed ? streak : streak + 1);
+    return {
+      streak: claimed ? streak : currentDay,
+      claimed,
+      rewards: DAILY_REWARDS,
+      nextReward: DAILY_REWARDS[(resetStreak ? 0 : streak) % 7],
+    };
+  },
+});
+
+export const claimDailyLogin = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getAuthPlayer(ctx);
+    if (player.inPrison) throw new Error("You are in prison!");
+
+    const now = Date.now();
+    const lastLogin = (player as any).lastDailyLogin ?? 0;
+    const today = new Date(now).toDateString();
+    const lastDay = new Date(lastLogin).toDateString();
+    if (lastDay === today) throw new Error("Already claimed today!");
+
+    const lastMidnight = new Date(now).setHours(0, 0, 0, 0);
+    const missedDay = lastLogin < lastMidnight && lastLogin > 0;
+    const resetStreak = missedDay && (now - lastLogin > 172800000);
+
+    let streak = resetStreak ? 1 : ((player as any).dailyLoginStreak ?? 0) + 1;
+    if (streak > 7) streak = 1;
+    const reward = DAILY_REWARDS[(streak - 1) % 7];
+
+    await ctx.db.patch(player._id, {
+      money: (player.money ?? 0) + reward.money,
+      experience: (player.experience ?? 0) + reward.xp,
+      lastDailyLogin: now,
+      dailyLoginStreak: streak,
+      skillPoints: (player.skillPoints ?? 0) + 1,
+    } as any);
+
+    return {
+      day: streak,
+      money: reward.money,
+      xp: reward.xp,
+      bonus: reward.bonus,
+      skillPoints: 1,
+    };
+  },
+});
+
+// ===== CRAFTING SYSTEM =====
+const CRAFTING_RECIPES = [
+  { id: "craft_knife", name: "Shiv", ingredients: ["Scrap Metal x2"], result: { attack: 5 }, cost: 500 },
+  { id: "craft_armor", name: "Makeshift Armor", ingredients: ["Leather x3"], result: { defense: 5 }, cost: 800 },
+  { id: "craft_gun", name: "Street Revolver", ingredients: ["Scrap Metal x3", "Wire x1"], result: { attack: 15 }, cost: 3000 },
+  { id: "craft_vest", name: "Ballistic Vest", ingredients: ["Kevlar x2", "Leather x2"], result: { defense: 15 }, cost: 3500 },
+  { id: "craft_explosive", name: "Pipe Bomb", ingredients: ["Gunpowder x3", "Scrap Metal x1"], result: { attack: 25 }, cost: 5000 },
+  { id: "craft_tactical", name: "Tactical Helmet", ingredients: ["Kevlar x1", "Wire x2"], result: { defense: 10, maxLife: 20 }, cost: 4000 },
+];
+
+export const getCraftingRecipes = query({
+  args: {},
+  handler: async () => CRAFTING_RECIPES,
+});
+
+export const craftItem = mutation({
+  args: { recipeId: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getAuthPlayer(ctx);
+    if (player.inPrison) throw new Error("You are in prison!");
+
+    const recipe = CRAFTING_RECIPES.find(r => r.id === args.recipeId);
+    if (!recipe) throw new Error("Recipe not found!");
+    if ((player.money ?? 0) < recipe.cost) throw new Error("Not enough money!");
+
+    const updates: Record<string, unknown> = {
+      money: player.money - recipe.cost,
+      experience: (player.experience ?? 0) + 20,
+      skillPoints: (player.skillPoints ?? 0) + 1,
+    };
+
+    if (recipe.result.attack) updates.attack = (player.attack ?? 10) + recipe.result.attack;
+    if (recipe.result.defense) updates.defense = (player.defense ?? 10) + recipe.result.defense;
+    if (recipe.result.maxLife) updates.maxLife = (player.maxLife ?? 100) + recipe.result.maxLife;
+
+    await ctx.db.patch(player._id, updates);
+    return { crafted: recipe.name, cost: recipe.cost };
+  },
+});
