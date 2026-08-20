@@ -75,9 +75,13 @@ const branchColors: Record<string, { bg: string; text: string; border: string; i
 
 export function SkillTreePage() {
   const player = useQuery(api.game.getPlayer);
+  const playerSkills = useQuery(api.gameFeatures.getPlayerSkills);
+  const unlockSkill = useMutation(api.gameFeatures.unlockSkill);
   const [activeBranch, setActiveBranch] = useState<string>("combat");
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
-  const [learnedSkills] = useState<Set<string>>(new Set()); // Would come from backend
+  const [learnMsg, setLearnMsg] = useState<string | null>(null);
+  const [loadingSkill, setLoadingSkill] = useState<string | null>(null);
+  const learnedSkills = new Set(playerSkills?.unlockedSkills ?? []);
 
   const branch = branchColors[activeBranch];
   const branchSkills = skillTree.filter(s => s.branch === activeBranch);
@@ -166,10 +170,18 @@ export function SkillTreePage() {
               {skill.requires && skill.requires.length > 0 && (
                 <div className="text-[10px] text-muted-foreground mb-2">Requires: {skill.requires.map(r => skillTree.find(s => s.id === r)?.name).join(", ")}</div>
               )}
-              <button disabled={learnedSkills.has(skill.id) || (player?.money ?? 0) < skill.cost}
+              <button disabled={learnedSkills.has(skill.id) || (player?.money ?? 0) < skill.cost || loadingSkill !== null}
+                onClick={async () => {
+                  if (learnedSkills.has(skill.id)) return;
+                  setLoadingSkill(skill.id); setLearnMsg(null);
+                  try { await unlockSkill({ skillId: skill.id }); setLearnMsg(`✅ ${skill.name} unlocked!`); }
+                  catch (e: unknown) { setLearnMsg(e instanceof Error ? e.message : "Failed"); }
+                  setLoadingSkill(null);
+                }}
                 className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all ${learnedSkills.has(skill.id) ? "bg-green-900/30 text-green-400" : (player?.money ?? 0) >= skill.cost ? "bg-primary text-primary-foreground hover:opacity-90" : "bg-muted text-muted-foreground cursor-not-allowed"}`}>
-                {learnedSkills.has(skill.id) ? "✅ Learned" : `Learn for $${skill.cost.toLocaleString()}`}
+                {learnedSkills.has(skill.id) ? "✅ Learned" : loadingSkill === skill.id ? "Learning..." : `Learn for $${skill.cost.toLocaleString()}`}
               </button>
+              {learnMsg && <div className="mt-2 text-xs text-green-400">{learnMsg}</div>}
             </motion.div>
           );
         })()}
@@ -337,6 +349,8 @@ export function ColosseumPage() {
 
   const fighter = colosseumFighters.find(f => f.id === selectedFighter);
 
+  const defeatBoss = useMutation(api.game.defeatBoss);
+
   const startFight = (fid: string) => {
     const f = colosseumFighters.find(x => x.id === fid);
     if (!f || !player) return;
@@ -348,7 +362,7 @@ export function ColosseumPage() {
     setResult(null);
   };
 
-  const attack = () => {
+  const attack = async () => {
     if (!fighter || !inCombat || result) return;
     const pDmg = Math.max(1, (player?.attack ?? 10) + Math.floor(Math.random() * 15) - Math.floor(fighter.defense * 0.2));
     const eDmg = Math.max(1, fighter.attack + Math.floor(Math.random() * 10) - Math.floor((player?.defense ?? 10) * 0.3));
@@ -361,10 +375,12 @@ export function ColosseumPage() {
       setResult("win");
       setStreak(s => s + 1);
       setFightLog(prev => [...prev, `🎉 ${fighter.name} is defeated!`]);
+      try { await defeatBoss({ bossId: fighter.id, reward: fighter.reward, xp: Math.floor(fighter.reward / 100), won: true }); } catch {}
     } else if (nPhp <= 0) {
       setResult("lose");
       setStreak(0);
       setFightLog(prev => [...prev, `💀 You have been knocked out!`]);
+      try { await defeatBoss({ bossId: fighter.id, reward: 0, xp: 0, won: false }); } catch {}
     }
   };
 
@@ -513,6 +529,29 @@ const tierBadgeColors: Record<string, string> = {
 
 export function SafeHousesPage() {
   const player = useQuery(api.game.getPlayer);
+  const properties = useQuery(api.game.getProperties, {});
+  const buyProperty = useMutation(api.game.buyProperty);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState<'market' | 'owned'>('market');
+
+  const collectIncome = useMutation(api.game.collectPropertyIncome);
+  const ownedProps = (properties ?? []).filter((p: any) => p.ownerId === player?._id);
+  const availableProps = (properties ?? []).filter((p: any) => !p.ownerId);
+  const totalIncome = ownedProps.reduce((sum: number, p: any) => sum + (p.income ?? 0), 0);
+  const displayProps = selectedTab === 'market' ? availableProps : ownedProps;
+
+  const handleBuy = async (propertyId: string) => {
+    setLoadingId(propertyId); setMsg(null);
+    try { await buyProperty({ propertyId: propertyId as any }); setMsg('✅ Property purchased!'); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : 'Failed'); }
+    setLoadingId(null);
+  };
+
+  const handleCollect = async () => {
+    try { const r = await collectIncome(); setMsg(`✅ Collected $${r.income.toLocaleString()}!`); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : 'Failed'); }
+  };
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -524,39 +563,49 @@ export function SafeHousesPage() {
         </div>
       </div>
 
+      {msg && <div className="p-3 rounded-lg text-sm bg-primary/10 border border-primary/20 text-primary animate-fade-in">{msg}</div>}
       <div className="grid grid-cols-2 gap-3">
         <div className="mafia-card rounded-xl p-3 text-center">
-          <div className="text-lg font-bold text-green-400">0</div>
+          <div className="text-lg font-bold text-green-400">{ownedProps.length}</div>
           <div className="text-[10px] text-muted-foreground">Owned</div>
         </div>
         <div className="mafia-card rounded-xl p-3 text-center">
-          <div className="text-lg font-bold text-primary">$0</div>
+          <div className="text-lg font-bold text-primary">${totalIncome.toLocaleString()}</div>
           <div className="text-[10px] text-muted-foreground">Daily Income</div>
         </div>
       </div>
+      {ownedProps.length > 0 && (
+        <button onClick={handleCollect} className="w-full py-2.5 bg-green-600 text-white font-bold rounded-xl hover:bg-green-500 transition-all">
+          💰 Collect Income (${totalIncome.toLocaleString()})
+        </button>
+      )}
+      <div className="flex gap-2 mb-2">
+        <button onClick={() => setSelectedTab('market')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${selectedTab === 'market' ? 'bg-primary text-primary-foreground' : 'bg-background/50 text-muted-foreground'}`}>Market ({availableProps.length})</button>
+        <button onClick={() => setSelectedTab('owned')} className={`px-3 py-1.5 text-xs rounded-lg font-bold transition-all ${selectedTab === 'owned' ? 'bg-primary text-primary-foreground' : 'bg-background/50 text-muted-foreground'}`}>My Properties ({ownedProps.length})</button>
+      </div>
 
       <div className="space-y-3">
-        {safeHouses.map(sh => {
-          const canBuy = (player?.money ?? 0) >= sh.price;
+        {displayProps.length === 0 && <div className="text-center py-8 text-muted-foreground text-sm">{selectedTab === 'market' ? 'No properties available.' : 'You own no properties yet.'}</div>}
+        {displayProps.map((sh: any) => {
+          const canBuy = selectedTab === 'market' && (player?.money ?? 0) >= sh.price;
           return (
-            <motion.div key={sh.id} whileHover={canBuy ? { scale: 1.01 } : {}}
-              className={`mafia-card rounded-xl p-4 border transition-all ${canBuy ? "hover:border-primary/30 cursor-pointer" : "opacity-60"}`}>
+            <motion.div key={sh._id} whileHover={canBuy ? { scale: 1.01 } : {}}
+              className={`mafia-card rounded-xl p-4 border transition-all ${canBuy ? "hover:border-primary/30 cursor-pointer" : ""}`}>
               <div className="flex items-center gap-4">
-                <div className="text-4xl">{sh.icon}</div>
+                <div className="text-3xl">🏠</div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm">{sh.name}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full capitalize ${tierBadgeColors[sh.tier]}`}>{sh.tier}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">📍 {sh.location}</div>
-                  <div className="flex gap-3 mt-1.5">
-                    <span className="text-[10px] text-green-400">💰 +${sh.dailyIncome.toLocaleString()}/day</span>
-                    <span className="text-[10px] text-blue-400">🛡️ +{sh.defenseBonus} DEF</span>
-                    <span className="text-[10px] text-purple-400">👁️ +{sh.hiddenBonus} Hidden</span>
-                  </div>
+                  <div className="font-bold text-sm">{sh.name}</div>
+                  <div className="text-xs text-muted-foreground">📍 {sh.city}</div>
+                  <div className="text-[10px] text-green-400 mt-1">💰 +${sh.income.toLocaleString()}/day</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-bold text-primary">${sh.price.toLocaleString()}</div>
+                  {selectedTab === 'market' && (
+                    <button onClick={() => handleBuy(sh._id)} disabled={!canBuy || loadingId === sh._id}
+                      className="mt-1 px-3 py-1 text-[10px] font-bold rounded bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-40 transition-all">
+                      {loadingId === sh._id ? '...' : 'Buy'}
+                    </button>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -591,8 +640,8 @@ const spreeTiers: SpreeTier[] = [
 
 export function CrimeSpreePage() {
   const player = useQuery(api.game.getPlayer);
-  const [currentSpree] = useState(0);
-  const [totalSpreeEarnings] = useState(0);
+  const currentSpree = (player?.totalCrimes ?? 0) % 100;
+  const totalSpreeEarnings = (player?.money ?? 0);
 
   const currentTier = [...spreeTiers].reverse().find(t => currentSpree >= t.crimes);
   const nextTier = spreeTiers.find(t => currentSpree < t.crimes);
@@ -810,8 +859,19 @@ const smugglingRoutes: SmugglingRoute[] = [
 
 export function SmugglingRoutesPage() {
   const player = useQuery(api.game.getPlayer);
+  const commitCrime = useMutation(api.game.commitCategoryCrime);
   const [activeRoute, setActiveRoute] = useState<string | null>(null);
   const [smuggling, setSmuggling] = useState(false);
+  const [result, setResult] = useState<{ success: boolean; money: number } | null>(null);
+
+  const runSmuggle = async (route: any) => {
+    setSmuggling(true); setResult(null);
+    try {
+      const res = await commitCrime({ crimeId: `smuggle_${route.id}`, reward: route.profit, risk: route.risk, xp: Math.floor(route.profit / 200) });
+      setResult({ success: res.success, money: res.moneyEarned });
+    } catch { setResult({ success: false, money: 0 }); }
+    setSmuggling(false);
+  };
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -854,7 +914,13 @@ export function SmugglingRoutesPage() {
               {isActive && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                   className="mt-4 pt-4 border-t border-border/30">
+                  {result && activeRoute === route.id && (
+                    <div className={`mb-3 p-3 rounded-lg text-sm font-bold ${result.success ? "bg-green-950/30 border border-green-800/50 text-green-400" : "bg-red-950/30 border border-red-800/50 text-red-400"}`}>
+                      {result.success ? `Smuggled! +$${result.money.toLocaleString()}` : "Caught! Failed!"}
+                    </div>
+                  )}
                   <button disabled={smuggling}
+                    onClick={() => runSmuggle(route)}
                     className={`w-full py-2.5 rounded-lg font-bold text-sm transition-all ${smuggling ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:opacity-90"}`}>
                     {smuggling ? "🚛 Smuggling in progress..." : `🚀 Start Smuggling ($${route.profit.toLocaleString()} potential)`}
                   </button>
