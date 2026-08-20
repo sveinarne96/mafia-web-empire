@@ -200,6 +200,7 @@ export const hireBodyguard = mutation({
     if (player._id === args.guardId) throw new Error("Can't hire yourself!");
     await ctx.db.patch(player._id, {
       bodyguardId: args.guardId, money: player.money - args.payPerDay * 7,
+      experience: (player.experience ?? 0) + 5,
     });
     return { hired: true };
   },
@@ -282,6 +283,7 @@ export const buyArmor = mutation({
     await ctx.db.patch(player._id, {
       armorEquipped: args.name, armorDurability: 100,
       money: player.money - args.cost,
+      experience: (player.experience ?? 0) + 5,
     });
     return { equipped: args.name };
   },
@@ -512,6 +514,7 @@ export const counterfeitMoney = mutation({
       const amount = Math.floor(1000 + Math.random() * 3000);
       await ctx.db.patch(player._id, {
         money: player.money - 500 + amount,
+        experience: (player.experience ?? 0) + 15,
         counterfeitSkill: Math.min(20, skill + 1),
         dirtyMoney: (player.dirtyMoney ?? 0) + amount,
       });
@@ -543,6 +546,7 @@ export const drugDeal = mutation({
       const sellPrice = Math.floor(totalCost * (1.5 + Math.random()));
       await ctx.db.patch(player._id, {
         money: player.money - totalCost + sellPrice,
+        experience: (player.experience ?? 0) + 15,
         drugDeals: (player.drugDeals ?? 0) + 1,
         dirtyMoney: (player.dirtyMoney ?? 0) + sellPrice,
       });
@@ -596,6 +600,7 @@ export const commitIdentityTheft = mutation({
       const stolen = Math.floor(target.bank * 0.1);
       await ctx.db.patch(player._id, {
         money: player.money + stolen, identityThefts: (player.identityThefts ?? 0) + 1,
+        experience: (player.experience ?? 0) + 15,
       });
       await ctx.db.patch(args.targetId, { bank: Math.max(0, target.bank - stolen) });
       return { success, stolen };
@@ -622,6 +627,7 @@ export const armsDeal = mutation({
       if (player.money < p.buy) throw new Error("Not enough money!");
       await ctx.db.patch(player._id, {
         money: player.money - p.buy, attack: player.attack + 3,
+        experience: (player.experience ?? 0) + 20,
         armsDeals: (player.armsDeals ?? 0) + 1,
       });
     } else {
@@ -645,6 +651,7 @@ export const intimidateWitness = mutation({
       await ctx.db.patch(player._id, {
         wantedLevel: Math.max(0, player.wantedLevel - 2),
         witnessIntimidations: (player.witnessIntimidations ?? 0) + 1,
+        experience: (player.experience ?? 0) + 10,
       });
       return { success, reduction: 2 };
     }
@@ -665,6 +672,7 @@ export const evadeTaxes = mutation({
     const fine = Math.floor(tax * 2);
     await ctx.db.patch(player._id, {
       money: Math.max(0, player.money - fine),
+      experience: (player.experience ?? 0) + 10,
       wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 2),
     });
     return { success: false, fine };
@@ -681,6 +689,7 @@ export const collectRacket = mutation({
     const risk = Math.random() < 0.15;
     await ctx.db.patch(player._id, {
       money: player.money + income,
+      experience: (player.experience ?? 0) + 10,
       racketeeringIncome: (player.racketeeringIncome ?? 0) + income,
     });
     if (risk) await ctx.db.patch(player._id, { wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 1) });
@@ -700,7 +709,7 @@ export const openGamblingDen = mutation({
       level: 1, income: 2000, riskLevel: 30,
       raided: false, lastCollected: Date.now(),
     });
-    await ctx.db.patch(player._id, { money: player.money - 50000 });
+    await ctx.db.patch(player._id, { money: player.money - 50000, experience: (player.experience ?? 0) + 10 });
     return { opened: true };
   },
 });
@@ -712,7 +721,7 @@ export const lendMoney = mutation({
     const player = await getAuthPlayer(ctx);
     if (player.money < args.amount) throw new Error("Not enough money!");
     if (player._id === args.borrowerId) throw new Error("Can't lend to yourself!");
-    await ctx.db.patch(player._id, { money: player.money - args.amount });
+    await ctx.db.patch(player._id, { money: player.money - args.amount, experience: (player.experience ?? 0) + 10 });
     const borrower = await ctx.db.get(args.borrowerId);
     if (borrower) {
       await ctx.db.patch(args.borrowerId, {
@@ -802,6 +811,7 @@ export const rouletteSpin = mutation({
     const winnings = won ? args.bet * multiplier : 0;
     await ctx.db.patch(player._id, {
       money: won ? player.money + winnings - args.bet : player.money - args.bet,
+      experience: (player.experience ?? 0) + 5,
     });
     return { result, color: isRed ? "red" : isBlack ? "black" : "green", won, winnings };
   },
@@ -829,6 +839,7 @@ export const playSlots = mutation({
     const winnings = multiplier > 0 ? args.bet * multiplier : 0;
     await ctx.db.patch(player._id, {
       money: winnings > 0 ? player.money + winnings - args.bet : player.money - args.bet,
+      experience: (player.experience ?? 0) + 5,
     });
     return { reels, multiplier, won: winnings > 0, winnings };
   },
@@ -847,6 +858,7 @@ export const betOnFight = mutation({
     const payout = won ? args.betAmount * 2 : 0;
     await ctx.db.patch(player._id, {
       money: won ? player.money + payout - args.betAmount : player.money - args.betAmount,
+      experience: (player.experience ?? 0) + 5,
     });
     return { won, payout };
   },
@@ -880,7 +892,7 @@ export const dogFight = mutation({
     const myDog = 10 + Math.floor(Math.random() * 20);
     const theirDog = 10 + Math.floor(Math.random() * 20);
     const won = myDog > theirDog;
-    await ctx.db.patch(player._id, { money: won ? player.money + args.bet : player.money - args.bet });
+    await ctx.db.patch(player._id, { money: won ? player.money + args.bet : player.money - args.bet, experience: (player.experience ?? 0) + 10 });
     await ctx.db.patch(args.opponentId, { money: won ? opponent.money - args.bet : opponent.money + args.bet });
     await ctx.db.insert("dogFights", {
       player1Id: player._id, player2Id: args.opponentId,
@@ -1035,6 +1047,7 @@ export const betrayFamily = mutation({
     const fid = player.familyId;
     await ctx.db.patch(player._id, {
       familyId: undefined, money: player.money + stolen,
+      experience: (player.experience ?? 0) + 5,
       betrayalCount: (player.betrayalCount ?? 0) + 1,
       reputation: Math.max(-100, player.reputation - 20), reputationAlignment: "evil",
     });
@@ -1095,7 +1108,7 @@ export const sendGift = mutation({
     const player = await getAuthPlayer(ctx);
     if (player.money < args.amount) throw new Error("Not enough money!");
     if (player._id === args.receiverId) throw new Error("Can't gift yourself!");
-    await ctx.db.patch(player._id, { money: player.money - args.amount });
+    await ctx.db.patch(player._id, { money: player.money - args.amount, experience: (player.experience ?? 0) + 10 });
     await ctx.db.insert("gifts", {
       senderId: player._id, receiverId: args.receiverId,
       type: "money", amount: args.amount,
@@ -1407,6 +1420,7 @@ export const claimDailyLogin = mutation({
     return {
       day: streak,
       money: reward.money,
+      experience: (player.experience ?? 0) + 5,
       xp: reward.xp,
       bonus: reward.bonus,
       skillPoints: 1,
