@@ -570,6 +570,372 @@ function generateGeneralMissions(): MissionData[] {
     id++;
   }
 
+
+  // ===== PRISON MISSIONS (300) =====
+  for (let i = 0; i < 300; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 75));
+    const diff = diffLevels[diffIdx];
+    const lvl = 3 + Math.floor(i / 25);
+    const reward = [1500, 6000, 20000, 60000][diffIdx] + Math.floor(Math.random() * 2000);
+    const xp = [25, 70, 180, 450][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const prisonOps = ["Cell Block Riot", "Contraband Smuggle", "Guard Bribe", "Tunnel Dig", "Prison Job", "Gang Alliance", "Solitary Escape", "Prison Fight"];
+    const op = prisonOps[i % prisonOps.length];
+    const num = Math.floor(i / prisonOps.length) + 1;
+    missions.push(m(
+      `🔒 ${op} #${num}`,
+      `Execute "${op.toLowerCase()}" operations from inside prison.`,
+      reward, 15 + diffIdx * 15, lvl, "crime", diff, xp, time, "Prison"
+    ));
+  }
+
+  // ===== HEIST CHAINS (300) =====
+  for (let i = 0; i < 300; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 75));
+    const diff = diffLevels[diffIdx];
+    const lvl = 10 + Math.floor(i / 25);
+    const reward = [8000, 25000, 75000, 250000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [60, 150, 400, 1000][diffIdx];
+    const time = [90, 60, 45, 20][diffIdx];
+    const chainOps = ["Setup Phase", "Infiltration", "The Grab", "Escape Route", "Fencing Goods", "Laundering", "Clean Getaway"];
+    const op = chainOps[i % chainOps.length];
+    const chain = Math.floor(i / chainOps.length) + 1;
+    missions.push(m(
+      `🔗 Chain ${chain}: ${op}`,
+      `Complete the "${op.toLowerCase()}" phase of heist chain #${chain}.`,
+      reward, 25 + diffIdx * 25, lvl, "heist", diff, xp, time
+    ));
+  }
+
+  // ===== TERRITORY WARS (300) =====
+  for (let i = 0; i < 300; i++) {
+    const city = CITIES[i % CITIES.length];
+    const diffIdx = Math.min(3, Math.floor(i / 75));
+    const diff = diffLevels[diffIdx];
+    const lvl = 8 + Math.floor(i / 25);
+    const reward = [4000, 15000, 45000, 120000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [40, 100, 250, 600][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const warOps = ["Claim District", "Defend Turf", "Raid Enemy", "Patrol Route", "Set Ambush", "Sabotage Op"];
+    const op = warOps[i % warOps.length];
+    const num = Math.floor(i / warOps.length) + 1;
+    missions.push(m(
+      `⚔️ ${op} #${num}`,
+      `Execute "${op.toLowerCase()}" in ${city}. Control the territory.`,
+      reward, 20 + diffIdx * 20, lvl, "territory", diff, xp, time, city
+    ));
+  }
+
+  // ===== ESPIONAGE MISSIONS (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 10 + Math.floor(i / 20);
+    const reward = [5000, 18000, 50000, 150000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [50, 120, 300, 700][diffIdx];
+    const time = [45, 30, 20, 10][diffIdx];
+    const spyOps = ["Plant Wiretap", "Extract Intel", "Double Agent", "Disinformation", "Surveillance", "Code Breaker"];
+    const op = spyOps[i % spyOps.length];
+    const num = Math.floor(i / spyOps.length) + 1;
+    missions.push(m(
+      `🕵️ ${op} #${num}`,
+      `Execute "${op.toLowerCase()}" espionage operations.`,
+      reward, 25 + diffIdx * 25, lvl, "espionage", diff, xp, time
+    ));
+  }
+
+  // ===== TOURNAMENT MISSIONS (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 5 + Math.floor(i / 20);
+    const reward = [3000, 10000, 30000, 80000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [35, 90, 220, 550][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const tourneyOps = ["Qualifying Round", "Quarterfinal", "Semifinal", "Finals", "Championship"];
+    const op = tourneyOps[i % tourneyOps.length];
+    const num = Math.floor(i / tourneyOps.length) + 1;
+    missions.push(m(
+      `🏆 Tournament: ${op} #${num}`,
+      `Win the ${op.toLowerCase()} of a fighting tournament.`,
+      reward, 20 + diffIdx * 20, lvl, "combat", diff, xp, time
+    ));
+  }
+
+  // ===== DRUG OPERATIONS (300) =====
+  for (let i = 0; i < 300; i++) {
+    const city = CITIES[i % CITIES.length];
+    const diffIdx = Math.min(3, Math.floor(i / 75));
+    const diff = diffLevels[diffIdx];
+    const lvl = 8 + Math.floor(i / 25);
+    const reward = [4000, 14000, 40000, 100000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [40, 100, 250, 600][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const drugOps = ["Street Distribution", "Lab Production", "Supply Chain", "Warehouse Raid", "Deal Gone Wrong", "Corner Hustle"];
+    const op = drugOps[i % drugOps.length];
+    const num = Math.floor(i / drugOps.length) + 1;
+    missions.push(m(
+      `💊 ${op} #${num}`,
+      `Run "${op.toLowerCase()}" operations in ${city}.`,
+      reward, 20 + diffIdx * 20, lvl, "crime", diff, xp, time, city
+    ));
+  }
+
+  // ===== POLICE Evasion (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 3 + Math.floor(i / 20);
+    const reward = [2000, 8000, 25000, 70000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [30, 80, 200, 500][diffIdx];
+    const time = [30, 20, 15, 10][diffIdx];
+    const copOps = ["Cop Chase", "Bribe Officer", "Evidence Destruction", "Alibi Setup", "Fake ID", "Witness Tampering"];
+    const op = copOps[i % copOps.length];
+    const num = Math.floor(i / copOps.length) + 1;
+    missions.push(m(
+      `👮 ${op} #${num}`,
+      `Evade law enforcement: ${op.toLowerCase()} operation.`,
+      reward, 15 + diffIdx * 15, lvl, "crime", diff, xp, time
+    ));
+  }
+
+  // ===== HEIST CREWS (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 12 + Math.floor(i / 20);
+    const reward = [10000, 30000, 80000, 250000][diffIdx] + Math.floor(Math.random() * 10000);
+    const xp = [80, 200, 500, 1200][diffIdx];
+    const time = [120, 90, 60, 30][diffIdx];
+    const crewOps = ["Recruit Specialist", "Plan Layout", "Scout Target", "Get Equipment", "Execute Job", "Split Loot"];
+    const op = crewOps[i % crewOps.length];
+    const num = Math.floor(i / crewOps.length) + 1;
+    missions.push(m(
+      `👥 Crew: ${op} #${num}`,
+      `Lead your crew through "${op.toLowerCase()}".`,
+      reward, 30 + diffIdx * 25, lvl, "social", diff, xp, time
+    ));
+  }
+
+  // ===== SMUGGLING ROUTES (300) =====
+  for (let i = 0; i < 300; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 75));
+    const diff = diffLevels[diffIdx];
+    const lvl = 6 + Math.floor(i / 25);
+    const reward = [3000, 12000, 35000, 90000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [35, 90, 220, 550][diffIdx];
+    const time = [60, 45, 30, 20][diffIdx];
+    const smugRoutes = ["Coastal Run", "Mountain Pass", "Tunnel Route", "River Delta", "Air Drop", "Border Crossing"];
+    const route = smugRoutes[i % smugRoutes.length];
+    const num = Math.floor(i / smugRoutes.length) + 1;
+    missions.push(m(
+      `🚛 Route: ${route} #${num}`,
+      `Complete the "${route.toLowerCase()}" smuggling route.`,
+      reward, 20 + diffIdx * 20, lvl, "transport", diff, xp, time
+    ));
+  }
+
+
+  // ===== BLACK MARKET DEALS (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 5 + Math.floor(i / 20);
+    const reward = [2000, 8000, 25000, 70000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [30, 80, 200, 500][diffIdx];
+    const time = [45, 30, 20, 10][diffIdx];
+    const bmOps = ["Buy Weapons", "Sell Contraband", "Trade Intel", "Exchange Goods", "Black Market Buy"];
+    const op = bmOps[i % bmOps.length];
+    const num = Math.floor(i / bmOps.length) + 1;
+    missions.push(m(`🖤 ${op} #${num}`, `Complete "${op.toLowerCase()}" at the black market.`, reward, 15 + diffIdx * 15, lvl, "underworld", diff, xp, time));
+  }
+
+  // ===== NIGHT OPS (200) =====
+  for (let i = 0; i < 200; i++) {
+    const city = CITIES[i % CITIES.length];
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 8 + Math.floor(i / 20);
+    const reward = [3000, 12000, 35000, 90000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [35, 90, 220, 550][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const nightOps = ["Night Raid", "Midnight Heist", "Dark Infiltration", "Shadow Operation", "Nocturnal Strike"];
+    const op = nightOps[i % nightOps.length];
+    const num = Math.floor(i / nightOps.length) + 1;
+    missions.push(m(`🌙 ${op} #${num}`, `Execute "${op.toLowerCase()}" in ${city} under cover of darkness.`, reward, 20 + diffIdx * 20, lvl, "crime", diff, xp, time, city));
+  }
+
+  // ===== VIP BODYGUARD (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 10 + Math.floor(i / 20);
+    const reward = [5000, 15000, 40000, 100000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [40, 100, 250, 600][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const bodyOps = ["Protect VIP", "Defend Shipment", "Escort Mission", "Guard Safehouse", "Security Detail"];
+    const op = bodyOps[i % bodyOps.length];
+    const num = Math.floor(i / bodyOps.length) + 1;
+    missions.push(m(`🛡️ ${op} #${num}`, `Complete "${op.toLowerCase()}" protection operations.`, reward, 20 + diffIdx * 20, lvl, "combat", diff, xp, time));
+  }
+
+  // ===== FRAUD OPERATIONS (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 5 + Math.floor(i / 20);
+    const reward = [2000, 8000, 25000, 70000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [30, 80, 200, 500][diffIdx];
+    const time = [45, 30, 20, 10][diffIdx];
+    const fraudOps = ["ID Theft Ring", "Credit Card Clone", "Tax Evasion Op", "Insurance Scam", "Fake Documents"];
+    const op = fraudOps[i % fraudOps.length];
+    const num = Math.floor(i / fraudOps.length) + 1;
+    missions.push(m(`📋 ${op} #${num}`, `Execute "${op.toLowerCase()}" fraud operations.`, reward, 15 + diffIdx * 15, lvl, "crime", diff, xp, time));
+  }
+
+  // ===== ARMS TRADE (200) =====
+  for (let i = 0; i < 200; i++) {
+    const city = CITIES[i % CITIES.length];
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 8 + Math.floor(i / 20);
+    const reward = [4000, 14000, 40000, 100000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [40, 100, 250, 600][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const armsOps = ["Weapons Smuggle", "Ammo Run", "Heavy Weapons", "Explosives Deal", "Sniper Acquisition"];
+    const op = armsOps[i % armsOps.length];
+    const num = Math.floor(i / armsOps.length) + 1;
+    missions.push(m(`🔫 ${op} #${num}`, `Complete "${op.toLowerCase()}" operations in ${city}.`, reward, 20 + diffIdx * 20, lvl, "crime", diff, xp, time, city));
+  }
+
+  // ===== CORPORATE CRIME (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 12 + Math.floor(i / 20);
+    const reward = [6000, 20000, 60000, 180000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [50, 120, 300, 700][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const corpOps = ["Insider Trading", "Data Theft", "Corporate Espionage", "Trade Secret Leak", "Stock Manipulation"];
+    const op = corpOps[i % corpOps.length];
+    const num = Math.floor(i / corpOps.length) + 1;
+    missions.push(m(`🏢 ${op} #${num}`, `Execute "${op.toLowerCase()}" corporate crime operations.`, reward, 25 + diffIdx * 25, lvl, "crime", diff, xp, time));
+  }
+
+  // ===== STREET RACES (200) =====
+  for (let i = 0; i < 200; i++) {
+    const city = CITIES[i % CITIES.length];
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 3 + Math.floor(i / 20);
+    const reward = [1500, 6000, 18000, 50000][diffIdx] + Math.floor(Math.random() * 2000);
+    const xp = [25, 70, 180, 450][diffIdx];
+    const time = [30, 20, 15, 10][diffIdx];
+    const raceOps = ["Sprint Race", "Drift Challenge", "Circuit Race", "Drag Race", "Endurance Run"];
+    const op = raceOps[i % raceOps.length];
+    const num = Math.floor(i / raceOps.length) + 1;
+    missions.push(m(`🏎️ ${op} #${num}`, `Win "${op.toLowerCase()}" events in ${city}.`, reward, 15 + diffIdx * 15, lvl, "crime", diff, xp, time, city));
+  }
+
+  // ===== UNDERGROUND ARENA (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 8 + Math.floor(i / 20);
+    const reward = [3000, 10000, 30000, 80000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [35, 90, 220, 550][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const arenaOps = ["Arena Fight", "Tournament Entry", "Champion Bout", "Survival Round", "Exhibition Match"];
+    const op = arenaOps[i % arenaOps.length];
+    const num = Math.floor(i / arenaOps.length) + 1;
+    missions.push(m(`🏟️ ${op} #${num}`, `Win "${op.toLowerCase()}" in the underground arena.`, reward, 20 + diffIdx * 20, lvl, "combat", diff, xp, time));
+  }
+
+  // ===== LEGENDARY HEISTS (300) =====
+  for (let i = 0; i < 300; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 75));
+    const diff = diffLevels[diffIdx];
+    const lvl = 20 + Math.floor(i / 25);
+    const reward = [20000, 75000, 200000, 1000000][diffIdx] + Math.floor(Math.random() * 10000);
+    const xp = [200, 500, 1200, 3000][diffIdx];
+    const time = [120, 90, 60, 30][diffIdx];
+    const legendaryOps = ["The Big Score", "Shadow Protocol", "Midnight Raid", "Ghost Heist", "The Grand Larceny", "Final Score"];
+    const op = legendaryOps[i % legendaryOps.length];
+    const num = Math.floor(i / legendaryOps.length) + 1;
+    missions.push(m(`⭐ ${op} #${num}`, `Execute the legendary "${op.toLowerCase()}" operation.`, reward, 50 + diffIdx * 50, lvl, "legendary", diff, xp, time));
+  }
+
+
+  // ===== REAL ESTATE (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 5 + Math.floor(i / 20);
+    const reward = [2000, 8000, 25000, 70000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [30, 80, 200, 500][diffIdx];
+    const time = [120, 90, 60, 30][diffIdx];
+    const reOps = ["Buy Property", "Flip House", "Rent Collection", "Property Upgrade", "Land Grab"];
+    const op = reOps[i % reOps.length];
+    const num = Math.floor(i / reOps.length) + 1;
+    missions.push(m(`🏠 ${op} #${num}`, `Complete "${op.toLowerCase()}" real estate operations.`, reward, 15 + diffIdx * 15, lvl, "business", diff, xp, time));
+  }
+
+  // ===== INVESTMENT (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 8 + Math.floor(i / 20);
+    const reward = [4000, 14000, 40000, 100000][diffIdx] + Math.floor(Math.random() * 3000);
+    const xp = [40, 100, 250, 600][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const invOps = ["Stock Buy", "Market Manipulation", "Insider Trade", "Portfolio Diversify", "Short Sell"];
+    const op = invOps[i % invOps.length];
+    const num = Math.floor(i / invOps.length) + 1;
+    missions.push(m(`📈 ${op} #${num}`, `Execute "${op.toLowerCase()}" investment operations.`, reward, 20 + diffIdx * 20, lvl, "business", diff, xp, time));
+  }
+
+  // ===== BOUNTY HUNTING (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 10 + Math.floor(i / 20);
+    const reward = [5000, 18000, 50000, 150000][diffIdx] + Math.floor(Math.random() * 5000);
+    const xp = [50, 120, 300, 700][diffIdx];
+    const time = [60, 45, 30, 15][diffIdx];
+    const bountyOps = ["Track Target", "Ambush Bounty", "Interrogate", "Collect Bounty", "Bounty Streak"];
+    const op = bountyOps[i % bountyOps.length];
+    const num = Math.floor(i / bountyOps.length) + 1;
+    missions.push(m(`🎯 ${op} #${num}`, `Execute bounty hunting: "${op.toLowerCase()}".`, reward, 25 + diffIdx * 25, lvl, "combat", diff, xp, time));
+  }
+
+  // ===== FORUM ACTIVITY (150) =====
+  for (let i = 0; i < 150; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 38));
+    const diff = diffLevels[diffIdx];
+    const lvl = 1 + Math.floor(i / 15);
+    const reward = [500, 2000, 6000, 15000][diffIdx] + Math.floor(Math.random() * 1000);
+    const xp = [15, 40, 100, 250][diffIdx];
+    const time = [30, 20, 15, 10][diffIdx];
+    const forumOps = ["Write Post", "Sell on Forum", "Recruit on Forum", "Trade Deal", "Intel Post"];
+    const op = forumOps[i % forumOps.length];
+    const num = Math.floor(i / forumOps.length) + 1;
+    missions.push(m(`💬 ${op} #${num}`, `Active on forums: "${op.toLowerCase()}" community engagement.`, reward, 10 + diffIdx * 10, lvl, "social", diff, xp, time));
+  }
+
+  // ===== DAILY CHALLENGES (200) =====
+  for (let i = 0; i < 200; i++) {
+    const diffIdx = Math.min(3, Math.floor(i / 50));
+    const diff = diffLevels[diffIdx];
+    const lvl = 1 + Math.floor(i / 20);
+    const reward = [1000, 4000, 12000, 35000][diffIdx] + Math.floor(Math.random() * 2000);
+    const xp = [20, 50, 130, 320][diffIdx];
+    const time = [120, 60, 45, 30][diffIdx];
+    const dailyOps = ["Daily Crime Streak", "Quick Cash", "Combat Training", "Stealth Challenge", "Speed Run"];
+    const op = dailyOps[i % dailyOps.length];
+    const num = Math.floor(i / dailyOps.length) + 1;
+    missions.push(m(`📅 ${op} #${num}`, `Complete the daily challenge: "${op.toLowerCase()}".`, reward, 15 + diffIdx * 15, lvl, "progression", diff, xp, time));
+  }
+
   return missions;
 }
 

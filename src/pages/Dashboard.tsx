@@ -6,14 +6,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Crown, Building2, Landmark, Trophy, Car, Home, Users, Swords, Truck,
-  Wrench, Package, Lock, Plane, Group, Target, Calendar, Shield,
-  UserMinus, Dice1, Ticket, Wallet, Coins, LandmarkIcon, Hash, Send,
-  Inbox, Bell, MessageSquare, Search, BarChart3, HelpCircle, MapPin,
-  SwordsIcon, Dices, Banknote, ChevronDown, LogOut, User,
-  AlertTriangle, Loader2, CircleDollarSign, Zap, MapPinned,
-  ShieldCheck, Skull, TrophyIcon, BookOpen,
-  Brain, Award, Flame, ShoppingBag, Globe, Gift, Wifi, Key, ScrollText,
+  Crown, Building2, Landmark, Trophy, Car, Home, Users, Swords, Truck, Wrench, Package, Lock, Plane, Group, Target, Calendar, Shield, Dice1, Ticket, Wallet, Coins, LandmarkIcon, Hash, Send, Inbox, Bell, MessageSquare, Search, BarChart3, HelpCircle, MapPin, SwordsIcon, Dices, Banknote, ChevronDown, LogOut, User, AlertTriangle, Loader2, CircleDollarSign, Zap, MapPinned, ShieldCheck, Skull, BookOpen, Brain, Award, Flame, ShoppingBag, Globe, Gift, Wifi, Key, ScrollText, Newspaper, Cloud, Tv, TreePine, Gem, Bomb, Ghost, Hammer, TrendingUp, Star, Clock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
@@ -26,6 +19,7 @@ import { BecomeAdminPage } from "../components/BecomeAdmin";
 import { MyProfilePage } from "../components/MyProfile";
 import { SeasonPassPage } from "../components/SeasonPass";
 import { UpdatesPage } from "../components/UpdatesPage";
+import { LiveChatPage, PrestigePage, CraftingPage, LeaderboardsPage, WorldMapPage, LotteryPage, CryptoPage, WeatherPage, NewsTickerPage, CrimeMasteryPage, LegendaryItemsPage, ArenaPage, LegacyBoardPage, RaidsPage, MysteryBoxesPage, GhostModePage, CrimeTVPage, TimeMachinePage } from "../components/AllFeatures";
 import {
   DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
   FightingStylesPage, ArmorPage, GamblingDenPage,
@@ -50,7 +44,11 @@ type GamePage =
   | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
   | "daily_login" | "crew_system" | "ranked_pvp"
   | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation"
-  | "admin_panel" | "online_list" | "become_admin" | "my_profile" | "season_pass" | "updates";
+  | "admin_panel" | "online_list" | "become_admin" | "my_profile" | "season_pass" | "updates"
+    | "live_chat" | "prestige" | "city_districts" | "crafting" | "leaderboards" | "world_map"
+    | "fight_club" | "lottery" | "crypto" | "weather" | "news_ticker" | "crime_mastery"
+    | "legendary_items" | "arena" | "legacy_board" | "raids" | "mystery_boxes" | "ghost_mode"
+    | "crime_tv" | "time_machine";
 
 const cities = [
   { name: "New York", emoji: "🗽", crime: "high", boost: 1.2, murderCity: true, drugRun: true },
@@ -159,6 +157,35 @@ const leftMenuSections: MenuItem[] = [
     { title: "💼 Company", icon: Shield, page: "company" as GamePage },
     { title: "🎁 Gifting", icon: Crown, page: "gifting" as GamePage },
     { title: "🌟 Crime Fame", icon: Trophy, page: "crime_fame" as GamePage },
+  ]},
+  { title: "🌐 World", icon: Globe, children: [
+    { title: "🗺️ World Map", icon: Globe, page: "world_map" as GamePage },
+    { title: "📰 News Ticker", icon: Newspaper, page: "news_ticker" as GamePage },
+    { title: "🌦️ Weather", icon: Cloud, page: "weather" as GamePage },
+    { title: "📺 Crime TV", icon: Tv, page: "crime_tv" as GamePage },
+  ]},
+  { title: "💎 Arsenal", icon: Gem, children: [
+    { title: "🔨 Crafting", icon: Hammer, page: "crafting" as GamePage },
+    { title: "💎 Legendary Items", icon: Gem, page: "legendary_items" as GamePage },
+    { title: "🎁 Mystery Boxes", icon: Star, page: "mystery_boxes" as GamePage },
+    { title: "👻 Ghost Mode", icon: Ghost, page: "ghost_mode" as GamePage },
+  ]},
+  { title: "🎮 Arena", icon: Swords, children: [
+    { title: "🥊 Fight Club", icon: Swords, page: "spar" as GamePage },
+    { title: "⚔️ Deathmatch", icon: Swords, page: "arena" as GamePage },
+    { title: "💣 Endgame Raids", icon: Bomb, page: "raids" as GamePage },
+  ]},
+  { title: "📈 Financial", icon: TrendingUp, children: [
+    { title: "₿ Crypto", icon: Coins, page: "crypto" as GamePage },
+    { title: "🎰 Lottery", icon: Ticket, page: "lottery" as GamePage },
+    { title: "🏙️ Districts", icon: MapPin, page: "city_districts" as GamePage },
+  ]},
+  { title: "⭐ Status", icon: Star, children: [
+    { title: "⭐ Prestige", icon: Crown, page: "prestige" as GamePage },
+    { title: "🏆 Leaderboards", icon: Trophy, page: "leaderboards" as GamePage },
+    { title: "🌲 Mastery", icon: TreePine, page: "crime_mastery" as GamePage },
+    { title: "📜 Legacy", icon: Award, page: "legacy_board" as GamePage },
+    { title: "⏪ Time Machine", icon: Clock, page: "time_machine" as GamePage },
   ]},
 ];
 
@@ -1558,7 +1585,7 @@ export default function Dashboard() {
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
     forum_shadows: "Shadows", forum_search: "Search Posts",
-    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", my_profile: "My Profile", season_pass: "Season Pass", updates: "Game Updates", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
+    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", my_profile: "My Profile", season_pass: "Season Pass", updates: "Game Updates", live_chat: "Live Chat", prestige: "Prestige", city_districts: "Districts", crafting: "Crafting", leaderboards: "Leaderboards", world_map: "World Map",  lottery: "Lottery", crypto: "Crypto", weather: "Weather", news_ticker: "News", crime_mastery: "Mastery", legendary_items: "Legendaries", arena: "Arena", legacy_board: "Legacy", raids: "Raids", mystery_boxes: "Mystery Boxes", ghost_mode: "Ghost Mode", crime_tv: "Crime TV", time_machine: "Time Machine", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
   };
 
   const renderPage = () => {
