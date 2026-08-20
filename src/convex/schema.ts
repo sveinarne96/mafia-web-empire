@@ -133,7 +133,7 @@ const schema = defineSchema(
       totalGifting: v.number(),
       totalMentoring: v.number(),
     })
-      .index("by_email", ["email"])
+      .index("email", ["email"])
       .index("by_nickname", ["nickname"])
       .index("by_location", ["location"])
       .index("by_family", ["familyId"])
