@@ -132,6 +132,11 @@ const schema = defineSchema(
       betrayalCount: v.number(),
       totalGifting: v.number(),
       totalMentoring: v.number(),
+
+      // Online tracking & admin
+      lastActive: v.number(),
+      isBanned: v.boolean(),
+      banReason: v.optional(v.string()),
     })
       .index("email", ["email"])
       .index("by_nickname", ["nickname"])

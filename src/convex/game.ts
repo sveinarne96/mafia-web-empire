@@ -170,6 +170,8 @@ export const registerPlayer = mutation({
       betrayalCount: 0,
       totalGifting: 0,
       totalMentoring: 0,
+      lastActive: Date.now(),
+      isBanned: false,
     });
   },
 });

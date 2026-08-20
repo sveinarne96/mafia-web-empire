@@ -13,13 +13,16 @@ import {
   SwordsIcon, Dices, Banknote, ChevronDown, LogOut, User,
   AlertTriangle, Loader2, CircleDollarSign, Zap, MapPinned,
   ShieldCheck, Skull, TrophyIcon, BookOpen,
-  Brain, Award, Flame, ShoppingBag, Globe, Gift,
+  Brain, Award, Flame, ShoppingBag, Globe, Gift, Wifi, Key,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
 import { UndergroundEconomyPage } from "../components/UndergroundEconomy";
 import { EpicActionResult, CooldownBar, useCooldown, EpicButton } from "@/components/EpicAction";
 import { PointsShopPage, GaragePage, MyItemsPage, MissionsPage, OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage, LegacyPage, ForumSearchPage, SupportPage } from "../components/GamePages";
+import { AdminPanel } from "../components/AdminPanel";
+import { OnlineList } from "../components/OnlineList";
+import { BecomeAdminPage } from "../components/BecomeAdmin";
 import {
   DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
   FightingStylesPage, ArmorPage, GamblingDenPage,
@@ -43,7 +46,8 @@ type GamePage =
   | "gifting" | "hit_list" | "crimes" | "boss_fights" | "crime_empire" | "heist_planning" | "world_events" | "criminal_pets"
   | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
   | "daily_login" | "crew_system" | "ranked_pvp"
-  | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation" | "prison_break";
+  | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation" | "prison_break"
+  | "admin_panel" | "online_list" | "become_admin";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
 
@@ -151,6 +155,9 @@ const rightMenuSections = [
   { title: "Statistics", icon: BarChart3, page: "statistics" as GamePage },
   { title: "FAQ", icon: BookOpen, page: "faq" as GamePage },
   { title: "Support", icon: HelpCircle, page: "support" as GamePage },
+  { title: "Online Players", icon: Wifi, page: "online_list" as GamePage },
+  { title: "Admin Panel", icon: Shield, page: "admin_panel" as GamePage },
+  { title: "Become Admin", icon: Key, page: "become_admin" as GamePage },
 ];
 
 function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (p: GamePage) => void }) {
@@ -1543,6 +1550,9 @@ export default function Dashboard() {
       case "daily_login": return <DailyLoginPage />;
       case "crew_system": return <CrewSystemPage />;
       case "ranked_pvp": return <RankedPvpPage />;
+      case "admin_panel": return <AdminPanel />;
+      case "online_list": return <OnlineList />;
+      case "become_admin": return <BecomeAdminPage />;
       default: return <HeadquartersPage />;
     }
   };
