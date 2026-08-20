@@ -511,7 +511,7 @@ export const claimDailyReward = mutation({
 
     const newStreak = (lastClaim && (now - lastClaim) < oneDayMs * 2) ? streak + 1 : 1;
     const dayIndex = ((newStreak - 1) % 7);
-    const rewards = [500, 1000, 2000, 3500, 5000, 7500, 15000];
+    const rewards = [100000, 350000, 700000, 1400000, 2800000, 6000000, 12000000];
     const reward = rewards[dayIndex];
     const isBonusDay = dayIndex === 6;
 

@@ -10,13 +10,13 @@ import {
 
 // ===== DAILY LOGIN REWARDS =====
 const DAILY_REWARDS = [
-  { day: 1, reward: 500, type: "money" as const, label: "$500", icon: "💰" },
-  { day: 2, reward: 1000, type: "money" as const, label: "$1,000", icon: "💰" },
-  { day: 3, reward: 2000, type: "money" as const, label: "$2,000", icon: "💰" },
-  { day: 4, reward: 3500, type: "money" as const, label: "$3,500", icon: "💰" },
-  { day: 5, reward: 5000, type: "money" as const, label: "$5,000", icon: "💎" },
-  { day: 6, reward: 7500, type: "money" as const, label: "$7,500", icon: "💎" },
-  { day: 7, reward: 15000, type: "bonus" as const, label: "$15,000 + Legendary Item", icon: "🏆" },
+  { day: 1, reward: 100000, type: "money" as const, label: "$100K", icon: "💰" },
+  { day: 2, reward: 350000, type: "money" as const, label: "$350K", icon: "💰" },
+  { day: 3, reward: 700000, type: "money" as const, label: "$700K", icon: "💎" },
+  { day: 4, reward: 1400000, type: "money" as const, label: "$1.4M", icon: "💎" },
+  { day: 5, reward: 2800000, type: "money" as const, label: "$2.8M", icon: "🏆" },
+  { day: 6, reward: 6000000, type: "money" as const, label: "$6M", icon: "🏆" },
+  { day: 7, reward: 12000000, type: "bonus" as const, label: "$12M + Legendary Item", icon: "👑" },
 ];
 
 export function DailyLoginPage() {
