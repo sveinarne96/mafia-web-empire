@@ -32,7 +32,7 @@ import {
 
 type GamePage =
   | "headquarters" | "bank" | "hospital" | "points" | "crime_car" | "crime_burglarize"
-  | "crime_rob" | "fight_club" | "garage" | "items" | "prison" | "airport"
+  | "crime_rob" | "fight_club"  | "garage" | "items" | "airport"
   | "organized_crime" | "missions" | "daily_raid" | "company" | "family"
   | "kill" | "gambling_dice" | "gambling_lotto" | "gambling_blackjack"
   | "gambling_coin" | "gambling_horse" | "gambling_number"
@@ -46,7 +46,7 @@ type GamePage =
   | "gifting" | "hit_list" | "crimes" | "boss_fights" | "crime_empire" | "heist_planning" | "world_events" | "criminal_pets"
   | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
   | "daily_login" | "crew_system" | "ranked_pvp"
-  | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation" | "prison_break"
+  | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation"
   | "admin_panel" | "online_list" | "become_admin";
 
 const cities = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
@@ -67,7 +67,6 @@ const leftMenuSections = [
 
   { title: "Garage", icon: Wrench, page: "garage" as GamePage },
   { title: "My Items", icon: Package, page: "items" as GamePage },
-  { title: "Prison", icon: Lock, page: "prison" as GamePage },
   { title: "Airport", icon: Plane, page: "airport" as GamePage },
   { title: "Organized Crime", icon: Group, page: "organized_crime" as GamePage },
   { title: "Missions", icon: Target, page: "missions" as GamePage },
@@ -127,7 +126,6 @@ const leftMenuSections = [
     { title: "Wanted Board", icon: AlertTriangle, page: "wanted_board" as GamePage },
     { title: "Smuggling Routes", icon: Truck, page: "smuggling_routes" as GamePage },
     { title: "Crime Spree", icon: Flame, page: "crime_spree" as GamePage },
-    { title: "Prison Break", icon: Lock, page: "prison_break" as GamePage },
   ]},
   { title: "Empire", icon: Crown, children: [
     { title: "Skill Tree", icon: Brain, page: "skill_tree" as GamePage },
@@ -1496,7 +1494,6 @@ export default function Dashboard() {
       case "points": return <PointsShopPage />;
       case "garage": return <GaragePage />;
       case "items": return <MyItemsPage />;
-      case "prison": return <PrisonPage />;
       case "airport": return <AirportPage />;
       case "organized_crime": return <OrganizedCrimePage />;
       case "missions": return <MissionsPage />;
@@ -1556,7 +1553,6 @@ export default function Dashboard() {
       case "smuggling_routes": return <SmugglingRoutesPage />;
       case "cartel": return <CartelPage />;
       case "reputation": return <ReputationPage />;
-      case "prison_break": return <PrisonBreakPage />;
       case "daily_login": return <DailyLoginPage />;
       case "crew_system": return <CrewSystemPage />;
       case "ranked_pvp": return <RankedPvpPage />;
