@@ -401,9 +401,15 @@ const schema = defineSchema(
       levelRequired: v.number(),
       type: v.string(),
       location: v.optional(v.string()),
+      storyline: v.optional(v.string()),
+      storyOrder: v.optional(v.number()),
+      timeLimitMinutes: v.optional(v.number()),
+      difficulty: v.optional(v.string()),
+      xpReward: v.optional(v.number()),
     })
       .index("by_type", ["type"])
-      .index("by_level", ["levelRequired"]),
+      .index("by_level", ["levelRequired"])
+      .index("by_storyline", ["storyline"]),
 
     playerMissions: defineTable({
       userId: v.id("users"),
@@ -412,6 +418,7 @@ const schema = defineSchema(
       completed: v.boolean(),
       claimed: v.boolean(),
       startedAt: v.number(),
+      expiresAt: v.optional(v.number()),
     })
       .index("by_user", ["userId"])
       .index("by_user_mission", ["userId", "missionId"]),
