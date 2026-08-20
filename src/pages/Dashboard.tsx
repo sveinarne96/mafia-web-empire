@@ -191,11 +191,11 @@ const rightMenuSections: MenuItem[] = [
 ];
 
 function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (p: GamePage) => void }) {
-  const [expanded, setExpanded] = useState<string[]>(["🔥 Crime", "🎲 Gambling"]);
+  const [expanded, setExpanded] = useState<string[]>(leftMenuSections.map(s => s.title));
   const toggleSection = (t: string) => setExpanded(p => p.includes(t) ? p.filter(x => x !== t) : [...p, t]);
 
   return (
-    <aside className="w-56 bg-sidebar border-r border-sidebar-border flex flex-col h-full overflow-y-auto scrollbar-thin">
+    <aside className="w-60 bg-sidebar border-r border-sidebar-border flex flex-col h-full overflow-y-auto scrollbar-thin">
       <div className="p-3 border-b border-sidebar-border flex items-center gap-2">
         <Crown className="size-5 text-primary" />
         <span className="font-bold text-sm">ShadowEmpire</span>
@@ -205,7 +205,7 @@ function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (
           if (s.children) {
             const open = expanded.includes(s.title);
             return (
-              <div key={s.title}>
+              <div key={s.title} className="border-t border-sidebar-border/30 first:border-t-0">
                 <button onClick={() => toggleSection(s.title)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-sidebar-foreground/60 uppercase tracking-wider hover:text-sidebar-foreground transition-colors">
                   <s.icon className="size-3.5" />{s.title}
@@ -286,7 +286,7 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
           if (s.children) {
             const open = expandedRight.includes(s.title);
             return (
-              <div key={s.title}>
+              <div key={s.title} className="border-t border-sidebar-border/30 first:border-t-0">
                 <button onClick={() => toggleRight(s.title)}
                   className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-sidebar-foreground/60 uppercase tracking-wider hover:text-sidebar-foreground transition-colors">
                   <s.icon className="size-3.5" />{s.title}
