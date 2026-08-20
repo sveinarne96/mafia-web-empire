@@ -1191,10 +1191,12 @@ export const getPrisonTimeDisplay = query({
     const player = await getAuthPlayer(ctx);
     if (!player.inPrison) return null;
     const remaining = Math.max(0, player.prisonTime);
-    const hours = Math.floor(remaining / 3600000);
-    const minutes = Math.floor((remaining % 3600000) / 60000);
+    const totalSeconds = Math.ceil(remaining / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
     return {
-      remaining, hours, minutes,
+      remaining, hours, minutes, seconds,
       cellLevel: player.cellLevel,
       job: player.prisonJob,
       gang: player.prisonGang,
