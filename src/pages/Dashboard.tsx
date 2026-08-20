@@ -67,50 +67,40 @@ const cities = [
   { name: "Dallas", emoji: "🐎", crime: "low", boost: 1.0 },
 ];
 
-const leftMenuSections = [
-  { title: "📜 Game Updates", icon: ScrollText, page: "updates" as GamePage },
-  { title: "👤 My Profile", icon: User, page: "my_profile" as GamePage },
-  { title: "🛡️ Season Pass", icon: Shield, page: "season_pass" as GamePage },
-  { title: "🔥 Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
-  { title: "⭐ Legendary Crimes", icon: Flame, page: "legendary_crimes" as GamePage },
-  { title: "🎁 Daily Login Rewards", icon: Gift, page: "daily_login" as GamePage },
-  { title: "💀 Boss Fights", icon: Skull, page: "boss_fights" as GamePage },
-  { title: "🗺️ Crime Empire", icon: MapPinned, page: "crime_empire" as GamePage },
-  { title: "🎯 Heist Planning", icon: Target, page: "heist_planning" as GamePage },
-  { title: "⚡ World Events", icon: Zap, page: "world_events" as GamePage },
-  { title: "🐾 Criminal Pets", icon: Users, page: "criminal_pets" as GamePage },
-  { title: "🏢 Headquarters", icon: Building2, page: "headquarters" as GamePage },
-  { title: "🏦 Bank", icon: Landmark, page: "bank" as GamePage },
-  { title: "🏥 Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
-  { title: "🏆 Points", icon: Trophy, page: "points" as GamePage },
-
-  { title: "🚗 Garage", icon: Wrench, page: "garage" as GamePage },
-  { title: "🎒 My Items", icon: Package, page: "items" as GamePage },
-  { title: "✈️ Airport", icon: Plane, page: "airport" as GamePage },
-  { title: "👥 Organized Crime", icon: Group, page: "organized_crime" as GamePage },
-  { title: "📋 Missions", icon: Target, page: "missions" as GamePage },
-  { title: "💼 Company", icon: Shield, page: "company" as GamePage },
-  { title: "👨‍👩‍👦 Family", icon: Users, page: "family" as GamePage },
-  { title: "🤝 Crew System", icon: Users, page: "crew_system" as GamePage },
-  { title: "🔪 Kill", icon: Skull, page: "kill" as GamePage },
-  { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
-  { title: "⚔️ Ranked PvP", icon: Trophy, page: "ranked_pvp" as GamePage },
-  { title: "🗡️ Duels", icon: Swords, page: "duels" as GamePage },
-  { title: "🥊 Spar", icon: SwordsIcon, page: "spar" as GamePage },
-  { title: "🏆 Tournament", icon: Trophy, page: "tournament" as GamePage },
-  { title: "🕵️ Underground", icon: Skull, page: "underground" as GamePage },
-  { title: "💰 Economy", icon: Banknote, children: [
-    { title: "📈 Stock Market", icon: BarChart3, page: "stock_market" as GamePage },
-    { title: "🏠 Real Estate", icon: Building2, page: "real_estate" as GamePage },
-    { title: "🏪 Businesses", icon: Shield, page: "businesses" as GamePage },
-    { title: "🏷️ Auction House", icon: Banknote, page: "auction_house" as GamePage },
-    { title: "🛡️ Insurance", icon: ShieldCheck, page: "insurance" as GamePage },
-    { title: "💳 Loans", icon: Landmark, page: "loans" as GamePage },
+type MenuItem = { title: string; icon: any; page?: GamePage; children?: MenuItem[] };
+// Safe menu click helper
+function menuClick(page: GamePage | undefined, setPage: (p: GamePage) => void) { if (page) setPage(page); }
+const leftMenuSections: MenuItem[] = [
+  { title: "🏠 Overview", icon: Building2, children: [
+    { title: "🏢 Headquarters", icon: Building2, page: "headquarters" as GamePage },
+    { title: "🏦 Bank", icon: Landmark, page: "bank" as GamePage },
+    { title: "🏥 Hospital", icon: ShieldCheck, page: "hospital" as GamePage },
+    { title: "🏆 Points", icon: Trophy, page: "points" as GamePage },
+    { title: "👤 My Profile", icon: User, page: "my_profile" as GamePage },
+    { title: "📜 Game Updates", icon: ScrollText, page: "updates" as GamePage },
   ]},
-  { title: "📊 Progression", icon: Trophy, children: [
-    { title: "🏅 Achievements", icon: Trophy, page: "achievements" as GamePage },
-    { title: "👑 Titles", icon: Crown, page: "titles" as GamePage },
-    { title: "📜 Legacy", icon: BookOpen, page: "legacy" as GamePage },
+  { title: "🔥 Crime", icon: AlertTriangle, children: [
+    { title: "🔥 Street Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
+    { title: "⭐ Legendary Crimes", icon: Flame, page: "legendary_crimes" as GamePage },
+    { title: "💀 Boss Fights", icon: Skull, page: "boss_fights" as GamePage },
+    { title: "🗺️ Crime Empire", icon: MapPinned, page: "crime_empire" as GamePage },
+    { title: "🎯 Heist Planning", icon: Target, page: "heist_planning" as GamePage },
+    { title: "👥 Organized Crime", icon: Group, page: "organized_crime" as GamePage },
+    { title: "🔪 Kill", icon: Skull, page: "kill" as GamePage },
+    { title: "🕵️ Underground", icon: Globe, page: "underground" as GamePage },
+  ]},
+  { title: "⚔️ Combat", icon: Swords, children: [
+    { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
+    { title: "⚔️ Ranked PvP", icon: Trophy, page: "ranked_pvp" as GamePage },
+    { title: "🗡️ Duels", icon: Swords, page: "duels" as GamePage },
+    { title: "🥊 Spar", icon: SwordsIcon, page: "spar" as GamePage },
+    { title: "🏆 Tournament", icon: Trophy, page: "tournament" as GamePage },
+    { title: "☠️ Death Match", icon: Skull, page: "death_match" as GamePage },
+    { title: "📝 Combat Log", icon: SwordsIcon, page: "combat_log" as GamePage },
+    { title: "🥋 Fighting Styles", icon: Swords, page: "fighting_styles" as GamePage },
+    { title: "🛡️ Armor", icon: Shield, page: "armor" as GamePage },
+    { title: "🏆 Season Rankings", icon: Trophy, page: "season_rankings" as GamePage },
+    { title: "🎯 Hit List", icon: Skull, page: "hit_list" as GamePage },
   ]},
   { title: "🎲 Gambling", icon: Dices, children: [
     { title: "🎲 Dice", icon: Dice1, page: "gambling_dice" as GamePage },
@@ -126,40 +116,58 @@ const leftMenuSections = [
     { title: "🐕 Dog Fighting", icon: SwordsIcon, page: "dog_fighting" as GamePage },
     { title: "🏎️ Street Racing", icon: Car, page: "street_racing" as GamePage },
   ]},
-  { title: "⚔️ PvP & Combat", icon: Swords, children: [
-    { title: "☠️ Death Match", icon: Skull, page: "death_match" as GamePage },
-    { title: "📝 Combat Log", icon: SwordsIcon, page: "combat_log" as GamePage },
-    { title: "🥋 Fighting Styles", icon: Swords, page: "fighting_styles" as GamePage },
-    { title: "🛡️ Armor", icon: Shield, page: "armor" as GamePage },
-    { title: "🏆 Season Rankings", icon: Trophy, page: "season_rankings" as GamePage },
-    { title: "🎯 Hit List", icon: Skull, page: "hit_list" as GamePage },
+  { title: "📋 Missions", icon: Target, children: [
+    { title: "📋 Missions", icon: Target, page: "missions" as GamePage },
+    { title: "⚡ World Events", icon: Zap, page: "world_events" as GamePage },
+    { title: "🎁 Daily Login", icon: Gift, page: "daily_login" as GamePage },
+    { title: "📅 Daily Challenges", icon: Calendar, page: "daily_challenges" as GamePage },
+    { title: "🛡️ Season Pass", icon: Shield, page: "season_pass" as GamePage },
   ]},
-
-
-  { title: "💌 Social", icon: Users, children: [
-    { title: "🎁 Gifting", icon: Crown, page: "gifting" as GamePage },
-    { title: "🌟 Crime Fame", icon: Trophy, page: "crime_fame" as GamePage },
+  { title: "💰 Economy", icon: Banknote, children: [
+    { title: "📈 Stock Market", icon: BarChart3, page: "stock_market" as GamePage },
+    { title: "🏠 Real Estate", icon: Building2, page: "real_estate" as GamePage },
+    { title: "🏪 Businesses", icon: Shield, page: "businesses" as GamePage },
+    { title: "🏷️ Auction House", icon: Banknote, page: "auction_house" as GamePage },
+    { title: "🛡️ Insurance", icon: ShieldCheck, page: "insurance" as GamePage },
+    { title: "💳 Loans", icon: Landmark, page: "loans" as GamePage },
+  ]},
+  { title: "📦 Assets", icon: Package, children: [
+    { title: "🚗 Garage", icon: Wrench, page: "garage" as GamePage },
+    { title: "🎒 My Items", icon: Package, page: "items" as GamePage },
+    { title: "✈️ Airport", icon: Plane, page: "airport" as GamePage },
+    { title: "🐾 Criminal Pets", icon: Users, page: "criminal_pets" as GamePage },
+  ]},
+  { title: "📊 Progression", icon: Trophy, children: [
+    { title: "🧠 Skill Tree", icon: Brain, page: "skill_tree" as GamePage },
+    { title: "🏅 Achievements", icon: Trophy, page: "achievements" as GamePage },
+    { title: "👑 Titles", icon: Crown, page: "titles" as GamePage },
+    { title: "📜 Legacy", icon: BookOpen, page: "legacy" as GamePage },
+    { title: "🏟️ Colosseum", icon: Swords, page: "colosseum" as GamePage },
+    { title: "🔥 Crime Spree", icon: Flame, page: "crime_spree" as GamePage },
   ]},
   { title: "🌐 Underworld", icon: Globe, children: [
     { title: "🖤 Black Market", icon: Package, page: "black_market" as GamePage },
     { title: "🔴 Wanted Board", icon: AlertTriangle, page: "wanted_board" as GamePage },
     { title: "🚛 Smuggling Routes", icon: Truck, page: "smuggling_routes" as GamePage },
-    { title: "🔥 Crime Spree", icon: Flame, page: "crime_spree" as GamePage },
-  ]},
-  { title: "👑 Empire", icon: Crown, children: [
-    { title: "🧠 Skill Tree", icon: Brain, page: "skill_tree" as GamePage },
-    { title: "📅 Daily Challenges", icon: Calendar, page: "daily_challenges" as GamePage },
-    { title: "🏟️ Colosseum", icon: Swords, page: "colosseum" as GamePage },
     { title: "🏠 Safe Houses", icon: Home, page: "safe_houses" as GamePage },
     { title: "🤝 Cartel", icon: Users, page: "cartel" as GamePage },
     { title: "🌍 Reputation", icon: Globe, page: "reputation" as GamePage },
   ]},
+  { title: "👥 Social", icon: Users, children: [
+    { title: "👨‍👩‍👦 Family", icon: Users, page: "family" as GamePage },
+    { title: "🤝 Crew System", icon: Users, page: "crew_system" as GamePage },
+    { title: "💼 Company", icon: Shield, page: "company" as GamePage },
+    { title: "🎁 Gifting", icon: Crown, page: "gifting" as GamePage },
+    { title: "🌟 Crime Fame", icon: Trophy, page: "crime_fame" as GamePage },
+  ]},
 ];
 
-const rightMenuSections = [
-  { title: "📩 Messages", icon: MessageSquare, page: "messages" as GamePage },
-  { title: "📥 Inbox", icon: Inbox, page: "inbox" as GamePage },
-  { title: "🔔 Notifications", icon: Bell, page: "notifications_page" as GamePage },
+const rightMenuSections: MenuItem[] = [
+  { title: "📬 Communication", icon: MessageSquare, children: [
+    { title: "📩 Messages", icon: MessageSquare, page: "messages" as GamePage },
+    { title: "📥 Inbox", icon: Inbox, page: "inbox" as GamePage },
+    { title: "🔔 Notifications", icon: Bell, page: "notifications_page" as GamePage },
+  ]},
   { title: "💬 Forums", icon: MessageSquare, children: [
     { title: "📢 General", icon: MessageSquare, page: "forum_general" as GamePage },
     { title: "💰 Sales & Wanted", icon: Banknote, page: "forum_sales" as GamePage },
@@ -167,18 +175,23 @@ const rightMenuSections = [
     { title: "🌑 Shadows", icon: MessageSquare, page: "forum_shadows" as GamePage },
     { title: "🔍 Search Posts", icon: Search, page: "forum_search" as GamePage },
   ]},
-  { title: "🏙️ City Overview", icon: MapPin, page: "city_overview" as GamePage },
-  { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
-  { title: "📊 Statistics", icon: BarChart3, page: "statistics" as GamePage },
-  { title: "❓ FAQ", icon: BookOpen, page: "faq" as GamePage },
-  { title: "🆘 Support", icon: HelpCircle, page: "support" as GamePage },
-  { title: "🟢 Online Players", icon: Wifi, page: "online_list" as GamePage },
-  { title: "⚙️ Admin Panel", icon: Shield, page: "admin_panel" as GamePage },
-  { title: "🔑 Become Admin", icon: Key, page: "become_admin" as GamePage },
+  { title: "🏙️ World", icon: MapPin, children: [
+    { title: "🏙️ City Overview", icon: MapPin, page: "city_overview" as GamePage },
+    { title: "📊 Statistics", icon: BarChart3, page: "statistics" as GamePage },
+    { title: "🟢 Online Players", icon: Wifi, page: "online_list" as GamePage },
+  ]},
+  { title: "❓ Help", icon: HelpCircle, children: [
+    { title: "❓ FAQ", icon: BookOpen, page: "faq" as GamePage },
+    { title: "🆘 Support", icon: HelpCircle, page: "support" as GamePage },
+  ]},
+  { title: "⚙️ System", icon: Shield, children: [
+    { title: "⚙️ Admin Panel", icon: Shield, page: "admin_panel" as GamePage },
+    { title: "🔑 Become Admin", icon: Key, page: "become_admin" as GamePage },
+  ]},
 ];
 
 function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (p: GamePage) => void }) {
-  const [expanded, setExpanded] = useState<string[]>(["Crime", "Gambling"]);
+  const [expanded, setExpanded] = useState<string[]>(["🔥 Crime", "🎲 Gambling"]);
   const toggleSection = (t: string) => setExpanded(p => p.includes(t) ? p.filter(x => x !== t) : [...p, t]);
 
   return (
@@ -201,24 +214,24 @@ function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (
                 <AnimatePresence>
                   {open && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      {s.children.map(c => (
-                        <button key={c.page} onClick={() => setPage(c.page)}
+                      {s.children?.map(c => c.page ? (
+                        <button key={c.page} onClick={() => menuClick(c.page, setPage)}
                           className={`w-full flex items-center gap-2 pl-8 pr-3 py-1.5 text-xs transition-all mafia-sidebar-item ${activePage === c.page ? "active" : "text-sidebar-foreground/60"}`}>
                           <c.icon className="size-3.5" />{c.title}
                         </button>
-                      ))}
+                      ) : null)}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             );
           }
-          return (
-            <button key={s.page} onClick={() => setPage(s.page)}
+          return s.page ? (
+            <button key={s.page} onClick={() => menuClick(s.page, setPage)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-xs transition-all mafia-sidebar-item ${activePage === s.page ? "active" : "text-sidebar-foreground/60"}`}>
               <s.icon className="size-4" />{s.title}
             </button>
-          );
+          ) : null;
         })}
       </nav>
     </aside>
@@ -228,7 +241,7 @@ function LeftSidebar({ activePage, setPage }: { activePage: GamePage; setPage: (
 function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
   const player = useQuery(api.game.getPlayer);
   const unreadCount = useQuery(api.game.getUnreadCount);
-  const [expandedRight, setExpandedRight] = useState(["Forums"]);
+  const [expandedRight, setExpandedRight] = useState(["💬 Forums", "📬 Communication"]);
   const toggleRight = (t: string) => setExpandedRight(p => p.includes(t) ? p.filter(x => x !== t) : [...p, t]);
 
   return (
@@ -282,27 +295,27 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
                 <AnimatePresence>
                   {open && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      {s.children.map(c => (
-                        <button key={c.page} onClick={() => setPage(c.page)}
+                      {s.children?.map(c => c.page ? (
+                        <button key={c.page} onClick={() => menuClick(c.page, setPage)}
                           className="w-full flex items-center gap-2 pl-8 pr-3 py-1.5 text-xs text-sidebar-foreground/60 hover:text-primary transition-colors">
                           <c.icon className="size-3.5" />{c.title}
                         </button>
-                      ))}
+                      ) : null)}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             );
           }
-          return (
-            <button key={s.page} onClick={() => setPage(s.page)}
+          return s.page ? (
+            <button key={s.page} onClick={() => menuClick(s.page, setPage)}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs text-sidebar-foreground/60 hover:text-primary transition-colors">
               <s.icon className="size-4" />{s.title}
               {s.page === "inbox" && unreadCount && unreadCount > 0 ? (
                 <span className="ml-auto bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.5 rounded-full">{unreadCount}</span>
               ) : null}
             </button>
-          );
+          ) : null;
         })}
       </div>
     </aside>
@@ -1631,6 +1644,11 @@ export default function Dashboard() {
       case "admin_panel": return <AdminPanel />;
       case "online_list": return <OnlineList />;
       case "become_admin": return <BecomeAdminPage />;
+      case "fight_club": return <SparPage />;
+      case "crime_car": return <CrimePage type="car_theft" />;
+      case "crime_burglarize": return <CrimePage type="burglarize" />;
+      case "crime_rob": return <CrimePage type="rob_player" />;
+      case "daily_raid": return <CrimePage type="daily_raid" />;
       default: return <HeadquartersPage />;
     }
   };
