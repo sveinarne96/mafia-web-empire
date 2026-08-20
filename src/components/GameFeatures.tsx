@@ -1,8 +1,9 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { EpicActionResult, CooldownBar, useCooldown, EpicButton } from "@/components/EpicAction";import { Swords, FileText, Shield, Target, Timer, Scroll,
+import { EpicActionResult, CooldownBar, useCooldown, EpicButton } from "@/components/EpicAction";
+import { Swords, FileText, Shield, Target, Timer, Scroll,
   DollarSign, Home, Store, TrendingUp,
   Flame, UserX, Crosshair, EyeOff, Receipt, Banknote,
   Coins, Truck, Trophy, Bomb, Dog, Car,
@@ -14,7 +15,6 @@ import { EpicActionResult, CooldownBar, useCooldown, EpicButton } from "@/compon
 } from "lucide-react";
 import { crimeCategories, getCrimeTypeColor, getCrimeTypeBg, type CrimeCategory, type Crime } from "@/data/crimes";
 import { getDailyLegendaryCrimes, getTimeUntilReset, RARITY_CONFIG, type LegendaryCrime } from "@/data/legendaryCrimes";
-import { useEffect } from "react";
 
 // ===== #20 PRISON TIME DISPLAY =====
 export function PrisonTimeDisplay() {
