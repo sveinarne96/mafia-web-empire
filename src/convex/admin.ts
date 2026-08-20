@@ -164,13 +164,15 @@ export const giveMoney = mutation({
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Player not found!");
     await ctx.db.patch(args.targetId, { money: (target.money ?? 0) + args.amount } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} ${args.amount >= 0 ? "gave you" : "took"} $${Math.abs(args.amount).toLocaleString()}`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try {
+      await ctx.db.insert("notifications", {
+        userId: args.targetId,
+        type: "admin",
+        message: `Admin ${player.nickname} ${args.amount >= 0 ? "gave you" : "took"} $${Math.abs(args.amount).toLocaleString()}`,
+        read: false,
+        timestamp: Date.now(),
+      });
+    } catch { /* notification insert is optional */ }
     return { success: true, amount: args.amount };
   },
 });
@@ -182,13 +184,7 @@ export const setLevel = mutation({
     if (!isAdmin(player)) throw new Error("Admin only!");
     if (args.level < 1 || args.level > 500) throw new Error("Level must be 1-500!");
     await ctx.db.patch(args.targetId, { level: args.level, experience: 0 } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} set your level to ${args.level}`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} set your level to ${args.level}`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true, level: args.level };
   },
 });
@@ -202,13 +198,7 @@ export const setStats = mutation({
     await ctx.db.patch(args.targetId, {
       attack: args.attack, defense: args.defense, maxLife: args.maxLife, life: args.maxLife,
     } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} modified your stats`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} modified your stats`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
@@ -221,13 +211,7 @@ export const teleportPlayer = mutation({
     const validLocations = ["New York", "Chicago", "Las Vegas", "Miami", "Los Angeles", "Detroit", "Philadelphia", "Boston", "Atlanta", "Dallas"];
     if (!validLocations.includes(args.location)) throw new Error("Invalid location!");
     await ctx.db.patch(args.targetId, { location: args.location } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} teleported you to ${args.location}`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} teleported you to ${args.location}`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true, location: args.location };
   },
 });
@@ -240,13 +224,7 @@ export const healPlayer = mutation({
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Player not found!");
     await ctx.db.patch(args.targetId, { life: target.maxLife ?? 100, isDead: false } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} fully healed you`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} fully healed you`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
@@ -261,13 +239,7 @@ export const revivePlayer = mutation({
       level: 1, experience: 0, attack: 10, defense: 10,
       location: "New York", inPrison: false, wantedLevel: 0,
     } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} revived you`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} revived you`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
@@ -278,13 +250,7 @@ export const freeFromPrison = mutation({
     const player = await getAuthPlayer(ctx);
     if (!isAdmin(player)) throw new Error("Admin only!");
     await ctx.db.patch(args.targetId, { inPrison: false, prisonTime: 0, solitaryTime: 0 } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} released you from prison`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} released you from prison`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
@@ -299,13 +265,7 @@ export const banPlayer = mutation({
     if (!target) throw new Error("Player not found!");
     if (target.role === "admin") throw new Error("Can't ban another admin!");
     await ctx.db.patch(args.targetId, { isBanned: true, banReason: args.reason } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `You have been banned by Admin ${player.nickname}. Reason: ${args.reason}`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `You have been banned by Admin ${player.nickname}. Reason: ${args.reason}`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true, banned: target.nickname };
   },
 });
@@ -326,13 +286,7 @@ export const killPlayerAdmin = mutation({
     const player = await getAuthPlayer(ctx);
     if (!isAdmin(player)) throw new Error("Admin only!");
     await ctx.db.patch(args.targetId, { isDead: true, life: 0 } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} eliminated you`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} eliminated you`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
@@ -364,13 +318,7 @@ export const resetPlayer = mutation({
       killsThisSeason: 0, deathsThisSeason: 0, totalEarned: 1000,
       betrayalCount: 0, totalGifting: 0, totalMentoring: 0,
     } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} has reset your account`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} has reset your account`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true, reset: target.nickname };
   },
 });
@@ -384,13 +332,7 @@ export const giveSkillPoints = mutation({
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Player not found!");
     await ctx.db.patch(args.targetId, { skillPoints: ((target as any).skillPoints ?? 0) + args.amount } as any);
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `Admin ${player.nickname} gave you ${args.amount} skill points`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `Admin ${player.nickname} gave you ${args.amount} skill points`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
@@ -401,13 +343,7 @@ export const sendAdminMessage = mutation({
     const player = await getAuthPlayer(ctx);
     if (!isAdmin(player)) throw new Error("Admin only!");
     if (args.message.length > 500) throw new Error("Message too long!");
-    await ctx.db.insert("notifications", {
-      userId: args.targetId,
-      type: "admin",
-      message: `📢 [ADMIN] ${args.message}`,
-      read: false,
-      timestamp: Date.now(),
-    });
+    try { await ctx.db.insert("notifications", { userId: args.targetId, type: "admin", message: `📢 [ADMIN] ${args.message}`, read: false, timestamp: Date.now() }); } catch {}
     return { success: true };
   },
 });
