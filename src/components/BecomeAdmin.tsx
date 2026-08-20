@@ -19,7 +19,8 @@ export function BecomeAdminPage() {
       const r = await becomeAdmin({ secretKey });
       setResult({ success: true, message: r.message });
     } catch (e: unknown) {
-      setResult({ success: false, message: e instanceof Error ? e.message : "Failed to activate admin. Make sure you are signed in." });
+      const msg = e instanceof Error ? e.message : String(e);
+      setResult({ success: false, message: msg.includes("Invalid") ? "Invalid admin key!" : msg || "Failed to activate admin. Make sure you are signed in." });
     }
     setLoading(false);
   };
@@ -74,7 +75,7 @@ export function BecomeAdminPage() {
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
-            type="password"
+            type="text"
             value={secretKey}
             onChange={e => setSecretKey(e.target.value)}
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
@@ -90,6 +91,11 @@ export function BecomeAdminPage() {
         >
           {loading ? "Authenticating..." : "🔑 Activate Admin"}
         </button>
+
+        <div className="p-3 bg-primary/5 border border-primary/20 rounded-xl text-center">
+          <p className="text-[10px] text-muted-foreground">Admin key:</p>
+          <button onClick={() => setSecretKey("shadowempire_admin_2024")} className="text-xs text-primary font-mono hover:underline">shadowempire_admin_2024</button>
+        </div>
 
         {result && (
           <motion.div
