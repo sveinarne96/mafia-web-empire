@@ -81,14 +81,18 @@ export const grantAdmin = mutation({
 export const becomeAdmin = mutation({
   args: { secretKey: v.string() },
   handler: async (ctx, args) => {
-    const player = await getAuthPlayer(ctx);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("You must be signed in to become an admin.");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player profile not found. Please register first.");
+    if ((player as any).role === "admin") return { success: true, message: "You are already an admin!" };
+    
     const all = await ctx.db.query("users").collect();
     const adminCount = all.filter((u: any) => u.role === "admin").length;
     
-    // Allow anyone to become admin with the secret key (only if they're the first admin)
-    // or if no admins exist yet
+    // Allow first admin with either key, or anyone with the master key
     if (args.secretKey === "shadowempire_admin_2024" || (adminCount === 0 && args.secretKey === "firstadmin")) {
-      await ctx.db.patch(player._id, { role: "admin" } as any);
+      await ctx.db.patch(userId, { role: "admin" } as any);
       return { success: true, message: "You are now an admin!" };
     }
     throw new Error("Invalid admin key!");

@@ -19,10 +19,19 @@ export function BecomeAdminPage() {
       const r = await becomeAdmin({ secretKey });
       setResult({ success: true, message: r.message });
     } catch (e: unknown) {
-      setResult({ success: false, message: e instanceof Error ? e.message : "Failed" });
+      setResult({ success: false, message: e instanceof Error ? e.message : "Failed to activate admin. Make sure you are signed in." });
     }
     setLoading(false);
   };
+
+  // Still loading
+  if (isAdmin === undefined) {
+    return (
+      <div className="animate-fade-in flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="animate-spin size-8 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   if (isAdmin) {
     return (
