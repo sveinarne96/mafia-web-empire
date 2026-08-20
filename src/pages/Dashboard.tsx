@@ -13,7 +13,7 @@ import {
   SwordsIcon, Dices, Banknote, ChevronDown, LogOut, User,
   AlertTriangle, Loader2, CircleDollarSign, Zap, MapPinned,
   ShieldCheck, Skull, TrophyIcon, BookOpen,
-  Brain, Award, Flame, ShoppingBag, Globe, Gift, Wifi, Key,
+  Brain, Award, Flame, ShoppingBag, Globe, Gift, Wifi, Key, ScrollText,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { TournamentPage, AchievementsPage, TitlesPage, StockMarketPage, RealEstatePage, BusinessesPage, AuctionHousePage, InsurancePage, LoansPage } from "../components/NewPages";
@@ -25,6 +25,7 @@ import { OnlineList } from "../components/OnlineList";
 import { BecomeAdminPage } from "../components/BecomeAdmin";
 import { MyProfilePage } from "../components/MyProfile";
 import { SeasonPassPage } from "../components/SeasonPass";
+import { UpdatesPage } from "../components/UpdatesPage";
 import {
   DeathMatchPage, SeasonRankingsPage, LegacyStatsPage, CombatLogPage,
   FightingStylesPage, ArmorPage, GamblingDenPage,
@@ -49,7 +50,7 @@ type GamePage =
   | "black_market" | "crime_fame" | "skill_tree" | "daily_challenges" | "colosseum" | "legendary_crimes"
   | "daily_login" | "crew_system" | "ranked_pvp"
   | "safe_houses" | "crime_spree" | "wanted_board" | "smuggling_routes" | "cartel" | "reputation"
-  | "admin_panel" | "online_list" | "become_admin" | "my_profile" | "season_pass";
+  | "admin_panel" | "online_list" | "become_admin" | "my_profile" | "season_pass" | "updates";
 
 const cities = [
   { name: "New York", emoji: "🗽", crime: "high", boost: 1.2, murderCity: true, drugRun: true },
@@ -67,6 +68,7 @@ const cities = [
 ];
 
 const leftMenuSections = [
+  { title: "📜 Game Updates", icon: ScrollText, page: "updates" as GamePage },
   { title: "👤 My Profile", icon: User, page: "my_profile" as GamePage },
   { title: "🛡️ Season Pass", icon: Shield, page: "season_pass" as GamePage },
   { title: "🔥 Crimes", icon: AlertTriangle, page: "crimes" as GamePage },
@@ -1543,7 +1545,7 @@ export default function Dashboard() {
     gambling_coin: "Coin Toss", gambling_horse: "Horse Racing", gambling_number: "Number Game",
     forum_general: "General", forum_sales: "Sales & Wanted", forum_offtopic: "Off-Topic",
     forum_shadows: "Shadows", forum_search: "Search Posts",
-    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", my_profile: "My Profile", season_pass: "Season Pass", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
+    stock_market: "Stock Market", real_estate: "Real Estate", businesses: "Businesses", auction_house: "Auction House", insurance: "Insurance", loans: "Loans", achievements: "Achievements", titles: "Titles", legacy: "Legacy", underground: "Underground Economy", death_match: "Death Match", season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles", armor: "Armor Shop", counterfeiting: "Counterfeiting", drug_trafficking: "Drug Trafficking", arson: "Arson", identity_theft: "Identity Theft", arms_dealing: "Arms Dealer", witness_intimidation: "Witness Intimidation", tax_evasion: "Tax Evasion", racketeering: "Racketeering", gambling_dens: "Gambling Dens", loan_sharking: "Loan Sharking", cargo_theft: "Cargo Theft", roulette: "Roulette", slots: "Slots", russian_roulette: "Russian Roulette", dog_fighting: "Dog Fighting", street_racing: "Street Racing", gifting: "Gifting", hit_list: "Hit List", black_market: "Black Market", crime_fame: "Crime Fame", skill_tree: "Skill Tree", daily_challenges: "Daily Challenges", colosseum: "Colosseum", safe_houses: "Safe Houses", crime_spree: "Crime Spree", wanted_board: "Wanted Board", smuggling_routes: "Smuggling Routes", cartel: "Cartel", reputation: "Reputation", my_profile: "My Profile", season_pass: "Season Pass", updates: "Game Updates", daily_login: "Daily Login Rewards", crew_system: "Crew System", ranked_pvp: "Ranked PvP",
   };
 
   const renderPage = () => {
@@ -1625,6 +1627,7 @@ export default function Dashboard() {
       case "ranked_pvp": return <RankedPvpPage />;
       case "my_profile": return <MyProfilePage />;
       case "season_pass": return <SeasonPassPage />;
+      case "updates": return <UpdatesPage />;
       case "admin_panel": return <AdminPanel />;
       case "online_list": return <OnlineList />;
       case "become_admin": return <BecomeAdminPage />;
