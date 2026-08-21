@@ -95,7 +95,7 @@ export const declareWar = mutation({
     if (!player.familyId) throw new Error("You need a family!");
     const family = await ctx.db.get(player.familyId);
     if (!family) throw new Error("Family not found!");
-    if (family.leaderId !== player._id) throw new Error("Only the Don can declare war!");
+    if ((family as any).leaderId !== player._id) throw new Error("Only the Don can declare war!");
     if (player.familyId === args.targetFamilyId) throw new Error("Can't war yourself!");
     const target = await ctx.db.get(args.targetFamilyId);
     if (!target) throw new Error("Target family not found!");
@@ -293,7 +293,7 @@ export const repairArmor = mutation({
   args: {},
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
-    if (!player.armorEquipped) throw new Error("No armor equipped!");
+    if (!(player as any).armorEquipped) throw new Error("No armor equipped!");
     const cost = Math.floor((100 - (player.armorDurability ?? 0)) * 10);
     if (player.money < cost) throw new Error(`Need $${cost} to repair!`);
     await ctx.db.patch(player._id, { armorDurability: 100, money: player.money - cost });
@@ -364,7 +364,7 @@ export const buyStock = mutation({
     const cost = stock.price * args.shares;
     if (player.money < cost) throw new Error("Not enough money!");
     const existing = await ctx.db.query("playerStocks")
-      .withIndex("by_player", (q) => q.eq("playerId", player._id))
+      .withIndex("by_user", (q) => q.eq("userId", player._id))
       .collect();
     const held = existing.find(s => s.stockId === args.stockId);
     if (held) {
@@ -373,7 +373,7 @@ export const buyStock = mutation({
       await ctx.db.patch(held._id, { shares: newShares, buyPrice: Math.round(newAvg) });
     } else {
       await ctx.db.insert("playerStocks", {
-        playerId: player._id, stockId: args.stockId,
+        userId: player._id, stockId: args.stockId,
         shares: args.shares, buyPrice: stock.price,
       });
     }
@@ -389,7 +389,7 @@ export const sellStock = mutation({
     const stock = await ctx.db.get(args.stockId);
     if (!stock) throw new Error("Stock not found!");
     const holdings = await ctx.db.query("playerStocks")
-      .withIndex("by_player", (q) => q.eq("playerId", player._id))
+      .withIndex("by_user", (q) => q.eq("userId", player._id))
       .collect();
     const held = holdings.find(s => s.stockId === args.stockId);
     if (!held || held.shares < args.shares) throw new Error("Not enough shares!");
@@ -407,7 +407,7 @@ export const getMyStocks = query({
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
     const holdings = await ctx.db.query("playerStocks")
-      .withIndex("by_player", (q) => q.eq("playerId", player._id))
+      .withIndex("by_user", (q) => q.eq("userId", player._id))
       .collect();
     const result = [];
     for (const h of holdings) {
@@ -970,7 +970,7 @@ export const setFamilyRank = mutation({
     const player = await getAuthPlayer(ctx);
     if (!player.familyId) throw new Error("No family!");
     const family = await ctx.db.get(player.familyId);
-    if (!family || family.leaderId !== player._id) throw new Error("Only Don can set ranks!");
+    if (!family || (family as any).leaderId !== player._id) throw new Error("Only Don can set ranks!");
     const member = await ctx.db.get(args.memberId);
     if (!member || member.familyId !== player.familyId) throw new Error("Not in your family!");
     await ctx.db.patch(args.memberId, { familyRank: args.rank, familyRole: args.rank });
@@ -1042,8 +1042,8 @@ export const betrayFamily = mutation({
     if (!player.familyId) throw new Error("No family!");
     const family = await ctx.db.get(player.familyId);
     if (!family) throw new Error("Family not found!");
-    if (family.leaderId === player._id) throw new Error("Don can't betray!");
-    const stolen = Math.floor(family.treasury * 0.1);
+    if ((family as any).leaderId === player._id) throw new Error("Don can't betray!");
+    const stolen = Math.floor((family as any).treasury * 0.1);
     const fid = player.familyId;
     await ctx.db.patch(player._id, {
       familyId: undefined, money: player.money + stolen,
@@ -1052,8 +1052,8 @@ export const betrayFamily = mutation({
       reputation: Math.max(-100, player.reputation - 20), reputationAlignment: "evil",
     });
     await ctx.db.patch(fid, {
-      memberCount: Math.max(0, family.memberCount - 1),
-      treasury: Math.max(0, family.treasury - stolen),
+      memberCount: Math.max(0, (family as any).memberCount - 1),
+      treasury: Math.max(0, (family as any).treasury - stolen),
     });
     return { stolen, family: family.name };
   },
@@ -1166,7 +1166,7 @@ export const startElection = mutation({
     if (!player.familyId) throw new Error("No family!");
     const family = await ctx.db.get(player.familyId);
     if (!family) throw new Error("Family not found!");
-    if (family.leaderId !== player._id) throw new Error("Only Don can start election!");
+    if ((family as any).leaderId !== player._id) throw new Error("Only Don can start election!");
     const members = await ctx.db.query("users")
       .withIndex("by_family", (q) => q.eq("familyId", player.familyId))
       .collect();

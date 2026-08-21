@@ -156,13 +156,13 @@ export function MyItemsPage() {
       </div>
       {(!inventory || inventory.length === 0) ? <div className="text-center py-10 text-muted-foreground text-sm">No items. Visit the Points Shop!</div> :
         <div className="space-y-2">{inventory.map(entry => (
-          <div key={entry._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between border ${entry.equipped ? "border-primary/50" : ""}`}>
+          <div key={entry._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between border ${entry?.equipped ? "border-primary/50" : ""}`}>
             <div><div className="font-semibold text-sm">{entry.item.name}</div>
               <div className="text-[10px] text-muted-foreground">{entry.item.type} • {entry.item.rarity}{entry.item.attack > 0 ? ` • ⚔️+${entry.item.attack}` : ""}{entry.item.defense > 0 ? ` • 🛡️+${entry.item.defense}` : ""}</div></div>
-            <button onClick={async () => { setLoading(true); try { const r = await equip({ inventoryId: entry._id }); setMsg(r.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
+            <button onClick={async () => { setLoading(true); try { const r = await equip({ inventoryId: entry._id }); setMsg(r?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
               disabled={loading || (entry.item.type !== "weapon" && entry.item.type !== "armor")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${entry.equipped ? "bg-primary text-primary-foreground" : "bg-secondary border border-border"}`}>
-              {entry.equipped ? "Equipped" : "Equip"}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${entry?.equipped ? "bg-primary text-primary-foreground" : "bg-secondary border border-border"}`}>
+              {entry?.equipped ? "Equipped" : "Equip"}
             </button>
           </div>
         ))}</div>
