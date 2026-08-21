@@ -23,8 +23,6 @@ async function ensurePlayerReady(ctx: { db: any }, player: any) {
   if (player.skillPoints === undefined) patches.skillPoints = 0;
   if (player.levelUpPending === undefined) patches.levelUpPending = false;
   if (player.crimeMomentum === undefined) patches.crimeMomentum = 0;
-  if (player.activeXpBoost === undefined) patches.activeXpBoost = 0;
-  if (player.xpBoostExpiresAt === undefined) patches.xpBoostExpiresAt = 0;
   if (Object.keys(patches).length > 0) {
     await ctx.db.patch(player._id, patches);
     return { ...player, ...patches };
@@ -41,39 +39,47 @@ async function getCurrentUser(ctx: { auth: any; db: any }) {
 }
 
 
-// ===== XP BOOST SYSTEM =====
-export const activateXpBoost = mutation({
-  args: { multiplier: v.number() },
-  handler: async (ctx, args) => {
-    const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
-    const costs: Record<number, number> = {
-      5: 0, 10: 50000, 15: 150000, 25: 500000, 30: 1000000,
-      35: 2500000, 40: 5000000, 45: 10000000, 50: 25000000,
-    };
-    const cost = costs[args.multiplier] ?? 0;
-    if ((player.money ?? 0) < cost) throw new Error(`Need $${cost.toLocaleString()}!`);
-    const expiresAt = Date.now() + 3600000; // 1 hour
-    await ctx.db.patch(player._id, {
-      money: (player.money ?? 0) - cost,
-      activeXpBoost: args.multiplier,
-      xpBoostExpiresAt: expiresAt,
-    });
-    return { success: true, multiplier: args.multiplier, expiresAt };
-  },
-});
+// ===== XP BOOST SYSTEM (Automatic based on hours played) =====
+// Hours played → XP multiplier tiers
+const XP_BOOST_TIERS = [
+  { hours: 0, multiplier: 5, label: "5x XP" },
+  { hours: 1, multiplier: 10, label: "10x XP" },
+  { hours: 2, multiplier: 15, label: "15x XP" },
+  { hours: 3, multiplier: 25, label: "25x XP" },
+  { hours: 5, multiplier: 30, label: "30x XP" },
+  { hours: 8, multiplier: 35, label: "35x XP" },
+  { hours: 12, multiplier: 40, label: "40x XP" },
+  { hours: 18, multiplier: 45, label: "45x XP" },
+  { hours: 24, multiplier: 50, label: "50x XP" },
+];
 
 export const getXpBoostInfo = query({
   args: {},
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
     if (!player) return null;
-    const active = (player.activeXpBoost ?? 0) > 0 && (player.xpBoostExpiresAt ?? 0) > Date.now();
+    // Calculate hours played from account creation
+    const registeredAt = player.registeredAt ?? Date.now();
+    const hoursPlayed = Math.floor((Date.now() - registeredAt) / 3600000);
+    // Find current tier
+    let currentTier = XP_BOOST_TIERS[0];
+    let nextTier = XP_BOOST_TIERS[1] ?? null;
+    for (let i = XP_BOOST_TIERS.length - 1; i >= 0; i--) {
+      if (hoursPlayed >= XP_BOOST_TIERS[i].hours) {
+        currentTier = XP_BOOST_TIERS[i];
+        nextTier = XP_BOOST_TIERS[i + 1] ?? null;
+        break;
+      }
+    }
     return {
-      active,
-      multiplier: active ? (player.activeXpBoost ?? 1) : 1,
-      expiresAt: player.xpBoostExpiresAt ?? 0,
-      remainingMs: active ? Math.max(0, (player.xpBoostExpiresAt ?? 0) - Date.now()) : 0,
+      multiplier: currentTier.multiplier,
+      label: currentTier.label,
+      hoursPlayed,
+      currentTierHours: currentTier.hours,
+      nextTierHours: nextTier?.hours ?? null,
+      nextTierMultiplier: nextTier?.multiplier ?? null,
+      nextTierLabel: nextTier?.label ?? null,
+      allTiers: XP_BOOST_TIERS,
     };
   },
 });
