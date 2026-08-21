@@ -63,10 +63,52 @@ export const sellItem = mutation({
     if (!player) throw new Error("Not authenticated");
     const item = await ctx.db.get(args.itemId);
     if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
-    const sellPrice = 100;
+    const rarity = (item as any).rarity ?? "common";
+    const rarityMult: Record<string, number> = { common: 100, uncommon: 300, rare: 800, epic: 2500, legendary: 10000 };
+    const sellPrice = rarityMult[rarity] ?? 100;
     await ctx.db.patch(player._id, { money: (player.money ?? 0) + sellPrice });
     await ctx.db.delete(args.itemId);
     return { money: sellPrice };
+  },
+});
+
+// Sell ALL items at once
+export const sellAllItems = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getPlayer(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const items = await ctx.db.query("inventory").withIndex("by_user", (q: any) => q.eq("userId", player._id)).collect();
+    let totalEarned = 0;
+    const rarityMult: Record<string, number> = { common: 100, uncommon: 300, rare: 800, epic: 2500, legendary: 10000 };
+    for (const item of items) {
+      if ((item as any).equipped) continue;
+      const rarity = (item as any).rarity ?? "common";
+      const price = rarityMult[rarity] ?? 100;
+      totalEarned += price;
+      await ctx.db.delete(item._id);
+    }
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) + totalEarned });
+    return { totalEarned, count: items.length };
+  },
+});
+
+// Sell ALL vehicles at once
+export const sellAllVehicles = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getPlayer(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const vehicles = await ctx.db.query("vehicles").withIndex("by_user", (q: any) => q.eq("userId", player._id)).collect();
+    let totalEarned = 0;
+    for (const veh of vehicles) {
+      const basePrice = (veh.purchasePrice ?? 0) > 0 ? (veh.purchasePrice ?? 0) : (veh.speed ?? 50) * 1000;
+      const price = Math.floor(basePrice * ((veh as any).stolen ? 0.5 : 0.6));
+      totalEarned += price;
+      await ctx.db.delete(veh._id);
+    }
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) + totalEarned });
+    return { totalEarned, count: vehicles.length };
   },
 });
 
