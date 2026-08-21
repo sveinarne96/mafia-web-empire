@@ -296,6 +296,9 @@ export const getMissions = query({
     // but we use a huge range so effectively infinite
     const total = 10000000;
 
+    // Sort by level required (lowest first)
+    missions.sort((a, b) => a.levelRequired - b.levelRequired);
+
     return {
       missions,
       total,
