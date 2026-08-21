@@ -2,10 +2,38 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+// ===== ENSURE PLAYER HAS ALL REQUIRED FIELDS =====
+async function ensurePlayerReady(ctx: { db: any }, player: any) {
+  const patches: Record<string, unknown> = {};
+  if (player.money === undefined) patches.money = 1000;
+  if (player.life === undefined) patches.life = 100;
+  if (player.maxLife === undefined) patches.maxLife = 100;
+  if (player.level === undefined) patches.level = 1;
+  if (player.experience === undefined) patches.experience = 0;
+  if (player.attack === undefined) patches.attack = 10;
+  if (player.defense === undefined) patches.defense = 10;
+  if (player.inPrison === undefined) patches.inPrison = false;
+  if (player.isDead === undefined) patches.isDead = false;
+  if (player.totalCrimes === undefined) patches.totalCrimes = 0;
+  if (player.totalKills === undefined) patches.totalKills = 0;
+  if (player.totalDeaths === undefined) patches.totalDeaths = 0;
+  if (player.wantedLevel === undefined) patches.wantedLevel = 0;
+  if (player.prisonTime === undefined) patches.prisonTime = 0;
+  if (player.skillPoints === undefined) patches.skillPoints = 0;
+  if (player.levelUpPending === undefined) patches.levelUpPending = false;
+  if (Object.keys(patches).length > 0) {
+    await ctx.db.patch(player._id, patches);
+    return { ...player, ...patches };
+  }
+  return player;
+}
+
 async function getCurrentUser(ctx: { auth: any; db: any }) {
   const userId = await getAuthUserId(ctx);
   if (!userId) return null;
-  return await ctx.db.get(userId);
+  const user = await ctx.db.get(userId);
+  if (!user) return null;
+  return await ensurePlayerReady(ctx, user);
 }
 
 export const getPlayer = query({

@@ -2,10 +2,39 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+
+// ===== ENSURE PLAYER HAS ALL REQUIRED FIELDS =====
+async function ensurePlayerReady(ctx: { db: any }, player: any) {
+  const patches: Record<string, unknown> = {};
+  if (player.money === undefined) patches.money = 1000;
+  if (player.life === undefined) patches.life = 100;
+  if (player.maxLife === undefined) patches.maxLife = 100;
+  if (player.level === undefined) patches.level = 1;
+  if (player.experience === undefined) patches.experience = 0;
+  if (player.attack === undefined) patches.attack = 10;
+  if (player.defense === undefined) patches.defense = 10;
+  if (player.inPrison === undefined) patches.inPrison = false;
+  if (player.isDead === undefined) patches.isDead = false;
+  if (player.totalCrimes === undefined) patches.totalCrimes = 0;
+  if (player.totalKills === undefined) patches.totalKills = 0;
+  if (player.totalDeaths === undefined) patches.totalDeaths = 0;
+  if (player.wantedLevel === undefined) patches.wantedLevel = 0;
+  if (player.prisonTime === undefined) patches.prisonTime = 0;
+  if (player.skillPoints === undefined) patches.skillPoints = 0;
+  if (player.levelUpPending === undefined) patches.levelUpPending = false;
+  if (Object.keys(patches).length > 0) {
+    await ctx.db.patch(player._id, patches);
+    return { ...player, ...patches };
+  }
+  return player;
+}
+
 async function getCurrentUser(ctx: { auth: any; db: any }) {
   const userId = await getAuthUserId(ctx);
   if (!userId) return null;
-  return await ctx.db.get(userId);
+  const user = await ctx.db.get(userId);
+  if (!user) return null;
+  return await ensurePlayerReady(ctx, user);
 }
 
 // ===== SAVE PROFILE (fix save button) =====
@@ -37,14 +66,15 @@ export const saveProfile = mutation({
 export const stealFromHouse = mutation({
   args: { difficulty: v.string() },
   handler: async (ctx, args) => {
+    try {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
     if (player.inPrison ?? false) throw new Error("You are in prison!");
     if (player.isDead ?? false) throw new Error("You are dead!");
 
-    // 60% base success rate
-    const baseRate = 0.6;
-    const levelBonus = Math.min(0.35, ((player.level ?? 1) * 0.005));
+    // 75% base success rate with level bonus
+    const baseRate = 0.75;
+    const levelBonus = Math.min(0.20, ((player.level ?? 1) * 0.004));
     const successRate = Math.min(0.95, baseRate + levelBonus);
     const succeeded = Math.random() < successRate;
 
@@ -106,13 +136,16 @@ export const stealFromHouse = mutation({
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       experience: levelUpNow ? 0 : newXP,
-      levelUpPending: levelUpNow ? true : player.levelUpPending,
+      levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
       inPrison: arrested,
-      prisonTime: arrested ? 15000 : player.prisonTime,
+      prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)),
     });
 
     return { success: succeeded, moneyEarned, itemsStolen, damageTaken, arrested, xpEarned };
+    } catch (e: any) {
+      throw new Error(e?.message ?? "stealFromHouse failed");
+    }
   },
 });
 
@@ -120,13 +153,15 @@ export const stealFromHouse = mutation({
 export const gtaCarTheft = mutation({
   args: {},
   handler: async (ctx, args) => {
+    try {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
     if (player.inPrison ?? false) throw new Error("You are in prison!");
     if (player.isDead ?? false) throw new Error("You are dead!");
 
-    const baseRate = 0.6;
-    const levelBonus = Math.min(0.35, ((player.level ?? 1) * 0.005));
+    // 75% base success rate with level bonus
+    const baseRate = 0.75;
+    const levelBonus = Math.min(0.20, ((player.level ?? 1) * 0.004));
     const successRate = Math.min(0.95, baseRate + levelBonus);
     const succeeded = Math.random() < successRate;
 
@@ -172,11 +207,14 @@ export const gtaCarTheft = mutation({
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       experience: (player.experience ?? 0) + xpEarned,
       inPrison: arrested,
-      prisonTime: arrested ? 15000 : player.prisonTime,
+      prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 2 : 0)),
     });
 
     return { success: succeeded, vehicleId, moneyEarned, damageTaken, arrested, xpEarned };
+    } catch (e: any) {
+      throw new Error(e?.message ?? "gtaCarTheft failed");
+    }
   },
 });
 
@@ -248,7 +286,7 @@ export const sellCapacity = mutation({
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
     const price = Math.min(500000, args.amount * 5000);
-    await ctx.db.patch(player._id, { money: player.money + price });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) + price });
     return { price };
   },
 });
@@ -270,7 +308,7 @@ export const prestige = mutation({
       level: 1,
       experience: 0,
       skillPoints: (player.skillPoints ?? 0) + 10,
-      money: player.money + 1000000 * newPrestige,
+      money: (player.money ?? 0) + 1000000 * newPrestige,
     });
 
     return { prestige: newPrestige, multiplier, bonus: 1000000 * newPrestige };
