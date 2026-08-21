@@ -703,7 +703,7 @@ function AirportPage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const cooldown = useCooldown(10, player?.lastCrimeAt);
+  const cooldown = useCooldown(15, player?.lastCrimeAt);
   const travelCooldown = useCooldown(15, player?.lastCrimeAt);
 
   if (!player) return <LoadingPage />;
@@ -863,7 +863,7 @@ function FightClubPage() {
   const players = useQuery(api.game.getPlayersInLocation, { location: player?.location ?? "New York" });
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
-  const cooldown = useCooldown(90, player?.lastCrimeAt);
+  const cooldown = useCooldown(15, player?.lastCrimeAt);
 
   if (!player) return <LoadingPage />;
 
@@ -924,7 +924,7 @@ function KillPage() {
   const players = useQuery(api.game.getPlayersInLocation, { location: player?.location ?? "New York" });
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
-  const cooldown = useCooldown(90, player?.lastCrimeAt);
+  const cooldown = useCooldown(15, player?.lastCrimeAt);
 
   if (!player) return <LoadingPage />;
 
@@ -1389,7 +1389,7 @@ function GamblingPage({ type, title, icon }: { type: string; title: string; icon
   const player = useQuery(api.game.getPlayer);
   const [bet, setBet] = useState(100);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
-  const cooldown = useCooldown(90, player?.lastCrimeAt);
+  const cooldown = useCooldown(15, player?.lastCrimeAt);
 
   const doDice = async (g: "high" | "low" | "seven") => { try { setResult(await diceRoll({ amount: bet, guess: g }) as unknown as Record<string, unknown>); } catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); } };
   const doCoin = async (g: "heads" | "tails") => { try { setResult(await coinToss({ amount: bet, guess: g }) as unknown as Record<string, unknown>); } catch (e: unknown) { setResult({ error: e instanceof Error ? e.message : "Error" }); } };
