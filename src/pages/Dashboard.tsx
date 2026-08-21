@@ -1940,7 +1940,7 @@ export default function Dashboard() {
             {(() => {
               const lastCrime = (player as any).lastCrimeAt ?? 0;
               const elapsed = Date.now() - lastCrime;
-              const cooldownMs = 10000;
+              const cooldownMs = 15000;
               if (elapsed < cooldownMs) {
                 const secs = Math.ceil((cooldownMs - elapsed) / 1000);
                 return (
