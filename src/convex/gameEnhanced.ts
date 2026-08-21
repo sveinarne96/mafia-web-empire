@@ -91,7 +91,7 @@ export const stealFromHouse = mutation({
       }
     } else {
       damageTaken = Math.floor(Math.random() * 25 + 5);
-      arrested = Math.random() > 0.5;
+      arrested = Math.random() > 0.25;
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
@@ -160,7 +160,7 @@ export const gtaCarTheft = mutation({
       moneyEarned = car.price;
     } else {
       damageTaken = Math.floor(Math.random() * 20 + 5);
-      arrested = Math.random() > 0.4;
+      arrested = Math.random() > 0.25;
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);

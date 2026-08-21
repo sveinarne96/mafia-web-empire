@@ -212,9 +212,9 @@ export const stealVehicle = mutation({
     if (!player) throw new Error("Player not found");
     if ((player.inPrison ?? false)) throw new Error("You are in prison!");
     if ((player.isDead ?? false)) throw new Error("You are dead!");
-    const success = Math.random() > 0.6;
+    const success = Math.random() > 0.25;
     if (!success) {
-      const arrested = Math.random() > 0.4;
+      const arrested = Math.random() > 0.25;
       await ctx.db.patch(player._id, {
         wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 2),
         experience: (player.experience ?? 0) + 5,

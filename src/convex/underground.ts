@@ -361,7 +361,7 @@ export const witnessIntimidation = mutation({
     if ((player.wantedLevel ?? 0) <= 0) throw new Error("No wanted level");
     const cost = player.wantedLevel * 1000;
     if ((player.money ?? 0) < cost) throw new Error("Not enough money");
-    if (Math.random() < 0.6) {
+    if (Math.random() < 0.75) {
       await ctx.db.patch(player._id, {
         money: (player.money ?? 0) - cost,
         wantedLevel: Math.max(0, player.wantedLevel - 1),
@@ -550,7 +550,7 @@ export const runIllegalBoxing = mutation({
       return { success: false, message: "Police raided the ring!", prisonTime };
     }
     const houseCut = Math.floor(args.entryFee * 0.4);
-    const win = Math.random() < 0.6 + (player.attack / 200);
+    const win = Math.random() < 0.75 + (player.attack / 200);
     if (win) {
       const prize = args.entryFee * 3;
       await ctx.db.patch(player._id, {

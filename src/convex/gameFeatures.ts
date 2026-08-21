@@ -520,7 +520,7 @@ export const counterfeitMoney = mutation({
       });
       return { success, earned: amount };
     }
-    const arrested = Math.random() > 0.5;
+    const arrested = Math.random() > 0.25;
     if (arrested) {
       await ctx.db.patch(player._id, {
         money: player.money - 500, inPrison: true, prisonTime: 7200000,
@@ -567,7 +567,7 @@ export const commitArson = mutation({
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
     if (player.inPrison) throw new Error("You are in prison!");
-    const success = Math.random() > 0.4;
+    const success = Math.random() > 0.25;
     if (success) {
       const payout = Math.floor(5000 + Math.random() * 15000);
       await ctx.db.patch(player._id, {
@@ -595,7 +595,7 @@ export const commitIdentityTheft = mutation({
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Target not found!");
     if (player._id === args.targetId) throw new Error("Can't steal your own identity!");
-    const success = Math.random() > 0.5;
+    const success = Math.random() > 0.25;
     if (success) {
       const stolen = Math.floor(target.bank * 0.1);
       await ctx.db.patch(player._id, {
@@ -646,7 +646,7 @@ export const intimidateWitness = mutation({
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
     if ((player.wantedLevel ?? 0) <= 0) throw new Error("No wanted level!");
-    const success = Math.random() > 0.4;
+    const success = Math.random() > 0.25;
     if (success) {
       await ctx.db.patch(player._id, {
         wantedLevel: Math.max(0, player.wantedLevel - 2),
@@ -748,7 +748,7 @@ export const hijackCargo = mutation({
       });
       return { success, loot };
     }
-    const arrested = Math.random() > 0.5;
+    const arrested = Math.random() > 0.25;
     await ctx.db.patch(player._id, {
       life: Math.max(0, player.life - 15),
       wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 2),
