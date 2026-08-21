@@ -158,21 +158,57 @@ function generateMission(seed: number, playerLevel: number): GeneratedMission {
     ? `${storyArc} - Chapter ${chapter}`
     : `${cat.emoji} ${STORY_PREFIXES[prefixIdx]} ${TARGETS[targetIdx].split(" ")[0]}`;
 
-  const descriptions = [
-    `Infiltrate ${TARGETS[targetIdx]} in ${CITIES[cityIdx]} and steal everything you can.`,
-    `Hit the ${TARGETS[targetIdx]} in ${CITIES[cityIdx]} using a ${WEAPONS[weaponIdx]}.`,
-    `Raid the ${TARGETS[targetIdx]} across town. Don't leave witnesses.`,
-    `Break into ${TARGETS[targetIdx]} during the night shift in ${CITIES[cityIdx]}.`,
-    `Coordinate a crew to take down ${TARGETS[targetIdx]} in ${CITIES[cityIdx]}.`,
-    `Go solo on ${TARGETS[targetIdx]}. Quick in, quick out.`,
-    `${CITIES[cityIdx]}'s ${TARGETS[targetIdx]} has weak security. Strike now.`,
-    `A tip says ${TARGETS[targetIdx]} has high-value loot. Investigate.`,
-  ];
+  // Category-specific descriptions with detailed what-to-do instructions
+  const actionVerbs = ["Execute", "Complete", "Pull off", "Carry out", "Perform", "Run", "Orchestrate"];
+  const stealthTips = ["Use stealth", "Stay in the shadows", "Avoid cameras", "Wear a mask", "Disable alarms first"];
+  const exitStrategies = ["Escape through the back", "Have a getaway car ready", "Blend into the crowd", "Use the sewers", "Helicopter extraction"];
+  const va = actionVerbs[Math.floor(rng() * actionVerbs.length)];
+  const st = stealthTips[Math.floor(rng() * stealthTips.length)].toLowerCase();
+  const ex = exitStrategies[Math.floor(rng() * exitStrategies.length)];
+  const t = TARGETS[targetIdx];
+  const c = CITIES[cityIdx];
+  const w = WEAPONS[weaponIdx];
+
+  // Build description based on category with specific instructions
+  const categoryActions: Record<string, string> = {
+    street: `${va} a street crime at ${t} in ${c}. Approach your target, choose your weapon (${w}), and strike when the moment is right. Steal valuables and ${ex}. Warning: police response time is fast in this area.`,
+    heist: `${va} a heist on ${t} in ${c}. First, scout the location and plan your entry. Bring a crew if possible — you'll need a hacker, a driver, and muscle. ${st}, crack the vault, grab the loot, and ${ex}. The reward is massive but so is the risk.`,
+    smuggle: `Smuggle contraband through ${c} via ${t}. Load up your vehicle with the goods, avoid police checkpoints, and deliver to the drop-off point. ${st} — one wrong move and you lose everything. Use decoy shipments if needed.`,
+    hack: `Hack into ${t} in ${c}. Access the network, bypass firewalls, and extract valuable data. You'll need to ${st} while downloading files. Watch for intrusion detection systems. Download speed: slow = safe, fast = risky. Sell the data on the black market after.`,
+    drug: `Run a drug operation at ${t} in ${c}. Set up your distribution network, negotiate with suppliers, and move product through the streets. ${st} — undercover cops are everywhere. Use encrypted communication and dead drops. Pay off local contacts for protection.`,
+    assassinate: `Carry out an assassination contract at ${t} in ${c}. Study your target's routine, pick the perfect moment, and use a ${w}. ${st} and have an escape plan ready. Confirm the kill and collect your payment from the contract board.`,
+    fraud: `Execute a fraud scheme at ${t} in ${c}. Create fake documents, set up shell companies, and launder the money through multiple accounts. ${st} — the IRS doesn't forgive. Use multiple identities and rotate your methods.`,
+    gamble: `Place your bets at ${t} in ${c}. Study the odds, manage your bankroll, and know when to walk away. Set a loss limit of $${Math.floor(moneyReward * 0.5).toLocaleString()} and a win target of $${moneyReward.toLocaleString()}. Don't chase losses.`,
+    extort: `Extort protection money from ${t} in ${c}. Approach the owner, make your demands clear, and enforce your territory. Use a ${w} for intimidation if needed. Collect weekly payments or face consequences. Keep the operation low-key to avoid police attention.`,
+    arson: `Set fire to ${t} in ${c}. Pour accelerant, light the fuse, and ${ex}. Use a ${w} to cover your tracks. Make sure no one is inside before you start. Watch the fire spread from a safe distance and disappear before firefighters arrive.`,
+    kidnap: `Kidnap a high-value target at ${t} in ${c}. Grab the target, secure them in a safe house, and demand ransom. ${st} during the abduction — use a van and a ${w}. Negotiate hard and collect the payment. Release the target once paid.`,
+    bribe: `Bribe officials at ${t} in ${c}. Slip a $${Math.floor(moneyReward * 0.3).toLocaleString()} envelope to the right person, get the favor you need, and walk away clean. Keep the paper trail minimal — cash only. Establish a long-term relationship for future deals.`,
+    data: `Steal data from ${t} in ${c}. Plant a keylogger, access the server room, and copy everything to an encrypted drive. ${st} — security cameras are everywhere. Delete your logs and ${ex}. The data sells for a fortune on the dark web.`,
+    race: `Win an illegal street race through ${c} starting near ${t}. Pick your fastest car, tune the engine, and race against rival drivers. Use nitrous at the right moment, take shortcuts through alleyways, and cross the finish line first. Avoid police roadblocks.`,
+    fence: `Fence stolen goods at ${t} in ${c}. Bring your hot items to the buyer, negotiate the best price (expect 40-70% of market value), and wash the money clean. Build a reputation for quality goods and reliable delivery.`,
+    counterfeit: `Operate a counterfeiting ring at ${t} in ${c}. Set up a printing press, produce fake bills or designer goods, and distribute through your network. ${st} — Secret Service watches for fakes. Rotate your printing plates and vary the serial numbers.`,
+    blackmail: `Gather blackmail material on someone at ${t} in ${c}. Plant surveillance devices, photograph incriminating evidence, and compile a dossier. Contact the target with your demands. $${moneyReward.toLocaleString()} or the photos go public. Pay up or else.`,
+    bounty: `Hunt a bounty target at ${t} in ${c}. Study the target's profile, track their movements, and close in for the capture. Use a ${w} if they resist. Bring them in alive for full reward, dead for half. Check the bounty board for new contracts.`,
+    escape: `Plan a prison escape from ${t} in ${c}. Bribe a guard, dig a tunnel, or create a distraction. ${st} during your escape. Have a getaway car waiting outside the walls. Change your appearance immediately after escaping. Lay low for 48 hours.`,
+    sabotage: `Sabotage ${t} in ${c}. Plant explosives, cut power lines, or poison the water supply. Use a ${w} and set timed charges. ${ex} before the damage is discovered. The target won't know what hit them until it's too late.`,
+    infiltrate: `Infiltrate ${t} in ${c}. Create a fake identity, get hired, and access restricted areas from the inside. ${st} — don't blow your cover. Copy files, plant bugs, and gather intelligence. Leave no trace of your real identity when you exit.`,
+    smuggle_weapons: `Smuggle weapons through ${t} in ${c}. Conceal firearms in shipping containers, bribe customs officials, and move the arsenal to your distribution point. ${st} — weapons charges carry life sentences. Use encrypted radios and avoid repeated routes.`,
+    territory: `Claim territory at ${t} in ${c}. Rally your crew, secure the perimeter, and establish control. Fight off rival gangs using ${w} tactics. Set up lookouts, mark your turf, and collect tribute from local businesses. Hold the ground or lose it all.`,
+    diamond: `Steal diamonds from ${t} in ${c}. This is a high-security target — you'll need laser cutters, a replica to swap, and perfect timing. ${st} through the laser grid, grab the gems, and ${ex}. Each diamond is worth $${Math.floor(moneyReward / 5).toLocaleString()}.`,
+    art: `Steal art from ${t} in ${c}. Study the security layout, create a replica to swap, and ${st} past the guards. Remove the painting carefully — one scratch and it's worthless. ${ex} with the art hidden in a vehicle. Sell to a private collector.`,
+    cargo: `Raid cargo at ${t} in ${c}. Intercept the shipment during transfer, overpower the guards, and load the goods into your vehicle. Use a ${w} if resistance is met. ${ex} before backup arrives. Check the cargo manifest — some items are worth more than others.`,
+    cyber_heist: `Execute a cyber heist on ${t} in ${c}. Deploy ransomware, encrypt their systems, and demand payment in cryptocurrency. Set up a dead drop for the decryption key exchange. ${st} — don't leave your IP exposed. Launder the crypto through mixers.`,
+    witness: `Tamper with a witness at ${t} in ${c}. Approach them, make an offer they can't refuse, or apply pressure through their family. Destroy any evidence they might have. ${st} — the prosecutor is watching. Once silenced, the case falls apart.`,
+    smuggle_art: `Smuggle art through ${t} in ${c}. Conceal paintings in fake frames, ship through customs with forged provenance documents, and deliver to the buyer. ${st} — art theft Interpol agents patrol this route. Vary your shipping schedule.`,
+    bank: `Rob ${t} in ${c}. Enter with a ${w}, take control of the lobby, and force the manager to open the vault. Grab cash, jewelry, and safety deposit contents. Set a 3-minute timer and ${ex} when the alarm triggers. Split the take with your crew.`,
+  };
+
+  const desc = categoryActions[cat.id] || `${va} a ${cat.name} operation at ${t} in ${c}. Use a ${w}, ${st.toLowerCase()}, and ${ex.toLowerCase()}. The reward is $${moneyReward.toLocaleString()} — don't mess this up.`;
 
   return {
     id: `m_${seed}`,
     name,
-    description: descriptions[Math.floor(rng() * descriptions.length)],
+    description: desc,
     category: cat.id,
     categoryEmoji: cat.emoji,
     categoryColor: cat.color,
