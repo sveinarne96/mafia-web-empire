@@ -83,7 +83,22 @@ export const registerPlayer = mutation({
   handler: async (ctx, args) => {
     const existing = await getCurrentUser(ctx);
     if (!existing) throw new Error("Not authenticated");
-    if (existing.nickname) throw new Error("Already registered");
+    if (existing.nickname) {
+      // Already registered - re-initialize any missing fields for existing users
+      const patch: Record<string, unknown> = {};
+      const fields = ["money","bank","points","life","maxLife","defense","attack","level","experience","location","inPrison","prisonTime","isDead","totalCrimes","totalFights","totalKills","totalDeaths","dailyRaidUsed","lastDailyRaid","registeredAt","lastRegenAt","wantedLevel","reputation","reputationAlignment","prestige","prestigeMultiplier","levelUpPending","skillPoints","cellLevel","solitaryTime","contraband","prisonCurrency","paroleEligible","totalPrisonEscapes","totalPrisonJobs","totalEarned","highestLevel","totalPlaytime","insuranceActive","loanAmount","loanDueAt","dirtyMoney","counterfeitSkill","smugglingRuns","drugDeals","racketeeringIncome","loanSharkDebts","witnessIntimidations","identityThefts","kidnappings","arsons","cargoThefts","armsDeals","illegalBoxingEvents","pirateRadioBoost","prostitutionRings","gamblingDens","protectionRackets","lastBlackMarketRefresh","totalLaundered","armorDurability","weaponProficiency","killsThisSeason","deathsThisSeason","retaliationUntil","lastDeathAt","isKidnapped","betrayalCount","totalGifting","totalMentoring","lastActive","lastCrimeAt","isBanned"];
+      for (const f of fields) { if ((existing as any)[f] === undefined) { patch[f] = 0; } }
+      patch.inPrison = existing.inPrison ?? false;
+      patch.isDead = existing.isDead ?? false;
+      patch.levelUpPending = existing.levelUpPending ?? false;
+      patch.paroleEligible = existing.paroleEligible ?? false;
+      patch.isKidnapped = existing.isKidnapped ?? false;
+      patch.isBanned = existing.isBanned ?? false;
+      patch.reputationAlignment = existing.reputationAlignment ?? "neutral";
+      patch.location = existing.location ?? "New York";
+      if (Object.keys(patch).length > 0) await ctx.db.patch(existing._id, patch);
+      return;
+    }
 
     // Check nickname uniqueness
     const nicknameTaken = await ctx.db

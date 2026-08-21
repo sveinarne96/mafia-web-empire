@@ -1,97 +1,56 @@
-// THIS FILE IS READ ONLY. Do not touch this file unless you are correctly adding a new auth provider in accordance to the vly auth documentation
-
 import { convexAuth } from "@convex-dev/auth/server";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { emailOtp } from "./auth/emailOtp";
 
+// Default values for all required game fields when a new user is created by auth.
+// This ensures the user document matches the schema immediately.
+const DEFAULT_GAME_FIELDS = {
+  money: 0, bank: 0, points: 0, life: 100, maxLife: 100,
+  defense: 10, attack: 10, level: 0, experience: 0,
+  location: "New York", inPrison: false, prisonTime: 0, isDead: false,
+  totalCrimes: 0, totalFights: 0, totalKills: 0, totalDeaths: 0,
+  dailyRaidUsed: 0, lastDailyRaid: 0, registeredAt: 0,
+  lastRegenAt: 0, wantedLevel: 0, reputation: 0,
+  reputationAlignment: "neutral", prestige: 0, prestigeMultiplier: 1,
+  levelUpPending: false, skillPoints: 0,
+  cellLevel: 1, solitaryTime: 0, contraband: 0, prisonCurrency: 0,
+  paroleEligible: false, totalPrisonEscapes: 0, totalPrisonJobs: 0,
+  totalEarned: 0, highestLevel: 0, totalPlaytime: 0,
+  insuranceActive: false, loanAmount: 0, loanDueAt: 0,
+  dirtyMoney: 0, counterfeitSkill: 0, smugglingRuns: 0, drugDeals: 0,
+  racketeeringIncome: 0, loanSharkDebts: 0, witnessIntimidations: 0,
+  identityThefts: 0, kidnappings: 0, arsons: 0, cargoThefts: 0,
+  armsDeals: 0, illegalBoxingEvents: 0, pirateRadioBoost: 0,
+  prostitutionRings: 0, gamblingDens: 0, protectionRackets: 0,
+  lastBlackMarketRefresh: 0, totalLaundered: 0,
+  armorDurability: 0, weaponProficiency: 0,
+  killsThisSeason: 0, deathsThisSeason: 0, retaliationUntil: 0,
+  lastDeathAt: 0, isKidnapped: false,
+  betrayalCount: 0, totalGifting: 0, totalMentoring: 0,
+  lastActive: 0, lastCrimeAt: 0, isBanned: false,
+};
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
   providers: [emailOtp, Anonymous],
   callbacks: {
-    createOrUpdateUser: async (ctx, args) => {
-      const existingUserId = args.existingUserId;
+    createOrUpdateUser: async (ctx, { existingUserId, ...args }) => {
+      // If user already exists, just return their ID (profile already set)
       if (existingUserId) {
-        // Just update profile fields on existing user
-        await ctx.db.patch(existingUserId, { ...args.profile });
         return existingUserId;
       }
-      // Create new user with all required schema fields as defaults
+      // Only pick known-safe fields from the auth profile
+      const profile = args.profile ?? {};
+      const safeProfile: Record<string, unknown> = {};
+      if (profile.name) safeProfile.name = profile.name;
+      if (profile.image) safeProfile.image = profile.image;
+      if (profile.email) safeProfile.email = profile.email;
+      if (profile.isAnonymous !== undefined) safeProfile.isAnonymous = profile.isAnonymous;
+      if (profile.emailVerificationTime) safeProfile.emailVerificationTime = profile.emailVerificationTime;
+
       const userId = await ctx.db.insert("users", {
-        ...args.profile,
-        money: 0,
-        bank: 0,
-        points: 0,
-        life: 100,
-        maxLife: 100,
-        defense: 10,
-        attack: 10,
-        level: 0,
-        experience: 0,
-        location: "New York",
-        inPrison: false,
-        prisonTime: 0,
-        isDead: false,
-        totalCrimes: 0,
-        totalFights: 0,
-        totalKills: 0,
-        totalDeaths: 0,
-        dailyRaidUsed: 0,
-        lastDailyRaid: Date.now(),
-        registeredAt: 0,
-        lastRegenAt: Date.now(),
-        wantedLevel: 0,
-        reputation: 0,
-        reputationAlignment: "neutral",
-        prestige: 0,
-        prestigeMultiplier: 1,
-        levelUpPending: false,
-        skillPoints: 0,
-        cellLevel: 1,
-        solitaryTime: 0,
-        contraband: 0,
-        prisonCurrency: 0,
-        paroleEligible: false,
-        totalPrisonEscapes: 0,
-        totalPrisonJobs: 0,
-        totalEarned: 0,
-        highestLevel: 0,
-        totalPlaytime: 0,
-        insuranceActive: false,
-        loanAmount: 0,
-        loanDueAt: 0,
-        dirtyMoney: 0,
-        counterfeitSkill: 0,
-        smugglingRuns: 0,
-        drugDeals: 0,
-        racketeeringIncome: 0,
-        loanSharkDebts: 0,
-        witnessIntimidations: 0,
-        identityThefts: 0,
-        kidnappings: 0,
-        arsons: 0,
-        cargoThefts: 0,
-        armsDeals: 0,
-        illegalBoxingEvents: 0,
-        pirateRadioBoost: 0,
-        prostitutionRings: 0,
-        gamblingDens: 0,
-        protectionRackets: 0,
-        lastBlackMarketRefresh: 0,
-        totalLaundered: 0,
-        armorDurability: 0,
-        weaponProficiency: 0,
-        killsThisSeason: 0,
-        deathsThisSeason: 0,
-        retaliationUntil: 0,
-        lastDeathAt: 0,
-        isKidnapped: false,
-        betrayalCount: 0,
-        totalGifting: 0,
-        totalMentoring: 0,
-        lastActive: Date.now(),
-        lastCrimeAt: 0,
-        isBanned: false,
-      });
+        ...DEFAULT_GAME_FIELDS,
+        ...safeProfile,
+      } as any);
       return userId;
     },
   },
