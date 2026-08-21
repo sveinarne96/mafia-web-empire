@@ -434,7 +434,17 @@ crimeCategories.sort((a, b) => {
   return maxB - maxA;
 });
 
+// Sort crimes within each category by XP (highest first)
+crimeCategories.forEach((cat) => {
+  cat.crimes.sort((a, b) => b.xp - a.xp);
+});
 
+// Sort categories by highest XP crime (highest first)
+crimeCategories.sort((a, b) => {
+  const maxA = Math.max(...a.crimes.map((c) => c.xp));
+  const maxB = Math.max(...b.crimes.map((c) => c.xp));
+  return maxB - maxA;
+});
 
 export function getCrimeTypeColor(risk: number): string {
   if (risk < 30) return "text-green-400";

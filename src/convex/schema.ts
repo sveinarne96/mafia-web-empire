@@ -107,7 +107,8 @@ const schema = defineSchema({
   })
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])
-    .index("by_nickname", ["nickname"]),
+    .index("by_nickname", ["nickname"])
+    .index("email", ["email"]),
 
   families: defineTable({
     name: v.string(),
