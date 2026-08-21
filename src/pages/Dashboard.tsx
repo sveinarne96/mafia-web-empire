@@ -63,7 +63,7 @@ type GamePage =
     | "live_chat" | "prestige" | "city_districts" | "crafting" | "leaderboards" | "world_map"
     | "fight_club" | "lottery" | "crypto" | "weather" | "news_ticker" | "crime_mastery"
     | "legendary_items" | "arena" | "legacy_board" | "raids" | "mystery_boxes" | "ghost_mode"
-    | "crime_tv" | "time_machine"    | "steal_from_house" | "gta_car_theft" | "bodyguards" | "secret_challenges" | "boosts" | "enhanced_admin" | "events";
+    | "crime_tv" | "time_machine"    | "steal_from_house" | "gta_car_theft" | "bodyguards" | "secret_challenges" | "boosts" | "enhanced_admin" | "events" | "prison";
 
 const cities = [
   { name: "New York", emoji: "🗽", crime: "high", boost: 1.2, murderCity: true, drugRun: true },
@@ -103,6 +103,7 @@ const leftMenuSections: MenuItem[] = [
     { title: "🕵️ Underground", icon: Globe, page: "underground" as GamePage },
     { title: "🏚️ Steal From House", icon: Home, page: "steal_from_house" as GamePage },
     { title: "🚗 GTA Car Theft", icon: Car, page: "gta_car_theft" as GamePage },
+    { title: "🔒 Prison", icon: Lock, page: "prison" as GamePage },
   ]},
   { title: "⚔️ Combat", icon: Swords, children: [
     { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
@@ -553,6 +554,7 @@ function BankPage() {
 
 function CrimePage({ type }: { type: string }) {
   const commitCrime = useMutation(api.game.commitCrime);
+  const player = useQuery(api.game.getPlayer);
   const [result, setResult] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -562,6 +564,8 @@ function CrimePage({ type }: { type: string }) {
     rob_player: { title: "Rob Player", icon: "🔫", desc: "Target another player. Higher risk, higher reward." },
   };
   const i = info[type] ?? { title: type, icon: "❓", desc: "" };
+  const momentum = (player as any)?.crimeMomentum ?? 0;
+  const momentumMultiplier = momentum >= 90 ? "MAX (100%)" : `${Math.floor(momentum * 0.75 + 25)}%`;
 
   const doCrime = async () => {
     setLoading(true);
@@ -574,10 +578,24 @@ function CrimePage({ type }: { type: string }) {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center gap-3"><span className="text-2xl">{i.icon}</span><h2 className="text-2xl font-bold">{i.title}</h2></div>
       <p className="text-muted-foreground text-sm">{i.desc}</p>
+      {/* Crime Momentum Bar */}
+      <div className="mafia-card rounded-xl p-4 space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">⚡ Crime Momentum</span>
+          <span className={`font-bold ${momentum >= 90 ? "text-green-400" : "text-yellow-400"}`}>{momentum.toFixed(0)}%</span>
+        </div>
+        <div className="h-3 bg-background/60 rounded-full overflow-hidden">
+          <motion.div className={`h-full rounded-full ${momentum >= 90 ? "bg-gradient-to-r from-green-500 to-emerald-400" : "bg-gradient-to-r from-yellow-500 to-orange-400"}`}
+            animate={{ width: `${Math.min(100, momentum)}%` }} transition={{ duration: 0.5 }} />
+        </div>
+        <div className="text-[10px] text-muted-foreground">
+          {momentum >= 90 ? "✅ Maximum focus! Full rewards!" : `🎯 Build momentum for better rewards — Success: ${momentumMultiplier}`}
+        </div>
+      </div>
       <div className="mafia-card rounded-xl p-6">
-        <button onClick={doCrime} disabled={loading}
+        <button onClick={doCrime} disabled={loading || (player as any)?.inPrison}
           className="w-full py-4 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold text-lg rounded-lg hover:from-red-500 hover:to-red-400 transition-all disabled:opacity-50 shadow-lg shadow-red-900/20">
-          {loading ? "Committing..." : "Commit Crime"}
+          {loading ? "Committing..." : (player as any)?.inPrison ? "🔒 In Prison" : "Commit Crime"}
         </button>
         {result && !result.error && (
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -1880,6 +1898,25 @@ export default function Dashboard() {
       case "secret_challenges": return <SecretChallengesPage />;
       case "boosts": return <BoostsPage />;
       case "enhanced_admin": return <EnhancedAdminPage />;
+      case "prison": return <PrisonPage />;
+      case "arena": return <ColosseumPage />;
+      case "city_districts": return <RealEstatePage />;
+      case "crafting": return <SkillTreePage />;
+      case "crime_mastery": return <AchievementsPage />;
+      case "crime_tv": return <NewsTickerPage />;
+      case "crypto": return <CryptoPage />;
+      case "ghost_mode": return <GhostModePage />;
+      case "leaderboards": return <LeaderboardsPage />;
+      case "legacy_board": return <LegacyBoardPage />;
+      case "legendary_items": return <LegendaryItemsPage />;
+      case "lottery": return <LotteryPage />;
+      case "mystery_boxes": return <MysteryBoxesPage />;
+      case "news_ticker": return <NewsTickerPage />;
+      case "prestige": return <PrestigePage />;
+      case "raids": return <RaidsPage />;
+      case "time_machine": return <TimeMachinePage />;
+      case "weather": return <WeatherPage />;
+      case "world_map": return <WorldMapPage />;
       default: return <HeadquartersPage />;
     }
   };
