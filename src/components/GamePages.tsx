@@ -441,7 +441,7 @@ export function CompanyPage() {
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3"><Shield className="size-7 text-primary" /><h2 className="text-2xl font-bold">Company</h2></div>
-        <button onClick={async () => { setLoading(true); try { const r = await collectIncome(); setMsg(`+$${r.income.toLocaleString()}`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading || (businesses ?? []).length === 0} className="px-3 py-1.5 bg-green-500/10 text-green-400 text-xs font-semibold rounded-lg border border-green-500/20 disabled:opacity-40">💰 Collect</button>
+        <button onClick={async () => { setLoading(true); try { const r = await collectIncome({}); setMsg(`+$${r.income.toLocaleString()}`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading || (businesses ?? []).length === 0} className="px-3 py-1.5 bg-green-500/10 text-green-400 text-xs font-semibold rounded-lg border border-green-500/20 disabled:opacity-40">💰 Collect</button>
       </div>
       <div className="flex gap-1 bg-background/50 rounded-lg p-1">
         {(["owned", "shop"] as const).map(t => (

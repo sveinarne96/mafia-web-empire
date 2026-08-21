@@ -549,7 +549,7 @@ export function SafeHousesPage() {
   };
 
   const handleCollect = async () => {
-    try { const r = await collectIncome(); setMsg(`✅ Collected $${r.income.toLocaleString()}!`); }
+    try { const r = await collectIncome({}); setMsg(`✅ Collected $${r.income.toLocaleString()}!`); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : 'Failed'); }
   };
 
