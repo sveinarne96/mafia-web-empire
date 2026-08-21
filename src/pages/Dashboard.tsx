@@ -306,17 +306,21 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
               <span className="text-sm font-bold truncate">{player.nickname ?? "Unknown"}</span>
             </div>
             <div>
-              <div className="flex justify-between text-[10px] text-sidebar-foreground/50 mb-0.5"><span>Life</span><span>{player.life ?? 0}/{player.maxLife ?? 100}</span></div>
-              <div className="h-1.5 rounded-full bg-sidebar-accent overflow-hidden">
-                <div className="h-full rounded-full bg-gradient-to-r from-red-500 to-red-400 transition-all" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }} />
+              <div className="flex justify-between text-[11px] font-semibold text-sidebar-foreground/70 mb-1"><span className="flex items-center gap-1">❤️ Life</span><span className="text-red-400 font-bold">{player.life ?? 0}/{player.maxLife ?? 100}</span></div>
+              <div className="h-3.5 rounded-full bg-sidebar-accent overflow-hidden border border-red-500/20">
+                <div className="h-full rounded-full transition-all duration-700 ease-out animate-life-bar" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%`, background: `linear-gradient(90deg, #dc2626 0%, #ef4444 40%, #f87171 70%, #fca5a5 100%)`, boxShadow: `0 0 8px rgba(239,68,68,0.5), inset 0 1px 0 rgba(255,255,255,0.15)` }} />
               </div>
             </div>
             <div>
               {(() => { const xpNeeded = (player.level ?? 1) * 100; const xp = player.experience ?? 0; const pct = Math.min(100, (xp / xpNeeded) * 100); const rank = (player.level ?? 1) >= 50 ? "Godfather" : (player.level ?? 1) >= 30 ? "Don" : (player.level ?? 1) >= 20 ? "Capo" : (player.level ?? 1) >= 10 ? "Soldier" : "Associate"; return (
               <>
-                <div className="flex justify-between text-[10px] text-sidebar-foreground/50 mb-0.5"><span className="flex items-center gap-1"><Trophy className="size-2.5 text-yellow-400" />{rank}</span><span>XP {xp}/{xpNeeded}</span></div>
-                <div className="h-1.5 rounded-full bg-sidebar-accent overflow-hidden">
-                  <div className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-amber-400 transition-all" style={{ width: `${pct}%` }} />
+                <div className="flex justify-between text-[11px] font-semibold text-sidebar-foreground/70 mb-1"><span className="flex items-center gap-1">🏆 <span className="text-yellow-400">{rank}</span></span><span className="text-cyan-400">XP {xp}/{xpNeeded}</span></div>
+                <div className="h-3.5 rounded-full bg-sidebar-accent overflow-hidden border border-yellow-500/20">
+                  <div className="h-full rounded-full transition-all duration-700 ease-out animate-xp-bar" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #eab308 0%, #facc15 30%, #fde047 60%, #fef08a 100%)`, boxShadow: `0 0 8px rgba(234,179,8,0.5), inset 0 1px 0 rgba(255,255,255,0.15)` }} />
+                </div>
+                <div className="mt-1.5 flex items-center justify-between bg-gradient-to-r from-green-900/30 to-emerald-900/20 border border-green-500/20 rounded-lg px-2.5 py-1.5 animate-money-glow">
+                  <span className="text-[11px] font-semibold text-green-300/80">💰 Cash</span>
+                  <span className="text-sm font-black animate-money-text bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">${(player.money ?? 0).toLocaleString()}</span>
                 </div>
               </>
               ); })()}
@@ -430,14 +434,18 @@ function HeadquartersPage() {
         <StatBox label="Points" value={(player.points ?? 0).toString()} color="text-yellow-400" />
       </div>
       <div className="mafia-card rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Vital Stats</h3>
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">⚔️ Vital Stats</h3>
         <div>
-          <div className="flex justify-between text-xs text-muted-foreground mb-1"><span>Life</span><span>{player.life ?? 0}/{player.maxLife ?? 100}</span></div>
-          <div className="h-2 rounded-full bg-background/60 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-red-500 to-orange-400 transition-all" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }} /></div>
+          <div className="flex justify-between text-sm font-semibold text-muted-foreground mb-1.5"><span className="flex items-center gap-1.5">❤️ Life</span><span className="text-red-400 font-bold">{player.life ?? 0}/{player.maxLife ?? 100}</span></div>
+          <div className="h-4 rounded-full bg-background/60 overflow-hidden border border-red-500/20"><div className="h-full rounded-full animate-life-bar" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%`, background: `linear-gradient(90deg, #dc2626 0%, #ef4444 40%, #f87171 70%, #fca5a5 100%)`, boxShadow: `0 0 10px rgba(239,68,68,0.4), inset 0 1px 0 rgba(255,255,255,0.2)` }} /></div>
         </div>
         <div>
-          <div className="flex justify-between text-xs text-muted-foreground mb-1"><span>XP</span><span>{player.experience ?? 0}/{xpNeeded}</span></div>
-          <div className="h-2 rounded-full bg-background/60 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all" style={{ width: `${xpPercent}%` }} /></div>
+          <div className="flex justify-between text-sm font-semibold text-muted-foreground mb-1.5"><span>🏆 Rank XP</span><span className="text-cyan-400 font-bold">{player.experience ?? 0}/{xpNeeded}</span></div>
+          <div className="h-4 rounded-full bg-background/60 overflow-hidden border border-yellow-500/20"><div className="h-full rounded-full animate-xp-bar" style={{ width: `${xpPercent}%`, background: `linear-gradient(90deg, #eab308 0%, #facc15 30%, #fde047 60%, #fef08a 100%)`, boxShadow: `0 0 10px rgba(234,179,8,0.4), inset 0 1px 0 rgba(255,255,255,0.2)` }} /></div>
+        </div>
+        <div className="flex items-center justify-between bg-gradient-to-r from-green-900/40 to-emerald-900/20 border border-green-500/20 rounded-xl px-4 py-3 animate-money-glow">
+          <span className="text-sm font-bold text-green-300/80">💰 Cash on Hand</span>
+          <span className="text-xl font-black animate-money-text bg-gradient-to-r from-green-400 to-emerald-300 bg-clip-text text-transparent">${(player.money ?? 0).toLocaleString()}</span>
         </div>
         <div className="flex gap-3">
           <button onClick={doRegen} className="flex-1 py-2 bg-green-500/10 text-green-400 text-xs font-semibold rounded-lg hover:bg-green-500/20 transition-colors border border-green-500/20">💚 Heal (+1 HP / 5min)</button>
