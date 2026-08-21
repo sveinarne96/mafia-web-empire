@@ -173,6 +173,10 @@ export const registerPlayer = mutation({
       lastActive: Date.now(),
       isBanned: false,
       lastCrimeAt: 0,
+      avatarId: undefined,
+      bio: undefined,
+      profilePictureUrl: undefined,
+      activeRole: undefined,
     });
   },
 });
