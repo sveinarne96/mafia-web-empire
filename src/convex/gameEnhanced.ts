@@ -164,13 +164,13 @@ export const resetCrimeMomentum = mutation({
 export const stealFromHouse = mutation({
   args: { difficulty: v.string() },
   handler: async (ctx, args) => {
-    try {
-    const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
-    if (player.inPrison ?? false) throw new Error("You are in prison!");
-    if (player.isDead ?? false) throw new Error("You are dead!");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    if (player.inPrison) throw new Error("You are in prison!");
+    if (player.isDead) throw new Error("You are dead!");
 
-    // 75% base success rate with level bonus
     const baseRate = 0.75;
     const levelBonus = Math.min(0.20, ((player.level ?? 1) * 0.004));
     const successRate = Math.min(0.95, baseRate + levelBonus);
@@ -181,20 +181,8 @@ export const stealFromHouse = mutation({
     };
     const mult = difficultyMultipliers[args.difficulty] ?? 1.0;
 
-    const stolenItems = [
-      { name: "Cash Stash", emoji: "💵", value: 100, type: "cash" },
-      { name: "Gold Watch", emoji: "⌚", value: 500, type: "jewelry" },
-      { name: "Laptop", emoji: "💻", value: 800, type: "electronics" },
-      { name: "Jewelry Box", emoji: "💎", value: 1500, type: "jewelry" },
-      { name: "Painting", emoji: "🖼️", value: 3000, type: "art" },
-      { name: "TV", emoji: "📺", value: 600, type: "electronics" },
-      { name: "Safe Contents", emoji: "🔐", value: 2000, type: "cash" },
-      { name: "Designer Bag", emoji: "👜", value: 1200, type: "fashion" },
-      { name: "Rare Coins", emoji: "🪙", value: 900, type: "collectible" },
-      { name: "Medicine", emoji: "💊", value: 400, type: "medical" },
-      { name: "Weapon", emoji: "🔫", value: 2500, type: "weapon" },
-      { name: "Cash Register", emoji: "Register", value: 700, type: "cash" },
-    ];
+    const stolenItemNames = ["Cash Stash","Gold Watch","Laptop","Jewelry Box","Painting","TV","Safe Contents","Designer Bag","Rare Coins","Medicine","Weapon","Cash Register"];
+    const stolenItemValues = [100, 500, 800, 1500, 3000, 600, 2000, 1200, 900, 400, 2500, 700];
 
     let moneyEarned = 0;
     let itemsStolen: string[] = [];
@@ -204,19 +192,13 @@ export const stealFromHouse = mutation({
     if (succeeded) {
       const numItems = Math.floor(Math.random() * 3) + 1;
       for (let i = 0; i < numItems; i++) {
-        const item = stolenItems[Math.floor(Math.random() * stolenItems.length)];
-        const itemValue = Math.floor(item.value * mult);
+        const idx = Math.floor(Math.random() * stolenItemNames.length);
+        const itemValue = Math.floor(stolenItemValues[idx] * mult);
         moneyEarned += itemValue;
-        itemsStolen.push(`${item.emoji} ${item.name} ($${itemValue.toLocaleString()})`);
+        itemsStolen.push(stolenItemNames[idx] + " ($" + itemValue + ")");
       }
-      // Energy drink drop (5% chance)
-      if (Math.random() < 0.05) {
-        itemsStolen.push("⚡ Energy Drink");
-      }
-      // Secret chest drop (2.5% chance)
-      if (Math.random() < 0.025) {
-        itemsStolen.push("🗝️ SECRET CHEST FOUND!");
-      }
+      if (Math.random() < 0.05) itemsStolen.push("Energy Drink");
+      if (Math.random() < 0.025) itemsStolen.push("SECRET CHEST FOUND!");
     } else {
       damageTaken = Math.floor(Math.random() * 25 + 5);
       arrested = Math.random() > 0.25;
@@ -242,37 +224,29 @@ export const stealFromHouse = mutation({
     });
 
     return { success: succeeded, moneyEarned, itemsStolen, damageTaken, arrested, xpEarned };
-    } catch (e: any) {
-      throw new Error(e?.message ?? "stealFromHouse failed");
-    }
   },
 });
 
 // ===== GTA CAR THEFT (cars show in garage) =====
 export const gtaCarTheft = mutation({
   args: {},
-  handler: async (ctx, args) => {
-    try {
-    const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
-    if (player.inPrison ?? false) throw new Error("You are in prison!");
-    if (player.isDead ?? false) throw new Error("You are dead!");
+  handler: async (ctx, _args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    if (player.inPrison) throw new Error("You are in prison!");
+    if (player.isDead) throw new Error("You are dead!");
 
-    // 75% base success rate with level bonus
     const baseRate = 0.75;
     const levelBonus = Math.min(0.20, ((player.level ?? 1) * 0.004));
     const successRate = Math.min(0.95, baseRate + levelBonus);
     const succeeded = Math.random() < successRate;
 
-    const carTypes = [
-      { name: "Beater Sedan", speed: 40, storage: 10, price: 500, emoji: "🚗" },
-      { name: "Stolen Pickup", speed: 45, storage: 20, price: 1200, emoji: "🛻" },
-      { name: "Hot Hatch", speed: 65, storage: 8, price: 2500, emoji: "🏎️" },
-      { name: "Muscle Car", speed: 75, storage: 6, price: 4000, emoji: "🏁" },
-      { name: "Luxury Sedan", speed: 70, storage: 12, price: 8000, emoji: "🚗" },
-      { name: "Sports Coupe", speed: 85, storage: 5, price: 12000, emoji: "🏎️" },
-      { name: "Super Car", speed: 95, storage: 4, price: 25000, emoji: "🚀" },
-    ];
+    const carNames = ["Beater Sedan","Stolen Pickup","Hot Hatch","Muscle Car","Luxury Sedan","Sports Coupe","Super Car"];
+    const carSpeeds = [40, 45, 65, 75, 70, 85, 95];
+    const carStorages = [10, 20, 8, 6, 12, 5, 4];
+    const carPrices = [500, 1200, 2500, 4000, 8000, 12000, 25000];
 
     let vehicleId = null;
     let moneyEarned = 0;
@@ -280,18 +254,18 @@ export const gtaCarTheft = mutation({
     let arrested = false;
 
     if (succeeded) {
-      const car = carTypes[Math.floor(Math.random() * carTypes.length)];
+      const idx = Math.floor(Math.random() * carNames.length);
       vehicleId = await ctx.db.insert("vehicles", {
-        userId: player._id,
-        name: car.name,
+        userId: userId,
+        name: carNames[idx],
         type: "stolen",
-        speed: car.speed,
-        storage: car.storage,
+        speed: carSpeeds[idx],
+        storage: carStorages[idx],
         armored: false,
         stolen: true,
         purchasePrice: 0,
       });
-      moneyEarned = car.price;
+      moneyEarned = carPrices[idx];
     } else {
       damageTaken = Math.floor(Math.random() * 20 + 5);
       arrested = Math.random() > 0.25;
@@ -300,7 +274,7 @@ export const gtaCarTheft = mutation({
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
     const xpEarned = succeeded ? 12 : 2;
 
-    await ctx.db.patch(player._id, {
+    await ctx.db.patch(userId, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
@@ -312,9 +286,6 @@ export const gtaCarTheft = mutation({
     });
 
     return { success: succeeded, vehicleId, moneyEarned, damageTaken, arrested, xpEarned };
-    } catch (e: any) {
-      throw new Error(e?.message ?? "gtaCarTheft failed");
-    }
   },
 });
 
