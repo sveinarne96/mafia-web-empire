@@ -1,11 +1,33 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-// ===== 90-SECOND COOLDOWN HOOK =====
-export function useCooldown(seconds = 90) {
-  const [remaining, setRemaining] = useState(0);
-  const endRef = useRef<number>(0);
+// ===== 90-SECOND COOLDOWN HOOK (server-persisted via lastCrimeAt) =====
+export function useCooldown(seconds = 90, serverLastActionAt?: number) {
+  const [remaining, setRemaining] = useState(() => {
+    if (serverLastActionAt && serverLastActionAt > 0) {
+      const elapsed = Math.floor((Date.now() - serverLastActionAt) / 1000);
+      const left = Math.max(0, seconds - elapsed);
+      return left;
+    }
+    return 0;
+  });
+  const endRef = useRef<number>(remaining > 0 ? Date.now() + remaining * 1000 : 0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const prevServerRef = useRef<number | undefined>(serverLastActionAt);
+
+  // When serverLastActionAt changes (mutation completed), restart cooldown
+  useEffect(() => {
+    if (serverLastActionAt && serverLastActionAt !== prevServerRef.current && serverLastActionAt > 0) {
+      prevServerRef.current = serverLastActionAt;
+      const elapsed = Math.floor((Date.now() - serverLastActionAt) / 1000);
+      const left = Math.max(0, seconds - elapsed);
+      if (left > 0) {
+        endRef.current = Date.now() + left * 1000;
+        setRemaining(left);
+      }
+    }
+  }, [serverLastActionAt]);
 
   const startCooldown = useCallback(() => {
     endRef.current = Date.now() + seconds * 1000;

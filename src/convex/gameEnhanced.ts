@@ -238,6 +238,7 @@ export const stealFromHouse = mutation({
       inPrison: arrested,
       prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)),
+      lastCrimeAt: Date.now(),
     });
 
     return { success: succeeded, moneyEarned, itemsStolen, damageTaken, arrested, xpEarned };
@@ -307,6 +308,7 @@ export const gtaCarTheft = mutation({
       inPrison: arrested,
       prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 2 : 0)),
+      lastCrimeAt: Date.now(),
     });
 
     return { success: succeeded, vehicleId, moneyEarned, damageTaken, arrested, xpEarned };
