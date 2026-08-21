@@ -135,7 +135,7 @@ const schema = defineSchema(
 
       // Online tracking & admin
       lastActive: v.number(),
-      lastCrimeAt: v.number(),
+      lastCrimeAt: v.optional(v.number()),
       avatarId: v.optional(v.string()),
       bio: v.optional(v.string()),
       profilePictureUrl: v.optional(v.string()),
@@ -405,7 +405,7 @@ const schema = defineSchema(
       pointsReward: v.number(),
       levelRequired: v.number(),
       type: v.string(),
-      location: v.optional(v.string()),
+      location: v.string(),
       storyline: v.optional(v.string()),
       storyOrder: v.optional(v.number()),
       timeLimitMinutes: v.optional(v.number()),
