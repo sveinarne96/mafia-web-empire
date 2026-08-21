@@ -607,18 +607,26 @@ function LevelUpModal({ player, onDone }: { player: { _id: string; level?: numbe
 
 function AirportPage() {
   const player = useQuery(api.game.getPlayer);
-  const commitCrime = useMutation(api.game.commitCrime);
   const changeLocation = useMutation(api.game.changeLocation);
+  const commitCrime = useMutation(api.game.commitCrime);
+  const commitCategoryCrime = useMutation(api.game.commitCategoryCrime);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [cityActivity, setCityActivity] = useState<string | null>(null);
-  const cooldown = useCooldown(90);
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const cooldown = useCooldown(10);
+  const travelCooldown = useCooldown(15);
 
   if (!player) return <LoadingPage />;
 
+  const level = player.level ?? 1;
+  const baseSuccessRate = 0.6;
+  const levelBonus = Math.min(0.35, level * 0.005); // +0.5% per level, max +35%
+  const successRate = Math.min(0.95, baseSuccessRate + levelBonus);
+
   const travel = async (loc: string) => {
+    if (travelCooldown.onCooldown) return;
     setLoading(true); setMsg("");
-    try { await changeLocation({ location: loc }); setMsg(`✈️ Flew to ${loc}!`); }
+    try { await changeLocation({ location: loc }); setMsg(`✅ ✈️ Flew to ${loc}! Success rate here: ${Math.round(successRate * 100)}%`); travelCooldown.startCooldown(); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
     setLoading(false);
   };
@@ -627,58 +635,134 @@ function AirportPage() {
     if (cooldown.onCooldown) return;
     setLoading(true); setMsg("");
     try {
-      const res = await commitCrime({ type: "car_theft" });
+      const res = await commitCategoryCrime({ crimeId: "drug_run", reward: Math.floor(3000 * (cities.find(c => c.name === city)?.boost ?? 1)), risk: Math.max(10, 50 - Math.floor(levelBonus * 100)), xp: 15 });
       const data = res as unknown as Record<string, unknown>;
-      if (data.success) { setMsg(`💊 Drug run in ${city} successful! +$${(data.moneyEarned as number ?? 0).toLocaleString()} (+50% XP boost)`); }
-      else { setMsg(`💀 Drug run in ${city} failed!`); }
+      if (data.success) { setMsg(`✅ 💊 Drug run in ${city} successful! +$${((data.moneyEarned as number) ?? 0).toLocaleString()} (+50% XP boost!)`); }
+      else { setMsg(`❌ 💀 Drug run in ${city} failed! The cops were tipped off.`); }
       cooldown.startCooldown();
     } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
     setLoading(false);
   };
 
+  const doTaxFraud = async (city: string) => {
+    if (cooldown.onCooldown) return;
+    setLoading(true); setMsg("");
+    try {
+      const res = await commitCategoryCrime({ crimeId: "tax_fraud", reward: Math.floor(8000 * (cities.find(c => c.name === city)?.boost ?? 1)), risk: Math.max(5, 40 - Math.floor(levelBonus * 100)), xp: 20 });
+      const data = res as unknown as Record<string, unknown>;
+      if (data.success) { setMsg(`✅ 📋 Tax fraud in ${city} filed! +$${((data.moneyEarned as number) ?? 0).toLocaleString()}`); }
+      else { setMsg(`❌ 🚨 Tax fraud caught in ${city}!`); }
+      cooldown.startCooldown();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doMurder = async (city: string) => {
+    if (cooldown.onCooldown) return;
+    setLoading(true); setMsg("");
+    try {
+      const res = await commitCategoryCrime({ crimeId: "murder", reward: Math.floor(10000 * (cities.find(c => c.name === city)?.boost ?? 1)), risk: Math.max(10, 55 - Math.floor(levelBonus * 100)), xp: 25 });
+      const data = res as unknown as Record<string, unknown>;
+      if (data.success) { setMsg(`✅ 🔪 Hit in ${city} completed! +$${((data.moneyEarned as number) ?? 0).toLocaleString()} (+50% XP!)`); }
+      else { setMsg(`❌ 🚔 Murder attempt failed in ${city}! Witnesses everywhere!`); }
+      cooldown.startCooldown();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const crimeLevelFor = (c: any) => c.crime === "high" ? "bg-red-950/50 text-red-400 border-red-800/50" : c.crime === "medium" ? "bg-yellow-950/50 text-yellow-400 border-yellow-800/50" : "bg-green-950/50 text-green-400 border-green-800/50";
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Plane className="size-7 text-primary" /><h2 className="text-2xl font-bold">✈️ International Airport</h2></div>
-      <div className="mafia-card rounded-xl p-4 text-sm text-muted-foreground">
-        📍 Current location: <span className="text-primary font-bold">{player.location ?? "Unknown"}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3"><Plane className="size-7 text-cyan-400" /><div><h2 className="text-2xl font-bold">✈️ International Airport</h2><p className="text-xs text-muted-foreground">Travel between cities • Higher level = higher success rate</p></div></div>
+        <div className="text-right"><div className="text-[10px] text-muted-foreground">Crime Success</div><div className={`text-lg font-bold ${successRate >= 0.8 ? "text-green-400" : successRate >= 0.65 ? "text-yellow-400" : "text-red-400"}`}>{Math.round(successRate * 100)}%</div></div>
       </div>
-      <CooldownBar cooldown={cooldown} />
+
+      {/* Current Location & Level Info */}
+      <div className="mafia-card rounded-xl p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-lg bg-cyan-500/10 flex items-center justify-center"><MapPin className="size-5 text-cyan-400" /></div>
+            <div><div className="text-[10px] text-muted-foreground">Current Location</div><div className="text-sm font-bold">{player.location ?? "New York"}</div></div>
+          </div>
+          <div className="text-right"><div className="text-[10px] text-muted-foreground">Level Bonus</div><div className="text-sm font-bold text-primary">+{Math.round(levelBonus * 100)}%</div></div>
+        </div>
+        <div className="mt-3 h-2 bg-background/60 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full" style={{ width: `${(level / 100) * 100}%` }} />
+        </div>
+        <div className="text-[9px] text-muted-foreground mt-1 text-right">Lv.{level} → Success rate {Math.round(successRate * 100)}% (max 95% at Lv.70+)</div>
+      </div>
+
+      <CooldownBar cooldown={travelCooldown} />
+
+      {/* City Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {cities.filter(c => c.name !== player.location).map(c => (
-          <motion.div key={c.name} whileHover={{ scale: 1.01 }} className="mafia-card rounded-xl p-4 space-y-3">
+          <motion.div key={c.name} whileHover={{ scale: 1.01 }} className={`mafia-card rounded-xl p-4 space-y-3 transition-all ${selectedCity === c.name ? "border-primary shadow-lg shadow-primary/10" : ""}`}
+            onClick={() => setSelectedCity(selectedCity === c.name ? null : c.name)}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-xl">{c.emoji}</span>
+                <span className="text-2xl">{c.emoji}</span>
                 <div>
                   <div className="font-bold text-sm">{c.name}</div>
                   <div className="flex gap-1.5 mt-0.5">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${c.crime === "high" ? "bg-red-950/50 text-red-400 border border-red-800/50" : c.crime === "medium" ? "bg-yellow-950/50 text-yellow-400 border border-yellow-800/50" : "bg-green-950/50 text-green-400 border border-green-800/50"}`}>{c.crime.toUpperCase()} CRIME</span>
-                    {c.boost !== 1.0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">+{Math.round((c.boost - 1) * 100)}% BOOST</span>}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${crimeLevelFor(c)}`}>{c.crime.toUpperCase()} CRIME</span>
+                    {c.boost !== 1.0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">+{Math.round((c.boost - 1) * 100)}% REWARDS</span>}
                   </div>
                 </div>
               </div>
             </div>
+
+            {/* Activity Tags */}
             <div className="flex flex-wrap gap-1.5">
               {c.murderCity && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-950/30 text-red-300 border border-red-800/30">🔥 24/7 MURDERS +50% XP</span>}
               {c.drugRun && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-950/30 text-purple-300 border border-purple-800/30">💊 DRUG RUNS</span>}
               {c.taxFraud && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-950/30 text-orange-300 border border-orange-800/30">📋 TAX FRAUD</span>}
             </div>
+
+            {/* Action Buttons */}
             <div className="flex gap-2">
-              <button onClick={() => travel(c.name)} disabled={loading || player.inPrison}
-                className="flex-1 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-40">
-                ✈️ Travel
+              <button onClick={(e) => { e.stopPropagation(); travel(c.name); }} disabled={loading || (player.inPrison ?? false) || travelCooldown.onCooldown}
+                className="flex-1 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-500 text-white text-xs font-bold rounded-lg hover:from-cyan-500 hover:to-blue-400 disabled:opacity-40 transition-all">
+                ✈️ Travel Here
               </button>
-              {c.drugRun && (
-                <button onClick={() => doDrugRun(c.name)} disabled={loading || player.inPrison || cooldown.onCooldown}
-                  className="flex-1 py-2 bg-purple-600/20 text-purple-400 text-xs font-semibold rounded-lg hover:bg-purple-600/30 border border-purple-600/30 disabled:opacity-40">
-                  💊 Drug Run
-                </button>
-              )}
             </div>
+
+            {/* Expanded Activity Buttons */}
+            {selectedCity === c.name && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
+                <div className="text-[10px] text-muted-foreground font-semibold uppercase">Activities in {c.name}</div>
+                {c.drugRun && (
+                  <button onClick={(e) => { e.stopPropagation(); doDrugRun(c.name); }} disabled={loading || cooldown.onCooldown}
+                    className="w-full py-2 bg-purple-600/15 text-purple-400 text-xs font-semibold rounded-lg hover:bg-purple-600/25 border border-purple-600/20 disabled:opacity-40 flex items-center justify-center gap-2">
+                    💊 Drug Run • ${Math.floor(3000 * (c.boost ?? 1)).toLocaleString()} • {Math.round(successRate * 100)}% success
+                  </button>
+                )}
+                {c.taxFraud && (
+                  <button onClick={(e) => { e.stopPropagation(); doTaxFraud(c.name); }} disabled={loading || cooldown.onCooldown}
+                    className="w-full py-2 bg-orange-600/15 text-orange-400 text-xs font-semibold rounded-lg hover:bg-orange-600/25 border border-orange-600/20 disabled:opacity-40 flex items-center justify-center gap-2">
+                    📋 Tax Fraud • ${Math.floor(8000 * (c.boost ?? 1)).toLocaleString()} • {Math.round(successRate * 100)}% success
+                  </button>
+                )}
+                {c.murderCity && (
+                  <button onClick={(e) => { e.stopPropagation(); doMurder(c.name); }} disabled={loading || cooldown.onCooldown}
+                    className="w-full py-2 bg-red-600/15 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-600/25 border border-red-600/20 disabled:opacity-40 flex items-center justify-center gap-2">
+                    🔪 Murder Contract • ${Math.floor(10000 * (c.boost ?? 1)).toLocaleString()} • {Math.round(successRate * 100)}% success
+                  </button>
+                )}
+                <div className="text-[9px] text-muted-foreground">⏱️ 10s cooldown between actions</div>
+              </motion.div>
+            )}
           </motion.div>
         ))}
       </div>
-      {msg && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in">{msg}</motion.div>}
+
+      {/* Message */}
+      {msg && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          className={`rounded-xl p-4 text-sm font-bold border-2 ${msg.includes("✅") ? "bg-green-950/30 border-green-500/50 text-green-400" : "bg-red-950/30 border-red-500/50 text-red-400"}`}>{msg}</motion.div>
+      )}
     </div>
   );
 }

@@ -43,7 +43,9 @@ export const stealFromHouse = mutation({
     if (player.isDead ?? false) throw new Error("You are dead!");
 
     // 60% base success rate
-    const successRate = 0.6;
+    const baseRate = 0.6;
+    const levelBonus = Math.min(0.35, ((player.level ?? 1) * 0.005));
+    const successRate = Math.min(0.95, baseRate + levelBonus);
     const succeeded = Math.random() < successRate;
 
     const difficultyMultipliers: Record<string, number> = {
@@ -123,7 +125,9 @@ export const gtaCarTheft = mutation({
     if (player.inPrison ?? false) throw new Error("You are in prison!");
     if (player.isDead ?? false) throw new Error("You are dead!");
 
-    const successRate = 0.6;
+    const baseRate = 0.6;
+    const levelBonus = Math.min(0.35, ((player.level ?? 1) * 0.005));
+    const successRate = Math.min(0.95, baseRate + levelBonus);
     const succeeded = Math.random() < successRate;
 
     const carTypes = [
