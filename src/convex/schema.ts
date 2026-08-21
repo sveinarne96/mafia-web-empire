@@ -88,6 +88,8 @@ const schema = defineSchema({
     bodyguardId: v.optional(v.string()),
     familyRank: v.optional(v.string()),
     lastCrimeAt: v.optional(v.number()),
+    dailyStreak: v.optional(v.number()),
+    lastDailyClaim: v.optional(v.number()),
     isBanned: v.optional(v.boolean()),
     banReason: v.optional(v.string()),
     role: v.optional(v.string()),

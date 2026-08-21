@@ -29,8 +29,8 @@ export function DailyLoginPage() {
   const currentStreak = player?.dailyStreak ?? 0;
   const lastClaim = player?.lastDailyClaim ?? 0;
   const now = Date.now();
-  const oneDayMs = 86400000;
-  const canClaim = !lastClaim || (now - lastClaim) >= oneDayMs;
+  const TWELVE_HOURS = 43200000;
+  const canClaim = !lastClaim || (now - lastClaim) >= TWELVE_HOURS;
   const todayBonus = DAILY_REWARDS[(currentStreak % 7)];
 
   const handleClaim = async () => {
@@ -53,7 +53,7 @@ export function DailyLoginPage() {
   useEffect(() => {
     if (canClaim || !lastClaim) { setTimeLeft("Ready to claim!"); return; }
     const interval = setInterval(() => {
-      const diff = oneDayMs - (now - (lastClaim || 0));
+      const diff = TWELVE_HOURS - (now - (lastClaim || 0));
       if (diff <= 0) { setTimeLeft("Ready to claim!"); clearInterval(interval); return; }
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
@@ -69,7 +69,7 @@ export function DailyLoginPage() {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-black text-green-400">🎁 DAILY LOGIN REWARDS</h2>
-            <p className="text-sm text-green-200/60">Log in every day for massive bonuses. Streak bonus at Day 7!</p>
+            <p className="text-sm text-green-200/60">Log in every 12 hours for massive bonuses. Streak bonus at Day 7!</p>
           </div>
           <div className="text-right">
             <div className="text-xs text-green-200/40 uppercase tracking-widest">Next reward in</div>
