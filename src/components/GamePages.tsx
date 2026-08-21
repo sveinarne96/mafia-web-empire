@@ -196,99 +196,84 @@ const DIFF_META: Record<string, { color: string; label: string }> = {
 
 export function MissionsPage() {
   const player = useQuery(api.game.getPlayer);
-  const missions = useQuery(api.gameExtended.getMissions);
-  const playerMissions = useQuery(api.gameExtended.getPlayerMissions);
-  const acceptM = useMutation(api.gameExtended.acceptMission);
-  const completeM = useMutation(api.gameExtended.completeMission);
+  const missionData = useQuery(api.missionSystem.getMissions, { page: 0, pageSize: 50 });
+  const playerMissions = useQuery(api.missionSystem.getMissionStats);
+  const storyArcs = useQuery(api.missionSystem.getStoryArcs);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<string>("all");
-  const [storyFilter, setStoryFilter] = useState<string>("all");
-  const [expandedStory, setExpandedStory] = useState<string | null>(null);
+  const [catFilter, setCatFilter] = useState("all");
+  const [diffFilter, setDiffFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
-  const PAGE_SIZE = 30;
+  const [showAll, setShowAll] = useState(false);
+  const PAGE_SIZE = 50;
 
   if (!player) return <LoadingPage />;
-  const pmMap = new Map((playerMissions ?? []).map(pm => [pm.missionId, pm]));
-  const completedCount = (playerMissions ?? []).filter(pm => pm.completed).length;
-  const totalMissions = (missions ?? []).length;
 
-  // Group by storyline
-  const storyMissions = new Map<string, any[]>();
-  const generalMissions: any[] = [];
-  for (const m of missions ?? []) {
-    if (m.storyline) {
-      const arr = storyMissions.get(m.storyline) || [];
-      arr.push(m);
-      storyMissions.set(m.storyline, arr);
-    } else {
-      generalMissions.push(m);
-    }
-  }
+  const level = (player as any).level ?? 1;
+  const missions = missionData?.missions ?? [];
+  const total = missionData?.total ?? 50000;
+  const completedIds = new Set(missionData?.completedIds ?? []);
+  const completedCount = missionData?.completedCount ?? 0;
+  const categories = missionData?.categories ?? [];
 
-  // Apply filters
-  const applyFilter = (list: any[]) => list.filter(m => {
-    if (filter === "available") return !pmMap.has(m._id) && (player.level ?? 1) >= m.levelRequired;
-    if (filter === "active") return pmMap.has(m._id) && !pmMap.get(m._id)?.completed;
-    if (filter === "done") return pmMap.get(m._id)?.completed;
-    return true;
+  // Stats
+  const stats = playerMissions;
+
+  // Daily challenges (procedural from today's date)
+  const today = new Date();
+  const daySeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const dailyChallenges = Array.from({ length: 5 }, (_, i) => {
+    const seed = daySeed * 100 + i;
+    const rng = ((seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+    const cats = ["street", "heist", "smuggle", "hack", "drug", "assassinate", "fraud", "gamble"];
+    const cat = cats[Math.floor(rng * cats.length)];
+    const rewards = [50000, 100000, 250000, 500000, 1000000];
+    return { id: `daily_${daySeed}_${i}`, name: `${cat.replace(/_/g," ").replace(/\b\w/g,(c:string)=>c.toUpperCase())} Daily #${i+1}`, reward: rewards[i], completed: false };
   });
 
-  const filteredGeneral = applyFilter(
-    storyFilter === "general" || storyFilter === "all" ? generalMissions : []
-  );
-  const filteredStoryline = storyFilter !== "all" && storyFilter !== "general"
-    ? applyFilter(storyMissions.get(storyFilter) || [])
-    : [];
-
-  const visibleGeneral = filteredGeneral.slice(0, (page + 1) * PAGE_SIZE);
-  const visibleStoryline = filteredStoryline.slice(0, (page + 1) * PAGE_SIZE);
-  const hasMore = (storyFilter === "general" || storyFilter === "all")
-    ? visibleGeneral.length < filteredGeneral.length
-    : visibleStoryline.length < filteredStoryline.length;
-
   const renderMissionCard = (m: any) => {
-    const pm = pmMap.get(m._id);
-    const icon = missionTypeIcons[m.type] || "📋";
-    const colorClass = missionTypeColors[m.type] || "bg-background/40 text-muted-foreground border-border/50";
-    const locked = (player.level ?? 1) < m.levelRequired;
-    const diff = DIFF_META[m.difficulty || "easy"] || DIFF_META.easy;
-    const storyMeta = m.storyline ? STORYLINE_META[m.storyline] : null;
+    const locked = level < (m.levelRequired ?? 1);
+    const completed = completedIds.has(m.id);
+    const diffColors: Record<string, string> = {
+      easy: "text-green-400 border-green-800/50",
+      medium: "text-yellow-400 border-yellow-800/50",
+      hard: "text-orange-400 border-orange-800/50",
+      brutal: "text-red-400 border-red-800/50",
+      impossible: "text-red-500 border-red-900/50",
+      legendary: "text-yellow-300 border-yellow-600/50",
+    };
+    const diffEmoji: Record<string, string> = {
+      easy: "🟢", medium: "🟡", hard: "🟠", brutal: "🔴", impossible: "💀", legendary: "👑",
+    };
+    const dc = diffColors[m.difficulty ?? "easy"] ?? diffColors.easy;
 
     return (
-      <motion.div key={m._id} layout
-        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-        className={`mafia-card rounded-xl p-4 transition-all ${pm?.completed ? "opacity-60" : locked ? "opacity-40" : "hover:border-primary/20"}`}>
+      <motion.div key={m.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        className={`mafia-card rounded-xl p-4 transition-all ${completed ? "opacity-60" : locked ? "opacity-40" : "hover:border-primary/20"}`}>
         <div className="flex items-start gap-3">
-          <div className="text-2xl mt-0.5 shrink-0">{icon}</div>
+          <div className="text-2xl mt-0.5 shrink-0">{m.categoryEmoji ?? "📋"}</div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-              <span className="font-bold text-sm">{m.title}</span>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${diff.color}`}>{diff.label}</span>
-              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${colorClass}`}>{(m.type as string).toUpperCase()}</span>
-              {storyMeta && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold border bg-background/30 text-muted-foreground border-border/30">{storyMeta.emoji} Story</span>}
+              <span className="font-bold text-sm">{m.name}</span>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${dc}`}>{diffEmoji[m.difficulty ?? "easy"]} {(m.difficulty ?? "easy").toUpperCase()}</span>
+              {m.storyArc && <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold border bg-purple-500/10 text-purple-400 border-purple-800/50">📖 Story</span>}
             </div>
             <p className="text-xs text-muted-foreground mb-2 line-clamp-1">{m.description}</p>
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground flex-wrap">
               <span>⭐ Lv.{m.levelRequired}</span>
-              <span className="text-green-400 font-bold">💰 ${m.reward.toLocaleString()}</span>
-              <span className="text-yellow-400 font-bold">🏆 {m.pointsReward} pts</span>
-              {m.xpReward ? <span className="text-blue-400 font-bold">⚡ {m.xpReward} XP</span> : null}
-              {m.timeLimitMinutes ? <span className="text-orange-400 flex items-center gap-0.5"><Clock className="size-2.5" />{m.timeLimitMinutes}m</span> : null}
-              {m.location && m.location !== "any" ? <span>📍 {m.location}</span> : null}
+              <span className="text-green-400 font-bold">💰 ${(m.moneyReward ?? 0).toLocaleString()}</span>
+              <span className="text-blue-400 font-bold">⚡ {(m.xpReward ?? 0)} XP</span>
+              <span className="text-orange-400 flex items-center gap-0.5"><Clock className="size-2.5" />{m.timeLimit ?? 30}m</span>
+              {m.city && <span>📍 {m.city}</span>}
             </div>
           </div>
           <div className="shrink-0">
-            {!pm && !locked && (
-              <button onClick={async () => { setLoading(true); setMsg(""); try { await acceptM({ missionId: m._id }); setMsg(`Accepted: ${m.title}!`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading}
-                className="px-3 py-1.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg hover:opacity-90 disabled:opacity-40">Accept</button>
+            {completed && <span className="text-xs text-green-400 font-bold">✅ Done</span>}
+            {!completed && locked && <span className="text-[10px] text-muted-foreground">🔒 Lv.{m.levelRequired}</span>}
+            {!completed && !locked && (
+              <div className="text-[10px] text-primary font-semibold">Available</div>
             )}
-            {!pm && locked && <span className="text-[10px] text-muted-foreground">🔒 Lv.{m.levelRequired}</span>}
-            {pm && !pm.completed && (
-              <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await completeM({ missionId: pm._id }); setMsg(`✅ Completed! +$${(r as any)?.reward ?? 0} +${(r as any)?.points ?? 0}pts`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading}
-                className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-500 disabled:opacity-40">Complete</button>
-            )}
-            {pm?.completed && <span className="text-xs text-green-400 font-bold">✅ Done</span>}
           </div>
         </div>
       </motion.div>
@@ -297,96 +282,86 @@ export function MissionsPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      {/* Header */}
+      {/* Epic Header */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border border-primary/20 p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3"><Target className="size-8 text-primary" /><h2 className="text-3xl font-bold">📋 Missions</h2></div>
-          <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary">{completedCount}/{totalMissions} Done</div>
+          <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary">{completedCount}/{total.toLocaleString()} Done</div>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">{Object.keys(STORYLINE_META).length} storylines • {totalMissions} missions • Time-limited challenges</p>
+        <p className="text-sm text-muted-foreground mt-1">{(storyArcs ?? []).length} storylines • {total.toLocaleString()}+ missions • Daily challenges • Time-limited</p>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mafia-card rounded-xl p-4">
-        <div className="flex justify-between text-[10px] text-muted-foreground mb-1.5"><span>Mission Progress</span><span>{totalMissions > 0 ? Math.round((completedCount / totalMissions) * 100) : 0}%</span></div>
-        <div className="h-2.5 rounded-full bg-background/60 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all" style={{ width: `${totalMissions > 0 ? (completedCount / totalMissions) * 100 : 0}%` }} /></div>
+      {/* Stats */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+        <StatBox label="Total Done" value={completedCount.toString()} color="text-green-400" />
+        <StatBox label="Total XP" value={`${((stats as any)?.totalXpEarned ?? 0).toLocaleString()}`} color="text-blue-400" />
+        <StatBox label="Cash Earned" value={`$${((stats as any)?.totalMoneyEarned ?? 0).toLocaleString()}`} color="text-yellow-400" />
+        <StatBox label="Streak" value={`${(stats as any)?.currentStreak ?? 0} 🔥`} color="text-orange-400" />
+        <StatBox label="Daily" value={`${dailyChallenges.filter(d => d.completed).length}/${dailyChallenges.length}`} color="text-purple-400" />
+        <StatBox label="Level" value={`⭐ ${level}`} />
       </div>
 
-      {/* Storyline Cards */}
-      {storyFilter === "all" && (
+      {/* Daily Challenges */}
+      <div className="mafia-card rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-2"><Zap className="size-4 text-yellow-400" /><span className="font-bold text-sm">⚡ Daily Challenges</span><span className="text-[10px] text-muted-foreground">Resets at midnight</span></div>
+        <div className="space-y-2">
+          {dailyChallenges.map(d => (
+            <div key={d.id} className="flex items-center justify-between p-2 bg-background/30 rounded-lg">
+              <span className="text-xs font-semibold">{d.name}</span>
+              <span className="text-[10px] text-green-400 font-bold">${d.reward.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Story Arcs */}
+      {(storyArcs ?? []).length > 0 && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">📖 Storylines</h3>
+          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">📖 Story Arcs</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(STORYLINE_META).map(([key, meta]) => {
-              const storyMis = storyMissions.get(key) || [];
-              const storyDone = storyMis.filter(m => pmMap.get(m._id)?.completed).length;
-              const pct = storyMis.length > 0 ? Math.round((storyDone / storyMis.length) * 100) : 0;
-              return (
-                <motion.button key={key} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  onClick={() => { setStoryFilter(key); setPage(0); }}
-                  className="mafia-card rounded-xl p-4 text-left hover:border-primary/30 transition-all">
-                  <div className="text-2xl mb-2">{meta.emoji}</div>
-                  <div className={`font-bold text-sm ${meta.color}`}>{meta.name}</div>
-                  <div className="text-[10px] text-muted-foreground mt-1">{storyDone}/{storyMis.length} • {pct}%</div>
-                  <div className="h-1.5 rounded-full bg-background/60 overflow-hidden mt-2"><div className={`h-full rounded-full bg-gradient-to-r ${meta.gradient}`} style={{ width: `${pct}%` }} /></div>
-                </motion.button>
-              );
-            })}
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-              onClick={() => { setStoryFilter("general"); setPage(0); }}
-              className="mafia-card rounded-xl p-4 text-left hover:border-primary/30 transition-all">
-              <div className="text-2xl mb-2">⚡</div>
-              <div className="font-bold text-sm text-primary">General Missions</div>
-              <div className="text-[10px] text-muted-foreground mt-1">{filteredGeneral.length} available</div>
-            </motion.button>
+            {(storyArcs ?? []).slice(0, 8).map((arc: any) => (
+              <motion.button key={arc.id} whileHover={{ scale: 1.02 }} className="mafia-card rounded-xl p-4 text-left hover:border-primary/30 transition-all">
+                <div className="text-2xl mb-2">{arc.emoji}</div>
+                <div className="font-bold text-sm text-primary">{arc.name}</div>
+                <div className="text-[10px] text-muted-foreground mt-1">{arc.chapters} chapters • {arc.difficulty}</div>
+                <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{arc.description}</p>
+              </motion.button>
+            ))}
           </div>
         </div>
       )}
 
       {/* Filters */}
       <div className="flex items-center gap-2 flex-wrap">
-        {storyFilter !== "all" && (
-          <button onClick={() => { setStoryFilter("all"); setPage(0); }}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
-            ← All Storylines
-          </button>
-        )}
-        {["all", "available", "active", "done"].map(f => (
-          <button key={f} onClick={() => { setFilter(f); setPage(0); }}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg capitalize whitespace-nowrap transition-colors ${filter === f ? "bg-primary text-primary-foreground" : "bg-background/40 text-muted-foreground border border-border/50 hover:text-foreground"}`}>{f}</button>
-        ))}
-        {storyFilter !== "all" && storyFilter !== "general" && STORYLINE_META[storyFilter] && (
-          <span className="text-xs text-muted-foreground ml-auto">{STORYLINE_META[storyFilter].emoji} {STORYLINE_META[storyFilter].name} • {filteredStoryline.length} missions</span>
-        )}
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search 50,000+ missions..."
+            className="w-full bg-background/40 border border-border/50 rounded-lg pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary outline-none" />
+        </div>
+        <select value={catFilter} onChange={e => { setCatFilter(e.target.value); setPage(0); }}
+          className="bg-background/40 border border-border/50 rounded-lg px-3 py-2 text-xs text-foreground outline-none">
+          <option value="all">All Categories</option>
+          {categories.map((c: any) => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+        </select>
+        <select value={diffFilter} onChange={e => { setDiffFilter(e.target.value); setPage(0); }}
+          className="bg-background/40 border border-border/50 rounded-lg px-3 py-2 text-xs text-foreground outline-none">
+          <option value="all">All Difficulties</option>
+          <option value="easy">🟢 Easy</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="hard">🟠 Hard</option>
+          <option value="brutal">🔴 Brutal</option>
+          <option value="impossible">💀 Impossible</option>
+          <option value="legendary">👑 Legendary</option>
+        </select>
       </div>
 
       {/* Mission List */}
       <div className="space-y-3">
-        {storyFilter === "general" || storyFilter === "all" ? (
-          <>
-            {storyFilter === "general" && <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider">⚡ General Missions</h3>}
-            {visibleGeneral.length === 0 && storyFilter === "general" && (
-              <div className="text-center py-10 text-muted-foreground text-sm">No general missions found.</div>
-            )}
-            {visibleGeneral.map(m => renderMissionCard(m))}
-          </>
-        ) : (
-          <>
-            {visibleStoryline.length === 0 && (
-              <div className="text-center py-10 text-muted-foreground text-sm">No missions found in this storyline.</div>
-            )}
-            {visibleStoryline.map(m => renderMissionCard(m))}
-          </>
-        )}
-        {hasMore && (
-          <button onClick={() => setPage(p => p + 1)}
-            className="w-full py-3 text-sm font-semibold text-primary hover:text-primary/80 transition-colors">
-            Load More Missions...
-          </button>
-        )}
+        {missions.length === 0 && <div className="text-center py-10 text-muted-foreground text-sm">Loading missions...</div>}
+        {missions.map((m: any) => renderMissionCard(m))}
       </div>
 
-      {msg && <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 mafia-card rounded-xl px-6 py-3 text-sm font-bold text-primary animate-fade-in shadow-xl border-primary/30">✓ {msg}</motion.div>}
+      {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}
     </div>
   );
 }
