@@ -172,6 +172,7 @@ export const registerPlayer = mutation({
       totalMentoring: 0,
       lastActive: Date.now(),
       isBanned: false,
+      lastCrimeAt: 0,
     });
   },
 });
@@ -210,7 +211,8 @@ export const commitCrime = mutation({
     let moneyEarned = 0;
     let pointsEarned = 0;
     let damageTaken = 0;
-    const success = Math.random() > 0.3 + (args.type === "rob_player" ? 0.1 : 0);
+    // 60% success rate, 40% fail
+    const success = Math.random() < 0.6;
 
     switch (args.type) {
       case "car_theft":
@@ -1583,8 +1585,8 @@ export const commitCategoryCrime = mutation({
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.isDead) throw new Error("You are dead!");
 
-    const roll = Math.random() * 100;
-    const succeeded = roll > args.risk;
+    // 60% success rate, 40% fail - consistent across all crimes
+    const succeeded = Math.random() < 0.6;
     const moneyEarned = succeeded
       ? args.reward + Math.floor(Math.random() * args.reward * 0.2)
       : -Math.floor(Math.random() * 500 + 100);

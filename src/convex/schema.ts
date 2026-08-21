@@ -135,6 +135,7 @@ const schema = defineSchema(
 
       // Online tracking & admin
       lastActive: v.number(),
+      lastCrimeAt: v.number(),
       isBanned: v.boolean(),
       banReason: v.optional(v.string()),
     })

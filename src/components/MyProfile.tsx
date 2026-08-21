@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion } from "framer-motion";
-import { User, Award, Globe, Shield, Crown, Star, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { User, Award, Globe, Shield, Crown, Star, ChevronDown, ChevronUp, Check, Save, Camera } from "lucide-react";
 
 function LoadingPage() {
-  const { Loader2 } = require("lucide-react");
-  return <div className="flex items-center justify-center h-64"><Loader2 className="size-6 animate-spin text-primary" /></div>;
+  return <div className="flex items-center justify-center h-64"><div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
 }
 
 const avatarOptions = [
@@ -63,14 +62,21 @@ const europeanLanguages = ["English", "German", "French", "Spanish", "Italian", 
 
 export function MyProfilePage() {
   const player = useQuery(api.game.getPlayer);
+  const saveProfile = useMutation(api.gameEnhanced.saveProfile);
+
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [customPictureUrl, setCustomPictureUrl] = useState("");
+  const [bio, setBio] = useState("");
   const [showLangs, setShowLangs] = useState(false);
   const [showBadges, setShowBadges] = useState(false);
   const [showRoles, setShowRoles] = useState(false);
   const [showAvatars, setShowAvatars] = useState(false);
+  const [showPicture, setShowPicture] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [saving, setSaving] = useState(false);
 
   if (!player) return <LoadingPage />;
 
@@ -79,16 +85,49 @@ export function MyProfilePage() {
 
   const rank = (player.level ?? 1) >= 50 ? "Godfather" : (player.level ?? 1) >= 30 ? "Don" : (player.level ?? 1) >= 20 ? "Capo" : (player.level ?? 1) >= 10 ? "Soldier" : "Associate";
 
+  const doSave = async () => {
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      await saveProfile({
+        avatarId: selectedAvatar ?? undefined,
+        activeRole: selectedRole ?? undefined,
+        bio: bio || undefined,
+        profilePictureUrl: customPictureUrl || undefined,
+      });
+      setSaveMsg("✅ Profile saved successfully!");
+      setTimeout(() => setSaveMsg(""), 3000);
+    } catch (e: unknown) {
+      setSaveMsg(e instanceof Error ? e.message : "Failed to save");
+    }
+    setSaving(false);
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><User className="size-7 text-primary" /><h2 className="text-2xl font-bold">👤 My Profile</h2></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3"><User className="size-7 text-primary" /><h2 className="text-2xl font-bold">👤 My Profile</h2></div>
+        <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={doSave} disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-sm rounded-xl hover:from-green-500 hover:to-emerald-400 transition-all disabled:opacity-50 shadow-lg shadow-green-900/30">
+          <Save className="size-4" />{saving ? "Saving..." : "💾 Save Profile"}
+        </motion.button>
+      </div>
+
+      {saveMsg && (
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className={`text-sm rounded-xl p-3 font-bold ${saveMsg.includes("✅") ? "bg-green-950/30 text-green-400 border border-green-500/30" : "bg-red-950/30 text-red-400 border border-red-500/30"}`}>
+          {saveMsg}
+        </motion.div>
+      )}
 
       {/* Profile Card */}
       <div className="mafia-card rounded-2xl p-6 space-y-4">
         <div className="flex items-center gap-5">
           <motion.button whileHover={{ scale: 1.05 }} onClick={() => setShowAvatars(!showAvatars)}
-            className="size-20 rounded-2xl bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-4xl hover:border-primary/60 transition-all">
-            {currentAvatar ? currentAvatar.emoji : <User className="size-8 text-primary" />}
+            className="size-20 rounded-2xl bg-primary/10 border-2 border-primary/30 flex items-center justify-center text-4xl hover:border-primary/60 transition-all overflow-hidden">
+            {customPictureUrl ? (
+              <img src={customPictureUrl} alt="Profile" className="w-full h-full object-cover" />
+            ) : currentAvatar ? currentAvatar.emoji : <User className="size-8 text-primary" />}
           </motion.button>
           <div className="flex-1">
             <div className="flex items-center gap-2">
@@ -127,6 +166,28 @@ export function MyProfilePage() {
         </div>
       </div>
 
+      {/* Custom Picture URL */}
+      <div className="mafia-card rounded-xl p-4 space-y-3">
+        <button onClick={() => setShowPicture(!showPicture)} className="w-full flex items-center justify-between">
+          <div className="flex items-center gap-2"><Camera className="size-4 text-pink-400" /><h3 className="text-sm font-bold">📸 Custom Profile Picture</h3></div>
+          {showPicture ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
+        </button>
+        {showPicture && (
+          <div className="space-y-3">
+            <input type="url" value={customPictureUrl} onChange={(e) => setCustomPictureUrl(e.target.value)}
+              placeholder="Paste image URL here..."
+              className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none" />
+            {customPictureUrl && (
+              <div className="flex justify-center">
+                <img src={customPictureUrl} alt="Preview" className="size-24 rounded-xl object-cover border-2 border-primary/30"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              </div>
+            )}
+            <div className="text-[10px] text-muted-foreground">Paste any image URL (jpg, png, gif) to set as your profile picture</div>
+          </div>
+        )}
+      </div>
+
       {/* Avatar Selection */}
       {showAvatars && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mafia-card rounded-xl p-4 space-y-3">
@@ -146,10 +207,17 @@ export function MyProfilePage() {
         </motion.div>
       )}
 
+      {/* Bio */}
+      <div className="mafia-card rounded-xl p-4 space-y-3">
+        <h3 className="text-sm font-bold">📝 Bio</h3>
+        <textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Write about yourself..."
+          className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none h-20 resize-none" />
+      </div>
+
       {/* Animated Color Roles */}
       <div className="mafia-card rounded-xl p-4 space-y-3">
         <button onClick={() => setShowRoles(!showRoles)} className="w-full flex items-center justify-between">
-          <div className="flex items-center gap-2"><Crown className="size-4 text-yellow-400" /><h3 className="text-sm font-bold">🎭 Animated Color Roles</h3></div>
+          <div className="flex items-center gap-2"><Crown className="size-4 text-yellow-400" /><h3 className="text-sm font-bold">🎭 Animated Color Roles ({animatedRoles.length})</h3></div>
           {showRoles ? <ChevronUp className="size-4 text-muted-foreground" /> : <ChevronDown className="size-4 text-muted-foreground" />}
         </button>
         {showRoles && (
@@ -238,6 +306,12 @@ export function MyProfilePage() {
           <div className="flex justify-between p-2 bg-background/30 rounded"><span className="text-muted-foreground">Wanted</span><span className="font-bold text-red-400">{'⭐'.repeat(Math.min(player.wantedLevel ?? 0, 5)) || '—'}</span></div>
         </div>
       </div>
+
+      {/* Bottom Save Button */}
+      <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={doSave} disabled={saving}
+        className="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-500 text-white font-bold text-lg rounded-xl hover:from-green-500 hover:to-emerald-400 transition-all disabled:opacity-50 shadow-lg shadow-green-900/30 flex items-center justify-center gap-2">
+        <Save className="size-5" />{saving ? "💾 Saving..." : "💾 Save All Changes"}
+      </motion.button>
     </div>
   );
 }
