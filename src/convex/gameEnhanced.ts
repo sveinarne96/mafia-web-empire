@@ -39,8 +39,8 @@ export const stealFromHouse = mutation({
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
-    if (player.inPrison) throw new Error("You are in prison!");
-    if (player.isDead) throw new Error("You are dead!");
+    if (player.inPrison ?? false) throw new Error("You are in prison!");
+    if (player.isDead ?? false) throw new Error("You are dead!");
 
     // 60% base success rate
     const successRate = 0.6;
@@ -92,7 +92,7 @@ export const stealFromHouse = mutation({
       arrested = Math.random() > 0.5;
     }
 
-    const newLife = Math.max(0, player.life - damageTaken);
+    const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
     const xpEarned = succeeded ? 15 : 3;
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
@@ -100,7 +100,7 @@ export const stealFromHouse = mutation({
     const levelUpNow = newXP >= xpNeeded && succeeded;
 
     await ctx.db.patch(player._id, {
-      money: Math.max(0, player.money + moneyEarned),
+      money: Math.max(0, (player.money ?? 0) + moneyEarned),
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       experience: levelUpNow ? 0 : newXP,
@@ -120,8 +120,8 @@ export const gtaCarTheft = mutation({
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
-    if (player.inPrison) throw new Error("You are in prison!");
-    if (player.isDead) throw new Error("You are dead!");
+    if (player.inPrison ?? false) throw new Error("You are in prison!");
+    if (player.isDead ?? false) throw new Error("You are dead!");
 
     const successRate = 0.6;
     const succeeded = Math.random() < successRate;
@@ -159,11 +159,11 @@ export const gtaCarTheft = mutation({
       arrested = Math.random() > 0.4;
     }
 
-    const newLife = Math.max(0, player.life - damageTaken);
+    const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
     const xpEarned = succeeded ? 12 : 2;
 
     await ctx.db.patch(player._id, {
-      money: Math.max(0, player.money + moneyEarned),
+      money: Math.max(0, (player.money ?? 0) + moneyEarned),
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       experience: (player.experience ?? 0) + xpEarned,
@@ -221,10 +221,10 @@ export const buyBodyguard = mutation({
     const died = (player.totalDeaths ?? 0) > 0;
     const cost = died ? Math.floor((costs[args.count] ?? 0) / 2) : (costs[args.count] ?? 0);
 
-    if (player.money < cost) throw new Error(`Need $${cost.toLocaleString()}!`);
+    if ((player.money ?? 0) < cost) throw new Error(`Need $${cost.toLocaleString()}!`);
     if (args.count !== activeCount + 1) throw new Error(`Must buy one at a time! Next: bodyguard #${activeCount + 1}`);
 
-    await ctx.db.patch(player._id, { money: player.money - cost });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost });
     await ctx.db.insert("bodyguards", {
       employerId: player._id,
       guardId: player._id, // NPC guard, use employer as placeholder
@@ -340,7 +340,7 @@ export const adminGetAllPlayers = query({
   args: {},
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") return [];
+    if (!player || (player.role ?? "user") !== "admin") return [];
     return await ctx.db.query("users").collect();
   },
 });
@@ -349,10 +349,10 @@ export const adminGiveMoney = mutation({
   args: { targetId: v.id("users"), amount: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Player not found");
-    await ctx.db.patch(args.targetId, { money: target.money + args.amount });
+    await ctx.db.patch(args.targetId, { money: (target.money ?? 0) + args.amount });
     return { success: true };
   },
 });
@@ -361,7 +361,7 @@ export const adminBan = mutation({
   args: { targetId: v.id("users"), reason: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     await ctx.db.patch(args.targetId, { isBanned: true, banReason: args.reason });
     return { success: true };
   },
@@ -371,7 +371,7 @@ export const adminUnban = mutation({
   args: { targetId: v.id("users") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     await ctx.db.patch(args.targetId, { isBanned: false, banReason: undefined });
     return { success: true };
   },
@@ -381,7 +381,7 @@ export const adminSetLevel = mutation({
   args: { targetId: v.id("users"), level: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     await ctx.db.patch(args.targetId, { level: args.level, experience: 0 });
     return { success: true };
   },
@@ -391,7 +391,7 @@ export const adminKillPlayer = mutation({
   args: { targetId: v.id("users") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     await ctx.db.patch(args.targetId, { life: 0, isDead: true });
     return { success: true };
   },
@@ -401,7 +401,7 @@ export const adminHealPlayer = mutation({
   args: { targetId: v.id("users") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Player not found");
     await ctx.db.patch(args.targetId, { life: target.maxLife ?? 100, isDead: false });
@@ -413,7 +413,7 @@ export const adminJailPlayer = mutation({
   args: { targetId: v.id("users"), seconds: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     await ctx.db.patch(args.targetId, { inPrison: true, prisonTime: args.seconds * 1000 });
     return { success: true };
   },
@@ -423,7 +423,7 @@ export const adminWipePlayer = mutation({
   args: { targetId: v.id("users") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player || player.role !== "admin") throw new Error("Admin only");
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
     await ctx.db.patch(args.targetId, {
       money: 0, bank: 0, points: 0, level: 1, experience: 0,
       totalCrimes: 0, totalFights: 0, totalKills: 0, totalDeaths: 0,

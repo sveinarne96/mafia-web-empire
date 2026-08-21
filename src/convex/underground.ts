@@ -81,20 +81,20 @@ export const counterfeiting = mutation({
     const arrestChances: Record<string, number> = { low: 0.05, medium: 0.15, high: 0.30 };
     const cost = costs[args.quality];
     const reward = rewards[args.quality];
-    if (player.money < cost) throw new Error("Not enough money");
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money");
     if (Math.random() < arrestChances[args.quality]) {
       const prisonTime = 60 + Math.floor(Math.random() * 120);
       await ctx.db.patch(player._id, {
-        money: player.money - cost, inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 1), reputation: player.reputation - 5,
+        money: (player.money ?? 0) - cost, inPrison: true, prisonTime,
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1), reputation: (player.reputation ?? 0) - 5,
       });
       return { success: false, message: "Caught counterfeiting!", prisonTime };
     }
     await ctx.db.patch(player._id, {
-      money: player.money - cost + reward,
+      money: (player.money ?? 0) - cost + reward,
       counterfeitSkill: (player.counterfeitSkill ?? 0) + 1,
       dirtyMoney: (player.dirtyMoney ?? 0) + Math.floor(reward * 0.5),
-      reputation: player.reputation - 1,
+      reputation: (player.reputation ?? 0) - 1,
     });
     await ctx.db.insert("crimes", {
       userId: player._id, type: "counterfeiting", target: "self", success: true,
@@ -114,12 +114,12 @@ export const runSmuggling = mutation({
     if (player.location === args.destCity) throw new Error("Already in that city");
     const baseCost: Record<string, number> = { drugs: 200, weapons: 500, electronics: 150, luxury: 300 };
     const cost = (baseCost[args.contrabandType] ?? 200) * args.quantity;
-    if (player.money < cost) throw new Error("Not enough money");
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money");
     const riskChance = 0.15 + (player.wantedLevel * 0.05);
     if (Math.random() < riskChance) {
       const prisonTime = 120 + Math.floor(Math.random() * 240);
       await ctx.db.patch(player._id, {
-        money: player.money - cost, inPrison: true, prisonTime,
+        money: (player.money ?? 0) - cost, inPrison: true, prisonTime,
         wantedLevel: Math.min(5, player.wantedLevel + 2),
       });
       await ctx.db.insert("crimes", {
@@ -131,7 +131,7 @@ export const runSmuggling = mutation({
     const sellMultiplier = 1.8 + Math.random() * 0.5;
     const profit = Math.floor(cost * sellMultiplier);
     await ctx.db.patch(player._id, {
-      money: player.money - cost + profit,
+      money: (player.money ?? 0) - cost + profit,
       smugglingRuns: (player.smugglingRuns ?? 0) + 1,
       dirtyMoney: (player.dirtyMoney ?? 0) + Math.floor(profit * 0.3),
     });
@@ -151,12 +151,12 @@ export const drugTrafficking = mutation({
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const cost = 150 * args.quantity;
-    if (player.money < cost) throw new Error("Not enough money");
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money");
     const riskChance = 0.2 + (player.wantedLevel * 0.08);
     if (Math.random() < riskChance) {
       const prisonTime = 180 + Math.floor(Math.random() * 360);
       await ctx.db.patch(player._id, {
-        money: player.money - cost, inPrison: true, prisonTime,
+        money: (player.money ?? 0) - cost, inPrison: true, prisonTime,
         wantedLevel: Math.min(5, player.wantedLevel + 2), reputation: player.reputation - 8,
       });
       return { success: false, message: "Drug bust!", prisonTime };
@@ -164,7 +164,7 @@ export const drugTrafficking = mutation({
     const priceVariation = 0.8 + Math.random() * 0.8;
     const profit = Math.floor(cost * 2.5 * priceVariation);
     await ctx.db.patch(player._id, {
-      money: player.money - cost + profit,
+      money: (player.money ?? 0) - cost + profit,
       drugDeals: (player.drugDeals ?? 0) + 1,
       dirtyMoney: (player.dirtyMoney ?? 0) + Math.floor(profit * 0.5),
       reputation: player.reputation - 3,
@@ -185,19 +185,19 @@ export const commitArson = mutation({
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
     const cost = 5000;
-    if (player.money < cost) throw new Error("Not enough money");
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money");
     const insurancePayout = 10000 + Math.floor(Math.random() * 15000);
     if (Math.random() < 0.25) {
       const prisonTime = 300 + Math.floor(Math.random() * 300);
       await ctx.db.patch(player._id, {
-        money: player.money - cost, inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 2), reputation: player.reputation - 10,
+        money: (player.money ?? 0) - cost, inPrison: true, prisonTime,
+        wantedLevel: Math.min(5, player.wantedLevel + 2), reputation: (player.reputation ?? 0) - 10,
       });
       return { success: false, message: "Arson investigation caught you!", prisonTime };
     }
     await ctx.db.patch(player._id, {
-      money: player.money - cost + insurancePayout,
-      arsons: (player.arsons ?? 0) + 1, reputation: player.reputation - 5,
+      money: (player.money ?? 0) - cost + insurancePayout,
+      arsons: (player.arsons ?? 0) + 1, reputation: (player.reputation ?? 0) - 5,
     });
     await ctx.db.insert("crimes", {
       userId: player._id, type: "arson", target: args.targetName, success: true,
@@ -223,7 +223,7 @@ export const commitIdentityTheft = mutation({
       const prisonTime = 120 + Math.floor(Math.random() * 180);
       await ctx.db.patch(player._id, {
         inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 1), reputation: player.reputation - 5,
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1), reputation: (player.reputation ?? 0) - 5,
       });
       return { success: false, message: "Identity theft failed!", prisonTime };
     }
@@ -257,7 +257,7 @@ export const kidnapPlayer = mutation({
       const prisonTime = 240 + Math.floor(Math.random() * 240);
       await ctx.db.patch(player._id, {
         inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 2), reputation: player.reputation - 10,
+        wantedLevel: Math.min(5, player.wantedLevel + 2), reputation: (player.reputation ?? 0) - 10,
       });
       return { success: false, message: "Police intercepted!", prisonTime };
     }
@@ -280,10 +280,10 @@ export const payRansom = mutation({
     const k = await ctx.db.get(args.kidnappingId);
     if (!k || k.victimId !== player._id) throw new Error("Not your kidnapping");
     if (k.ransomPaid || k.released) throw new Error("Already resolved");
-    if (player.money < k.ransom) throw new Error("Not enough money");
-    await ctx.db.patch(player._id, { money: player.money - k.ransom });
+    if ((player.money ?? 0) < k.ransom) throw new Error("Not enough money");
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - k.ransom });
     const kidnapper = await ctx.db.get(k.kidnapperId);
-    if (kidnapper) await ctx.db.patch(k.kidnapperId, { money: kidnapper.money + k.ransom });
+    if (kidnapper) await ctx.db.patch(k.kidnapperId, { money: (kidnapper.money ?? 0) + k.ransom });
     await ctx.db.patch(args.kidnappingId, { ransomPaid: true, released: true });
     return { success: true, paid: k.ransom };
   },
@@ -302,7 +302,7 @@ export const commitCargoTheft = mutation({
       const prisonTime = 180 + Math.floor(Math.random() * 180);
       await ctx.db.patch(player._id, {
         inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 1),
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1),
       });
       return { success: false, message: "Security caught you!", prisonTime };
     }
@@ -329,9 +329,9 @@ export const commitArmsDeal = mutation({
     if (!player) throw new Error("Player not found");
     if (args.action === "buy") {
       const cost = 800 * args.quantity;
-      if (player.money < cost) throw new Error("Not enough money");
+      if ((player.money ?? 0) < cost) throw new Error("Not enough money");
       await ctx.db.patch(player._id, {
-        money: player.money - cost,
+        money: (player.money ?? 0) - cost,
         attack: player.attack + args.quantity * 2,
         armsDeals: (player.armsDeals ?? 0) + args.quantity,
       });
@@ -360,10 +360,10 @@ export const witnessIntimidation = mutation({
     if (!player) throw new Error("Player not found");
     if ((player.wantedLevel ?? 0) <= 0) throw new Error("No wanted level");
     const cost = player.wantedLevel * 1000;
-    if (player.money < cost) throw new Error("Not enough money");
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money");
     if (Math.random() < 0.6) {
       await ctx.db.patch(player._id, {
-        money: player.money - cost,
+        money: (player.money ?? 0) - cost,
         wantedLevel: Math.max(0, player.wantedLevel - 1),
         witnessIntimidations: (player.witnessIntimidations ?? 0) + 1,
         reputation: player.reputation - 2,
@@ -371,8 +371,8 @@ export const witnessIntimidation = mutation({
       return { success: true, message: "Witnesses intimidated!", cost };
     }
     await ctx.db.patch(player._id, {
-      money: player.money - cost,
-      wantedLevel: Math.min(5, player.wantedLevel + 1),
+      money: (player.money ?? 0) - cost,
+      wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1),
       reputation: player.reputation - 3,
     });
     return { success: false, message: "Intimidation backfired!", cost };
@@ -392,7 +392,7 @@ export const commitTaxEvasion = mutation({
       const fine = args.amount * 2;
       await ctx.db.patch(player._id, {
         money: Math.max(0, player.money - fine),
-        wantedLevel: Math.min(5, player.wantedLevel + 1),
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1),
         reputation: player.reputation - 3,
       });
       return { success: false, message: "Audited! Fine imposed.", fine };
@@ -417,7 +417,7 @@ export const runRacketeering = mutation({
       const prisonTime = 120;
       await ctx.db.patch(player._id, {
         inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 1), reputation: player.reputation - 5,
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1), reputation: (player.reputation ?? 0) - 5,
       });
       return { success: false, message: "Business owner called police!", prisonTime };
     }
@@ -447,7 +447,7 @@ export const runGamblingDen = mutation({
     if (Math.random() < 0.1) {
       await ctx.db.patch(player._id, {
         money: player.money - args.betPool,
-        wantedLevel: Math.min(5, player.wantedLevel + 1),
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1),
       });
       return { success: false, message: "Police raided your den!", lost: args.betPool };
     }
@@ -471,7 +471,7 @@ export const runProtectionRacket = mutation({
       const prisonTime = 180;
       await ctx.db.patch(player._id, {
         inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 1), reputation: player.reputation - 5,
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1), reputation: (player.reputation ?? 0) - 5,
       });
       return { success: false, message: "Victim reported extortion!", prisonTime };
     }
@@ -519,7 +519,7 @@ export const runPirateRadio = mutation({
     if (Math.random() < 0.1) {
       await ctx.db.patch(player._id, {
         money: player.money - 1000,
-        wantedLevel: Math.min(5, player.wantedLevel + 1),
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1),
       });
       return { success: false, message: "FCC shut down your broadcast!" };
     }
@@ -545,7 +545,7 @@ export const runIllegalBoxing = mutation({
       const prisonTime = 90;
       await ctx.db.patch(player._id, {
         inPrison: true, prisonTime,
-        wantedLevel: Math.min(5, player.wantedLevel + 1),
+        wantedLevel: Math.min(5, (player.wantedLevel ?? 0) + 1),
       });
       return { success: false, message: "Police raided the ring!", prisonTime };
     }

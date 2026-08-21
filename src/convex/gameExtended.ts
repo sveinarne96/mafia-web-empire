@@ -56,8 +56,8 @@ export const blackjackDeal = mutation({
     if (!identity) throw new Error("Not authenticated");
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
-    if (player.inPrison) throw new Error("You are in prison!");
-    if (player.isDead) throw new Error("You are dead!");
+    if ((player.inPrison ?? false)) throw new Error("You are in prison!");
+    if ((player.isDead ?? false)) throw new Error("You are dead!");
     if (args.bet < 10) throw new Error("Minimum bet is $10!");
     if ((player.money ?? 0) < args.bet) throw new Error("Not enough money!");
 
@@ -67,7 +67,7 @@ export const blackjackDeal = mutation({
     const pTotal = bjHandTotal(playerHand);
     const dTotal = bjHandTotal(dealerHand);
 
-    await ctx.db.patch(player._id, { money: player.money - args.bet });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - args.bet });
 
     if (pTotal === 21 && dTotal !== 21) {
       const winnings = Math.floor(args.bet * 1.5);
@@ -125,7 +125,7 @@ export const buyLottoTicket = mutation({
     if (!identity) throw new Error("Not authenticated");
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
-    if (player.inPrison) throw new Error("You are in prison!");
+    if ((player.inPrison ?? false)) throw new Error("You are in prison!");
     const costs: Record<string, number> = { daily: 100, weekly: 500, mega: 5000 };
     const multipliers: Record<string, number> = { daily: 50, weekly: 200, mega: 5000 };
     const cost = costs[args.type];
@@ -134,7 +134,7 @@ export const buyLottoTicket = mutation({
     if ((player.money ?? 0) < cost) throw new Error("Not enough money!");
     if (args.numbers.length !== count) throw new Error(`Pick exactly ${count} numbers!`);
     if (args.numbers.some((n) => n < 1 || n > maxNum)) throw new Error(`Numbers must be 1-${maxNum}!`);
-    await ctx.db.patch(player._id, { money: player.money - cost });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost });
     const winning: number[] = [];
     while (winning.length < count) { const n = Math.floor(Math.random() * maxNum) + 1; if (!winning.includes(n)) winning.push(n); }
     const matches = args.numbers.filter((n) => winning.includes(n)).length;
@@ -182,7 +182,7 @@ export const buyVehicle = mutation({
     if (!player) throw new Error("Player not found");
     if ((player.money ?? 0) < args.price) throw new Error("Not enough money!");
     await ctx.db.insert("vehicles", { userId: player._id, name: args.name, type: args.type, speed: args.speed, storage: args.storage, armored: args.armored, stolen: false, purchasePrice: args.price });
-    await ctx.db.patch(player._id, { money: player.money - args.price });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - args.price });
     return { bought: args.name };
   },
 });
@@ -210,8 +210,8 @@ export const stealVehicle = mutation({
     if (!identity) throw new Error("Not authenticated");
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Player not found");
-    if (player.inPrison) throw new Error("You are in prison!");
-    if (player.isDead) throw new Error("You are dead!");
+    if ((player.inPrison ?? false)) throw new Error("You are in prison!");
+    if ((player.isDead ?? false)) throw new Error("You are dead!");
     const success = Math.random() > 0.6;
     if (!success) {
       const arrested = Math.random() > 0.4;
@@ -265,7 +265,7 @@ export const buyItem = mutation({
     } else {
       await ctx.db.insert("inventory", { userId: player._id, itemId: args.itemId, quantity: 1, equipped: false });
     }
-    await ctx.db.patch(player._id, { money: player.money - item.price });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - item.price });
     return { bought: item.name };
   },
 });
@@ -473,20 +473,20 @@ export const commitLegendaryCrime = mutation({
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
-    if (player.inPrison) throw new Error("You are in prison!");
-    if (player.isDead) throw new Error("You are dead!");
+    if ((player.inPrison ?? false)) throw new Error("You are in prison!");
+    if ((player.isDead ?? false)) throw new Error("You are dead!");
 
     const success = Math.random() * 100 > args.risk;
     if (success) {
       await ctx.db.patch(player._id, {
-        money: player.money + args.reward,
+        money: (player.money ?? 0) + args.reward,
         experience: (player.experience ?? 0) + args.xp,
       });
       return { success: true, message: `SUCCESS! You earned $${args.reward.toLocaleString()} and ${args.xp.toLocaleString()} XP!` };
     } else {
       const penalty = Math.floor(args.reward * 0.3);
       await ctx.db.patch(player._id, {
-        money: Math.max(0, player.money - penalty),
+        money: Math.max(0, (player.money ?? 0) - penalty),
         life: Math.max(0, (player.life ?? 100) - 30),
       });
       return { success: false, message: `FAILED! You lost $${penalty.toLocaleString()} and took 30 damage.` };
@@ -516,7 +516,7 @@ export const claimDailyReward = mutation({
     const isBonusDay = dayIndex === 6;
 
     await ctx.db.patch(player._id, {
-      money: player.money + reward,
+      money: (player.money ?? 0) + reward,
       lastDailyClaim: now,
       dailyStreak: newStreak,
     } as any);
