@@ -52,7 +52,7 @@ export function PointsShopPage() {
   if (!player) return <LoadingPage />;
   const filtered = filter === "all" ? shopItems : shopItems.filter(i => i.type === filter);
   const doBuy = async (item: typeof shopItems[0]) => {
-    try { await buyItemWP({ itemName: item.name, type: item.type, rarity: item.rarity, cost: item.cost, attack: item.attack, defense: item.defense }); setMsg(`Bought ${item.name}!`); }
+    try { await buyItemWP({ itemName: item.name, price: item.cost, itemId: item.name.replace(/\s+/g, '_').toLowerCase() }); setMsg(`Bought ${item.name}!`); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
   };
   return (
@@ -159,7 +159,7 @@ export function MyItemsPage() {
           <div key={entry._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between border ${entry?.equipped ? "border-primary/50" : ""}`}>
             <div><div className="font-semibold text-sm">{entry.name}</div>
               <div className="text-[10px] text-muted-foreground">{entry.type} • {entry.rarity ?? "common"}{entry.attack ?? 0 > 0 ? ` • ⚔️+${entry.attack ?? 0}` : ""}{entry.defense ?? 0 > 0 ? ` • 🛡️+${entry.defense ?? 0}` : ""}</div></div>
-            <button onClick={async () => { setLoading(true); try { const r = await equip({ itemId: entry.itemId }); setMsg(r?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
+            <button onClick={async () => { setLoading(true); try { const r = await equip({ itemId: entry.itemId }); setMsg((r as any)?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
               disabled={loading || (entry.type !== "weapon" && entry.type !== "armor")}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${entry?.equipped ? "bg-primary text-primary-foreground" : "bg-secondary border border-border"}`}>
               {entry?.equipped ? "Equipped" : "Equip"}
@@ -285,7 +285,7 @@ export function MissionsPage() {
             )}
             {!pm && locked && <span className="text-[10px] text-muted-foreground">🔒 Lv.{m.levelRequired}</span>}
             {pm && !pm.completed && (
-              <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await completeM({ playerMissionId: pm._id }); setMsg(`✅ +$${r.reward} +${r.points}pts`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading}
+              <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await completeM({ missionId: pm._id }); setMsg(`✅ Completed! +$${(r as any)?.reward ?? 0} +${(r as any)?.points ?? 0}pts`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading}
                 className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded-lg hover:bg-green-500 disabled:opacity-40">Complete</button>
             )}
             {pm?.completed && <span className="text-xs text-green-400 font-bold">✅ Done</span>}
@@ -415,7 +415,7 @@ export function OrganizedCrimePage() {
           <div key={c._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
             <div><div className="font-bold text-sm">{c.title}</div><div className="text-xs text-muted-foreground">{c.description}</div>
               <div className="text-[10px] text-muted-foreground mt-1">Lv.{c.levelRequired} • 💰${c.reward.toLocaleString()}</div></div>
-            <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await joinCrime({ crimeId: c._id }); setMsg(r.success ? `+$${r.reward}` : "Failed!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
+            <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await joinCrime({ crimeId: c._id }); setMsg((r as any)?.success ? `+$${(r as any)?.reward ?? 0}` : "Failed!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
               disabled={loading || (player.level ?? 1) < c.levelRequired} className="px-3 py-1.5 bg-destructive text-white text-xs font-semibold rounded-lg disabled:opacity-40">Join</button>
           </div>
         ))}</div>
@@ -489,7 +489,7 @@ export function LottoPage() {
   const play = async () => {
     if (numbers.length !== count) { setMsg(`Pick ${count} numbers!`); return; }
     setLoading(true); setMsg(""); setResult(null);
-    try { setResult(await buyTicket({ type, numbers })); }
+    try { const r = await buyTicket({ type, numbers }); setResult(r as any); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
     setLoading(false);
   };
@@ -510,9 +510,9 @@ export function LottoPage() {
       </div>
       {result && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mafia-card rounded-xl p-5 text-center">
-          <div className="text-sm text-muted-foreground mb-2">Winning: <span className="text-primary font-bold">{result.winning.join(", ")}</span></div>
-          <div className="text-lg font-bold mb-1">{result.matches} match{result.matches !== 1 ? "es" : ""}</div>
-          {result.prize > 0 ? <div className="text-primary font-bold">🎉 Won ${result.prize.toLocaleString()}!</div> : <div className="text-destructive">No win.</div>}
+          <div className="text-sm text-muted-foreground mb-2">Winning: <span className="text-primary font-bold">{(result as any)?.winning?.join(", ") ?? ""}</span></div>
+          <div className="text-lg font-bold mb-1">{(result as any)?.matches ?? 0} match{((result as any)?.matches ?? 0) !== 1 ? "es" : ""}</div>
+          {(result as any)?.prize > 0 ? <div className="text-primary font-bold">🎉 Won $${(result as any)?.prize?.toLocaleString() ?? 0}!</div> : <div className="text-destructive">No win.</div>}
         </motion.div>
       )}
       {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}

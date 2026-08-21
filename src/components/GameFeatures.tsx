@@ -882,7 +882,7 @@ export function LegendaryCrimePage() {
     setExecuting(true);
     setResult(null);
     try {
-      const res = await executeCrime({ crimeId: crime.id, reward: crime.reward, xp: crime.xp, risk: crime.risk });
+      const res = await executeCrime({ crimeId: crime.id, reward: crime.reward });
       if (res.success) {
         const lootDrop = crime.loot?.filter((l) => Math.random() * 100 < l.chance);
         const lootStr = lootDrop && lootDrop.length > 0 ? lootDrop.map(l => l.name).join(', ') : undefined;
