@@ -390,6 +390,8 @@ function EmptyPage({ icon, title, desc }: { icon: React.ReactNode; title: string
 function HeadquartersPage() {
   const player = useQuery(api.game.getPlayer);
   const regenHealth = useMutation(api.game.regenHealth);
+  const boostInfo = useQuery(api.gameEnhanced.getBoostInfo);
+  const randomEvent = useQuery(api.gameEnhanced.getRandomEvent);
   const [regenMsg, setRegenMsg] = useState("");
   if (!player) return <LoadingPage />;
 
@@ -442,6 +444,64 @@ function HeadquartersPage() {
           <div><SwordsIcon className="size-5 mx-auto mb-1 text-primary" /><div className="font-bold text-foreground">{player.totalFights ?? 0}</div>Fights</div>
           <div><Skull className="size-5 mx-auto mb-1 text-destructive" /><div className="font-bold text-foreground">{player.totalKills ?? 0}</div>Kills</div>
           <div><Target className="size-5 mx-auto mb-1 text-green-400" /><div className="font-bold text-foreground">{player.totalCrimes ?? 0}</div>Crimes</div>
+        </div>
+      </div>
+
+      {/* Active Events */}
+      <div className="mafia-card rounded-xl p-5 space-y-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">⚡ Active Events & Boosts</h3>
+        <div className="grid grid-cols-1 gap-2">
+          {boostInfo?.weekendBoost?.active && (
+            <div className="p-3 rounded-lg bg-orange-500/10 border border-orange-500/30 text-sm">
+              <span className="font-bold text-orange-400">🔥 Weekend Boost</span>
+              <span className="text-muted-foreground ml-2">2x rewards on all actions!</span>
+            </div>
+          )}
+          {boostInfo?.goldenHour?.active && (
+            <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30 text-sm">
+              <span className="font-bold text-yellow-400">✨ Golden Hour</span>
+              <span className="text-muted-foreground ml-2">3x rewards active!</span>
+            </div>
+          )}
+          {boostInfo?.killFreeZone?.active && (
+            <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30 text-sm">
+              <span className="font-bold text-blue-400">⚔️ Kill Free Zone</span>
+              <span className="text-muted-foreground ml-2">PvP disabled!</span>
+            </div>
+          )}
+          {randomEvent && (
+            <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/30 text-sm">
+              <span className="font-bold text-purple-400">{randomEvent.emoji} {randomEvent.name}</span>
+              <span className="text-muted-foreground ml-2">{randomEvent.description}</span>
+            </div>
+          )}
+          {!boostInfo?.weekendBoost?.active && !boostInfo?.goldenHour?.active && !boostInfo?.killFreeZone?.active && !randomEvent && (
+            <div className="p-3 rounded-lg bg-background/40 border border-border/50 text-sm text-muted-foreground">No active events right now. Check back soon!</div>
+          )}
+        </div>
+        {boostInfo?.weekendBoost && !boostInfo.weekendBoost.active && (
+          <div className="text-[10px] text-muted-foreground">🔥 Next Weekend Boost: Friday 00:00</div>
+        )}
+        {boostInfo?.goldenHour && !boostInfo.goldenHour.active && (
+          <div className="text-[10px] text-muted-foreground">✨ Golden Hour: Daily 12:00-13:00</div>
+        )}
+        {boostInfo?.killFreeZone && !boostInfo.killFreeZone.active && (
+          <div className="text-[10px] text-muted-foreground">⚔️ Kill Free Zone: Mon-Wed 20:00-22:00</div>
+        )}
+      </div>
+
+      {/* Crime Momentum */}
+      <div className="mafia-card rounded-xl p-5 space-y-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">🎯 Crime Focus</h3>
+        <div>
+          <div className="flex justify-between text-xs text-muted-foreground mb-1">
+            <span>Momentum</span>
+            <span>{(player.crimeMomentum ?? 0)}% / 90%</span>
+          </div>
+          <div className="h-3 rounded-full bg-background/60 overflow-hidden">
+            <div className={`h-full rounded-full transition-all ${((player.crimeMomentum ?? 0) >= 90) ? "bg-gradient-to-r from-green-500 to-emerald-400" : "bg-gradient-to-r from-red-500 to-orange-400"}`} style={{ width: `${Math.min(100, ((player.crimeMomentum ?? 0) / 90) * 100)}%` }} />
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-1">{((player.crimeMomentum ?? 0) >= 90) ? "✅ Maximum focus! Commit crimes for full rewards!" : "Commit crimes to build momentum. Reach 90% for maximum success!"}</div>
         </div>
       </div>
     </div>
@@ -966,6 +1026,22 @@ function PrisonPage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [tab, setTab] = useState<"overview" | "jobs" | "gangs" | "contraband" | "cells" | "escape">("overview");
+  const [secondsLeft, setSecondsLeft] = useState(15);
+
+  // Live 15-second countdown
+  useEffect(() => {
+    if (!player?.inPrison) return;
+    const end = Date.now() + 15000;
+    const timer = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        clearInterval(timer);
+        window.location.reload();
+      }
+    }, 500);
+    return () => clearInterval(timer);
+  }, [player?.inPrison]);
 
   // Auto-reload when prison sentence is over
   useEffect(() => {
@@ -977,9 +1053,9 @@ function PrisonPage() {
   if (!player || !prisonStatus) return <LoadingPage />;
   if (!player.inPrison) return <EmptyPage icon={<Lock className="size-8 text-primary" />} title="Not in Prison" desc="You're a free man. Commit crimes to end up here..." />;
 
-  const remaining = Math.max(0, Math.ceil((player.prisonTime ?? 0) / 60000));
+  const remaining = Math.max(0, secondsLeft);
   const bailCost = 2000 + (player.level ?? 1) * 200;
-  const solLeft = Math.ceil((prisonStatus.solitaryTime ?? 0) / 60000);
+  const solLeft = Math.ceil((prisonStatus.solitaryTime ?? 0) / 1000);
 
   const doAction = async (fn: () => Promise<unknown>, label: string) => { setLoading(true); setMsg(""); try { await fn(); setMsg(label); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); };
 
@@ -998,10 +1074,23 @@ function PrisonPage() {
 
       {/* Status Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatBox label="Time Left" value={`${remaining} min`} color="text-destructive" />
+        <StatBox label="Time Left" value={`${secondsLeft}s`} color="text-destructive" />
         <StatBox label="Cell Level" value={`Lv.${prisonStatus.cellLevel ?? 1}`} />
         <StatBox label="Prison $" value={(prisonStatus.prisonCurrency ?? 0).toString()} color="text-yellow-400" />
         <StatBox label="Contraband" value={(prisonStatus.contraband ?? 0).toString()} color="text-purple-400" />
+      </div>
+
+      {/* Live Countdown */}
+      <div className="mafia-card rounded-xl p-6 text-center">
+        <div className="text-6xl font-black text-destructive animate-pulse">{secondsLeft}</div>
+        <div className="text-sm text-muted-foreground mt-2">seconds until release</div>
+        <div className="h-3 bg-background/60 rounded-full mt-4 overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full"
+            animate={{ width: `${((15 - secondsLeft) / 15) * 100}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
       </div>
 
       {solLeft > 0 && <div className="mafia-card rounded-lg p-3 border-destructive/30 border text-sm text-destructive">🔒 Solitary: {solLeft} min remaining</div>}

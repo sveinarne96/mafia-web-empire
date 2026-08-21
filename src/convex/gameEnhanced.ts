@@ -22,6 +22,7 @@ async function ensurePlayerReady(ctx: { db: any }, player: any) {
   if (player.prisonTime === undefined) patches.prisonTime = 0;
   if (player.skillPoints === undefined) patches.skillPoints = 0;
   if (player.levelUpPending === undefined) patches.levelUpPending = false;
+  if (player.crimeMomentum === undefined) patches.crimeMomentum = 0;
   if (Object.keys(patches).length > 0) {
     await ctx.db.patch(player._id, patches);
     return { ...player, ...patches };
@@ -46,6 +47,7 @@ export const saveProfile = mutation({
     activeTitle: v.optional(v.string()),
     bio: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
+    activeLanguage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
@@ -57,8 +59,34 @@ export const saveProfile = mutation({
     if (args.activeTitle !== undefined) patch.activeTitle = args.activeTitle;
     if (args.bio !== undefined) patch.bio = args.bio;
     if (args.profilePictureUrl !== undefined) patch.profilePictureUrl = args.profilePictureUrl;
+    if (args.activeLanguage !== undefined) patch.activeLanguage = args.activeLanguage;
     await ctx.db.patch(player._id, patch);
     return { success: true };
+  },
+});
+
+
+// ===== ADVANCE CRIME MOMENTUM =====
+export const advanceCrimeMomentum = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const current = (player.crimeMomentum ?? 0);
+    const newMomentum = Math.min(90, current + Math.floor(Math.random() * 8) + 3);
+    await ctx.db.patch(player._id, { crimeMomentum: newMomentum });
+    return { momentum: newMomentum };
+  },
+});
+
+// ===== RESET CRIME MOMENTUM =====
+export const resetCrimeMomentum = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    await ctx.db.patch(player._id, { crimeMomentum: 0 });
+    return { momentum: 0 };
   },
 });
 

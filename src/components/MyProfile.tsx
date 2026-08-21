@@ -68,6 +68,7 @@ export function MyProfilePage() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [activeLanguage, setActiveLanguage] = useState<string>((player as any).activeLanguage ?? "English");
   const [customPictureUrl, setCustomPictureUrl] = useState("");
   const [bio, setBio] = useState("");
   const [showLangs, setShowLangs] = useState(false);
@@ -94,6 +95,7 @@ export function MyProfilePage() {
         activeRole: selectedRole ?? undefined,
         bio: bio || undefined,
         profilePictureUrl: customPictureUrl || undefined,
+        activeLanguage: activeLanguage || undefined,
       });
       setSaveMsg("✅ Profile saved successfully!");
       setTimeout(() => setSaveMsg(""), 3000);
@@ -285,9 +287,7 @@ export function MyProfilePage() {
                 ))}
               </div>
             </div>
-            {selectedLanguages.length > 0 && (
-              <div className="text-xs text-muted-foreground">Selected: <span className="text-primary font-bold">{selectedLanguages.join(", ")}</span></div>
-            )}
+            <div className="text-xs text-muted-foreground mt-2">Active Language: <span className="text-green-400 font-bold">{activeLanguage}</span> <span className="text-[10px] text-muted-foreground">(click any language to set)</span></div>
           </div>
         )}
       </div>

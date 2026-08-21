@@ -21,6 +21,7 @@ async function ensurePlayerReady(ctx: { db: any }, player: any) {
   if (player.prisonTime === undefined) patches.prisonTime = 0;
   if (player.skillPoints === undefined) patches.skillPoints = 0;
   if (player.levelUpPending === undefined) patches.levelUpPending = false;
+  if (player.crimeMomentum === undefined) patches.crimeMomentum = 0;
   if (Object.keys(patches).length > 0) {
     await ctx.db.patch(player._id, patches);
     return { ...player, ...patches };
