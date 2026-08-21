@@ -181,8 +181,21 @@ export const stealFromHouse = mutation({
     };
     const mult = difficultyMultipliers[args.difficulty] ?? 1.0;
 
-    const stolenItemNames = ["Cash Stash","Gold Watch","Laptop","Jewelry Box","Painting","TV","Safe Contents","Designer Bag","Rare Coins","Medicine","Weapon","Cash Register"];
-    const stolenItemValues = [100, 500, 800, 1500, 3000, 600, 2000, 1200, 900, 400, 2500, 700];
+    const stolenItemNames = [
+      "Cash Stash","Gold Watch","Laptop","Jewelry Box","Painting","TV","Safe Contents",
+      "Designer Bag","Rare Coins","Medicine","Weapon","Cash Register",
+      "Rolex Submariner","Diamond Necklace","Antique Vase","Gold Bar","Platinum Chain",
+      "CCTV DVR","Art Sculpture","Bullion Stack","Ceramic Vase","Rare Wine Bottle",
+      "Silver Set","Gemstone Ring","Stolen Laptop Pro","Leather Briefcase","Pearl Earrings",
+      "Vintage Watch","Diamond Bracelet","Gold Chain","Emerald Pendant","Ruby Tiara",
+      "Sapphire Ring","Antique Clock","Bronze Statue","Crystal Decanter","Silk Tapestry",
+    ];
+    const stolenItemValues = [
+      100, 500, 800, 1500, 3000, 600, 2000, 1200, 900, 400, 2500, 700,
+      8500, 12000, 5000, 25000, 3500, 450, 15000, 30000, 7500, 2800,
+      4200, 18000, 2200, 1800, 6500, 9500, 1500, 7200, 32000,
+      8800, 4500, 3200, 1100, 2100,
+    ];
 
     let moneyEarned = 0;
     let itemsStolen: string[] = [];
@@ -263,20 +276,30 @@ export const gtaCarTheft = mutation({
       { name: "2020 BMW 3 Series", type: "sedan", speed: 72, storage: 20, price: 45000, armored: false },
       { name: "2022 Mercedes C-Class", type: "luxury", speed: 75, storage: 18, price: 55000, armored: false },
       { name: "2021 Audi A6", type: "luxury", speed: 78, storage: 22, price: 62000, armored: false },
-      { name: "2020 Tesla Model S", type: "electric", speed: 85, storage: 24, price: 85000, armored: false },
-      { name: "2022 Porsche 911", type: "sports", speed: 92, storage: 10, price: 120000, armored: false },
-      { name: "2021 BMW M5", type: "sports", speed: 88, storage: 16, price: 110000, armored: false },
-      { name: "2020 Range Rover", type: "suv", speed: 65, storage: 50, price: 95000, armored: false },
-      { name: "2022 Lamborghini Huracán", type: "supercar", speed: 98, storage: 6, price: 250000, armored: false },
-      { name: "2021 Ferrari F8", type: "supercar", speed: 99, storage: 5, price: 320000, armored: false },
-      { name: "2020 Bugatti Chiron", type: "hypercar", speed: 100, storage: 4, price: 500000, armored: false },
-      { name: "2021 Rolls-Royce Ghost", type: "luxury", speed: 70, storage: 30, price: 350000, armored: false },
-      { name: "2022 McLaren 720S", type: "supercar", speed: 97, storage: 5, price: 310000, armored: false },
-      { name: "2020 Dodge Charger Hellcat", type: "muscle", speed: 82, storage: 18, price: 75000, armored: false },
-      { name: "2021 Ford Mustang GT", type: "muscle", speed: 78, storage: 15, price: 55000, armored: false },
-      { name: "2020 Jeep Wrangler", type: "suv", speed: 55, storage: 40, price: 42000, armored: false },
-      { name: "2022 Mercedes G-Wagon", type: "suv", speed: 72, storage: 35, price: 180000, armored: true },
-      { name: "2021 Tesla Cybertruck", type: "truck", speed: 65, storage: 60, price: 120000, armored: true },
+      { name: "2023 Mercedes-AMG GT", type: "supercar", speed: 94, storage: 8, price: 185000, armored: false },
+      { name: "2022 Bentley Continental GT", type: "ultra", speed: 82, storage: 14, price: 245000, armored: false },
+      { name: "2021 Aston Martin DB11", type: "supercar", speed: 90, storage: 10, price: 215000, armored: false },
+      { name: "2023 Porsche Taycan Turbo S", type: "electric", speed: 93, storage: 15, price: 195000, armored: false },
+      { name: "2022 Maserati MC20", type: "supercar", speed: 96, storage: 6, price: 240000, armored: false },
+      { name: "2021 Lexus LC 500", type: "luxury", speed: 80, storage: 16, price: 95000, armored: false },
+      { name: "2023 Cadillac Escalade ESV", type: "suv", speed: 60, storage: 55, price: 110000, armored: false },
+      { name: "2022 Lincoln Navigator", type: "suv", speed: 58, storage: 50, price: 98000, armored: false },
+      { name: "2021 Ram 1500 TRX", type: "truck", speed: 62, storage: 40, price: 85000, armored: false },
+      { name: "2022 Ford Bronco Raptor", type: "suv", speed: 68, storage: 35, price: 78000, armored: false },
+      { name: "2023 Cadillac CT5-V Blackwing", type: "luxury", speed: 85, storage: 16, price: 120000, armored: false },
+      { name: "2022 BMW X7 M60i", type: "suv", speed: 74, storage: 32, price: 105000, armored: false },
+      { name: "2021 Mercedes-Maybach S580", type: "ultra", speed: 72, storage: 20, price: 285000, armored: false },
+      { name: "2022 Ferrari Roma", type: "supercar", speed: 96, storage: 8, price: 280000, armored: false },
+      { name: "2023 Lamborghini Urus Performante", type: "supercar", speed: 92, storage: 20, price: 265000, armored: false },
+      { name: "2021 Aston Martin DBX707", type: "supercar", speed: 88, storage: 28, price: 245000, armored: false },
+      { name: "2022 Ferrari 296 GTB", type: "supercar", speed: 99, storage: 5, price: 350000, armored: false },
+      { name: "2023 Mercedes-AMG One", type: "hypercar", speed: 100, storage: 4, price: 2750000, armored: false },
+      { name: "2022 Porsche 918 Spyder", type: "hypercar", speed: 99, storage: 4, price: 1200000, armored: false },
+      { name: "2021 Koenigsegg Jesko", type: "hypercar", speed: 100, storage: 3, price: 3000000, armored: false },
+      { name: "2022 Rimac Nevera", type: "hypercar", speed: 100, storage: 5, price: 2200000, armored: false },
+      { name: "2023 Pagani Huayra R", type: "hypercar", speed: 100, storage: 3, price: 3500000, armored: false },
+      { name: "2022 Gordon Murray T.50", type: "hypercar", speed: 100, storage: 3, price: 3000000, armored: false },
+      { name: "2021 Zenvo TSR-S", type: "hypercar", speed: 100, storage: 4, price: 1800000, armored: false },
     ];
     const carNames = carData.map(c => c.name);
     const carSpeeds = carData.map(c => c.speed);
