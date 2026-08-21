@@ -137,6 +137,8 @@ const schema = defineSchema(
       lastActive: v.number(),
       lastCrimeAt: v.optional(v.number()),
     crimeMomentum: v.optional(v.number()),
+    activeXpBoost: v.optional(v.number()),
+    xpBoostExpiresAt: v.optional(v.number()),
       avatarId: v.optional(v.string()),
       bio: v.optional(v.string()),
       profilePictureUrl: v.optional(v.string()),

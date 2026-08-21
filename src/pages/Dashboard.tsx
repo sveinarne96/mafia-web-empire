@@ -30,6 +30,18 @@ import {
   GiftingPage, HitListPage,
 } from "../components/GameFeatures";
 
+
+// Language flag map
+const LANGUAGE_FLAGS: Record<string, string> = {
+  "Swedish": "🇸🇪", "Norwegian": "🇳🇴", "Danish": "🇩🇰", "Finnish": "🇫🇮", "Icelandic": "🇮🇸",
+  "English": "🇬🇧", "German": "🇩🇪", "French": "🇫🇷", "Spanish": "🇪🇸", "Italian": "🇮🇹",
+  "Portuguese": "🇵🇹", "Dutch": "🇳🇱", "Polish": "🇵🇱", "Russian": "🇷🇺", "Greek": "🇬🇷",
+  "Turkish": "🇹🇷", "Czech": "🇨🇿", "Romanian": "🇷🇴", "Hungarian": "🇭🇺", "Croatian": "🇭🇷",
+  "Serbian": "🇷🇸", "Bulgarian": "🇧🇬", "Slovak": "🇸🇰", "Slovenian": "🇸🇮", "Estonian": "🇪🇪",
+  "Latvian": "🇱🇻", "Lithuanian": "🇱🇹", "Ukrainian": "🇺🇦", "Albanian": "🇦🇱", "Bosnian": "🇧🇦",
+  "Montenegrin": "🇲🇪",
+};
+
 type GamePage =
   | "headquarters" | "bank" | "hospital" | "points" | "crime_car" | "crime_burglarize"
   | "crime_rob" | "fight_club"  | "garage" | "items" | "airport"
@@ -1881,6 +1893,27 @@ export default function Dashboard() {
             <div className="text-sm font-semibold text-foreground/80">{pageNames[activePage] ?? activePage}</div>
             {(player.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-400 font-bold">🔴 {(player.wantedLevel ?? 0)} Wanted</span>}
             {(player.reputationAlignment ?? "neutral") !== "neutral" && <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${player.reputationAlignment === "evil" ? "bg-red-950/50 border-red-800/50 text-red-400" : "bg-green-950/50 border-green-800/50 text-green-400"}`}>{player.reputationAlignment === "evil" ? "😈 Evil" : "😇 Good"}</span>}
+            {/* Language Flag */}
+            {(player as any).activeLanguage && LANGUAGE_FLAGS[(player as any).activeLanguage] && (
+              <span className="px-2 py-0.5 bg-background/50 border border-border/50 rounded-full text-[10px]" title={`Active Language: ${(player as any).activeLanguage}`}>
+                {LANGUAGE_FLAGS[(player as any).activeLanguage]} {(player as any).activeLanguage}
+              </span>
+            )}
+            {/* Global Crime Cooldown Indicator */}
+            {(() => {
+              const lastCrime = (player as any).lastCrimeAt ?? 0;
+              const elapsed = Date.now() - lastCrime;
+              const cooldownMs = 10000;
+              if (elapsed < cooldownMs) {
+                const secs = Math.ceil((cooldownMs - elapsed) / 1000);
+                return (
+                  <span className="px-2 py-0.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-[10px] text-yellow-400 font-bold animate-pulse">
+                    ⏱️ Crime Cooldown: {secs}s
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </div>
           <button onClick={() => signOut()} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
             <LogOut className="size-3.5" /> Sign Out

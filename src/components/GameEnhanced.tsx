@@ -405,6 +405,33 @@ export function SecretChallengesPage() {
 export function BoostsPage() {
   const boostInfo = useQuery(api.gameEnhanced.getBoostInfo);
   const randomEvent = useQuery(api.gameEnhanced.getRandomEvent);
+  const xpBoostInfo = useQuery(api.gameEnhanced.getXpBoostInfo);
+  const activateXpBoost = useMutation(api.gameEnhanced.activateXpBoost);
+  const player = useQuery(api.game.getPlayer);
+  const [boostMsg, setBoostMsg] = useState("");
+
+  const XP_BOOSTS = [
+    { multiplier: 5, label: "5x Boost", color: "text-green-400", bg: "bg-green-500/10 border-green-500/30", cost: 0 },
+    { multiplier: 10, label: "10x Boost", color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/30", cost: 50000 },
+    { multiplier: 15, label: "15x Boost", color: "text-purple-400", bg: "bg-purple-500/10 border-purple-500/30", cost: 150000 },
+    { multiplier: 25, label: "25x Boost", color: "text-yellow-400", bg: "bg-yellow-500/10 border-yellow-500/30", cost: 500000 },
+    { multiplier: 30, label: "30x Boost", color: "text-orange-400", bg: "bg-orange-500/10 border-orange-500/30", cost: 1000000 },
+    { multiplier: 35, label: "35x Boost", color: "text-red-400", bg: "bg-red-500/10 border-red-500/30", cost: 2500000 },
+    { multiplier: 40, label: "40x Boost", color: "text-pink-400", bg: "bg-pink-500/10 border-pink-500/30", cost: 5000000 },
+    { multiplier: 45, label: "45x Boost", color: "text-cyan-400", bg: "bg-cyan-500/10 border-cyan-500/30", cost: 10000000 },
+    { multiplier: 50, label: "50x Boost", color: "text-yellow-300", bg: "bg-yellow-400/10 border-yellow-400/30", cost: 25000000 },
+  ];
+
+  const doActivateBoost = async (mult: number, cost: number) => {
+    if ((player?.money ?? 0) < cost) { setBoostMsg("Not enough money!"); return; }
+    try {
+      await activateXpBoost({ multiplier: mult });
+      setBoostMsg(`✅ ${mult}x XP Boost activated for 1 hour!`);
+      setTimeout(() => setBoostMsg(""), 3000);
+    } catch (e: unknown) {
+      setBoostMsg(e instanceof Error ? e.message : "Error");
+    }
+  };
 
   if (!boostInfo) return <LoadingPage />;
 
@@ -495,6 +522,42 @@ export function BoostsPage() {
             <div className="mt-3 text-xs text-yellow-300">✨ ALL rewards x3! Every action is amplified!</div>
           )}
         </div>
+      </div>
+
+      {/* Hourly XP Boost */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">⚡ Hourly XP Boost (1 Hour)</h3>
+        {xpBoostInfo?.active && (
+          <div className="rounded-xl p-4 bg-green-950/30 border border-green-500/30">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">⚡</span>
+                <div>
+                  <div className="font-bold text-green-400">{xpBoostInfo.multiplier}x XP BOOST ACTIVE</div>
+                  <div className="text-xs text-muted-foreground">Expires in {Math.ceil(xpBoostInfo.remainingMs / 60000)} min</div>
+                </div>
+              </div>
+              <div className="h-2 w-24 bg-background/60 rounded-full overflow-hidden">
+                <div className="h-full bg-green-400 rounded-full" style={{ width: `${(xpBoostInfo.remainingMs / 3600000) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <div className="grid grid-cols-3 gap-2">
+          {XP_BOOSTS.map(b => {
+            const isActive = xpBoostInfo?.active && xpBoostInfo.multiplier === b.multiplier;
+            const canAfford = (player?.money ?? 0) >= b.cost;
+            return (
+              <button key={b.multiplier} onClick={() => doActivateBoost(b.multiplier, b.cost)} disabled={isActive || !canAfford}
+                className={`p-3 rounded-xl border text-center transition-all ${isActive ? "bg-green-500/20 border-green-500/50" : canAfford ? `${b.bg} hover:border-primary/50` : "bg-background/20 border-border/20 opacity-40"}`}>
+                <div className={`text-lg font-black ${b.color}`}>{b.label}</div>
+                <div className="text-[10px] text-muted-foreground mt-1">{b.cost === 0 ? "FREE" : `$${b.cost.toLocaleString()}`}</div>
+                {isActive && <div className="text-[10px] text-green-400 font-bold mt-1">✓ ACTIVE</div>}
+              </button>
+            );
+          })}
+        </div>
+        {boostMsg && <div className="text-sm text-primary text-center animate-fade-in">{boostMsg}</div>}
       </div>
 
       {/* Schedule */}

@@ -23,6 +23,8 @@ async function ensurePlayerReady(ctx: { db: any }, player: any) {
   if (player.skillPoints === undefined) patches.skillPoints = 0;
   if (player.levelUpPending === undefined) patches.levelUpPending = false;
   if (player.crimeMomentum === undefined) patches.crimeMomentum = 0;
+  if (player.activeXpBoost === undefined) patches.activeXpBoost = 0;
+  if (player.xpBoostExpiresAt === undefined) patches.xpBoostExpiresAt = 0;
   if (Object.keys(patches).length > 0) {
     await ctx.db.patch(player._id, patches);
     return { ...player, ...patches };
@@ -37,6 +39,44 @@ async function getCurrentUser(ctx: { auth: any; db: any }) {
   if (!user) return null;
   return await ensurePlayerReady(ctx, user);
 }
+
+
+// ===== XP BOOST SYSTEM =====
+export const activateXpBoost = mutation({
+  args: { multiplier: v.number() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const costs: Record<number, number> = {
+      5: 0, 10: 50000, 15: 150000, 25: 500000, 30: 1000000,
+      35: 2500000, 40: 5000000, 45: 10000000, 50: 25000000,
+    };
+    const cost = costs[args.multiplier] ?? 0;
+    if ((player.money ?? 0) < cost) throw new Error(`Need $${cost.toLocaleString()}!`);
+    const expiresAt = Date.now() + 3600000; // 1 hour
+    await ctx.db.patch(player._id, {
+      money: (player.money ?? 0) - cost,
+      activeXpBoost: args.multiplier,
+      xpBoostExpiresAt: expiresAt,
+    });
+    return { success: true, multiplier: args.multiplier, expiresAt };
+  },
+});
+
+export const getXpBoostInfo = query({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) return null;
+    const active = (player.activeXpBoost ?? 0) > 0 && (player.xpBoostExpiresAt ?? 0) > Date.now();
+    return {
+      active,
+      multiplier: active ? (player.activeXpBoost ?? 1) : 1,
+      expiresAt: player.xpBoostExpiresAt ?? 0,
+      remainingMs: active ? Math.max(0, (player.xpBoostExpiresAt ?? 0) - Date.now()) : 0,
+    };
+  },
+});
 
 // ===== SAVE PROFILE (fix save button) =====
 export const saveProfile = mutation({

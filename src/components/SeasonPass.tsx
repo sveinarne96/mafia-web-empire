@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Shield, Gift, Clock, Zap, Lock, Star, Trophy, Crown, Skull, AlertTriangle, Loader2 } from "lucide-react";
 
 // Season pass config
-const SEASON_DURATION_MS = 60 * 24 * 60 * 60 * 1000; // ~60 days (2 months)
+const SEASON_DURATION_MS = 150 * 24 * 60 * 60 * 1000; // 5 months
 const PURGE_BEFORE_END_MS = 5 * 24 * 60 * 60 * 1000; // 5 days before end
 const WIPE_COUNTDOWN_MS = 60 * 1000; // 1 minute countdown
 
