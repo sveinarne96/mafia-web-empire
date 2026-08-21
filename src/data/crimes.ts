@@ -428,6 +428,13 @@ export const crimeCategories: CrimeCategory[] = [
     ],
   },
 ];
+crimeCategories.sort((a, b) => {
+  const maxA = Math.max(...a.crimes.map(c => c.xp));
+  const maxB = Math.max(...b.crimes.map(c => c.xp));
+  return maxB - maxA;
+});
+
+
 
 export function getCrimeTypeColor(risk: number): string {
   if (risk < 30) return "text-green-400";
