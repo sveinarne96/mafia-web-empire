@@ -190,15 +190,27 @@ export const stealFromHouse = mutation({
     let arrested = false;
 
     if (succeeded) {
-      const numItems = Math.floor(Math.random() * 3) + 1;
+      const numItems = Math.floor(Math.random() * 4) + 1;
       for (let i = 0; i < numItems; i++) {
         const idx = Math.floor(Math.random() * stolenItemNames.length);
         const itemValue = Math.floor(stolenItemValues[idx] * mult);
         moneyEarned += itemValue;
         itemsStolen.push(stolenItemNames[idx] + " ($" + itemValue + ")");
+        // Actually insert stolen item into inventory
+        await ctx.db.insert("inventory", {
+          userId: player._id,
+          itemId: `stolen_${Date.now()}_${i}`,
+          name: stolenItemNames[idx],
+          type: "stolen",
+          equipped: false,
+          quantity: 1,
+          attack: 0,
+          defense: 0,
+          rarity: itemValue > 5000 ? "epic" : itemValue > 2000 ? "rare" : itemValue > 500 ? "uncommon" : "common",
+        });
       }
-      if (Math.random() < 0.05) itemsStolen.push("Energy Drink");
-      if (Math.random() < 0.025) itemsStolen.push("SECRET CHEST FOUND!");
+      if (Math.random() < 0.05) { itemsStolen.push("Energy Drink"); }
+      if (Math.random() < 0.025) { itemsStolen.push("SECRET CHEST FOUND!"); }
     } else {
       damageTaken = Math.floor(Math.random() * 25 + 5);
       arrested = Math.random() > 0.25;
@@ -243,10 +255,33 @@ export const gtaCarTheft = mutation({
     const successRate = Math.min(0.95, baseRate + levelBonus);
     const succeeded = Math.random() < successRate;
 
-    const carNames = ["Beater Sedan","Stolen Pickup","Hot Hatch","Muscle Car","Luxury Sedan","Sports Coupe","Super Car"];
-    const carSpeeds = [40, 45, 65, 75, 70, 85, 95];
-    const carStorages = [10, 20, 8, 6, 12, 5, 4];
-    const carPrices = [500, 1200, 2500, 4000, 8000, 12000, 25000];
+    // Realistic car names, values, and stats
+    const carData = [
+      { name: "2019 Honda Civic", type: "sedan", speed: 55, storage: 25, price: 18000, armored: false },
+      { name: "2020 Toyota Camry", type: "sedan", speed: 58, storage: 28, price: 25000, armored: false },
+      { name: "2021 Ford F-150", type: "truck", speed: 52, storage: 45, price: 38000, armored: false },
+      { name: "2020 BMW 3 Series", type: "sedan", speed: 72, storage: 20, price: 45000, armored: false },
+      { name: "2022 Mercedes C-Class", type: "luxury", speed: 75, storage: 18, price: 55000, armored: false },
+      { name: "2021 Audi A6", type: "luxury", speed: 78, storage: 22, price: 62000, armored: false },
+      { name: "2020 Tesla Model S", type: "electric", speed: 85, storage: 24, price: 85000, armored: false },
+      { name: "2022 Porsche 911", type: "sports", speed: 92, storage: 10, price: 120000, armored: false },
+      { name: "2021 BMW M5", type: "sports", speed: 88, storage: 16, price: 110000, armored: false },
+      { name: "2020 Range Rover", type: "suv", speed: 65, storage: 50, price: 95000, armored: false },
+      { name: "2022 Lamborghini Huracán", type: "supercar", speed: 98, storage: 6, price: 250000, armored: false },
+      { name: "2021 Ferrari F8", type: "supercar", speed: 99, storage: 5, price: 320000, armored: false },
+      { name: "2020 Bugatti Chiron", type: "hypercar", speed: 100, storage: 4, price: 500000, armored: false },
+      { name: "2021 Rolls-Royce Ghost", type: "luxury", speed: 70, storage: 30, price: 350000, armored: false },
+      { name: "2022 McLaren 720S", type: "supercar", speed: 97, storage: 5, price: 310000, armored: false },
+      { name: "2020 Dodge Charger Hellcat", type: "muscle", speed: 82, storage: 18, price: 75000, armored: false },
+      { name: "2021 Ford Mustang GT", type: "muscle", speed: 78, storage: 15, price: 55000, armored: false },
+      { name: "2020 Jeep Wrangler", type: "suv", speed: 55, storage: 40, price: 42000, armored: false },
+      { name: "2022 Mercedes G-Wagon", type: "suv", speed: 72, storage: 35, price: 180000, armored: true },
+      { name: "2021 Tesla Cybertruck", type: "truck", speed: 65, storage: 60, price: 120000, armored: true },
+    ];
+    const carNames = carData.map(c => c.name);
+    const carSpeeds = carData.map(c => c.speed);
+    const carStorages = carData.map(c => c.storage);
+    const carPrices = carData.map(c => c.price);
 
     let vehicleId = null;
     let moneyEarned = 0;
@@ -258,12 +293,12 @@ export const gtaCarTheft = mutation({
       vehicleId = await ctx.db.insert("vehicles", {
         userId: userId,
         name: carNames[idx],
-        type: "stolen",
+        type: carData[idx].type,
         speed: carSpeeds[idx],
         storage: carStorages[idx],
-        armored: false,
+        armored: carData[idx].armored,
         stolen: true,
-        purchasePrice: 0,
+        purchasePrice: carPrices[idx],
       });
       moneyEarned = carPrices[idx];
     } else {
