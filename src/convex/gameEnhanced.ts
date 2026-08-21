@@ -3,7 +3,31 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 
-// ===== ENSURE PLAYER HAS ALL REQUIRED FIELDS =====
+// ===== READ-ONLY DEFAULTS (safe for queries) =====
+function ensurePlayerDefaults(player: any) {
+  return {
+    ...player,
+    money: player.money ?? 1000,
+    life: player.life ?? 100,
+    maxLife: player.maxLife ?? 100,
+    level: player.level ?? 1,
+    experience: player.experience ?? 0,
+    attack: player.attack ?? 10,
+    defense: player.defense ?? 10,
+    inPrison: player.inPrison ?? false,
+    isDead: player.isDead ?? false,
+    totalCrimes: player.totalCrimes ?? 0,
+    totalKills: player.totalKills ?? 0,
+    totalDeaths: player.totalDeaths ?? 0,
+    wantedLevel: player.wantedLevel ?? 0,
+    prisonTime: player.prisonTime ?? 0,
+    skillPoints: player.skillPoints ?? 0,
+    levelUpPending: player.levelUpPending ?? false,
+    crimeMomentum: player.crimeMomentum ?? 0,
+  };
+}
+
+// ===== PATCH MISSING FIELDS (mutation only) =====
 async function ensurePlayerReady(ctx: { db: any }, player: any) {
   const patches: Record<string, unknown> = {};
   if (player.money === undefined) patches.money = 1000;
@@ -35,7 +59,7 @@ async function getCurrentUser(ctx: { auth: any; db: any }) {
   if (!userId) return null;
   const user = await ctx.db.get(userId);
   if (!user) return null;
-  return await ensurePlayerReady(ctx, user);
+  return ensurePlayerDefaults(user);
 }
 
 
