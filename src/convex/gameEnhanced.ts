@@ -230,7 +230,7 @@ export const stealFromHouse = mutation({
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-    const xpEarned = succeeded ? 18 : 4;
+    const xpEarned = succeeded ? 21 : 6;
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;
@@ -330,7 +330,7 @@ export const gtaCarTheft = mutation({
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-    const xpEarned = succeeded ? 15 : 3;
+    const xpEarned = succeeded ? 17 : 4;
 
     await ctx.db.patch(userId, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
