@@ -326,6 +326,7 @@ const schema = defineSchema({
     attack: v.optional(v.number()),
     defense: v.optional(v.number()),
     rarity: v.optional(v.string()),
+    price: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   playerAchievements: defineTable({

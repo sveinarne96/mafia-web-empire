@@ -63,9 +63,14 @@ export const sellItem = mutation({
     if (!player) throw new Error("Not authenticated");
     const item = await ctx.db.get(args.itemId);
     if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
-    const rarity = (item as any).rarity ?? "common";
-    const rarityMult: Record<string, number> = { common: 100, uncommon: 300, rare: 800, epic: 2500, legendary: 10000 };
-    const sellPrice = rarityMult[rarity] ?? 100;
+    // Get real value from the item's price field or use name-based lookup
+    let sellPrice = (item as any).price ?? 0;
+    if (sellPrice <= 0) {
+      // Fallback: use rarity-based value but much higher
+      const rarity = (item as any).rarity ?? "common";
+      const rarityMult: Record<string, number> = { common: 500, uncommon: 2000, rare: 8000, epic: 25000, legendary: 100000 };
+      sellPrice = rarityMult[rarity] ?? 500;
+    }
     await ctx.db.patch(player._id, { money: (player.money ?? 0) + sellPrice });
     await ctx.db.delete(args.itemId);
     return { money: sellPrice };
@@ -80,11 +85,14 @@ export const sellAllItems = mutation({
     if (!player) throw new Error("Not authenticated");
     const items = await ctx.db.query("inventory").withIndex("by_user", (q: any) => q.eq("userId", player._id)).collect();
     let totalEarned = 0;
-    const rarityMult: Record<string, number> = { common: 100, uncommon: 300, rare: 800, epic: 2500, legendary: 10000 };
     for (const item of items) {
       if ((item as any).equipped) continue;
-      const rarity = (item as any).rarity ?? "common";
-      const price = rarityMult[rarity] ?? 100;
+      let price = (item as any).price ?? 0;
+      if (price <= 0) {
+        const rarity = (item as any).rarity ?? "common";
+        const rarityMult: Record<string, number> = { common: 500, uncommon: 2000, rare: 8000, epic: 25000, legendary: 100000 };
+        price = rarityMult[rarity] ?? 500;
+      }
       totalEarned += price;
       await ctx.db.delete(item._id);
     }
@@ -103,7 +111,7 @@ export const sellAllVehicles = mutation({
     let totalEarned = 0;
     for (const veh of vehicles) {
       const basePrice = (veh.purchasePrice ?? 0) > 0 ? (veh.purchasePrice ?? 0) : (veh.speed ?? 50) * 1000;
-      const price = Math.floor(basePrice * ((veh as any).stolen ? 0.5 : 0.6));
+      const price = basePrice;
       totalEarned += price;
       await ctx.db.delete(veh._id);
     }
@@ -151,7 +159,7 @@ export const getGarage = query({ args: {}, handler: async (ctx) => { const p = a
 export const getVehicleShop = query({ args: {}, handler: async () => { return [{ name: "2021 Honda Accord", type: "sedan", speed: 58, storage: 26, price: 28000, armored: false, emoji: "🚗" }, { name: "2022 Toyota Tacoma", type: "truck", speed: 55, storage: 45, price: 42000, armored: false, emoji: "🛻" }, { name: "2021 BMW X5", type: "suv", speed: 70, storage: 40, price: 75000, armored: false, emoji: "🚙" }, { name: "2022 Mercedes G-Wagon", type: "suv", speed: 72, storage: 35, price: 180000, armored: true, emoji: "🛡️" }, { name: "2021 Porsche Cayenne", type: "suv", speed: 78, storage: 30, price: 95000, armored: false, emoji: "🏎️" }, { name: "2022 Tesla Model X", type: "electric", speed: 80, storage: 35, price: 110000, armored: false, emoji: "⚡" }]; } });
 export const buyVehicle = mutation({ args: { name: v.string(), type: v.string(), speed: v.number(), storage: v.number(), price: v.number(), armored: v.boolean() }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); if ((p.money ?? 0) < args.price) throw new Error("Not enough money!"); await ctx.db.patch(p._id, { money: (p.money ?? 0) - args.price }); await ctx.db.insert("vehicles", { userId: p._id, name: args.name, type: args.type, speed: args.speed, storage: args.storage, armored: args.armored, stolen: false, purchasePrice: args.price }); return { success: true }; } });
 export const sellVehicle = mutation({ args: { vehicleId: v.id("vehicles") }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const veh = await ctx.db.get(args.vehicleId); if (!veh || veh.userId !== p._id) throw new Error("Not your vehicle"); const basePrice = (veh.purchasePrice ?? 0) > 0 ? (veh.purchasePrice ?? 0) : (veh.speed ?? 50) * 1000;
-    const price = Math.floor(basePrice * (veh.stolen ? 0.5 : 0.6)); await ctx.db.patch(p._id, { money: (p.money ?? 0) + price }); await ctx.db.delete(args.vehicleId); return { price, money: price }; } });
+    const price = basePrice; await ctx.db.patch(p._id, { money: (p.money ?? 0) + price }); await ctx.db.delete(args.vehicleId); return { price, money: price }; } });
 export const stealVehicle = mutation({ args: {}, handler: async (ctx) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const success = Math.random() < 0.5; let vehicle: any = null; let arrested = false; if (success) { vehicle = await ctx.db.insert("vehicles", { userId: p._id, name: "Stolen Car", type: "stolen", speed: 40, storage: 15, armored: false, stolen: true, purchasePrice: 0 }); } else { arrested = Math.random() > 0.6; } return { success, vehicle, arrested }; } });
 export const commitLegendaryCrime = mutation({ args: { crimeId: v.string(), reward: v.optional(v.number()), xp: v.optional(v.number()), risk: v.optional(v.number()) }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const success = Math.random() < 0.3; const rw = success ? (args.reward ?? 100000) : 0; if (success) await ctx.db.patch(p._id, { money: (p.money ?? 0) + rw, experience: (p.experience ?? 0) + 500 }); return { success, reward: rw, message: success ? "Success!" : "Failed!" }; } });
 export const getMissions = query({ args: {}, handler: async (ctx) => { return await ctx.db.query("missions").collect(); } });

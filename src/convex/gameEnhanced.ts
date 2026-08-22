@@ -294,6 +294,7 @@ export const stealFromHouse = mutation({
           quantity: 1,
           attack: 0,
           defense: 0,
+          price: itemValue,
           rarity: itemValue > 5000 ? "epic" : itemValue > 2000 ? "rare" : itemValue > 500 ? "uncommon" : "common",
         });
       }
