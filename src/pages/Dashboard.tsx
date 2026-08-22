@@ -428,7 +428,8 @@ function Crown() { return <span className="text-yellow-400">👑</span>; }
 function LoadingPage() { return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin size-8 border-2 border-primary border-t-transparent rounded-full" /></div>; }
 
 function LevelUpModal({ player, onDone }: { player: any; onDone: () => void }) {
-  const handle = async () => { onDone(); };
+  const ackLevelUp = useMutation(api.game.acknowledgeLevelUp);
+  const handle = async () => { try { await ackLevelUp({}); } catch {} onDone(); };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
       <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-card border border-primary/30 rounded-2xl p-8 max-w-sm text-center space-y-4">
@@ -1410,6 +1411,7 @@ export default function Dashboard() {
   const player = useQuery(api.game.getPlayer);
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [dismissedLevelUp, setDismissedLevelUp] = useState(false);
   const setPage = useCallback((p: GamePage) => setActivePage(p), []);
 
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
@@ -1594,7 +1596,7 @@ const renderPage = (): React.ReactNode => {
           </div>
         </div>
       )}
-      {player.levelUpPending ? <LevelUpModal player={player as any} onDone={() => {}} /> : null}
+      {player.levelUpPending && !dismissedLevelUp ? <LevelUpModal player={player as any} onDone={() => setDismissedLevelUp(true)} /> : null}
       <RightPanel setPage={setPage} activePage={activePage} />
     </div>
   );

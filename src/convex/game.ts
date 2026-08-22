@@ -162,6 +162,19 @@ export const changeLocation = mutation({
   },
 });
 
+
+export const acknowledgeLevelUp = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    await ctx.db.patch(userId, { levelUpPending: false });
+    return { success: true };
+  },
+});
+
 export const commitCrime = mutation({
   args: { type: v.union(v.literal("car_theft"), v.literal("burglarize"), v.literal("rob_player")), targetId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
