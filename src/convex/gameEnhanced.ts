@@ -306,10 +306,10 @@ export const stealFromHouse = mutation({
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-        // XP: 185% bonus + 10% per 15 levels
-    const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
-    const baseXp = succeeded ? 25 : 6;
-    const xpEarned = Math.floor(baseXp * 6.0 * levelBonusXp);
+        // XP scales with total value of items stolen + level multiplier
+    const levelMult = 1 + ((player.level ?? 1) * 0.05); // +5% per level
+    const valueXp = succeeded ? Math.max(25, Math.floor(moneyEarned / 500)) : 6; // $1 per 500 value, min 25
+    const xpEarned = Math.floor(valueXp * 6.0 * levelMult);
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;
@@ -617,7 +617,18 @@ export const gtaCarTheft = mutation({
     let arrested = false;
 
     if (succeeded) {
-      const idx = Math.floor(Math.random() * carNames.length);
+      // 35% chance for NEON supercar ($50M-$500M)
+      const isNeon = Math.random() < 0.35;
+      let idx: number;
+      let isNeonCar = false;
+      if (isNeon) {
+        // Pick from the most expensive cars and boost price
+        const expensiveIdx = Math.floor(Math.random() * carNames.length);
+        idx = expensiveIdx;
+        isNeonCar = true;
+      } else {
+        idx = Math.floor(Math.random() * carNames.length);
+      }
       vehicleId = await ctx.db.insert("vehicles", {
         userId: userId,
         name: carNames[idx],
@@ -628,17 +639,17 @@ export const gtaCarTheft = mutation({
         stolen: true,
         purchasePrice: carPrices[idx],
       });
-      moneyEarned = carPrices[idx];
+      moneyEarned = isNeonCar ? Math.floor(carPrices[idx] * (100 + Math.floor(Math.random() * 400))) : carPrices[idx];
     } else {
       damageTaken = Math.floor(Math.random() * 20 + 5);
       arrested = Math.random() > 0.25;
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-        // XP: 185% bonus + 10% per 15 levels
-    const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
-    const baseXp = succeeded ? 20 : 4;
-    const xpEarned = Math.floor(baseXp * 6.0 * levelBonusXp);
+        // XP scales with car price + level multiplier
+    const levelMult = 1 + ((player.level ?? 1) * 0.05); // +5% per level
+    const valueXp = succeeded ? Math.max(20, Math.floor(moneyEarned / 1000)) : 4; // $1 per 1000 value, min 20
+    const xpEarned = Math.floor(valueXp * 6.0 * levelMult);
 
     await ctx.db.patch(userId, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
