@@ -484,9 +484,41 @@ function LevelUpModal({ player, onDone }: { player: any; onDone: () => void }) {
   );
 }
 
-function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
+const rightMenuSections: { title: string; icon: any; items: { title: string; icon: any; page: GamePage }[] }[] = [
+  { title: "📬 Communication", icon: MessageSquare, items: [
+    { title: "📩 Messages", icon: MessageSquare, page: "messages" },
+    { title: "📥 Inbox", icon: Inbox, page: "inbox" },
+    { title: "🔔 Notifications", icon: Bell, page: "notifications_page" },
+  ]},
+  { title: "💬 Forums", icon: MessageSquare, items: [
+    { title: "📢 General", icon: MessageSquare, page: "forum_general" },
+    { title: "💰 Sales & Wanted", icon: DollarSign, page: "forum_sales" },
+    { title: "💭 Off-Topic", icon: MessageSquare, page: "forum_offtopic" },
+    { title: "🌑 Shadows", icon: MessageSquare, page: "forum_shadows" },
+    { title: "🔍 Search Posts", icon: Search, page: "forum_search" },
+  ]},
+  { title: "🏙️ World", icon: Map, items: [
+    { title: "🏙️ City Overview", icon: MapPin, page: "city_overview" },
+    { title: "📊 Statistics", icon: BarChart3, page: "statistics" },
+    { title: "👥 Online Players", icon: Users, page: "online_list" },
+    { title: "🌍 Weather", icon: Coffee, page: "weather" },
+    { title: "📰 News Ticker", icon: Megaphone, page: "news_ticker" },
+  ]},
+  { title: "❓ Help", icon: HelpCircle, items: [
+    { title: "❓ FAQ", icon: HelpCircle, page: "faq" },
+    { title: "🆘 Support", icon: Shield, page: "support" },
+  ]},
+  { title: "⚙️ System", icon: Star, items: [
+    { title: "⚙️ Admin Panel", icon: Star, page: "admin_panel" },
+    { title: "🔑 Become Admin", icon: Shield, page: "become_admin" },
+  ]},
+];
+
+function RightPanel({ setPage, activePage }: { setPage: (p: GamePage) => void; activePage: GamePage }) {
   const player = useQuery(api.game.getPlayer);
   const onlineCount = useQuery(api.admin.getOnlineCount);
+  const [expandedRight, setExpandedRight] = useState<string[]>(rightMenuSections.map(s => s.title));
+  const toggleRight = (title: string) => setExpandedRight(prev => prev.includes(title) ? prev.filter(t => t !== title) : [...prev, title]);
   const level = player?.level ?? 1;
   const life = player?.life ?? 100;
   const maxLife = player?.maxLife ?? 100;
@@ -494,26 +526,27 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
   const xp = player?.experience ?? 0;
   const xpPct = Math.min(100, (xp / xpNeeded) * 100);
   const money = player?.money ?? 0;
+
   return (
-    <aside className="w-56 bg-sidebar border-l border-sidebar-border flex flex-col h-full overflow-y-auto scrollbar-thin">
+    <aside className="w-52 bg-sidebar border-l border-sidebar-border flex flex-col h-full overflow-y-auto scrollbar-thin">
       <div className="p-3 border-b border-sidebar-border">
         <div className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest mb-2">Status</div>
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           <div>
             <div className="flex justify-between text-[11px] font-semibold mb-1"><span className="text-red-300">❤️ Life</span><span className="text-red-400 font-bold">{life}/{maxLife}</span></div>
-            <div className="h-4 rounded-full bg-sidebar-accent overflow-hidden border border-red-500/30 animate-glow-pulse">
+            <div className="h-3.5 rounded-full bg-sidebar-accent overflow-hidden border border-red-500/30 animate-glow-pulse">
               <div className="h-full rounded-full animate-life-bar" style={{ width: `${(life / maxLife) * 100}%`, background: "linear-gradient(90deg, #ef4444, #f87171, #ef4444)" }} />
             </div>
           </div>
           <div>
             <div className="flex justify-between text-[11px] font-semibold mb-1"><span className="text-yellow-300">⚡ XP</span><span className="text-yellow-400 font-bold">Lv. {level} ({Math.floor(xpPct)}%)</span></div>
-            <div className="h-4 rounded-full bg-sidebar-accent overflow-hidden border border-yellow-500/30">
+            <div className="h-3.5 rounded-full bg-sidebar-accent overflow-hidden border border-yellow-500/30">
               <div className="h-full rounded-full animate-xp-bar" style={{ width: `${xpPct}%`, background: "linear-gradient(90deg, #eab308, #facc15, #eab308)" }} />
             </div>
           </div>
-          <div className="flex items-center justify-between bg-gradient-to-r from-green-900/40 to-emerald-900/30 border border-green-500/30 rounded-lg px-3 py-2 animate-money-glow">
+          <div className="flex items-center justify-between bg-gradient-to-r from-green-900/40 to-emerald-900/30 border border-green-500/30 rounded-lg px-2.5 py-1.5 animate-money-glow">
             <span className="text-[11px] font-semibold text-green-300/80">💰 Cash</span>
-            <span className="text-[12px] font-bold text-green-300 animate-money-text">${money.toLocaleString()}</span>
+            <span className="text-[11px] font-bold text-green-300 animate-money-text">${money.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -525,10 +558,24 @@ function RightPanel({ setPage }: { setPage: (p: GamePage) => void }) {
           <div className="flex justify-between"><span className="text-sidebar-foreground/60">Prestige</span><span className="font-bold text-yellow-400">{player?.prestige ?? 0}</span></div>
         </div>
       </div>
-      <div className="p-3 border-b border-sidebar-border">
-        <div className="text-[10px] font-semibold text-sidebar-foreground/40 uppercase tracking-widest mb-2">Help</div>
-        <button onClick={() => setPage("faq")} className="w-full text-left text-[11px] text-sidebar-foreground/60 hover:text-sidebar-foreground py-1">❓ FAQ</button>
-        <button onClick={() => setPage("support")} className="w-full text-left text-[11px] text-sidebar-foreground/60 hover:text-sidebar-foreground py-1">🆘 Support</button>
+      <div className="flex-1 overflow-y-auto">
+        {rightMenuSections.map(section => (
+          <div key={section.title}>
+            <button onClick={() => toggleRight(section.title)} className="w-full flex items-center justify-between px-3 py-2 hover:bg-sidebar-accent/50 transition-colors">
+              <span className="text-[11px] font-semibold text-sidebar-foreground/80">{section.title}</span>
+              <ChevronDown className={`size-3 text-sidebar-foreground/40 transition-transform ${expandedRight.includes(section.title) ? "rotate-180" : ""}`} />
+            </button>
+            <AnimatePresence>{expandedRight.includes(section.title) && (
+              <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
+                {section.items.map(item => (
+                  <button key={item.page} onClick={() => setPage(item.page)} className={`w-full text-left px-4 py-1.5 text-[10px] transition-colors ${activePage === item.page ? "bg-primary/10 text-primary font-semibold" : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/30"}`}>
+                    {item.title}
+                  </button>
+                ))}
+              </motion.div>
+            )}</AnimatePresence>
+          </div>
+        ))}
       </div>
     </aside>
   );
@@ -792,7 +839,7 @@ export default function Dashboard() {
         </div>
       )}
       {player.levelUpPending ? <LevelUpModal player={player as any} onDone={() => {}} /> : null}
-      <RightPanel setPage={setPage} />
+      <RightPanel setPage={setPage} activePage={activePage} />
     </div>
   );
 }
