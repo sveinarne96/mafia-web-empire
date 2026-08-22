@@ -112,6 +112,41 @@ const schema = defineSchema({
     .index("by_nickname", ["nickname"])
     .index("email", ["email"]),
 
+  // ===== Convex Auth tables (required by @convex-dev/auth) =====
+  authSessions: defineTable({
+    userId: v.id("users"),
+    expirationTime: v.number(),
+  }).index("userId", ["userId"]),
+
+  authAccounts: defineTable({
+    userId: v.id("users"),
+    provider: v.string(),
+    providerAccountId: v.string(),
+    secret: v.optional(v.string()),
+    emailVerified: v.optional(v.string()),
+    phoneVerified: v.optional(v.string()),
+  })
+    .index("userIdAndProvider", ["userId", "provider"])
+    .index("providerAndAccountId", ["provider", "providerAccountId"]),
+
+  authRefreshTokens: defineTable({
+    sessionId: v.id("authSessions"),
+    expirationTime: v.number(),
+    firstUsedTime: v.optional(v.number()),
+    parentRefreshTokenId: v.optional(v.id("authRefreshTokens")),
+  })
+    .index("sessionId", ["sessionId"])
+    .index("sessionIdAndParentRefreshTokenId", ["sessionId", "parentRefreshTokenId"]),
+
+  authVerificationCodes: defineTable({
+    accountId: v.id("authAccounts"),
+    provider: v.string(),
+    code: v.string(),
+    expirationTime: v.number(),
+    target: v.string(),
+    used: v.boolean(),
+  }).index("by_target", ["target"]),
+
   families: defineTable({
     name: v.string(),
     tag: v.string(),
