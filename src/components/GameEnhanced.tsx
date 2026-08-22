@@ -607,8 +607,11 @@ export function EnhancedAdminPage() {
 
   const tabs = [
     { id: "players", label: "👥 Players", icon: Users },
-    { id: "events", label: "📅 Events", icon: Clock },
     { id: "tools", label: "🔧 Tools", icon: Shield },
+    { id: "events", label: "📅 Events", icon: Clock },
+    { id: "competitions", label: "🏆 Competitions", icon: Trophy },
+    { id: "weather", label: "🌍 Weather", icon: Shield },
+    { id: "broadcasts", label: "📢 Broadcasts", icon: Users },
     { id: "stats", label: "📊 Stats", icon: Trophy },
   ];
 
@@ -654,11 +657,14 @@ export function EnhancedAdminPage() {
                     <div className="text-[10px] text-muted-foreground">Lv.{p.level} • 💰${p.money?.toLocaleString()} • ❤️{p.life}/{p.maxLife}</div>
                   </div>
                   <div className="flex gap-1 flex-wrap justify-end">
-                    <button onClick={() => doAction("giveMoney", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-green-500/10 text-green-400 rounded hover:bg-green-500/20">💰</button>
-                    <button onClick={() => doAction("heal", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500/20">💚</button>
-                    <button onClick={() => doAction("kill", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-red-500/10 text-red-400 rounded hover:bg-red-500/20">💀</button>
-                    <button onClick={() => doAction("jail", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-yellow-500/10 text-yellow-400 rounded hover:bg-yellow-500/20">🔒</button>
-                    <button onClick={() => p.isBanned ? doAction("unban", { targetId: p._id }) : doAction("ban", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-orange-500/10 text-orange-400 rounded hover:bg-orange-500/20">{p.isBanned ? "🔓" : "🚫"}</button>
+                    <button onClick={() => doAction("giveMoney", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-green-500/10 text-green-400 rounded hover:bg-green-500/20" title="Give Money">💰</button>
+                    <button onClick={() => doAction("resetMoney", { targetId: p._id, amount: 0 })} className="px-2 py-1 text-[9px] bg-red-500/10 text-red-400 rounded hover:bg-red-500/20" title="Reset Money to $0">💸</button>
+                    <button onClick={() => doAction("setLevel", { targetId: p._id, level: (p.level ?? 1) + 1 })} className="px-2 py-1 text-[9px] bg-purple-500/10 text-purple-400 rounded hover:bg-purple-500/20" title="Level Up +1">⬆️</button>
+                    <button onClick={() => doAction("heal", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-blue-500/10 text-blue-400 rounded hover:bg-blue-500/20" title="Full Heal">💚</button>
+                    <button onClick={() => doAction("kill", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-red-500/10 text-red-400 rounded hover:bg-red-500/20" title="Kill Player">💀</button>
+                    <button onClick={() => doAction("jail", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-yellow-500/10 text-yellow-400 rounded hover:bg-yellow-500/20" title="Jail 5 min">🔒</button>
+                    <button onClick={() => p.isBanned ? doAction("unban", { targetId: p._id }) : doAction("ban", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-orange-500/10 text-orange-400 rounded hover:bg-orange-500/20" title={p.isBanned ? "Unban" : "Ban"}>{p.isBanned ? "🔓" : "🚫"}</button>
+                    <button onClick={() => doAction("wipe", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-purple-500/10 text-purple-400 rounded hover:bg-purple-500/20" title="Full Wipe">🧹</button>
                     <button onClick={() => doAction("wipe", { targetId: p._id })} className="px-2 py-1 text-[9px] bg-purple-500/10 text-purple-400 rounded hover:bg-purple-500/20">🧹</button>
                   </div>
                 </div>
@@ -716,6 +722,157 @@ export function EnhancedAdminPage() {
               className="w-full py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-500 disabled:opacity-40">
               Reset Money
             </button>
+          </div>
+          <div className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="text-sm font-bold">⬆️ Set Player Level</div>
+            <input type="text" value={targetId} onChange={(e) => setTargetId(e.target.value)} placeholder="Target Player ID"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            <input type="number" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} placeholder="Level (1-100)"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            <button onClick={() => doAction("setLevel", { targetId, level: amount })} disabled={!targetId || !amount}
+              className="w-full py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-500 disabled:opacity-40">
+              Set Level
+            </button>
+          </div>
+          <div className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="text-sm font-bold">⚖️ Player Actions</div>
+            <input type="text" value={targetId} onChange={(e) => setTargetId(e.target.value)} placeholder="Target Player ID"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => doAction("heal", { targetId })} disabled={!targetId}
+                className="py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-500 disabled:opacity-40">💚 Heal</button>
+              <button onClick={() => doAction("jail", { targetId, seconds: 300 })} disabled={!targetId}
+                className="py-2 bg-yellow-600 text-white text-xs font-bold rounded-lg hover:bg-yellow-500 disabled:opacity-40">🔒 Jail 5m</button>
+              <button onClick={() => doAction("kill", { targetId })} disabled={!targetId}
+                className="py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-500 disabled:opacity-40">💀 Kill</button>
+              <button onClick={() => doAction("ban", { targetId })} disabled={!targetId}
+                className="py-2 bg-orange-600 text-white text-xs font-bold rounded-lg hover:bg-orange-500 disabled:opacity-40">🚫 Ban</button>
+              <button onClick={() => doAction("unban", { targetId })} disabled={!targetId}
+                className="py-2 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-500 disabled:opacity-40">🔓 Unban</button>
+              <button onClick={() => doAction("wipe", { targetId })} disabled={!targetId}
+                className="py-2 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-500 disabled:opacity-40">🧹 Full Wipe</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedTab === "competitions" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="text-sm font-bold">🏆 Active Competitions</div>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="p-3 bg-green-950/20 border border-green-500/30 rounded-lg">
+                <div className="font-bold text-xs">💰 Grand Heist Tournament</div>
+                <div className="text-[10px] text-muted-foreground">Top heist crew wins $50M prize pool</div>
+                <div className="text-[10px] text-green-400 mt-1">🔴 LIVE • Ends in 2 days</div>
+              </div>
+              <div className="p-3 bg-blue-950/20 border border-blue-500/30 rounded-lg">
+                <div className="font-bold text-xs">🏎️ Street Race Championship</div>
+                <div className="text-[10px] text-muted-foreground">1v1 street racing tournament • 256 players</div>
+                <div className="text-[10px] text-blue-400 mt-1">🔴 LIVE • Round 3 of 8</div>
+              </div>
+              <div className="p-3 bg-yellow-950/20 border border-yellow-500/30 rounded-lg">
+                <div className="font-bold text-xs">🎯 Most Wanted Challenge</div>
+                <div className="text-[10px] text-muted-foreground">Highest kill count wins exclusive title</div>
+                <div className="text-[10px] text-yellow-400 mt-1">📅 Starts in 12 hours</div>
+              </div>
+              <div className="p-3 bg-purple-950/20 border border-purple-500/30 rounded-lg">
+                <div className="font-bold text-xs">💎 Diamond Rush</div>
+                <div className="text-[10px] text-muted-foreground">First to $10B cash wins legendary vehicle</div>
+                <div className="text-[10px] text-purple-400 mt-1">📅 Starts in 1 day</div>
+              </div>
+              <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-lg">
+                <div className="font-bold text-xs">⚔️ Family Wars Season</div>
+                <div className="text-[10px] text-muted-foreground">Family with most territory wins $200M</div>
+                <div className="text-[10px] text-red-400 mt-1">📅 Starts in 3 days</div>
+              </div>
+              <div className="p-3 bg-orange-950/20 border border-orange-500/30 rounded-lg">
+                <div className="font-bold text-xs">🎰 Casino King</div>
+                <div className="text-[10px] text-muted-foreground">Gambling tournament • Win $500M</div>
+                <div className="text-[10px] text-orange-400 mt-1">📅 Starts in 6 hours</div>
+              </div>
+              <div className="p-3 bg-cyan-950/20 border border-cyan-500/30 rounded-lg">
+                <div className="font-bold text-xs">🏃 Speed Heist League</div>
+                <div className="text-[10px] text-muted-foreground">Fastest heist completion time wins</div>
+                <div className="text-[10px] text-cyan-400 mt-1">📅 Starts in 2 days</div>
+              </div>
+              <div className="p-3 bg-pink-950/20 border border-pink-500/30 rounded-lg">
+                <div className="font-bold text-xs">🥊 Underground Champion</div>
+                <div className="text-[10px] text-muted-foreground">Fight club tournament • Win $75M</div>
+                <div className="text-[10px] text-pink-400 mt-1">📅 Starts in 18 hours</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedTab === "weather" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="text-sm font-bold">🌍 Dynamic Weather Events</div>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="p-3 bg-blue-950/20 border border-blue-500/30 rounded-lg">
+                <div className="font-bold text-xs">❄️ Arctic Cold Snap</div>
+                <div className="text-[10px] text-muted-foreground">Smuggling profits +50% • Duration: 4 hours</div>
+                <div className="text-[10px] text-blue-400 mt-1">Active in 2 hours</div>
+              </div>
+              <div className="p-3 bg-orange-950/20 border border-orange-500/30 rounded-lg">
+                <div className="font-bold text-xs">🔥 Heat Wave</div>
+                <div className="text-[10px] text-muted-foreground">Crime XP +25% • All actions faster</div>
+                <div className="text-[10px] text-orange-400 mt-1">Next: Tomorrow 12:00</div>
+              </div>
+              <div className="p-3 bg-gray-950/20 border border-gray-500/30 rounded-lg">
+                <div className="font-bold text-xs">🌫️ Dense Fog</div>
+                <div className="text-[10px] text-muted-foreground">Stealth crimes +40% success • Arrest chance -20%</div>
+                <div className="text-[10px] text-gray-400 mt-1">Next: Tonight 22:00</div>
+              </div>
+              <div className="p-3 bg-yellow-950/20 border border-yellow-500/30 rounded-lg">
+                <div className="font-bold text-xs">⚡ Thunder Storm</div>
+                <div className="text-[10px] text-muted-foreground">Power grid sabotage +50% • Blackout events</div>
+                <div className="text-[10px] text-yellow-400 mt-1">Next: Wednesday</div>
+              </div>
+              <div className="p-3 bg-green-950/20 border border-green-500/30 rounded-lg">
+                <div className="font-bold text-xs">🌊 Flooding</div>
+                <div className="text-[10px] text-muted-foreground">Cargo transport disrupted • Smuggling +30% profit</div>
+                <div className="text-[10px] text-green-400 mt-1">Next: Thursday</div>
+              </div>
+              <div className="p-3 bg-purple-950/20 border border-purple-500/30 rounded-lg">
+                <div className="font-bold text-xs">🌕 Full Moon Night</div>
+                <div className="text-[10px] text-muted-foreground">All rewards x1.5 • Rare item drops doubled</div>
+                <div className="text-[10px] text-purple-400 mt-1">Next: Friday midnight</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedTab === "broadcasts" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="text-sm font-bold">📢 Broadcast System</div>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="p-3 bg-red-950/20 border border-red-500/30 rounded-lg">
+                <div className="font-bold text-xs">🚨 Server Announcement</div>
+                <div className="text-[10px] text-muted-foreground">Send message to all online players</div>
+                <input type="text" placeholder="Announcement message..." className="w-full bg-background border border-border rounded px-2 py-1 text-[10px] mt-1" />
+                <button className="mt-1 px-3 py-1 bg-red-600 text-white text-[10px] rounded hover:bg-red-500">Send to All</button>
+              </div>
+              <div className="p-3 bg-green-950/20 border border-green-500/30 rounded-lg">
+                <div className="font-bold text-xs">💰 Money Drop Event</div>
+                <div className="text-[10px] text-muted-foreground">Trigger random cash drops for all players</div>
+                <button className="mt-1 px-3 py-1 bg-green-600 text-white text-[10px] rounded hover:bg-green-500">Trigger Drop</button>
+              </div>
+              <div className="p-3 bg-purple-950/20 border border-purple-500/30 rounded-lg">
+                <div className="font-bold text-xs">⚡ Double XP Event</div>
+                <div className="text-[10px] text-muted-foreground">Activate 2x XP for 1 hour</div>
+                <button className="mt-1 px-3 py-1 bg-purple-600 text-white text-[10px] rounded hover:bg-purple-500">Activate 2x XP</button>
+              </div>
+              <div className="p-3 bg-yellow-950/20 border border-yellow-500/30 rounded-lg">
+                <div className="font-bold text-xs">🎯 Bounty Bonanza</div>
+                <div className="text-[10px] text-muted-foreground">Double all bounty rewards for 2 hours</div>
+                <button className="mt-1 px-3 py-1 bg-yellow-600 text-white text-[10px] rounded hover:bg-yellow-500">Activate Bounties</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
