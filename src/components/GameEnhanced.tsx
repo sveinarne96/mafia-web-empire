@@ -598,6 +598,7 @@ export function BoostsPage() {
 // ===== ENHANCED ADMIN PANEL =====
 export function EnhancedAdminPage() {
   const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
   const allPlayers = useQuery(api.gameEnhanced.adminGetAllPlayers);
   const events = useQuery(api.gameEnhanced.adminGetEvents);
   const giveMoney = useMutation(api.gameEnhanced.adminGiveMoney);

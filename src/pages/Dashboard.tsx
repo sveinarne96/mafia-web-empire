@@ -665,6 +665,23 @@ const pageNames: Record<string, string> = {
   online_list: "Online Players", send_money: "Send Money",
 };
 
+function SafePage({ children }: { children: React.ReactNode }) {
+  const [error, setError] = useState<string | null>(null);
+  if (error) {
+    return (
+      <div className="animate-fade-in space-y-4">
+        <div className="mafia-card rounded-xl p-6 text-center space-y-3">
+          <div className="text-3xl">⚠️</div>
+          <div className="text-sm font-bold text-red-400">Page Error</div>
+          <div className="text-xs text-muted-foreground">{error}</div>
+          <button onClick={() => { setError(null); window.location.reload(); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs">Reload</button>
+        </div>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+
 export default function Dashboard() {
   const signOut = () => {};
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
@@ -679,7 +696,7 @@ export default function Dashboard() {
   if (!player || !isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
   if (player.isDead) return <DeathPage />;
 
-  const renderPage = (): React.ReactNode => {
+const renderPage = (): React.ReactNode => {
     switch (activePage) {
       case "headquarters": return <HeadquartersPage />;
       case "bank": return <BankPage />;

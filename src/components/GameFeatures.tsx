@@ -869,6 +869,7 @@ export function LegendaryCrimePage() {
   const [executing, setExecuting] = useState(false);
   const [result, setResult] = useState<{ success: boolean; message: string; loot?: string } | null>(null);
   const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
   const executeCrime = useMutation(api.gameExtended.commitLegendaryCrime);
 
   useEffect(() => {
@@ -1075,6 +1076,7 @@ import { legendaryBosses, getBossById } from "@/data/bosses";
 
 export function BossFightsPage() {
   const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
   const [selectedBoss, setSelectedBoss] = useState<string | null>(null);
   const [battleLog, setBattleLog] = useState<string[]>([]);
   const [playerHp, setPlayerHp] = useState(0);
