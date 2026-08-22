@@ -427,6 +427,38 @@ export const crimeCategories: CrimeCategory[] = [
       { id: "cyber_espionage", name: "Cyber Espionage", description: "Spy on targets through digital channels.", reward: 12000, risk: 45, xp: 70, levelRequired: 9 },
     ],
   },
+
+  // ═══════════════════════════════════════════
+  // ⚡ LEVEL-BASED ELITE CRIMES
+  // ═══════════════════════════════════════════
+  {
+    id: "elite",
+    name: "⚡ Elite Crimes",
+    icon: "⚡",
+    description: "High-level crimes with massive cash and XP rewards",
+    crimes: [
+      { id: "federal_vault", name: "Federal Reserve Heist", description: "Breach the federal reserve vault for unlimited cash.", reward: 500000, risk: 95, xp: 500, levelRequired: 30 },
+      { id: "pentagon_breach", name: "Pentagon Data Breach", description: "Hack into classified government servers.", reward: 750000, risk: 98, xp: 600, levelRequired: 35 },
+      { id: "island_fortress", name: "Private Island Fortress Raid", description: "Storm a billionaire's private island.", reward: 1000000, risk: 99, xp: 750, levelRequired: 40 },
+      { id: "space_station", name: "Orbital Station Heist", description: "Steal experimental tech from a space station.", reward: 2000000, risk: 99, xp: 1000, levelRequired: 45 },
+      { id: "underwater_vault", name: "Deep Sea Vault Crack", description: "Dive to an underwater vault in the Mariana Trench.", reward: 1500000, risk: 97, xp: 800, levelRequired: 42 },
+      { id: "nuclear_facility", name: "Nuclear Facility Infiltration", description: "Infiltrate a nuclear power plant for weapons-grade material.", reward: 800000, risk: 99, xp: 650, levelRequired: 38 },
+      { id: "crypto_mine", name: "Crypto Mining Farm Raid", description: "Steal 10,000 Bitcoin from a mining operation.", reward: 3000000, risk: 96, xp: 900, levelRequired: 48 },
+      { id: "military_convoy", name: "Military Convoy Ambush", description: "Intercept a classified military transport.", reward: 600000, risk: 94, xp: 550, levelRequired: 32 },
+      { id: "royal_palace", name: "Royal Palace Jewelry Heist", description: "Steal the crown jewels from a foreign palace.", reward: 4000000, risk: 98, xp: 1200, levelRequired: 50 },
+      { id: "art_museum_vip", name: "VIP Art Vault Robbery", description: "Break into the world's most secure art vault.", reward: 900000, risk: 93, xp: 700, levelRequired: 36 },
+      { id: "hacker_society", name: "Dark Web Syndicate Takeover", description: "Overthrow the dark web's ruling council.", reward: 1200000, risk: 97, xp: 850, levelRequired: 44 },
+      { id: "diamond_mine", name: "De Beers Diamond Mine Raid", description: "Raid the world's largest diamond mine.", reward: 5000000, risk: 99, xp: 1500, levelRequired: 50 },
+      { id: "ghost_protocol", name: "Ghost Protocol Activation", description: "Erase your identity and steal a new one from MI6.", reward: 3500000, risk: 98, xp: 1100, levelRequired: 46 },
+      { id: "cartel_takeover", name: "Full Cartel Takeover", description: "Eliminate the entire cartel leadership.", reward: 2500000, risk: 96, xp: 950, levelRequired: 43 },
+      { id: "olympic_heist", name: "Olympic Gold Vault", description: "Steal every gold medal from the Olympics.", reward: 800000, risk: 92, xp: 650, levelRequired: 34 },
+      { id: "casino_royale", name: "Casino Royale Total Sweep", description: "Clean out every table and vault in Monaco.", reward: 1800000, risk: 95, xp: 880, levelRequired: 41 },
+      { id: "embassy_raid", name: "Embassy Server Extraction", description: "Extract classified data from an embassy.", reward: 1100000, risk: 94, xp: 750, levelRequired: 39 },
+      { id: "wine_fortress", name: "Chateau Wine Vault Heist", description: "Steal the world's rarest wine collection.", reward: 650000, risk: 90, xp: 550, levelRequired: 33 },
+      { id: "smart_city", name: "Smart City Override", description: "Take control of a smart city's infrastructure.", reward: 4500000, risk: 99, xp: 1300, levelRequired: 49 },
+      { id: "final_job", name: "The Final Job", description: "The ultimate crime - retire with unlimited wealth.", reward: 10000000, risk: 100, xp: 2000, levelRequired: 50 },
+    ],
+  },
 ];
 crimeCategories.sort((a, b) => {
   const maxA = Math.max(...a.crimes.map(c => c.xp));

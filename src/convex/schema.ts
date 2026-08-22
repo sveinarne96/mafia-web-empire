@@ -103,6 +103,8 @@ const schema = defineSchema({
     activeLanguage: v.optional(v.string()),
     crimeMomentum: v.optional(v.number()),
     prisonJob: v.optional(v.string()),
+    deathTimerAt: v.optional(v.number()),
+    lastStreetCrimeAt: v.optional(v.number()),
     prisonGang: v.optional(v.string()),
   })
     .index("by_location", ["location"])
