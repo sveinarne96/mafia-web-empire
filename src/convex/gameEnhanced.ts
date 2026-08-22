@@ -162,7 +162,7 @@ export const resetCrimeMomentum = mutation({
 
 // ===== STEAL FROM HOUSE =====
 export const stealFromHouse = mutation({
-  args: { difficulty: v.string() },
+  args: { difficulty: v.string(), houseType: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
@@ -180,8 +180,12 @@ export const stealFromHouse = mutation({
       easy: 0.5, medium: 1.0, hard: 1.5, extreme: 2.5,
     };
     const mult = difficultyMultipliers[args.difficulty] ?? 1.0;
+    // House type tier multiplier
+    const houseTier: string = (args as any).houseType ?? "easy";
+    const houseTierMult: Record<string, number> = { easy: 1.0, average: 2.5, luxury: 4.0 };
+    const finalMult = mult * (houseTierMult[houseTier] ?? 1.0);
 
-        const stolenItemNames = [
+    const stolenItemNames = [
       // Common ($50-$500)
       "Loose Change","Broken Watch","Old Phone","USB Drive","Cash Stash","Medicine","Old TV","CD Collection",
       "Cash Register","Bicycle Lock","Car Keys","Wallet","Purse","Backpack","Sunglasses","Jacket",
@@ -270,7 +274,7 @@ export const stealFromHouse = mutation({
       const numItems = Math.floor(Math.random() * 4) + 1;
       for (let i = 0; i < numItems; i++) {
         const idx = Math.floor(Math.random() * stolenItemNames.length);
-        const itemValue = Math.floor(stolenItemValues[idx] * mult);
+        const itemValue = Math.floor(stolenItemValues[idx] * finalMult);
         moneyEarned += itemValue;
         itemsStolen.push(stolenItemNames[idx] + " ($" + itemValue + ")");
         // Actually insert stolen item into inventory
@@ -297,7 +301,7 @@ export const stealFromHouse = mutation({
         // XP: 185% bonus + 10% per 15 levels
     const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
     const baseXp = succeeded ? 25 : 6;
-    const xpEarned = Math.floor(baseXp * 1.85 * levelBonusXp);
+    const xpEarned = Math.floor(baseXp * 3.0 * levelBonusXp);
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;
@@ -626,7 +630,7 @@ export const gtaCarTheft = mutation({
         // XP: 185% bonus + 10% per 15 levels
     const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
     const baseXp = succeeded ? 20 : 4;
-    const xpEarned = Math.floor(baseXp * 1.85 * levelBonusXp);
+    const xpEarned = Math.floor(baseXp * 3.0 * levelBonusXp);
 
     await ctx.db.patch(userId, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),

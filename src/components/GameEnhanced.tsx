@@ -36,7 +36,7 @@ export function StealFromHousePage() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await stealFromHouse({ difficulty: selectedDifficulty });
+      const res = await stealFromHouse({ difficulty: selectedDifficulty, houseType: selectedDifficulty });
       setResult(res);
       setCooldown(10);
     } catch (e: unknown) {
