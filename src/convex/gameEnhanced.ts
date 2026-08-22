@@ -799,6 +799,18 @@ export const adminGiveMoney = mutation({
   },
 });
 
+export const adminResetMoney = mutation({
+  args: { targetId: v.id("users"), amount: v.number() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player || (player.role ?? "user") !== "admin") throw new Error("Admin only");
+    const target = await ctx.db.get(args.targetId);
+    if (!target) throw new Error("Player not found");
+    await ctx.db.patch(args.targetId, { money: args.amount });
+    return { success: true };
+  },
+});
+
 export const adminBan = mutation({
   args: { targetId: v.id("users"), reason: v.string() },
   handler: async (ctx, args) => {

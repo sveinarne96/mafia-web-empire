@@ -570,6 +570,7 @@ export function EnhancedAdminPage() {
   const healPlayer = useMutation(api.gameEnhanced.adminHealPlayer);
   const jailPlayer = useMutation(api.gameEnhanced.adminJailPlayer);
   const wipePlayer = useMutation(api.gameEnhanced.adminWipePlayer);
+  const resetMoney = useMutation(api.gameEnhanced.adminResetMoney);
 
   const [selectedTab, setSelectedTab] = useState("players");
   const [searchQuery, setSearchQuery] = useState("");
@@ -599,6 +600,7 @@ export function EnhancedAdminPage() {
         case "heal": { await healPlayer({ targetId: params.targetId }); setMsg("✅ Player healed!"); break; }
         case "jail": { await jailPlayer({ targetId: params.targetId, seconds: 300 }); setMsg("✅ Player jailed for 5 min!"); break; }
         case "wipe": { await wipePlayer({ targetId: params.targetId }); setMsg("✅ Player wiped!"); break; }
+        case "resetMoney": { await resetMoney({ targetId: params.targetId, amount: params.amount }); setMsg(`✅ Money reset to $${params.amount.toLocaleString()}!`); break; }
       }
     } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
   };
@@ -702,6 +704,17 @@ export function EnhancedAdminPage() {
             <button onClick={() => doAction("giveMoney", { targetId, amount })} disabled={!targetId || !amount}
               className="w-full py-2 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-500 disabled:opacity-40">
               Give Money
+            </button>
+          </div>
+          <div className="mafia-card rounded-xl p-4 space-y-3">
+            <div className="text-sm font-bold">💸 Reset Money</div>
+            <input type="text" value={targetId} onChange={(e) => setTargetId(e.target.value)} placeholder="Target Player ID"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            <input type="number" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} placeholder="Set to amount (0 = $0)"
+              className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-primary outline-none" />
+            <button onClick={() => doAction("resetMoney", { targetId, amount })} disabled={!targetId}
+              className="w-full py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-500 disabled:opacity-40">
+              Reset Money
             </button>
           </div>
         </div>
