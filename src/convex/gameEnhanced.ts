@@ -5,25 +5,32 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 
 // ===== READ-ONLY DEFAULTS (safe for queries) =====
 function ensurePlayerDefaults(player: any) {
+  // NaN-safe helper
+  const n = (v: any, d: number) => (typeof v === "number" && !isNaN(v)) ? v : d;
   return {
     ...player,
-    money: player.money ?? 1000,
-    life: player.life ?? 100,
-    maxLife: player.maxLife ?? 100,
-    level: player.level ?? 1,
-    experience: player.experience ?? 0,
-    attack: player.attack ?? 10,
-    defense: player.defense ?? 10,
+    money: n(player.money, 1000),
+    bank: n(player.bank, 0),
+    points: n(player.points, 0),
+    life: n(player.life, 100),
+    maxLife: n(player.maxLife, 100),
+    level: n(player.level, 1),
+    experience: n(player.experience, 0),
+    attack: n(player.attack, 10),
+    defense: n(player.defense, 10),
     inPrison: player.inPrison ?? false,
     isDead: player.isDead ?? false,
-    totalCrimes: player.totalCrimes ?? 0,
-    totalKills: player.totalKills ?? 0,
-    totalDeaths: player.totalDeaths ?? 0,
-    wantedLevel: player.wantedLevel ?? 0,
-    prisonTime: player.prisonTime ?? 0,
-    skillPoints: player.skillPoints ?? 0,
+    totalCrimes: n(player.totalCrimes, 0),
+    totalKills: n(player.totalKills, 0),
+    totalDeaths: n(player.totalDeaths, 0),
+    wantedLevel: n(player.wantedLevel, 0),
+    prisonTime: n(player.prisonTime, 0),
+    skillPoints: n(player.skillPoints, 0),
     levelUpPending: player.levelUpPending ?? false,
-    crimeMomentum: player.crimeMomentum ?? 0,
+    crimeMomentum: n(player.crimeMomentum, 0),
+    reputation: n(player.reputation, 0),
+    prestige: n(player.prestige, 0),
+    prestigeMultiplier: n(player.prestigeMultiplier, 1),
   };
 }
 
