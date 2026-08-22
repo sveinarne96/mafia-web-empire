@@ -301,7 +301,7 @@ export const stealFromHouse = mutation({
         // XP: 185% bonus + 10% per 15 levels
     const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
     const baseXp = succeeded ? 25 : 6;
-    const xpEarned = Math.floor(baseXp * 3.0 * levelBonusXp);
+    const xpEarned = Math.floor(baseXp * 6.0 * levelBonusXp);
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;
@@ -630,7 +630,7 @@ export const gtaCarTheft = mutation({
         // XP: 185% bonus + 10% per 15 levels
     const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
     const baseXp = succeeded ? 20 : 4;
-    const xpEarned = Math.floor(baseXp * 3.0 * levelBonusXp);
+    const xpEarned = Math.floor(baseXp * 6.0 * levelBonusXp);
 
     await ctx.db.patch(userId, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
