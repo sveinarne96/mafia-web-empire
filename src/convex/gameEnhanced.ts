@@ -1007,3 +1007,253 @@ export const isGoldenHourActive = query({
     return hour === 12;
   },
 });
+
+
+// ===== FBI / MILITARY POLICE SYSTEM =====
+export const fbiRaid = mutation({
+  args: {},
+  handler: async (ctx, _args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    if (player.inPrison) throw new Error("You are in prison!");
+    if (player.isDead) throw new Error("You are dead!");
+
+    const wanted = player.wantedLevel ?? 0;
+    if (wanted < 2) throw new Error("FBI only investigates wanted criminals (level 2+)");
+
+    // FBI raid chance scales with wanted level
+    const raidChance = Math.min(0.95, 0.2 + (wanted * 0.15));
+    const raided = Math.random() < raidChance;
+
+    if (raided) {
+      const damage = Math.floor(30 + wanted * 15);
+      const moneyLoss = Math.floor((player.money ?? 0) * (0.05 + wanted * 0.03));
+      const newLife = Math.max(0, (player.life ?? 100) - damage);
+      const arrested = wanted >= 4 || Math.random() < 0.5;
+
+      await ctx.db.patch(userId, {
+        life: newLife,
+        money: Math.max(0, (player.money ?? 0) - moneyLoss),
+        wantedLevel: arrested ? 0 : Math.max(0, wanted - 1),
+        inPrison: arrested,
+        prisonTime: arrested ? 15000 : 0,
+        lastCrimeAt: Date.now(),
+      });
+
+      // Log the raid
+      await ctx.db.insert("crimes", {
+        userId: player._id,
+        type: "fbi_raid",
+        target: "FBI",
+        success: false,
+        moneyEarned: 0,
+        pointsEarned: 0,
+        damageTaken: damage,
+        timestamp: Date.now(),
+      });
+
+      return {
+        raided: true,
+        damage,
+        moneyLoss,
+        arrested,
+        message: arrested
+          ? `🚨 FBI RAID! ${damage} damage dealt, $${moneyLoss.toLocaleString()} seized, ARRESTED and sent to prison!`
+          : `🚨 FBI RAID! ${damage} damage dealt, $${moneyLoss.toLocaleString()} seized! Wanted level reduced.`,
+      };
+    }
+
+    // FBI didn't raid - wanted level still increases
+    return {
+      raided: false,
+      message: "🕵️ The FBI is investigating but hasn't raided yet. Stay low.",
+    };
+  },
+});
+
+export const militaryPoliceResponse = mutation({
+  args: {},
+  handler: async (ctx, _args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    if (player.inPrison) throw new Error("You are in prison!");
+    if (player.isDead) throw new Error("You are dead!");
+
+    const wanted = player.wantedLevel ?? 0;
+    if (wanted < 4) throw new Error("Military responds to extreme threats only (wanted level 4+)");
+
+    // Military is deadly - 80% raid chance at level 5
+    const raidChance = Math.min(0.95, 0.3 + (wanted * 0.12));
+    const raided = Math.random() < raidChance;
+
+    if (raided) {
+      const damage = Math.floor(60 + wanted * 20);
+      const moneyLoss = Math.floor((player.money ?? 0) * (0.10 + wanted * 0.05));
+      const newLife = Math.max(0, (player.life ?? 100) - damage);
+      // Military always arrests
+      const arrested = true;
+
+      await ctx.db.patch(userId, {
+        life: newLife,
+        money: Math.max(0, (player.money ?? 0) - moneyLoss),
+        wantedLevel: 0,
+        inPrison: true,
+        prisonTime: 15000,
+        lastCrimeAt: Date.now(),
+      });
+
+      await ctx.db.insert("crimes", {
+        userId: player._id,
+        type: "military_response",
+        target: "Military Police",
+        success: false,
+        moneyEarned: 0,
+        pointsEarned: 0,
+        damageTaken: damage,
+        timestamp: Date.now(),
+      });
+
+      return {
+        raided: true,
+        damage,
+        moneyLoss,
+        arrested: true,
+        message: `⚔️ MILITARY RESPONSE! ${damage} damage, $${moneyLoss.toLocaleString()} seized! Military always arrests. You're going to supermax.`,
+      };
+    }
+
+    return {
+      raided: false,
+      message: "🎖️ The military mobilized but didn't reach you. You're on thin ice.",
+    };
+  },
+});
+
+export const bribeLawEnforcement = mutation({
+  args: { amount: v.number() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+
+    const wanted = player.wantedLevel ?? 0;
+    const cost = args.amount;
+    if ((player.money ?? 0) < cost) throw new Error("Not enough money");
+
+    const bribeChance = Math.min(0.95, 0.3 + (cost / 100000) * 0.1 + (wanted * 0.05));
+
+    if (Math.random() < bribeChance) {
+      const newWanted = Math.max(0, wanted - 2);
+      await ctx.db.patch(userId, {
+        money: (player.money ?? 0) - cost,
+        wantedLevel: newWanted,
+      });
+      return {
+        success: true,
+        message: `💰 Bribe accepted! Wanted level: ${wanted} → ${newWanted}. The evidence "disappeared".`,
+      };
+    }
+
+    // Bribe failed - money lost, wanted level increases
+    await ctx.db.patch(userId, {
+      money: (player.money ?? 0) - cost,
+      wantedLevel: Math.min(10, wanted + 1),
+    });
+    return {
+      success: false,
+      message: `❌ Bribe REJECTED! The officer was an undercover agent. Money lost, wanted level increased!`,
+    };
+  },
+});
+
+export const payBail = mutation({
+  args: {},
+  handler: async (ctx, _args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("You're not in prison!");
+
+    const bail = Math.floor(50000 + (player.wantedLevel ?? 0) * 100000);
+    if ((player.money ?? 0) < bail) throw new Error(`Bail costs $${bail.toLocaleString()}. Not enough money.`);
+
+    await ctx.db.patch(userId, {
+      money: (player.money ?? 0) - bail,
+      inPrison: false,
+      prisonTime: 0,
+      wantedLevel: Math.max(0, (player.wantedLevel ?? 0) - 1),
+    });
+
+    return {
+      success: true,
+      bail,
+      message: `🏛️ Bail posted for $${bail.toLocaleString()}! You're free... for now.`,
+    };
+  },
+});
+
+export const clearWantedLevel = mutation({
+  args: {},
+  handler: async (ctx, _args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+
+    const wanted = player.wantedLevel ?? 0;
+    if (wanted === 0) throw new Error("You're already clean!");
+
+    // Cost: $200K per wanted level
+    const cost = wanted * 200000;
+    if ((player.money ?? 0) < cost) throw new Error(`Clearing costs $${cost.toLocaleString()}. Not enough money.`);
+
+    await ctx.db.patch(userId, {
+      money: (player.money ?? 0) - cost,
+      wantedLevel: 0,
+    });
+
+    return {
+      success: true,
+      cost,
+      message: `🧹 Record cleaned! Paid $${cost.toLocaleString()} to make it all go away.`,
+    };
+  },
+});
+
+export const getWantedStatus = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const player = await ctx.db.query("users").withIndex("by_id", (q: any) => q.eq("_id", identity.subject as any)).first();
+    if (!player) return null;
+
+    const wanted = player.wantedLevel ?? 0;
+    const threats = [];
+    if (wanted >= 2) threats.push({ agency: "🕵️ FBI", level: "Investigating", severity: "medium", message: "FBI is building a case against you. Raids possible." });
+    if (wanted >= 4) threats.push({ agency: "🎖️ Military Police", level: "Mobilized", severity: "high", message: "Military has been deployed. Lethal force authorized." });
+    if (wanted >= 5) threats.push({ agency: "⚡ SWAT Team", level: "Standing By", severity: "critical", message: "SWAT is preparing a siege. Leave the city NOW." });
+
+    const nextRaidIn = wanted > 0 ? Math.floor(300 - (wanted * 45)) : 0; // seconds until next potential raid
+    const bail = Math.floor(50000 + wanted * 100000);
+    const bribeCost = Math.floor(50000 + wanted * 30000);
+    const clearCost = wanted * 200000;
+
+    return {
+      wantedLevel: wanted,
+      threats,
+      bail,
+      bribeCost,
+      clearCost,
+      nextRaidIn: Math.max(60, nextRaidIn),
+      isSafe: wanted === 0,
+      riskLevel: wanted >= 5 ? "CRITICAL" : wanted >= 3 ? "HIGH" : wanted >= 1 ? "MODERATE" : "SAFE",
+    };
+  },
+});

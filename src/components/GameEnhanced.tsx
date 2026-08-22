@@ -134,6 +134,23 @@ export function GtaCarTheftPage() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const carCategories = [
+    { id: "economy", name: "🚗 Economy Street", desc: "Cheap cars from parking lots", icon: "🚗", color: "text-gray-400", priceRange: "$4K-$10K", chance: "Common" },
+    { id: "compact", name: "🚙 Compact District", desc: "Suburban driveways & office parks", icon: "🚙", color: "text-blue-400", priceRange: "$16K-$26K", chance: "Common" },
+    { id: "sedan", name: "🚕 Sedan Row", desc: "Business district & downtown", icon: "🚕", color: "text-green-400", priceRange: "$22K-$50K", chance: "Uncommon" },
+    { id: "sports", name: "🏎️ Sports Strip", desc: "Luxury neighborhoods & car shows", icon: "🏎️", color: "text-yellow-400", priceRange: "$40K-$120K", chance: "Uncommon" },
+    { id: "luxury", name: "💎 Luxury Boulevard", desc: "Beverly Hills & penthouse garages", icon: "💎", color: "text-purple-400", priceRange: "$55K-$110K", chance: "Rare" },
+    { id: "suv", name: "🛻 SUV Territory", desc: "Suburban estates & dealer lots", icon: "🛻", color: "text-orange-400", priceRange: "$42K-$180K", chance: "Rare" },
+    { id: "electric", name: "⚡ Electric Avenue", desc: "Tech campuses & charging stations", icon: "⚡", color: "text-cyan-400", priceRange: "$50K-$140K", chance: "Rare" },
+    { id: "muscle", name: "🔥 Muscle Alley", desc: "Hot rod meets & race strips", icon: "🔥", color: "text-red-400", priceRange: "$35K-$95K", chance: "Uncommon" },
+    { id: "supercar", name: "🏆 Supercar Row", desc: "Dealerships & VIP events", icon: "🏆", color: "text-amber-400", priceRange: "$95K-$380K", chance: "Very Rare" },
+    { id: "hypercar", name: "👑 Hypercar Vault", desc: "Private collections & museums", icon: "👑", color: "text-yellow-300", priceRange: "$1.2M-$5.8M", chance: "Ultra Rare" },
+    { id: "legendary", name: "🌟 Legendary Lot", desc: "Fortune 500 CEOs & royalty", icon: "🌟", color: "text-rose-400", priceRange: "$2M-$40M", chance: "Legendary" },
+    { id: "neon", name: "🌈 Neon Underground", desc: "Street racers & underground shows", icon: "🌈", color: "text-pink-400", priceRange: "$50M-$500M", chance: "35% Neon" },
+    { id: "ultra", name: "👑✨ Ultra Neon", desc: "Cartel bosses & arms dealers", icon: "👑✨", color: "text-amber-300", priceRange: "$100M-$5B", chance: "10% Ultra" },
+  ];
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -173,7 +190,28 @@ export function GtaCarTheftPage() {
           <div className="text-[10px] text-yellow-400">⚠️ 60% success rate • 40% fail chance</div>
           <div className="text-[10px] text-muted-foreground">Stolen vehicles appear in your Garage</div>
         </div>
+      
+      {/* Car Categories Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {carCategories.map((cat: any) => (
+          <button key={cat.id} onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+            className={`p-3 rounded-xl text-left transition-all border ${selectedCategory === cat.id ? "border-cyan-500/50 bg-cyan-950/20 shadow-lg" : "border-border/50 bg-card/50 hover:border-cyan-500/20"}`}>
+            <div className="flex items-center gap-2">
+              <span className="text-lg">{cat.icon}</span>
+              <div>
+                <div className={`text-xs font-bold ${cat.color}`}>{cat.name}</div>
+                <div className="text-[9px] text-muted-foreground">{cat.desc}</div>
+              </div>
+            </div>
+            <div className="flex justify-between mt-1.5">
+              <span className="text-[8px] text-muted-foreground">{cat.priceRange}</span>
+              <span className="text-[8px] text-primary">{cat.chance}</span>
+            </div>
+          </button>
+        ))}
       </div>
+      <div className="text-[9px] text-muted-foreground text-center">Categories show where stolen vehicles come from — all cars go to your Garage</div>
+</div>
 
       {cooldown > 0 ? (
         <div className="mafia-card rounded-xl p-6 text-center">
@@ -904,6 +942,142 @@ export function EnhancedAdminPage() {
           {msg}
         </motion.div>
       )}
+    </div>
+  );
+}
+
+// ===== WANTED STATUS / FBI / MILITARY =====
+export function WantedStatusPage() {
+  const player = useQuery(api.game.getPlayer);
+  const wantedStatus = useQuery(api.gameEnhanced.getWantedStatus);
+  const fbiRaid = useMutation(api.gameEnhanced.fbiRaid);
+  const militaryResponse = useMutation(api.gameEnhanced.militaryPoliceResponse);
+  const bribeLaw = useMutation(api.gameEnhanced.bribeLawEnforcement);
+  const payBailMut = useMutation(api.gameEnhanced.payBail);
+  const clearWanted = useMutation(api.gameEnhanced.clearWantedLevel);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!player || !wantedStatus) return <LoadingPage />;
+
+  const doBribe = async (amount: number) => {
+    setLoading(true); setMsg("");
+    try { const r = await bribeLaw({ amount }); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doBail = async () => {
+    setLoading(true); setMsg("");
+    try { const r = await payBailMut({}); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doClear = async () => {
+    setLoading(true); setMsg("");
+    try { const r = await clearWanted({}); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const riskColor = wantedStatus.riskLevel === "CRITICAL" ? "text-red-400" : wantedStatus.riskLevel === "HIGH" ? "text-orange-400" : wantedStatus.riskLevel === "MODERATE" ? "text-yellow-400" : "text-green-400";
+  const riskBg = wantedStatus.riskLevel === "CRITICAL" ? "bg-red-950/40 border-red-500/40" : wantedStatus.riskLevel === "HIGH" ? "bg-orange-950/40 border-orange-500/40" : wantedStatus.riskLevel === "MODERATE" ? "bg-yellow-950/40 border-yellow-500/40" : "bg-green-950/40 border-green-500/40";
+
+  return (
+    <div className="animate-fade-in space-y-5">
+      <div className="flex items-center gap-3"><Shield className="size-7 text-red-400" /><div><h2 className="text-2xl font-bold">🏛️ Law Enforcement</h2><p className="text-xs text-muted-foreground">FBI • Military Police • Bail • Bribe</p></div></div>
+
+      {/* Wanted Level Display */}
+      <div className={`rounded-xl p-5 border-2 ${riskBg}`}>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Wanted Level</div>
+            <div className="text-3xl font-black">{'🔴'.repeat(Math.min(10, wantedStatus.wantedLevel))}{'⚫'.repeat(Math.max(0, 10 - wantedStatus.wantedLevel))}</div>
+          </div>
+          <div className="text-right">
+            <div className={`text-xl font-black ${riskColor}`}>{wantedStatus.riskLevel}</div>
+            <div className="text-[10px] text-muted-foreground">Level {wantedStatus.wantedLevel}/10</div>
+          </div>
+        </div>
+
+        {/* Threats */}
+        {wantedStatus.threats.length > 0 && (
+          <div className="space-y-2 mt-3">
+            {wantedStatus.threats.map((t: any, i: number) => (
+              <div key={i} className={`rounded-lg p-3 border ${t.severity === "critical" ? "bg-red-950/30 border-red-500/30" : t.severity === "high" ? "bg-orange-950/30 border-orange-500/30" : "bg-yellow-950/30 border-yellow-500/30"}`}>
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-sm">{t.agency}</div>
+                  <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold ${t.severity === "critical" ? "bg-red-500/20 text-red-300" : t.severity === "high" ? "bg-orange-500/20 text-orange-300" : "bg-yellow-500/20 text-yellow-300"}`}>{t.level}</span>
+                </div>
+                <div className="text-[10px] text-muted-foreground mt-1">{t.message}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {wantedStatus.isSafe && (
+          <div className="text-center py-4">
+            <div className="text-3xl mb-2">✅</div>
+            <div className="text-green-400 font-bold">You're clean! No law enforcement interest.</div>
+            <div className="text-[10px] text-muted-foreground mt-1">Commit crimes to gain notoriety... or stay safe.</div>
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      {!wantedStatus.isSafe && (
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => doBribe(wantedStatus.bribeCost)} disabled={loading || (player.money ?? 0) < wantedStatus.bribeCost}
+            className="p-4 mafia-card rounded-xl text-center hover:border-yellow-500/30 transition-all disabled:opacity-40">
+            <div className="text-2xl mb-1">💰</div>
+            <div className="text-xs font-bold">Bribe Officer</div>
+            <div className="text-[10px] text-yellow-400">${wantedStatus.bribeCost.toLocaleString()}</div>
+            <div className="text-[9px] text-muted-foreground mt-1">Reduce wanted by 2 levels</div>
+          </button>
+          <button onClick={doClear} disabled={loading || (player.money ?? 0) < wantedStatus.clearCost}
+            className="p-4 mafia-card rounded-xl text-center hover:border-green-500/30 transition-all disabled:opacity-40">
+            <div className="text-2xl mb-1">🧹</div>
+            <div className="text-xs font-bold">Clear Record</div>
+            <div className="text-[10px] text-green-400">${wantedStatus.clearCost.toLocaleString()}</div>
+            <div className="text-[9px] text-muted-foreground mt-1">Fully reset wanted level</div>
+          </button>
+          {player.inPrison && (
+            <button onClick={doBail} disabled={loading}
+              className="p-4 mafia-card rounded-xl text-center hover:border-blue-500/30 transition-all disabled:opacity-40 col-span-2">
+              <div className="text-2xl mb-1">🏛️</div>
+              <div className="text-xs font-bold">Post Bail</div>
+              <div className="text-[10px] text-blue-400">${wantedStatus.bail.toLocaleString()}</div>
+              <div className="text-[9px] text-muted-foreground mt-1">Get out of prison early</div>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* FBI/MP Raid Info */}
+      <div className="mafia-card rounded-xl p-4 space-y-3">
+        <div className="text-sm font-bold">📋 Law Enforcement Intel</div>
+        <div className="grid grid-cols-2 gap-3 text-[10px]">
+          <div className="bg-background/50 rounded-lg p-2.5">
+            <div className="text-muted-foreground">FBI Raid Chance</div>
+            <div className="text-orange-400 font-bold">{wantedStatus.wantedLevel >= 2 ? `${Math.min(95, 20 + wantedStatus.wantedLevel * 15)}%` : "N/A (need level 2+)"}</div>
+          </div>
+          <div className="bg-background/50 rounded-lg p-2.5">
+            <div className="text-muted-foreground">Military Response</div>
+            <div className="text-red-400 font-bold">{wantedStatus.wantedLevel >= 4 ? `${Math.min(95, 30 + wantedStatus.wantedLevel * 12)}%` : "N/A (need level 4+)"}</div>
+          </div>
+          <div className="bg-background/50 rounded-lg p-2.5">
+            <div className="text-muted-foreground">Bail Cost</div>
+            <div className="text-blue-400 font-bold">${wantedStatus.bail.toLocaleString()}</div>
+          </div>
+          <div className="bg-background/50 rounded-lg p-2.5">
+            <div className="text-muted-foreground">Bribe Cost</div>
+            <div className="text-yellow-400 font-bold">${wantedStatus.bribeCost.toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
+
+      {msg && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`rounded-xl p-4 text-sm font-bold border-2 ${msg.includes("✅") || msg.includes("💰") || msg.includes("🏛️") || msg.includes("🧹") ? "bg-green-950/30 border-green-500/50 text-green-400" : "bg-red-950/30 border-red-500/50 text-red-400"}`}>{msg}</motion.div>}
     </div>
   );
 }

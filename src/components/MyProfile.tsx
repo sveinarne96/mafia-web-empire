@@ -96,11 +96,12 @@ export function MyProfilePage() {
         bio: bio || undefined,
         profilePictureUrl: customPictureUrl || undefined,
         activeLanguage: activeLanguage || undefined,
+        activeTitle: selectedRole || undefined,
       });
       setSaveMsg("✅ Profile saved successfully!");
       setTimeout(() => setSaveMsg(""), 3000);
     } catch (e: unknown) {
-      setSaveMsg(e instanceof Error ? e.message : "Failed to save");
+      setSaveMsg("❌ " + (e instanceof Error ? e.message : "Failed to save"));
     }
     setSaving(false);
   };
