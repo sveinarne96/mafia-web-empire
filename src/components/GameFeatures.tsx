@@ -886,9 +886,9 @@ export function LegendaryCrimePage() {
       if (res.success) {
         const lootDrop = crime.loot?.filter((l) => Math.random() * 100 < l.chance);
         const lootStr = lootDrop && lootDrop.length > 0 ? lootDrop.map(l => l.name).join(', ') : undefined;
-        setResult({ success: true, message: `SUCCESS! You earned $${crime.reward.toLocaleString()} and ${crime.xp.toLocaleString()} XP!`, loot: lootStr });
+        setResult({ success: true, message: `SUCCESS! You earned $${crime.reward.toLocaleString()} and ${crime.xp.toLocaleString()} XP!` + (crime.successStory ? "\n\n" + crime.successStory : ""), loot: lootStr });;
       } else {
-        setResult({ success: false, message: `FAILED! You lost $${Math.floor(crime.reward * 0.3).toLocaleString()} and took damage.` });
+        setResult({ success: false, message: `FAILED! You lost $${Math.floor(crime.reward * 0.3).toLocaleString()} and took damage.${crime.failStory ? "\n\n" + crime.failStory : ""}` });
       }
     } catch {
       setResult({ success: false, message: "Something went wrong. The crime failed." });

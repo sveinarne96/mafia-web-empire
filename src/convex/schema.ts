@@ -184,6 +184,7 @@ const schema = defineSchema({
     stolen: v.boolean(),
     purchasePrice: v.number(),
     neon: v.optional(v.boolean()),
+    ultraNeon: v.optional(v.boolean()),
     neonColor: v.optional(v.string()),
   }).index("by_user", ["userId"]),
 

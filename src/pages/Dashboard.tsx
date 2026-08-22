@@ -116,6 +116,7 @@ const leftMenuSections: MenuItem[] = [
     { title: "🏚️ Steal From House", icon: Home, page: "steal_from_house" as GamePage },
     { title: "🚗 GTA Car Theft", icon: Car, page: "gta_car_theft" as GamePage },
     { title: "🔒 Prison", icon: Lock, page: "prison" as GamePage },
+    { title: "✈️ Airport", icon: Plane, page: "airport" as GamePage },
   ]},
   { title: "⚔️ Combat", icon: Swords, children: [
     { title: "🎯 Bounty Board", icon: Skull, page: "bounty_board" as GamePage },
@@ -164,7 +165,6 @@ const leftMenuSections: MenuItem[] = [
   { title: "📦 Assets", icon: Package, children: [
     { title: "🚗 Garage", icon: Wrench, page: "garage" as GamePage },
     { title: "🎒 My Items", icon: Package, page: "items" as GamePage },
-    { title: "✈️ Airport", icon: Plane, page: "airport" as GamePage },
     { title: "🐾 Criminal Pets", icon: Users, page: "criminal_pets" as GamePage },
   ]},
   { title: "📊 Progression", icon: Trophy, children: [

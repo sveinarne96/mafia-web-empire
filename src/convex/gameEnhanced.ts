@@ -617,14 +617,19 @@ export const gtaCarTheft = mutation({
     let arrested = false;
 
     if (succeeded) {
-      // 35% chance for NEON supercar ($50M-$500M)
-      const isNeon = Math.random() < 0.35;
+      // 10% ULTRA RARE gold/orange neon ($100M-$1B), 25% regular neon ($50M-$500M)
+      const roll = Math.random();
       let idx: number;
       let isNeonCar = false;
-      if (isNeon) {
-        // Pick from the most expensive cars and boost price
-        const expensiveIdx = Math.floor(Math.random() * carNames.length);
-        idx = expensiveIdx;
+      let isUltraNeon = false;
+      if (roll < 0.10) {
+        // ULTRA RARE gold/orange neon
+        idx = Math.floor(Math.random() * carNames.length);
+        isUltraNeon = true;
+        isNeonCar = true;
+      } else if (roll < 0.35) {
+        // Regular neon
+        idx = Math.floor(Math.random() * carNames.length);
         isNeonCar = true;
       } else {
         idx = Math.floor(Math.random() * carNames.length);
@@ -639,7 +644,7 @@ export const gtaCarTheft = mutation({
         stolen: true,
         purchasePrice: carPrices[idx],
       });
-      moneyEarned = isNeonCar ? Math.floor(carPrices[idx] * (100 + Math.floor(Math.random() * 400))) : carPrices[idx];
+      moneyEarned = isUltraNeon ? Math.floor(carPrices[idx] * (2000 + Math.floor(Math.random() * 8000))) : isNeonCar ? Math.floor(carPrices[idx] * (100 + Math.floor(Math.random() * 400))) : carPrices[idx];
     } else {
       damageTaken = Math.floor(Math.random() * 20 + 5);
       arrested = Math.random() > 0.25;

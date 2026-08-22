@@ -112,8 +112,8 @@ export function GaragePage() {
       {tab === "owned" && (
         (vehicles ?? []).length === 0 ? <div className="text-center py-10 text-muted-foreground text-sm">No vehicles. Buy or steal one!</div> :
         <div className="space-y-2">{vehicles?.map(v => (
-          <div key={v._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between ${(v as any).neon ? "border border-cyan-400/60 shadow-lg shadow-cyan-500/20" : ""}`}>
-            <div><div className="font-semibold text-sm">{v.name}</div><div className="text-[10px] text-muted-foreground">Speed {v.speed} • Storage {v.storage} {v.armored ? "• 🛡️" : ""} {(v as any).stolen ? "• 🔴 Stolen" : ""} {(v as any).neon ? `• 🌈 ${(v as any).neonColor?.toUpperCase()} NEON` : ""}</div></div>
+          <div key={v._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between ${(v as any).ultraNeon ? "border-2 border-amber-400/80 shadow-xl shadow-amber-500/30 bg-gradient-to-r from-amber-950/30 via-orange-950/20 to-red-950/10 animate-pulse" : (v as any).neon ? "border border-cyan-400/60 shadow-lg shadow-cyan-500/20" : ""}`}>
+            <div><div className="font-semibold text-sm">{v.name}</div><div className="text-[10px] text-muted-foreground">Speed {v.speed} • Storage {v.storage} {v.armored ? "• 🛡️" : ""} {(v as any).stolen ? "• 🔴 Stolen" : ""} {(v as any).ultraNeon ? `• 👑✨ ${(v as any).neonColor} ULTRA NEON` : (v as any).neon ? `• 🌈 ${(v as any).neonColor?.toUpperCase()} NEON` : ""}</div></div>
             <button onClick={async () => { setLoading(true); try { const r = await sellV({ vehicleId: v._id }); setMsg(`Sold for $${r.price.toLocaleString()} (100% value!)`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 bg-secondary text-xs font-semibold rounded-lg disabled:opacity-40">Sell</button>
           </div>
         ))}</div>
