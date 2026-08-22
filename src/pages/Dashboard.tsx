@@ -189,20 +189,26 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
 function HeadquartersPage() {
   const player = useQuery(api.game.getPlayer);
   if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
+  const xpNeeded = (player.level ?? 1) * 100;
+  const xpPct = Math.min(100, ((player.experience ?? 0) / xpNeeded) * 100);
+  const lifePct = ((player.life ?? 100) / (player.maxLife ?? 100)) * 100;
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Building2 className="size-7 text-primary" /><h2 className="text-2xl font-bold">Headquarters</h2></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl font-bold text-green-400">${(player.money ?? 0).toLocaleString()}</div><div className="text-[10px] text-muted-foreground">Cash</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl font-bold text-blue-400">${(player.bank ?? 0).toLocaleString()}</div><div className="text-[10px] text-muted-foreground">Bank</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl font-bold text-red-400">{player.life ?? 100}/{player.maxLife ?? 100}</div><div className="text-[10px] text-muted-foreground">Life</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl font-bold text-primary">Lv. {player.level ?? 1}</div><div className="text-[10px] text-muted-foreground">Level</div></div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-900/30 via-red-900/20 to-amber-900/30 border border-amber-500/20 p-6">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl" />
+        <div className="flex items-center gap-3 mb-4"><Building2 className="size-8 text-amber-400" /><div><h2 className="text-2xl font-black">Shadow Empire HQ</h2><p className="text-xs text-muted-foreground">Your criminal empire at a glance</p></div></div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-black/30 rounded-xl p-4 border border-green-500/20 animate-money-glow"><div className="text-2xl mb-1">💰</div><div className="text-xl font-black text-green-400 animate-money-text">${(player.money ?? 0).toLocaleString()}</div><div className="text-[10px] text-green-400/60">Cash on Hand</div></div>
+          <div className="bg-black/30 rounded-xl p-4 border border-blue-500/20"><div className="text-2xl mb-1">🏦</div><div className="text-xl font-black text-blue-400">${(player.bank ?? 0).toLocaleString()}</div><div className="text-[10px] text-blue-400/60">Bank Balance</div></div>
+          <div className="bg-black/30 rounded-xl p-4 border border-red-500/20"><div className="text-2xl mb-1">❤️</div><div className="text-xl font-black text-red-400">{player.life ?? 100}/{player.maxLife ?? 100}</div><div className="h-2 bg-black/50 rounded-full mt-1 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-red-600 to-red-400 animate-life-bar" style={{width:`${lifePct}%`}} /></div></div>
+          <div className="bg-black/30 rounded-xl p-4 border border-primary/20"><div className="text-2xl mb-1">⭐</div><div className="text-xl font-black text-primary">Lv. {player.level ?? 1}</div><div className="h-2 bg-black/50 rounded-full mt-1 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-yellow-600 to-yellow-400 animate-xp-bar" style={{width:`${xpPct}%`}} /></div><div className="text-[10px] text-primary/60 mt-1">{player.experience ?? 0}/{xpNeeded} XP</div></div>
+        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-xl font-bold text-red-400">{player.attack ?? 10}</div><div className="text-[10px] text-muted-foreground">ATK</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-xl font-bold text-blue-400">{player.defense ?? 10}</div><div className="text-[10px] text-muted-foreground">DEF</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-xl font-bold text-yellow-400">{player.totalCrimes ?? 0}</div><div className="text-[10px] text-muted-foreground">Crimes</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-xl font-bold text-purple-400">{player.location ?? "New York"}</div><div className="text-[10px] text-muted-foreground">Location</div></div>
+        <div className="mafia-card rounded-xl p-4 text-center border border-red-500/20 hover:border-red-500/40 transition-colors"><div className="text-3xl mb-1">⚔️</div><div className="text-2xl font-black text-red-400">{player.attack ?? 10}</div><div className="text-[10px] text-muted-foreground">Attack Power</div></div>
+        <div className="mafia-card rounded-xl p-4 text-center border border-blue-500/20 hover:border-blue-500/40 transition-colors"><div className="text-3xl mb-1">🛡️</div><div className="text-2xl font-black text-blue-400">{player.defense ?? 10}</div><div className="text-[10px] text-muted-foreground">Defense</div></div>
+        <div className="mafia-card rounded-xl p-4 text-center border border-yellow-500/20 hover:border-yellow-500/40 transition-colors"><div className="text-3xl mb-1">🔥</div><div className="text-2xl font-black text-yellow-400">{player.totalCrimes ?? 0}</div><div className="text-[10px] text-muted-foreground">Crimes Committed</div></div>
+        <div className="mafia-card rounded-xl p-4 text-center border border-purple-500/20 hover:border-purple-500/40 transition-colors"><div className="text-3xl mb-1">📍</div><div className="text-lg font-black text-purple-400">{player.location ?? "New York"}</div><div className="text-[10px] text-muted-foreground">Current Location</div></div>
       </div>
       {(player.wantedLevel ?? 0) > 0 && (
         <div className="bg-red-950/30 border border-red-800/50 rounded-xl p-4 text-center">
@@ -247,7 +253,10 @@ function HospitalPage() {
   const doHeal = async () => { setMsg("You are healed!"); };
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><ShieldCheck className="size-7 text-green-400" /><h2 className="text-2xl font-bold">Hospital</h2></div>
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 border border-green-500/20 p-6">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl" />
+        <div className="flex items-center gap-3"><ShieldCheck className="size-8 text-green-400" /><div><h2 className="text-2xl font-black">🏥 Emergency Hospital</h2><p className="text-xs text-muted-foreground">Get patched up before your next job</p></div></div>
+      </div>
       <div className="mafia-card rounded-xl p-5 text-center space-y-4">
         <div className="text-4xl">🏥</div>
         <div className="text-sm text-muted-foreground">Your health: {player.life ?? 100}/{player.maxLife ?? 100}</div>
@@ -629,9 +638,12 @@ const pageNames: Record<string, string> = {
 function FightClubPage() {
   const player = useQuery(api.game.getPlayer);
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Swords className="size-7 text-red-400" /><h2 className="text-2xl font-bold">🥊 Fight Club</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 via-orange-900/20 to-red-900/40 border border-red-500/30 p-6">
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ff0000%22%20fill-opacity%3D%220.03%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-50" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-bounce">🥊</div><h2 className="text-2xl font-black text-red-400">FIGHT CLUB</h2><p className="text-xs text-red-400/60">No rules. No referee. No mercy.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 border border-red-500/20">
-      <div className="text-center mb-4"><div className="text-5xl mb-2">🥊</div><div className="text-sm font-bold">Underground Arena</div><div className="text-[10px] text-muted-foreground">No rules. No referee. Just fists.</div></div>
+      <div className="text-center mb-4"><div className="text-sm font-bold">Underground Arena</div></div>
       <div className="grid grid-cols-3 gap-3 text-center text-xs mb-4">
         <div className="bg-red-950/30 rounded-lg p-3"><div className="text-red-400 font-bold text-lg">{player?.attack ?? 10}</div><div className="text-muted-foreground">ATK</div></div>
         <div className="bg-blue-950/30 rounded-lg p-3"><div className="text-blue-400 font-bold text-lg">{player?.defense ?? 10}</div><div className="text-muted-foreground">DEF</div></div>
@@ -646,21 +658,32 @@ function FightClubPage() {
 }
 
 function BountyBoardPage() {
-  const bounties = [{target:"ShadowKing99",reward:500000,by:"DarkMatter",time:"2h ago"},{target:"NeonViper",reward:250000,by:"GhostRider",time:"4h ago"},{target:"IronWolf",reward:1000000,by:"Anonymous",time:"1h ago"},{target:"CyberPhantom",reward:150000,by:"StreetLegend",time:"6h ago"},{target:"NightHawk",reward:750000,by:"SteelBoss",time:"30m ago"}];
+  const bounties = [{target:"ShadowKing99",reward:500000,by:"DarkMatter",time:"2h ago",danger:9},{target:"NeonViper",reward:250000,by:"GhostRider",time:"4h ago",danger:6},{target:"IronWolf",reward:1000000,by:"Anonymous",time:"1h ago",danger:10},{target:"CyberPhantom",reward:150000,by:"StreetLegend",time:"6h ago",danger:4},{target:"NightHawk",reward:750000,by:"SteelBoss",time:"30m ago",danger:8}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Crosshair className="size-7 text-red-400" /><h2 className="text-2xl font-bold">🎯 Bounty Board</h2></div>
-    <div className="grid grid-cols-1 gap-2">{bounties.map((b,i) => (
-      <div key={i} className="mafia-card rounded-xl p-3 flex items-center justify-between border border-red-500/20 hover:border-red-500/40 transition-colors">
-        <div className="flex items-center gap-3"><div className="size-10 rounded-full bg-red-950/50 flex items-center justify-center">🎯</div><div><div className="font-bold text-sm">{b.target}</div><div className="text-[10px] text-muted-foreground">by {b.by} • {b.time}</div></div></div>
-        <div className="text-right"><div className="text-sm font-bold text-green-400">${b.reward.toLocaleString()}</div><button className="text-[10px] px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-500 mt-1">Accept</button></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/30 via-red-800/20 to-red-900/30 border border-red-500/20 p-6">
+      <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-full blur-3xl" />
+      <div className="flex items-center gap-3"><Crosshair className="size-8 text-red-400" /><div><h2 className="text-2xl font-black">🎯 Bounty Board</h2><p className="text-xs text-muted-foreground">Put a price on someone's head</p></div></div>
+    </div>
+    <div className="grid grid-cols-1 gap-3">{bounties.map((b,i) => (
+      <div key={i} className="relative overflow-hidden mafia-card rounded-xl p-4 flex items-center justify-between border border-red-500/20 hover:border-red-500/40 transition-all hover:scale-[1.01] cursor-pointer group">
+        <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="relative flex items-center gap-3">
+          <div className="size-12 rounded-full bg-gradient-to-br from-red-900/50 to-red-800/30 flex items-center justify-center border border-red-500/30"><span className="text-xl">🎯</span></div>
+          <div><div className="font-bold text-sm">{b.target}</div><div className="text-[10px] text-muted-foreground">by {b.by} • {b.time}</div>
+          <div className="flex items-center gap-1 mt-1">{Array.from({length:10}).map((_,j) => (<div key={j} className={`size-1.5 rounded-full ${j<b.danger?"bg-red-500":"bg-gray-700"}`} />))}<span className="text-[9px] text-red-400 ml-1">Danger: {b.danger}/10</span></div></div>
+        </div>
+        <div className="relative text-right"><div className="text-lg font-black text-green-400">${b.reward.toLocaleString()}</div><button className="text-[10px] px-4 py-1.5 bg-gradient-to-r from-red-600 to-red-500 text-white font-bold rounded-lg mt-1 hover:from-red-500 hover:to-red-400 transition-all">Accept Bounty</button></div>
       </div>))}</div>
   </div>);
 }
 
 function DuelsPage() {
-  const modes = [{n:"Quick Duel",d:"Best of 3 rounds",e:"⚔️",r:"$10K-50K"},{n:"Ranked Duel",d:"Competitive match",e:"🏆",r:"$100K-500K"},{n:"High Stakes",d:"Winner takes all",e:"💰",r:"$1M-5M"},{n:"Clan War",d:"Crew vs crew 3v3",e:"🏴",r:"Team Reward"}];
+  const modes = [{n:"Quick Duel",d:"Best of 3 rounds",e:"⚔️",r:"$10K-50K",diff:"Easy"},{n:"Ranked Duel",d:"Competitive match",e:"🏆",r:"$100K-500K",diff:"Medium"},{n:"High Stakes",d:"Winner takes all",e:"💰",r:"$1M-5M",diff:"Hard"},{n:"Clan War",d:"Crew vs crew 3v3",e:"🏴",r:"Team Reward",diff:"Extreme"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Swords className="size-7 text-primary" /><h2 className="text-2xl font-bold">⚔️ Duels</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">⚔️</div><h2 className="text-2xl font-black">DUEL ARENA</h2><p className="text-xs text-primary/60">Choose your battlefield. Prove your worth.</p></div>
+    </div>
     <div className="grid grid-cols-2 gap-3">{modes.map((d,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 space-y-2 border border-primary/20 hover:border-primary/40 transition-all cursor-pointer hover:scale-[1.02]">
         <div className="text-3xl text-center">{d.e}</div><div className="font-bold text-sm text-center">{d.n}</div>
@@ -671,7 +694,11 @@ function DuelsPage() {
 
 function KillPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">💀 Kill</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/50 via-red-800/30 to-red-900/50 border border-red-500/30 p-6">
+      <div className="absolute inset-0 animate-pulse bg-red-500/5" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-bounce">💀</div><h2 className="text-2xl font-black text-red-400">ASSASSINATION</h2><p className="text-xs text-red-400/60">Put a price on someone's life. Available 24/7.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-4 border border-red-500/20">
       <div className="text-center text-6xl">💀</div>
       <div className="text-center"><div className="text-sm font-bold">Assassination Contract</div><div className="text-[10px] text-red-400">Available 24/7</div></div>
@@ -696,7 +723,11 @@ function SparPage() {
 
 function TournamentPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Trophy className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">🏆 Tournament</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-900/30 via-amber-900/20 to-yellow-900/30 border border-yellow-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-transparent" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl" />
+      <div className="relative z-10 flex items-center gap-3"><Trophy className="size-8 text-yellow-400" /><div><h2 className="text-2xl font-black">🏆 Grand Tournament</h2><p className="text-xs text-yellow-400/60">Fight for glory and massive prizes</p></div></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-yellow-500/20">
       <div className="text-center text-5xl mb-2">🏆</div>
       <div className="text-center"><div className="text-lg font-bold text-yellow-400">Grand Tournament</div><div className="text-xs text-muted-foreground">Ends in 4h 32m</div></div>
@@ -712,9 +743,13 @@ function TournamentPage() {
 }
 
 function CrimeSpreePage() {
-  const streaks = [{name:"Bronze Spree",count:5,reward:"2x XP",e:"🥉"},{name:"Silver Spree",count:10,reward:"3x XP + $100K",e:"🥈"},{name:"Gold Spree",count:25,reward:"5x XP + $500K",e:"🥇"},{name:"Diamond Spree",count:50,reward:"10x XP + $2M",e:"💎"},{name:"Legendary Spree",count:100,reward:"20x XP + $10M",e:"👑"}];
+  const streaks = [{name:"Bronze Spree",count:5,reward:"2x XP",e:"🥉",color:"from-amber-600 to-amber-500"},{name:"Silver Spree",count:10,reward:"3x XP + $100K",e:"🥈",color:"from-gray-400 to-gray-300"},{name:"Gold Spree",count:25,reward:"5x XP + $500K",e:"🥇",color:"from-yellow-500 to-yellow-400"},{name:"Diamond Spree",count:50,reward:"10x XP + $2M",e:"💎",color:"from-cyan-400 to-blue-400"},{name:"Legendary Spree",count:100,reward:"20x XP + $10M",e:"👑",color:"from-purple-500 to-pink-500"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Activity className="size-7 text-orange-400" /><h2 className="text-2xl font-bold">🔥 Crime Spree</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-900/30 via-red-900/20 to-orange-900/30 border border-orange-500/20 p-6">
+      <div className="absolute inset-0 animate-pulse bg-orange-500/5" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-orange-500/5 rounded-full blur-3xl" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-pulse">🔥</div><h2 className="text-2xl font-black">CRIME SPREE</h2><p className="text-xs text-orange-400/60">Commit crimes in a row for massive multipliers</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 border border-orange-500/20">
       <div className="text-center mb-4"><div className="text-4xl mb-2">🔥</div><div className="text-sm font-bold">Consecutive Crime Bonus</div><div className="text-xs text-muted-foreground">Commit crimes in a row for massive multipliers</div></div>
       <div className="space-y-2">{streaks.map((s,i) => (
@@ -727,9 +762,12 @@ function CrimeSpreePage() {
 }
 
 function UndergroundPage() {
-  const ops = [{n:"Counterfeiting",e:"💵",d:"Print fake bills",p:"$500K/day"},{n:"Drug Lab",e:"⚗️",d:"Manufacture product",p:"$2M/day"},{n:"Weapon Forge",e:"🔧",d:"Build custom weapons",p:"$1M/day"},{n:"Data Farm",e:"💻",d:"Mine & sell data",p:"$800K/day"}];
+  const ops = [{n:"Counterfeiting",e:"💵",d:"Print fake bills",p:"$500K/day",r:"Common"},{n:"Drug Lab",e:"⚗️",d:"Manufacture product",p:"$2M/day",r:"Epic"},{n:"Weapon Forge",e:"🔧",d:"Build custom weapons",p:"$1M/day",r:"Rare"},{n:"Data Farm",e:"💻",d:"Mine & sell data",p:"$800K/day",r:"Uncommon"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Bomb className="size-7 text-red-400" /><h2 className="text-2xl font-bold">💣 Underground Economy</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 via-red-800/30 to-red-900/40 border border-red-500/30 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">💣</div><h2 className="text-2xl font-black">UNDERGROUND ECONOMY</h2><p className="text-xs text-red-400/60">Advanced criminal operations for serious players</p></div>
+    </div>
     <div className="grid grid-cols-2 gap-3">{ops.map((o,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 space-y-2 border border-red-500/20 hover:border-red-500/40 transition-all cursor-pointer">
         <div className="text-3xl text-center">{o.e}</div><div className="font-bold text-sm text-center">{o.n}</div>
@@ -771,9 +809,13 @@ function WantedBoardPage() {
 }
 
 function MysteryBoxesPage() {
-  const boxes = [{n:"Common Box",c:"$10K",e:"📦",l:"Common-Uncommon"},{n:"Rare Box",c:"$100K",e:"🎁",l:"Rare-Epic"},{n:"Legendary Box",c:"$1M",e:"💎",l:"Epic-Legendary"},{n:"Mythic Box",c:"$10M",e:"👑",l:"Legendary+ guaranteed"}];
+  const boxes = [{n:"Common Box",c:"$10K",e:"📦",l:"Common-Uncommon",color:"from-gray-600 to-gray-500",glow:""},{n:"Rare Box",c:"$100K",e:"🎁",l:"Rare-Epic",color:"from-blue-600 to-blue-500",glow:"animate-rare-glow"},{n:"Legendary Box",c:"$1M",e:"💎",l:"Epic-Legendary",color:"from-purple-600 to-purple-500",glow:"animate-legendary-glow"},{n:"Mythic Box",c:"$10M",e:"👑",l:"Legendary+ guaranteed",color:"from-amber-600 to-yellow-500",glow:"animate-epic-glow"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Sparkles className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">✨ Mystery Boxes</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-900/30 via-purple-900/20 to-yellow-900/30 border border-yellow-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-purple-500/5" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-yellow-500/5 rounded-full blur-3xl" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">✨</div><h2 className="text-2xl font-black">MYSTERY BOXES</h2><p className="text-xs text-yellow-400/60">What's inside? Only one way to find out...</p></div>
+    </div>
     <div className="grid grid-cols-2 gap-3">{boxes.map((b,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 space-y-2 border border-yellow-500/20 hover:border-yellow-500/40 transition-all cursor-pointer hover:scale-[1.02]">
         <div className="text-3xl text-center">{b.e}</div><div className="font-bold text-sm text-center">{b.n}</div>
@@ -784,9 +826,13 @@ function MysteryBoxesPage() {
 }
 
 function LegendaryItemsPage() {
-  const items = [{n:"Excalibur",t:"Weapon",s:"+50 ATK",e:"⚔️"},{n:"Dragon Scale Armor",t:"Armor",s:"+80 DEF",e:"🛡️"},{n:"Invisibility Cloak",t:"Accessory",s:"Ghost Mode",e:"👻"},{n:"Phoenix Feather",t:"Consumable",s:"Full Heal",e:"🔥"},{n:"Shadow Blade",t:"Weapon",s:"+75 ATK + Speed",e:"🗡️"},{n:"Titan Shield",t:"Shield",s:"+100 DEF",e:"🛡️"}];
+  const items = [{n:"Excalibur",t:"Weapon",s:"+50 ATK",e:"⚔️",r:"Mythic"},{n:"Dragon Scale Armor",t:"Armor",s:"+80 DEF",e:"🛡️",r:"Legendary"},{n:"Invisibility Cloak",t:"Accessory",s:"Ghost Mode",e:"👻",r:"Epic"},{n:"Phoenix Feather",t:"Consumable",s:"Full Heal",e:"🔥",r:"Legendary"},{n:"Shadow Blade",t:"Weapon",s:"+75 ATK + Speed",e:"🗡️",r:"Mythic"},{n:"Titan Shield",t:"Shield",s:"+100 DEF",e:"🛡️",r:"Epic"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Gem className="size-7 text-amber-400" /><h2 className="text-2xl font-bold">🌟 Legendary Items</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-900/30 via-yellow-900/20 to-amber-900/30 border border-amber-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-amber-500/5 rounded-full blur-3xl" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🌟</div><h2 className="text-2xl font-black">LEGENDARY ITEMS</h2><p className="text-xs text-amber-400/60">One-of-a-kind artifacts of immense power</p></div>
+    </div>
     <div className="grid grid-cols-2 gap-3">{items.map((it,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 space-y-2 border border-amber-500/20 animate-legendary-glow">
         <div className="text-3xl text-center">{it.e}</div><div className="font-bold text-sm text-center text-amber-400">{it.n}</div>
@@ -857,7 +903,10 @@ function ColosseumPage() {
 
 function InsurancePage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Shield className="size-7 text-blue-400" /><h2 className="text-2xl font-bold">🛡️ Insurance</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-blue-900/30 border border-blue-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🛡️</div><h2 className="text-2xl font-black">INSURANCE</h2><p className="text-xs text-blue-400/60">Protect your assets against robbery and death</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-center text-4xl mb-2">🛡️</div><div className="text-sm text-center font-bold">Protect Your Assets</div>
       <div className="text-xs text-center text-muted-foreground">Insure your cash and items against robberies and deaths</div>
@@ -872,7 +921,10 @@ function InsurancePage() {
 
 function LoansPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Landmark className="size-7 text-primary" /><h2 className="text-2xl font-bold">🏦 Underground Loans</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🏦</div><h2 className="text-2xl font-black">UNDERGROUND LOANS</h2><p className="text-xs text-primary/60">Borrow from loan sharks. Default = items seized.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-center text-4xl mb-2">🏦</div><div className="text-sm text-center font-bold">Loan Shark</div>
       <div className="text-xs text-center text-red-400">⚠️ High interest rates. Default = items seized.</div>
@@ -887,7 +939,10 @@ function LoansPage() {
 
 function CryptoPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Gem className="size-7 text-purple-400" /><h2 className="text-2xl font-bold">💎 Crypto Trading</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/30 via-violet-900/20 to-purple-900/30 border border-purple-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">💎</div><h2 className="text-2xl font-black">CRYPTO TRADING</h2><p className="text-xs text-purple-400/60">Trade volatile in-game cryptocurrencies</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="space-y-2">{[{n:"ShadowCoin (SHC)",p:"$1,234",chg:"+12.5%",c:"bg-green-950/30"},{n:"CrimeCash (CRC)",p:"$567",chg:"-3.2%",c:"bg-red-950/30"},{n:"UnderBank (UNB)",p:"$8,901",chg:"+0.8%",c:"bg-green-950/30"},{n:"DarkToken (DKT)",p:"$42",chg:"+45.2%",c:"bg-green-950/30"}].map((cr,i) => (
         <div key={i} className="flex items-center justify-between bg-background/50 rounded-lg p-3 border border-border">
@@ -991,9 +1046,12 @@ function LeaderboardsPage() {
 }
 
 function WorldMapPage() {
-  const cities = [{n:"New York",cr:85,p:12},{n:"Los Angeles",cr:72,p:8},{n:"Miami",cr:91,p:15},{n:"Chicago",cr:68,p:6},{n:"Las Vegas",cr:95,p:10}];
+  const cities = [{n:"New York",cr:85,p:12,e:"🗽"},{n:"Los Angeles",cr:72,p:8,e:"🌴"},{n:"Miami",cr:91,p:15,e:"🏖️"},{n:"Chicago",cr:68,p:6,e:"🏙️"},{n:"Las Vegas",cr:95,p:10,e:"🎰"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Map className="size-7 text-primary" /><h2 className="text-2xl font-bold">🗺️ World Map</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🗺️</div><h2 className="text-2xl font-black">WORLD MAP</h2><p className="text-xs text-primary/60">Crime hotspots and territory control</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="grid grid-cols-2 gap-2">{cities.map((c,i) => (
         <div key={i} className="bg-background/50 rounded-lg p-3 border border-border hover:border-primary/30 cursor-pointer transition-colors">
@@ -1007,7 +1065,10 @@ function WorldMapPage() {
 
 function WeatherPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Cloud className="size-7 text-cyan-400" /><h2 className="text-2xl font-bold">🌤️ Weather</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-900/30 via-blue-900/20 to-cyan-900/30 border border-cyan-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🌤️</div><h2 className="text-2xl font-black">WEATHER</h2><p className="text-xs text-cyan-400/60">Dynamic conditions affect crime success rates</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-center text-5xl">🌧️</div>
       <div className="text-center"><div className="text-lg font-bold">Rainy</div><div className="text-xs text-muted-foreground">Smuggling +20% success</div></div>
@@ -1021,9 +1082,12 @@ function WeatherPage() {
 }
 
 function NewsTickerPage() {
-  const news = [{t:"Robbery on 5th Avenue!",a:"5 min ago",e:"🏦"},{t:"Player ShadowKing reached Level 87",a:"12 min ago",e:"🏆"},{t:"Gang war erupted in Miami",a:"1h ago",e:"⚔️"},{t:"New smuggling route opened",a:"3h ago",e:"🚢"}];
+  const news = [{t:"Robbery on 5th Avenue!",a:"5 min ago",e:"🏦",c:"text-red-400"},{t:"Player ShadowKing reached Level 87",a:"12 min ago",e:"🏆",c:"text-yellow-400"},{t:"Gang war erupted in Miami",a:"1h ago",e:"⚔️",c:"text-orange-400"},{t:"New smuggling route opened",a:"3h ago",e:"🚢",c:"text-blue-400"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Newspaper className="size-7 text-primary" /><h2 className="text-2xl font-bold">📰 News Ticker</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">📰</div><h2 className="text-2xl font-black">NEWS TICKER</h2><p className="text-xs text-primary/60">Live feed of crime events and player activity</p></div>
+    </div>
     <div className="space-y-2">{news.map((n,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 flex items-center gap-3 border border-border">
         <span className="text-2xl">{n.e}</span><div className="flex-1"><div className="font-bold text-sm">{n.t}</div><div className="text-[10px] text-muted-foreground">{n.a}</div></div>
@@ -1033,7 +1097,11 @@ function NewsTickerPage() {
 
 function GhostModePage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Eye className="size-7 text-purple-400" /><h2 className="text-2xl font-bold">👻 Ghost Mode</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/40 via-violet-900/20 to-purple-900/40 border border-purple-500/20 p-6">
+      <div className="absolute inset-0 animate-pulse bg-purple-500/5" />
+      <div className="absolute top-0 right-0 w-40 h-40 bg-purple-500/5 rounded-full blur-3xl" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-bounce">👻</div><h2 className="text-2xl font-black">GHOST MODE</h2><p className="text-xs text-purple-400/60">Vanish from the map. No one can find you.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-purple-500/20">
       <div className="text-center text-5xl">👻</div>
       <div className="text-center"><div className="font-bold">Become Invisible</div><div className="text-xs text-muted-foreground">Hidden from map and player list for 1 hour</div></div>
@@ -1051,9 +1119,12 @@ function CrimeTVPage() {
 }
 
 function DailyChallengesPage() {
-  const chals = [{n:"Commit 5 crimes",p:"60%",r:"$50K + 100 XP",e:"🔥"},{n:"Win a fight",p:"0%",r:"$25K + 50 XP",e:"🥊"},{n:"Steal from 3 houses",p:"33%",r:"$75K + 150 XP",e:"🏠"},{n:"Travel to 2 cities",p:"0%",r:"$30K + 75 XP",e:"✈️"}];
+  const chals = [{n:"Commit 5 crimes",p:"60%",r:"$50K + 100 XP",e:"🔥",t:"3h 22m left"},{n:"Win a fight",p:"0%",r:"$25K + 50 XP",e:"🥊",t:"8h 15m left"},{n:"Steal from 3 houses",p:"33%",r:"$75K + 150 XP",e:"🏠",t:"5h 45m left"},{n:"Travel to 2 cities",p:"0%",r:"$30K + 75 XP",e:"✈️",t:"11h 30m left"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Target className="size-7 text-primary" /><h2 className="text-2xl font-bold">📋 Daily Challenges</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">📋</div><h2 className="text-2xl font-black">DAILY CHALLENGES</h2><p className="text-xs text-primary/60">Complete objectives before the timer runs out</p></div>
+    </div>
     <div className="space-y-2">{chals.map((c,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 border border-border">
         <div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><span className="text-xl">{c.e}</span><span className="font-bold text-xs">{c.n}</span></div><span className="text-xs text-green-400 font-bold">{c.r}</span></div>
@@ -1065,7 +1136,10 @@ function DailyChallengesPage() {
 
 function RaidsPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Swords className="size-7 text-red-400" /><h2 className="text-2xl font-bold">⚔️ Raids</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/30 via-red-800/20 to-red-900/30 border border-red-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-red-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">⚔️</div><h2 className="text-2xl font-black">FACTION RAIDS</h2><p className="text-xs text-red-400/60">Team up for massive multi-player raids</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-center text-4xl mb-2">⚔️</div>
       <div className="text-center"><div className="font-bold">Faction Raids</div><div className="text-xs text-muted-foreground">Team up for massive multi-player raids</div></div>
@@ -1077,7 +1151,10 @@ function RaidsPage() {
 
 function TimeMachinePage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Clock className="size-7 text-cyan-400" /><h2 className="text-2xl font-bold">⏳ Time Machine</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-900/30 via-teal-900/20 to-cyan-900/30 border border-cyan-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-spin" style={{animationDuration:"10s"}}>⏳</div><h2 className="text-2xl font-black">TIME MACHINE</h2><p className="text-xs text-cyan-400/60">Relive your greatest heists for bonus XP</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-cyan-500/20">
       <div className="text-center text-5xl">⏳</div>
       <div className="text-center"><div className="font-bold">Replay Greatest Heists</div><div className="text-xs text-muted-foreground">Relive your best moments and earn bonus XP</div></div>
@@ -1089,7 +1166,10 @@ function TimeMachinePage() {
 function SeasonPassPage() {
   const tiers = [{l:1,r:"$10K starter bonus",u:true},{l:5,r:"Bronze Title",u:true},{l:10,r:"$100K + Exclusive Mask",u:false},{l:20,r:"$500K + Custom Plate",u:false},{l:30,r:"$1M + Legendary Crate",u:false},{l:50,r:"$5M + Prestige Bonus",u:false}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Trophy className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">🎫 Season Pass</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-yellow-900/30 via-amber-900/20 to-yellow-900/30 border border-yellow-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🎫</div><h2 className="text-2xl font-black">SEASON PASS</h2><p className="text-xs text-yellow-400/60">Unlock exclusive rewards as you level up</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-yellow-500/20">
       <div className="text-center"><div className="text-sm font-bold text-yellow-400">Season 1 — 5 months remaining</div></div>
       <div className="space-y-2">{tiers.map((t,i) => (
@@ -1102,9 +1182,12 @@ function SeasonPassPage() {
 }
 
 function CrimeMasteryPage() {
-  const crimes = [{n:"Theft",l:5,xp:1200},{n:"Assault",l:3,xp:800},{n:"Fraud",l:7,xp:2400},{n:"Drug Ops",l:2,xp:400},{n:"Heists",l:1,xp:100}];
+  const crimes = [{n:"Theft",l:5,xp:1200,e:"🤏"},{n:"Assault",l:3,xp:800,e:"👊"},{n:"Fraud",l:7,xp:2400,e:"💳"},{n:"Drug Ops",l:2,xp:400,e:"💊"},{n:"Heists",l:1,xp:100,e:"🏦"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Target className="size-7 text-primary" /><h2 className="text-2xl font-bold">🎯 Crime Mastery</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🎯</div><h2 className="text-2xl font-black">CRIME MASTERY</h2><p className="text-xs text-primary/60">Master each crime type for massive bonuses</p></div>
+    </div>
     <div className="space-y-2">{crimes.map((c,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 border border-border">
         <div className="flex items-center justify-between mb-2"><span className="font-bold text-sm">{c.n}</span><span className="text-xs text-muted-foreground">Level {c.l}</span></div>
@@ -1124,7 +1207,10 @@ function MarriagePage() {
   const [msg, setMsg] = useState("");
   if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Heart className="size-7 text-pink-400" /><h2 className="text-2xl font-bold">💍 Marriage</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-pink-900/30 via-rose-900/20 to-pink-900/30 border border-pink-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-pink-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-pulse">💍</div><h2 className="text-2xl font-black">MARRIAGE</h2><p className="text-xs text-pink-400/60">Love is a battlefield. Share power, share wealth.</p></div>
+    </div>
     {(player as any).marriedTo ? (
       <div className="mafia-card rounded-xl p-5 space-y-3 border border-pink-500/20">
         <div className="text-center text-5xl">💍</div>
@@ -1158,7 +1244,10 @@ function FamilyTreePage() {
 function PersonalityPage() {
   const traits = [{n:"Ruthless",e:"😈",d:"More crime rewards, more enemies",v:0,c:"red"},{n:"Loyal",e:"🤝",d:"Crew bonuses, harder to betray",v:0,c:"blue"},{n:"Snake",e:"🐍",d:"Better at scams, feared by NPCs",v:0,c:"green"},{n:"Legend",e:"👑",d:"NPC respect, cheaper shops",v:0,c:"yellow"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Star className="size-7 text-primary" /><h2 className="text-2xl font-bold">🎭 Personality</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/30 via-violet-900/20 to-purple-900/30 border border-purple-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🎭</div><h2 className="text-2xl font-black">PERSONALITY</h2><p className="text-xs text-purple-400/60">Your actions shape who you become</p></div>
+    </div>
     <div className="space-y-3">{traits.map((t,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 flex items-center gap-3 border border-border">
         <span className="text-3xl">{t.e}</span>
@@ -1174,7 +1263,10 @@ function DeadSwitchPage() {
   const [targetId, setTargetId] = useState("");
   const [msg, setMsg] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">💀 Dead Man's Switch</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 via-red-800/30 to-red-900/40 border border-red-500/30 p-6">
+      <div className="absolute inset-0 animate-pulse bg-red-500/5" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">💀</div><h2 className="text-2xl font-black text-red-400">DEAD MAN'S SWITCH</h2><p className="text-xs text-red-400/60">If you die, your legacy lives on</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-red-500/20">
       <div className="text-center text-5xl">💀</div>
       <div className="text-center"><div className="font-bold">Dead Man's Switch</div><div className="text-xs text-muted-foreground">If you die, your items auto-transfer to a trusted player</div></div>
@@ -1191,7 +1283,10 @@ function AIGangsPage() {
   const gangs = useQuery(api.advancedFeatures.getAIGangs);
   const [msg, setMsg] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">👹 Rival AI Gangs</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 via-orange-900/20 to-red-900/40 border border-red-500/30 p-6">
+      <div className="absolute inset-0 animate-pulse bg-red-500/5" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">👹</div><h2 className="text-2xl font-black text-red-400">RIVAL AI GANGS</h2><p className="text-xs text-red-400/60">AI crews that fight for territory and prey on players</p></div>
+    </div>
     <button onClick={async () => { const r = await initGangs({}); setMsg(r.message); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">Spawn Gangs</button>
     {msg && <div className="text-sm text-primary">{msg}</div>}
     <div className="space-y-2">{(gangs ?? []).map((g: any) => (
@@ -1208,7 +1303,10 @@ function InformantsPage() {
   const [intel, setIntel] = useState<any>(null);
   const [msg, setMsg] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Eye className="size-7 text-purple-400" /><h2 className="text-2xl font-bold">🕵️ Informants</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-900/30 via-indigo-900/20 to-purple-900/30 border border-purple-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🕵️</div><h2 className="text-2xl font-black">INFORMANTS</h2><p className="text-xs text-purple-400/60">Pay $100K to spy on any player</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-center text-4xl mb-2">🕵️</div>
       <div className="text-center"><div className="font-bold">Hire an Informant</div><div className="text-xs text-muted-foreground">Pay $100K to spy on any player</div></div>
@@ -1227,7 +1325,10 @@ function DistrictsPage() {
   const collect = useMutation(api.advancedFeatures.collectDistrictIncome);
   const [msg, setMsg] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Map className="size-7 text-blue-400" /><h2 className="text-2xl font-bold">🏙️ District Ownership</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-blue-900/30 border border-blue-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🏙️</div><h2 className="text-2xl font-black">DISTRICT OWNERSHIP</h2><p className="text-xs text-blue-400/60">Buy territory, earn passive income from every crime</p></div>
+    </div>
     <div className="flex gap-2"><button onClick={async () => { const r = await initD({}); setMsg(r.message); }} className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs">Init Districts</button>
     <button onClick={async () => { const r = await collect({}); setMsg(`Collected $${r.totalIncome.toLocaleString()} from ${r.count} districts`); }} className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs">💰 Collect Income</button></div>
     {msg && <div className="text-sm text-primary">{msg}</div>}
@@ -1242,9 +1343,12 @@ function DistrictsPage() {
 }
 
 function CorruptionPage() {
-  const bribes = [{n:"Street Cop",c:"$50K",e:"👮",d:"-2 wanted levels"},{n:"Judge",c:"$500K",e:"⚖️",d:"Clear all charges"},{n:"FBI Agent",c:"$2M",e:"🕵️",d:"Access FBI database"},{n:"Mayor",c:"$10M",e:"🏛️",d:"District protection"}];
+  const bribes = [{n:"Street Cop",c:"$50K",e:"👮",d:"-2 wanted levels",color:"from-gray-600 to-gray-500"},{n:"Judge",c:"$500K",e:"⚖️",d:"Clear all charges",color:"from-amber-600 to-yellow-500"},{n:"FBI Agent",c:"$2M",e:"🕵️",d:"Access FBI database",color:"from-blue-600 to-cyan-500"},{n:"Mayor",c:"$10M",e:"🏛️",d:"District protection",color:"from-red-600 to-orange-500"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Shield className="size-7 text-blue-400" /><h2 className="text-2xl font-bold">🔒 Corruption</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-900/30 via-indigo-900/20 to-blue-900/30 border border-blue-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🔒</div><h2 className="text-2xl font-black">CORRUPTION</h2><p className="text-xs text-blue-400/60">Everyone has a price. What's yours?</p></div>
+    </div>
     <div className="space-y-2">{bribes.map((b,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 flex items-center justify-between border border-blue-500/20">
         <div className="flex items-center gap-3"><span className="text-2xl">{b.e}</span><div><div className="font-bold text-sm">{b.n}</div><div className="text-[10px] text-muted-foreground">{b.d}</div></div></div>
@@ -1258,7 +1362,10 @@ function RansomwarePage() {
   const [targetId, setTargetId] = useState("");
   const [msg, setMsg] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Bomb className="size-7 text-red-400" /><h2 className="text-2xl font-bold">💻 Ransomware</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/40 via-orange-900/20 to-red-900/40 border border-red-500/20 p-6">
+      <div className="absolute inset-0 animate-pulse bg-red-500/5" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">💻</div><h2 className="text-2xl font-black">RANSOMWARE</h2><p className="text-xs text-red-400/60">Encrypt their data. Steal their cash. $50K per attack.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-red-500/20">
       <div className="text-center text-5xl">💻</div>
       <div className="text-center"><div className="font-bold">Deploy Ransomware</div><div className="text-xs text-muted-foreground">Steal 15% of a player's cash. Cost: $50K</div></div>
@@ -1272,9 +1379,12 @@ function RansomwarePage() {
 function CraftingPage() {
   const craft = useMutation(api.advancedFeatures.craftItem);
   const [msg, setMsg] = useState("");
-  const recipes = [{id:"lockpick_set",n:"Lockpick Set",c:"$5K",a:"+5 ATK",e:"🔓"},{id:"kevlar_vest",n:"Kevlar Vest",c:"$50K",a:"+25 DEF",e:"🦺"},{id:"silencer",n:"Silencer",c:"$25K",a:"+15 ATK",e:"🔇"},{id:"bat_signal",n:"Bat Signal",c:"$100K",a:"+30 ATK +20 DEF",e:"🦇"},{id:"diamond_blade",n:"Diamond Blade",c:"$500K",a:"+50 ATK",e:"💎"},{id:"nano_armor",n:"Nano Armor",c:"$2M",a:"+80 DEF",e:"🤖"}];
+  const recipes = [{id:"lockpick_set",n:"Lockpick Set",c:"$5K",a:"+5 ATK",e:"🔓",r:"Common"},{id:"kevlar_vest",n:"Kevlar Vest",c:"$50K",a:"+25 DEF",e:"🦺",r:"Uncommon"},{id:"silencer",n:"Silencer",c:"$25K",a:"+15 ATK",e:"🔇",r:"Uncommon"},{id:"bat_signal",n:"Bat Signal",c:"$100K",a:"+30 ATK +20 DEF",e:"🦇",r:"Rare"},{id:"diamond_blade",n:"Diamond Blade",c:"$500K",a:"+50 ATK",e:"💎",r:"Epic"},{id:"nano_armor",n:"Nano Armor",c:"$2M",a:"+80 DEF",e:"🤖",r:"Legendary"}];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Package className="size-7 text-amber-400" /><h2 className="text-2xl font-bold">🔧 Item Crafting</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-900/30 via-yellow-900/20 to-amber-900/30 border border-amber-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">🔧</div><h2 className="text-2xl font-black">ITEM CRAFTING</h2><p className="text-xs text-amber-400/60">Combine resources into powerful gear</p></div>
+    </div>
     {msg && <div className="text-sm text-primary">{msg}</div>}
     <div className="grid grid-cols-2 gap-3">{recipes.map((r,i) => (
       <div key={i} className="mafia-card rounded-xl p-4 space-y-2 border border-amber-500/20 hover:border-amber-500/40 transition-all">
@@ -1298,7 +1408,10 @@ function AuctionsPage() {
 
 function TimeCapsulesPage() {
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Clock className="size-7 text-cyan-400" /><h2 className="text-2xl font-bold">⏳ Time Capsules</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-cyan-900/30 via-teal-900/20 to-cyan-900/30 border border-cyan-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">⏳</div><h2 className="text-2xl font-black">TIME CAPSULES</h2><p className="text-xs text-cyan-400/60">Bury items now, dig them up later for +50% value</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3 border border-cyan-500/20">
       <div className="text-center text-5xl">⏳</div>
       <div className="text-center"><div className="font-bold">Buried Items</div><div className="text-xs text-muted-foreground">Bury items now, dig them up later for bonus value</div></div>
@@ -1312,7 +1425,10 @@ function CrimePhotosPage() {
   const takeP = useMutation(api.advancedFeatures.takePhoto);
   const [msg, setMsg] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Newspaper className="size-7 text-primary" /><h2 className="text-2xl font-bold">📸 Crime Photography</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">📸</div><h2 className="text-2xl font-black">CRIME PHOTOGRAPHY</h2><p className="text-xs text-primary/60">Capture the moment. Sell to newspapers for cash.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-center text-5xl mb-2">📸</div>
       <div className="text-center"><div className="font-bold">Capture the Moment</div><div className="text-xs text-muted-foreground">Take photos of crimes, sell to newspapers for cash</div></div>
@@ -1329,7 +1445,10 @@ function CrimePhotosPage() {
 function PurgePage() {
   const purge = useQuery(api.advancedFeatures.getPurgeStatus);
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">☠️ Server Purge</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/50 via-red-800/30 to-red-900/50 border border-red-500/30 p-6">
+      <div className="absolute inset-0 animate-pulse bg-red-500/10" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-bounce">☠️</div><h2 className="text-2xl font-black text-red-400">SERVER PURGE</h2><p className="text-xs text-red-400/60">Monthly 24-hour chaos event</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-4 border border-red-500/20">
       <div className="text-center text-6xl">☠️</div>
       <div className="text-center"><div className="text-lg font-bold text-red-400">{purge?.isPurge ? "🔴 PURGE ACTIVE!" : "Purge Inactive"}</div>
@@ -1342,7 +1461,10 @@ function PurgePage() {
 function HeadlinesPage() {
   const headlines = useQuery(api.advancedFeatures.getHeadlines);
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Newspaper className="size-7 text-primary" /><h2 className="text-2xl font-bold">📰 Crime Headlines</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/20 via-primary/10 to-primary/20 border border-primary/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">📰</div><h2 className="text-2xl font-black">CRIME HEADLINES</h2><p className="text-xs text-primary/60">Your biggest crimes make the news</p></div>
+    </div>
     {(headlines ?? []).length === 0 ? (
       <div className="mafia-card rounded-xl p-5 text-center"><div className="text-4xl mb-2">📰</div><div className="text-sm font-bold">No Headlines Yet</div><div className="text-xs text-muted-foreground">Commit big crimes to make the news!</div></div>
     ) : (headlines ?? []).map((h: any) => (
@@ -1356,7 +1478,10 @@ function RadioPage() {
   const [msg, setMsg] = useState("");
   const [text, setText] = useState("");
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><Radio className="size-7 text-green-400" /><h2 className="text-2xl font-bold">📻 Underground Radio</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 border border-green-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-green-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3">📻</div><h2 className="text-2xl font-black">UNDERGROUND RADIO</h2><p className="text-xs text-green-400/60">Level 30+ required. Real-time hidden chat.</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-3">
       <div className="text-xs text-muted-foreground text-center">🔒 Level 30+ required • Real-time hidden chat</div>
       <div className="space-y-2 max-h-60 overflow-y-auto">{(msgs ?? []).map((m: any) => (
@@ -1374,8 +1499,12 @@ function CockroachPage() {
   const [selected, setSelected] = useState(0);
   const [result, setResult] = useState<any>(null);
   const colors = ["🟥","🟧","🟨","🟩","🟦","🟪"];
+  const names = ["Red Rocket","Orange Crush","Golden Boy","Green Machine","Blue Thunder","Purple Rain"];
   return (<div className="animate-fade-in space-y-6">
-    <div className="flex items-center gap-3"><CircleDot className="size-7 text-amber-400" /><h2 className="text-2xl font-bold">🪳 Cockroach Racing</h2></div>
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amber-900/30 via-yellow-900/20 to-amber-900/30 border border-amber-500/20 p-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-amber-500/5 to-transparent" />
+      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-bounce">🪳</div><h2 className="text-2xl font-black">COCKROACH RACING</h2><p className="text-xs text-amber-400/60">Pick your champion. 5x payout if they win!</p></div>
+    </div>
     <div className="mafia-card rounded-xl p-5 space-y-4 border border-amber-500/20">
       <div className="text-center text-5xl">🪳</div>
       <div className="text-center"><div className="font-bold">Pick Your Roach</div><div className="text-xs text-muted-foreground">5x payout if your roach wins!</div></div>
