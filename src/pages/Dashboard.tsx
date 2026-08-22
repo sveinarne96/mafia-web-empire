@@ -616,14 +616,13 @@ export default function Dashboard() {
   const player = useQuery(api.game.getPlayer);
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const setPage = useCallback((p: GamePage) => setActivePage(p), []);
 
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
 
   if (player === undefined) return <LoadingPage />;
   if (!player || !isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;
   if (player.isDead) return <DeathPage />;
-
-  const setPage = useCallback((p: GamePage) => setActivePage(p), []);
 
   const renderPage = (): React.ReactNode => {
     switch (activePage) {
