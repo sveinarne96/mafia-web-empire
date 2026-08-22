@@ -219,7 +219,7 @@ export const stealFromHouse = mutation({
       "Gold Snuff Box","Antique Fob Chain","Diamond Stickpin","Ruby Pendant","Sapphire Tiara","Emerald Brooch",
       "Diamond Tennis Bracelet","Platinum Cigarette Case","Gold Locket","Emerald Anklet","Ruby Earrings",
       "Sapphire Crown","Antique Diamond Ring","Platinum Letter Opener","Gold Magnifying Glass",
-      // Legendary ($25,000-$50,000)
+      // 🏠 MANSION TIER ($1,000,000 - $15,000,000)
       "Silk Tapestry","Rare Painting","Ancient Scroll","Gold Chalice","Jade Dragon","Pearl Necklace",
       "Crystal Skull","Diamond Crown","Platinum Sculpture","Ruby Sword","Emerald Tablet","Sapphire Shield",
       "Antique Armor Piece","Medieval Dagger","Samurai Katana","Viking Axe","Egyptian Amulet","Greek Urn",
@@ -253,12 +253,12 @@ export const stealFromHouse = mutation({
       10500, 11500, 12500, 13500, 14500, 15500, 16500, 17500, 18500, 19500,
       20500, 21500, 22500, 23500, 24500, 8200, 9200, 10200, 11200, 12200,
       13200, 14200, 15200, 16200, 17200, 18200, 19200, 20200, 21200, 22200,
-      // Legendary ($25,000-$50,000)
-      25000, 27000, 29000, 31000, 33000, 35000, 37000, 39000, 41000, 43000,
-      45000, 47000, 49000, 50000, 26000, 28000, 30000, 32000, 34000, 36000,
-      38000, 40000, 42000, 44000, 46000, 48000, 50000, 5000000, 5000000, 5000000,
-      5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000,
-      5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000, 5000000,
+      // Mansion Tier ($1,000,000 - $15,000,000)
+      1000000, 1500000, 2000000, 2500000, 3000000, 3500000, 4000000, 4500000, 5000000, 5500000,
+      6000000, 6500000, 7000000, 7500000, 1200000, 1800000, 2200000, 2800000, 3200000, 3800000,
+      4200000, 4800000, 5200000, 5800000, 6200000, 6800000, 7200000, 8000000, 8500000, 9000000,
+      9500000, 10000000, 10500000, 11000000, 11500000, 12000000, 12500000, 13000000, 13500000, 14000000,
+      14500000, 15000000, 1100000, 1300000, 1600000, 1900000, 2300000, 2700000, 3100000, 3600000,
     ];
 
     let moneyEarned = 0;
