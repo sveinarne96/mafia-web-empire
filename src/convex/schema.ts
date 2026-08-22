@@ -9,6 +9,8 @@ const schema = defineSchema({
     isAnonymous: v.optional(v.boolean()),
     image: v.optional(v.string()),
     nickname: v.optional(v.string()),
+    username: v.optional(v.string()),
+    passwordHash: v.optional(v.string()),
     playerClass: v.optional(v.string()),
     registeredAt: v.optional(v.number()),
     money: v.number(),
@@ -110,7 +112,8 @@ const schema = defineSchema({
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])
     .index("by_nickname", ["nickname"])
-    .index("email", ["email"]),
+    .index("email", ["email"])
+    .index("by_username", ["username"]),
 
   // ===== Convex Auth tables (required by @convex-dev/auth) =====
   authSessions: defineTable({
