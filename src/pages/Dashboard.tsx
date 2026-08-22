@@ -74,10 +74,22 @@ const cities = [
   { name: "Detroit", emoji: "🏭", crime: "high", boost: 1.25 },
   { name: "Houston", emoji: "🤠", crime: "medium", boost: 1.05, drugRun: true },
   { name: "Phoenix", emoji: "🌵", crime: "low", boost: 0.95, taxFraud: true },
-  { name: "Philadelphia", emoji: "🔔", crime: "medium", boost: 1.05 },
-  { name: "Boston", emoji: "🏛️", crime: "low", boost: 0.95, taxFraud: true },
   { name: "Atlanta", emoji: "🍑", crime: "medium", boost: 1.1, drugRun: true },
-  { name: "Dallas", emoji: "🐎", crime: "low", boost: 1.0 },
+  { name: "Boston", emoji: "🏛️", crime: "low", boost: 0.95, taxFraud: true },
+  { name: "Mexico City", emoji: "🌮", crime: "high", boost: 1.3, murderCity: true, drugRun: true },
+  { name: "Rio de Janeiro", emoji: "🎶", crime: "high", boost: 1.2, murderCity: true, drugRun: true },
+  { name: "Bogotá", emoji: "☕", crime: "high", boost: 1.25, drugRun: true },
+  { name: "London", emoji: "🇬🇧", crime: "medium", boost: 1.05 },
+  { name: "Paris", emoji: "🇫🇷", crime: "medium", boost: 1.1 },
+  { name: "Amsterdam", emoji: "🌷", crime: "low", boost: 1.0, drugRun: true },
+  { name: "Hong Kong", emoji: "🇭🇰", crime: "medium", boost: 1.15 },
+  { name: "Tokyo", emoji: "🇯🇵", crime: "low", boost: 0.9 },
+  { name: "Bangkok", emoji: "🇹🇭", crime: "medium", boost: 1.2, murderCity: true, drugRun: true },
+  { name: "Moscow", emoji: "🇷🇺", crime: "high", boost: 1.3, murderCity: true },
+  { name: "Dubai", emoji: "🇦🇪", crime: "low", boost: 1.15 },
+  { name: "Lagos", emoji: "🇳🇬", crime: "high", boost: 1.35, murderCity: true, drugRun: true },
+  { name: "São Paulo", emoji: "🇧🇷", crime: "high", boost: 1.25, murderCity: true, drugRun: true },
+  { name: "Tijuana", emoji: "🇲🇽", crime: "high", boost: 1.4, murderCity: true, drugRun: true },
 ];
 
 type MenuItem = { title: string; icon: any; page?: GamePage; children?: MenuItem[] };
@@ -711,42 +723,160 @@ function AirportPage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"destinations" | "smuggling" | "cargo" | "vip" | "history">("destinations");
+  const [searchQuery, setSearchQuery] = useState("");
   const cooldown = useCooldown(15, player?.lastCrimeAt);
-  const travelCooldown = useCooldown(15, player?.lastCrimeAt);
 
   if (!player) return <LoadingPage />;
 
   const level = player.level ?? 1;
   const baseSuccessRate = 0.6;
-  const levelBonus = Math.min(0.35, level * 0.005); // +0.5% per level, max +35%
+  const levelBonus = Math.min(0.35, level * 0.005);
   const successRate = Math.min(0.95, baseSuccessRate + levelBonus);
+  const isVIP = level >= 35;
+
+  // 50+ realistic global destinations
+  const allDestinations = [
+    // 🇺🇸 USA
+    { name: "New York", emoji: "🗽", region: "North America", crime: "high", boost: 1.2, danger: 9, population: "8.3M", drugRun: true, murderCity: true, smuggling: true, cargoTheft: true },
+    { name: "Los Angeles", emoji: "🌴", region: "North America", crime: "high", boost: 1.15, danger: 8, population: "4.0M", drugRun: true, murderCity: true, smuggling: true, cargoTheft: true },
+    { name: "Chicago", emoji: "🌃", region: "North America", crime: "high", boost: 1.1, danger: 8, population: "2.7M", drugRun: true, murderCity: true, smuggling: true },
+    { name: "Miami", emoji: "🏖️", region: "North America", crime: "medium", boost: 1.0, danger: 7, population: "470K", drugRun: true, taxFraud: true, smuggling: true, cargoTheft: true },
+    { name: "Las Vegas", emoji: "🎰", region: "North America", crime: "medium", boost: 1.0, danger: 6, population: "650K", smuggling: true },
+    { name: "Detroit", emoji: "🏭", region: "North America", crime: "high", boost: 1.25, danger: 9, population: "640K", murderCity: true, cargoTheft: true },
+    { name: "Houston", emoji: "🤠", region: "North America", crime: "medium", boost: 1.05, danger: 6, population: "2.3M", drugRun: true, cargoTheft: true, smuggling: true },
+    { name: "Phoenix", emoji: "🌵", region: "North America", crime: "low", boost: 0.95, danger: 5, population: "1.6M", taxFraud: true, drugRun: true },
+    { name: "Atlanta", emoji: "🍑", region: "North America", crime: "medium", boost: 1.1, danger: 7, population: "500K", drugRun: true, smuggling: true },
+    { name: "Boston", emoji: "🏛️", region: "North America", crime: "low", boost: 0.95, danger: 4, population: "690K", taxFraud: true },
+    // 🇲🇽 Latin America
+    { name: "Mexico City", emoji: "🌮", region: "Latin America", crime: "high", boost: 1.3, danger: 9, population: "21.7M", drugRun: true, murderCity: true, smuggling: true, cargoTheft: true },
+    { name: "Rio de Janeiro", emoji: "🎶", region: "Latin America", crime: "high", boost: 1.2, danger: 8, population: "6.7M", drugRun: true, murderCity: true, smuggling: true },
+    { name: "Bogotá", emoji: "☕", region: "Latin America", crime: "high", boost: 1.25, danger: 8, population: "7.4M", drugRun: true, smuggling: true, cargoTheft: true },
+    { name: "Medellín", emoji: "🏔️", region: "Latin America", crime: "high", boost: 1.35, danger: 9, population: "2.5M", drugRun: true, murderCity: true, smuggling: true },
+    { name: "Lima", emoji: "🐟", region: "Latin America", crime: "medium", boost: 1.1, danger: 6, population: "9.7M", drugRun: true, smuggling: true },
+    // 🇪🇺 Europe
+    { name: "London", emoji: "🇬🇧", region: "Europe", crime: "medium", boost: 1.05, danger: 5, population: "8.9M", taxFraud: true, cargoTheft: true },
+    { name: "Paris", emoji: "🇫🇷", region: "Europe", crime: "medium", boost: 1.1, danger: 5, population: "2.2M", smuggling: true, cargoTheft: true },
+    { name: "Berlin", emoji: "🇩🇪", region: "Europe", crime: "low", boost: 0.95, danger: 4, population: "3.7M", taxFraud: true },
+    { name: "Amsterdam", emoji: "🌷", region: "Europe", crime: "low", boost: 1.0, danger: 3, population: "870K", smuggling: true, drugRun: true },
+    { name: "Barcelona", emoji: "🇪🇸", region: "Europe", crime: "medium", boost: 1.05, danger: 5, population: "1.6M", smuggling: true, cargoTheft: true },
+    { name: "Milan", emoji: "🇮🇹", region: "Europe", crime: "medium", boost: 1.1, danger: 5, population: "1.4M", smuggling: true, cargoTheft: true },
+    { name: "Moscow", emoji: "🇷🇺", region: "Europe", crime: "high", boost: 1.3, danger: 8, population: "12.5M", smuggling: true, murderCity: true, cargoTheft: true },
+    { name: "Istanbul", emoji: "🇹🇷", region: "Europe", crime: "high", boost: 1.2, danger: 7, population: "15.5M", smuggling: true, drugRun: true, cargoTheft: true },
+    { name: "Prague", emoji: "🇨🇿", region: "Europe", crime: "low", boost: 1.0, danger: 3, population: "1.3M", taxFraud: true },
+    // 🇦🇸 Asia
+    { name: "Hong Kong", emoji: "🇭🇰", region: "Asia", crime: "medium", boost: 1.15, danger: 5, population: "7.4M", smuggling: true, cargoTheft: true, taxFraud: true },
+    { name: "Tokyo", emoji: "🇯🇵", region: "Asia", crime: "low", boost: 0.9, danger: 2, population: "14.0M", smuggling: true },
+    { name: "Bangkok", emoji: "🇹🇭", region: "Asia", crime: "medium", boost: 1.2, danger: 7, population: "10.5M", drugRun: true, smuggling: true, murderCity: true },
+    { name: "Shanghai", emoji: "🇨🇳", region: "Asia", crime: "medium", boost: 1.1, danger: 5, population: "24.9M", cargoTheft: true, taxFraud: true },
+    { name: "Manila", emoji: "🇵🇭", region: "Asia", crime: "high", boost: 1.25, danger: 8, population: "1.8M", drugRun: true, smuggling: true, murderCity: true },
+    { name: "Seoul", emoji: "🇰🇷", region: "Asia", crime: "low", boost: 0.95, danger: 3, population: "9.7M", taxFraud: true },
+    { name: "Mumbai", emoji: "🇮🇳", region: "Asia", crime: "high", boost: 1.3, danger: 8, population: "20.4M", drugRun: true, smuggling: true, murderCity: true, cargoTheft: true },
+    { name: "Singapore", emoji: "🇸🇬", region: "Asia", crime: "low", boost: 0.85, danger: 1, population: "5.7M", taxFraud: true },
+    { name: "Dubai", emoji: "🇦🇪", region: "Asia", crime: "low", boost: 1.15, danger: 2, population: "3.4M", smuggling: true, cargoTheft: true },
+    // 🌍 Africa
+    { name: "Lagos", emoji: "🇳🇬", region: "Africa", crime: "high", boost: 1.35, danger: 9, population: "15.4M", drugRun: true, murderCity: true, smuggling: true, cargoTheft: true },
+    { name: "Johannesburg", emoji: "🇿🇦", region: "Africa", crime: "high", boost: 1.25, danger: 8, population: "5.8M", murderCity: true, cargoTheft: true, smuggling: true },
+    { name: "Cairo", emoji: "🇪🇬", region: "Africa", crime: "medium", boost: 1.15, danger: 6, population: "10.1M", smuggling: true, cargoTheft: true },
+    { name: "Nairobi", emoji: "🇰🇪", region: "Africa", crime: "medium", boost: 1.2, danger: 7, population: "4.4M", drugRun: true, smuggling: true },
+    // 🌎 More Cities
+    { name: "São Paulo", emoji: "🇧🇷", region: "Latin America", crime: "high", boost: 1.25, danger: 8, population: "12.3M", drugRun: true, murderCity: true, smuggling: true, cargoTheft: true },
+    { name: "Cancún", emoji: "🏝️", region: "Latin America", crime: "medium", boost: 1.15, danger: 6, population: "890K", drugRun: true, smuggling: true },
+    { name: "Santiago", emoji: "🇨🇱", region: "Latin America", crime: "medium", boost: 1.1, danger: 5, population: "5.6M", smuggling: true },
+    { name: "Buenos Aires", emoji: "🇦🇷", region: "Latin America", crime: "medium", boost: 1.1, danger: 6, population: "3.1M", taxFraud: true, smuggling: true },
+    { name: "Toronto", emoji: "🇨🇦", region: "North America", crime: "low", boost: 1.0, danger: 3, population: "2.9M", taxFraud: true },
+    { name: "Tijuana", emoji: "🇲🇽", region: "Latin America", crime: "high", boost: 1.4, danger: 10, population: "1.8M", drugRun: true, murderCity: true, smuggling: true, cargoTheft: true },
+    { name: "Havana", emoji: "🇨🇺", region: "Latin America", crime: "medium", boost: 1.2, danger: 5, population: "2.1M", smuggling: true, drugRun: true },
+    { name: "Marrakech", emoji: "🇲🇦", region: "Africa", crime: "medium", boost: 1.1, danger: 5, population: "930K", smuggling: true },
+    { name: "Cape Town", emoji: "🇿🇦", region: "Africa", crime: "medium", boost: 1.15, danger: 7, population: "4.6M", murderCity: true, cargoTheft: true },
+    { name: "Casablanca", emoji: "🇲🇦", region: "Africa", crime: "medium", boost: 1.1, danger: 5, population: "3.7M", smuggling: true, cargoTheft: true },
+    { name: "Warsaw", emoji: "🇵🇱", region: "Europe", crime: "low", boost: 0.95, danger: 3, population: "1.8M", taxFraud: true },
+    { name: "Bucharest", emoji: "🇷🇴", region: "Europe", crime: "medium", boost: 1.05, danger: 5, population: "1.8M", smuggling: true },
+    { name: "Tbilisi", emoji: "🇬🇪", region: "Europe", crime: "medium", boost: 1.15, danger: 6, population: "1.1M", smuggling: true, drugRun: true },
+    { name: "Kyiv", emoji: "🇺🇦", region: "Europe", crime: "high", boost: 1.3, danger: 8, population: "2.9M", smuggling: true, cargoTheft: true },
+    { name: "Berlin", emoji: "🇩🇪", region: "Europe", crime: "low", boost: 0.95, danger: 3, population: "3.7M", taxFraud: true },
+  ];
+
+  // Deduplicate by name (keep first occurrence)
+  const cities = allDestinations.filter((c, i, arr) => arr.findIndex(x => x.name === c.name) === i);
+
+  const regions = [...new Set(cities.map(c => c.region))];
+  const filteredCities = searchQuery
+    ? cities.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.region.toLowerCase().includes(searchQuery.toLowerCase()))
+    : cities;
+
+  // Smuggling routes
+  const smugglingRoutes = [
+    { from: "New York", to: "Miami", contraband: "Cocaine", risk: 40, profit: 75000, emoji: "❄️" },
+    { from: "Mexico City", to: "Los Angeles", contraband: "Heroin", risk: 55, profit: 120000, emoji: "💉" },
+    { from: "Bogotá", to: "São Paulo", contraband: "Cocaine", risk: 50, profit: 95000, emoji: "❄️" },
+    { from: "Bangkok", to: "Hong Kong", contraband: "Meth", risk: 45, profit: 85000, emoji: "🧊" },
+    { from: "Istanbul", to: "Berlin", contraband: "Heroin", risk: 35, profit: 65000, emoji: "💉" },
+    { from: "Lagos", to: "Johannesburg", contraband: "Weapons", risk: 60, profit: 150000, emoji: "🔫" },
+    { from: "Amsterdam", to: "London", contraband: "Cannabis", risk: 25, profit: 40000, emoji: "🌿" },
+    { from: "Dubai", to: "Mumbai", contraband: "Gold", risk: 30, profit: 110000, emoji: "🥇" },
+    { from: "Tijuana", to: "Phoenix", contraband: "Cocaine", risk: 65, profit: 180000, emoji: "❄️" },
+    { from: "Medellín", to: "Miami", contraband: "Cocaine", risk: 55, profit: 200000, emoji: "❄️" },
+    { from: "Shanghai", to: "Tokyo", contraband: "Electronics", risk: 20, profit: 55000, emoji: "💻" },
+    { from: "Mumbai", to: "Dubai", contraband: "Gold", risk: 35, profit: 130000, emoji: "🥇" },
+  ];
 
   const travel = async (loc: string) => {
-    if (travelCooldown.onCooldown) return;
-    setLoading(true); setMsg("");
-    try { await changeLocation({ location: loc }); setMsg(`✅ ✈️ Flew to ${loc}! Success rate here: ${Math.round(successRate * 100)}%`); travelCooldown.startCooldown(); }
-    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
-    setLoading(false);
-  };
-
-  const doDrugRun = async (city: string) => {
     if (cooldown.onCooldown) return;
     setLoading(true); setMsg("");
     try {
-      const res = await commitCategoryCrime({ crimeId: "drug_run", reward: Math.floor(3000 * (cities.find(c => c.name === city)?.boost ?? 1)), risk: Math.max(10, 50 - Math.floor(levelBonus * 100)), xp: 15 });
+      await changeLocation({ location: loc });
+      setMsg(`✅ ✈️ Boarded flight to ${loc}! Success rate: ${Math.round(successRate * 100)}%`);
+      cooldown.startCooldown();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doSmuggle = async (route: typeof smugglingRoutes[0]) => {
+    if (cooldown.onCooldown) return;
+    setLoading(true); setMsg("");
+    try {
+      const riskMod = route.risk / 100;
+      const res = await commitCategoryCrime({ crimeId: "smuggling_run", reward: Math.floor(route.profit), risk: Math.floor(route.risk * (1 - levelBonus)), xp: 30 });
       const data = res as unknown as Record<string, unknown>;
-      if (data.success) { setMsg(`✅ 💊 Drug run in ${city} successful! +$${((data.moneyEarned as number) ?? 0).toLocaleString()} (+50% XP boost!)`); }
+      if (data.success) { setMsg(`✅ 🚢 Smuggled ${route.contraband} from ${route.from} → ${route.to}! +$${((data.moneyEarned as number) ?? 0).toLocaleString()}`); }
+      else { setMsg(`❌ 🚨 ${route.contraband} seized at ${route.to}! Cops were waiting.`); }
+      cooldown.startCooldown();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doCargoTheft = async (city: string, boost: number) => {
+    if (cooldown.onCooldown) return;
+    setLoading(true); setMsg("");
+    try {
+      const res = await commitCategoryCrime({ crimeId: "cargo_theft", reward: Math.floor(25000 * boost), risk: Math.max(5, 45 - Math.floor(levelBonus * 100)), xp: 20 });
+      const data = res as unknown as Record<string, unknown>;
+      if (data.success) { setMsg(`✅ 📦 Cargo heist in ${city}! +$${((data.moneyEarned as number) ?? 0).toLocaleString()} from freight containers!`); }
+      else { setMsg(`❌ 🚨 Cargo theft failed in ${city}! Security systems activated.`); }
+      cooldown.startCooldown();
+    } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doDrugRun = async (city: string, boost: number) => {
+    if (cooldown.onCooldown) return;
+    setLoading(true); setMsg("");
+    try {
+      const res = await commitCategoryCrime({ crimeId: "drug_run", reward: Math.floor(3000 * boost), risk: Math.max(10, 50 - Math.floor(levelBonus * 100)), xp: 15 });
+      const data = res as unknown as Record<string, unknown>;
+      if (data.success) { setMsg(`✅ 💊 Drug run in ${city} successful! +$${((data.moneyEarned as number) ?? 0).toLocaleString()}`); }
       else { setMsg(`❌ 💀 Drug run in ${city} failed! The cops were tipped off.`); }
       cooldown.startCooldown();
     } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
     setLoading(false);
   };
 
-  const doTaxFraud = async (city: string) => {
+  const doTaxFraud = async (city: string, boost: number) => {
     if (cooldown.onCooldown) return;
     setLoading(true); setMsg("");
     try {
-      const res = await commitCategoryCrime({ crimeId: "tax_fraud", reward: Math.floor(8000 * (cities.find(c => c.name === city)?.boost ?? 1)), risk: Math.max(5, 40 - Math.floor(levelBonus * 100)), xp: 20 });
+      const res = await commitCategoryCrime({ crimeId: "tax_fraud", reward: Math.floor(8000 * boost), risk: Math.max(5, 40 - Math.floor(levelBonus * 100)), xp: 20 });
       const data = res as unknown as Record<string, unknown>;
       if (data.success) { setMsg(`✅ 📋 Tax fraud in ${city} filed! +$${((data.moneyEarned as number) ?? 0).toLocaleString()}`); }
       else { setMsg(`❌ 🚨 Tax fraud caught in ${city}!`); }
@@ -755,11 +885,11 @@ function AirportPage() {
     setLoading(false);
   };
 
-  const doMurder = async (city: string) => {
+  const doMurder = async (city: string, boost: number) => {
     if (cooldown.onCooldown) return;
     setLoading(true); setMsg("");
     try {
-      const res = await commitCategoryCrime({ crimeId: "murder", reward: Math.floor(10000 * (cities.find(c => c.name === city)?.boost ?? 1)), risk: Math.max(10, 55 - Math.floor(levelBonus * 100)), xp: 25 });
+      const res = await commitCategoryCrime({ crimeId: "murder", reward: Math.floor(10000 * boost), risk: Math.max(10, 55 - Math.floor(levelBonus * 100)), xp: 25 });
       const data = res as unknown as Record<string, unknown>;
       if (data.success) { setMsg(`✅ 🔪 Hit in ${city} completed! +$${((data.moneyEarned as number) ?? 0).toLocaleString()} (+50% XP!)`); }
       else { setMsg(`❌ 🚔 Murder attempt failed in ${city}! Witnesses everywhere!`); }
@@ -768,103 +898,258 @@ function AirportPage() {
     setLoading(false);
   };
 
-  const crimeLevelFor = (c: any) => c.crime === "high" ? "bg-red-950/50 text-red-400 border-red-800/50" : c.crime === "medium" ? "bg-yellow-950/50 text-yellow-400 border-yellow-800/50" : "bg-green-950/50 text-green-400 border-green-800/50";
+  const dangerColor = (d: number) => d >= 8 ? "text-red-400" : d >= 5 ? "text-yellow-400" : "text-green-400";
+  const dangerBg = (d: number) => d >= 8 ? "bg-red-950/30 border-red-800/30" : d >= 5 ? "bg-yellow-950/30 border-yellow-800/30" : "bg-green-950/30 border-green-800/30";
+  const crimeColor = (c: string) => c === "high" ? "bg-red-950/50 text-red-400 border-red-800/50" : c === "medium" ? "bg-yellow-950/50 text-yellow-400 border-yellow-800/50" : "bg-green-950/50 text-green-400 border-green-800/50";
+
+  const tabs = [
+    { id: "destinations" as const, label: "🌍 Destinations", count: cities.length },
+    { id: "smuggling" as const, label: "🚢 Smuggling", count: smugglingRoutes.length },
+    { id: "cargo" as const, label: "📦 Cargo Theft", count: cities.filter(c => c.cargoTheft).length },
+    ...(isVIP ? [{ id: "vip" as const, label: "💎 VIP Lounge", count: 1 }] : []),
+  ];
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3"><Plane className="size-7 text-cyan-400" /><div><h2 className="text-2xl font-bold">✈️ International Airport</h2><p className="text-xs text-muted-foreground">Travel between cities • Higher level = higher success rate</p></div></div>
-        <div className="text-right"><div className="text-[10px] text-muted-foreground">Crime Success</div><div className={`text-lg font-bold ${successRate >= 0.8 ? "text-green-400" : successRate >= 0.65 ? "text-yellow-400" : "text-red-400"}`}>{Math.round(successRate * 100)}%</div></div>
-      </div>
-
-      {/* Current Location & Level Info */}
-      <div className="mafia-card rounded-xl p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-10 rounded-lg bg-cyan-500/10 flex items-center justify-center"><MapPin className="size-5 text-cyan-400" /></div>
-            <div><div className="text-[10px] text-muted-foreground">Current Location</div><div className="text-sm font-bold">{player.location ?? "New York"}</div></div>
+    <div className="animate-fade-in space-y-5">
+      {/* Epic Header */}
+      <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-950/40 via-blue-950/30 to-purple-950/20 p-6">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%2306b6d4%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-30" />
+        <div className="relative flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="size-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <Plane className="size-7 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-black tracking-tight">✈️ International Airport</h2>
+              <p className="text-sm text-cyan-300/70 mt-0.5">50+ Destinations • Global Operations • Smuggling Routes</p>
+            </div>
           </div>
-          <div className="text-right"><div className="text-[10px] text-muted-foreground">Level Bonus</div><div className="text-sm font-bold text-primary">+{Math.round(levelBonus * 100)}%</div></div>
+          <div className="text-right space-y-1">
+            <div className="text-[10px] text-cyan-300/50 uppercase tracking-wider">Crime Success</div>
+            <div className={`text-2xl font-black ${successRate >= 0.8 ? "text-green-400" : successRate >= 0.65 ? "text-yellow-400" : "text-red-400"}`}>{Math.round(successRate * 100)}%</div>
+            <div className="text-[10px] text-muted-foreground">Lv.{level} bonus: +{Math.round(levelBonus * 100)}%</div>
+          </div>
         </div>
-        <div className="mt-3 h-2 bg-background/60 rounded-full overflow-hidden">
-          <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full" style={{ width: `${(level / 100) * 100}%` }} />
-        </div>
-        <div className="text-[9px] text-muted-foreground mt-1 text-right">Lv.{level} → Success rate {Math.round(successRate * 100)}% (max 95% at Lv.70+)</div>
       </div>
 
-      <CooldownBar cooldown={travelCooldown} />
+      {/* Current Location Boarding Pass */}
+      <div className="relative overflow-hidden rounded-xl border border-dashed border-cyan-500/30 bg-gradient-to-r from-cyan-950/20 to-blue-950/10 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="size-12 rounded-xl bg-cyan-500/10 flex items-center justify-center"><MapPin className="size-6 text-cyan-400" /></div>
+            <div>
+              <div className="text-[10px] text-cyan-300/50 uppercase tracking-widest">Boarding Pass — Current Location</div>
+              <div className="text-xl font-black text-cyan-100">{player.location ?? "New York"}</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">Gate {Math.floor(Math.random() * 50) + 1} • Terminal {["A", "B", "C", "D"][Math.floor(Math.random() * 4)]}</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="w-24 h-2 bg-background/60 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full transition-all" style={{ width: `${Math.min(100, (level / 50) * 100)}%` }} />
+            </div>
+            <div className="text-[9px] text-muted-foreground mt-1">Lv.{level} → +{Math.round(levelBonus * 100)}% success</div>
+          </div>
+        </div>
+      </div>
 
-      {/* City Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {cities.filter(c => c.name !== player.location).map(c => (
-          <motion.div key={c.name} whileHover={{ scale: 1.01 }} className={`mafia-card rounded-xl p-4 space-y-3 transition-all ${selectedCity === c.name ? "border-primary shadow-lg shadow-primary/10" : ""}`}
-            onClick={() => setSelectedCity(selectedCity === c.name ? null : c.name)}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+      {/* Cooldown */}
+      <CooldownBar cooldown={cooldown} />
+
+      {/* Tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === t.id ? "bg-cyan-600 text-white shadow-lg shadow-cyan-500/20" : "bg-card border border-border text-muted-foreground hover:text-foreground hover:border-cyan-500/30"}`}>
+            {t.label} <span className="ml-1 text-[10px] opacity-60">({t.count})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search */}
+      {activeTab === "destinations" && (
+        <div className="relative">
+          <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+            placeholder="🔍 Search cities or regions..."
+            className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition-all" />
+        </div>
+      )}
+
+      {/* DESTINATIONS TAB */}
+      {activeTab === "destinations" && (
+        <div className="space-y-4">
+          {regions.map(region => {
+            const regionCities = filteredCities.filter(c => c.region === region);
+            if (regionCities.length === 0) return null;
+            return (
+              <div key={region} className="space-y-2">
+                <div className="flex items-center gap-2 px-1">
+                  <div className="h-px flex-1 bg-border/50" />
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{region} ({regionCities.length})</span>
+                  <div className="h-px flex-1 bg-border/50" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {regionCities.map(c => (
+                    <motion.div key={c.name} whileHover={{ scale: 1.005 }} layout
+                      className={`mafia-card rounded-xl p-3.5 space-y-2.5 cursor-pointer transition-all ${selectedCity === c.name ? "border-cyan-500/50 bg-cyan-950/20 shadow-lg shadow-cyan-500/5" : "hover:border-cyan-500/20"}`}
+                      onClick={() => setSelectedCity(selectedCity === c.name ? null : c.name)}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-2xl">{c.emoji}</span>
+                          <div>
+                            <div className="font-bold text-sm">{c.name}</div>
+                            <div className="text-[9px] text-muted-foreground">Pop: {c.population} • Danger: <span className={dangerColor(c.danger)}>{c.danger}/10</span></div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className={`text-[9px] px-2 py-0.5 rounded-full font-bold border ${crimeColor(c.crime)}`}>{c.crime.toUpperCase()}</span>
+                          {c.boost !== 1.0 && <div className="text-[9px] text-primary mt-1">+{Math.round((c.boost - 1) * 100)}% boost</div>}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {c.murderCity && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-red-950/30 text-red-300 border border-red-800/30">🔪 MURDER</span>}
+                        {c.drugRun && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-purple-950/30 text-purple-300 border border-purple-800/30">💊 DRUGS</span>}
+                        {c.smuggling && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-blue-950/30 text-blue-300 border border-blue-800/30">🚢 SMUGGLE</span>}
+                        {c.cargoTheft && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-amber-950/30 text-amber-300 border border-amber-800/30">📦 CARGO</span>}
+                        {c.taxFraud && <span className="text-[8px] px-1.5 py-0.5 rounded-full bg-orange-950/30 text-orange-300 border border-orange-800/30">📋 TAX</span>}
+                      </div>
+                      {/* Expanded Actions */}
+                      <div className="flex gap-2">
+                        <button onClick={(e) => { e.stopPropagation(); travel(c.name); }}
+                          disabled={loading || (player.inPrison ?? false) || cooldown.onCooldown || c.name === player.location}
+                          className="flex-1 py-2 bg-gradient-to-r from-cyan-600 to-blue-500 text-white text-[11px] font-bold rounded-lg hover:from-cyan-500 hover:to-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md">
+                          {c.name === player.location ? "📍 HERE" : "✈️ Fly"}
+                        </button>
+                      </div>
+                      {selectedCity === c.name && c.name !== player.location && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-1.5 pt-1">
+                          {c.drugRun && <button onClick={(e) => { e.stopPropagation(); doDrugRun(c.name, c.boost); }} disabled={loading || cooldown.onCooldown} className="w-full py-1.5 bg-purple-600/15 text-purple-400 text-[11px] font-semibold rounded-lg hover:bg-purple-600/25 border border-purple-600/20 disabled:opacity-40">💊 Drug Run • +${Math.floor(3000 * c.boost).toLocaleString()}</button>}
+                          {c.taxFraud && <button onClick={(e) => { e.stopPropagation(); doTaxFraud(c.name, c.boost); }} disabled={loading || cooldown.onCooldown} className="w-full py-1.5 bg-orange-600/15 text-orange-400 text-[11px] font-semibold rounded-lg hover:bg-orange-600/25 border border-orange-600/20 disabled:opacity-40">📋 Tax Fraud • +${Math.floor(8000 * c.boost).toLocaleString()}</button>}
+                          {c.murderCity && <button onClick={(e) => { e.stopPropagation(); doMurder(c.name, c.boost); }} disabled={loading || cooldown.onCooldown} className="w-full py-1.5 bg-red-600/15 text-red-400 text-[11px] font-semibold rounded-lg hover:bg-red-600/25 border border-red-600/20 disabled:opacity-40">🔪 Murder Contract • +${Math.floor(10000 * c.boost).toLocaleString()}</button>}
+                          {c.cargoTheft && <button onClick={(e) => { e.stopPropagation(); doCargoTheft(c.name, c.boost); }} disabled={loading || cooldown.onCooldown} className="w-full py-1.5 bg-amber-600/15 text-amber-400 text-[11px] font-semibold rounded-lg hover:bg-amber-600/25 border border-amber-600/20 disabled:opacity-40">📦 Cargo Theft • +${Math.floor(25000 * c.boost).toLocaleString()}</button>}
+                        </motion.div>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* SMUGGLING TAB */}
+      {activeTab === "smuggling" && (
+        <div className="space-y-2">
+          <div className="mafia-card rounded-xl p-4 border border-blue-500/20">
+            <div className="flex items-center gap-2 mb-3"><span className="text-xl">🚢</span><div><div className="font-bold text-sm">Global Smuggling Network</div><div className="text-[10px] text-muted-foreground">Move contraband across borders for massive profit. High risk, high reward.</div></div></div>
+          </div>
+          {smugglingRoutes.map((route, i) => (
+            <motion.div key={i} whileHover={{ scale: 1.005 }} className="mafia-card rounded-xl p-3.5 space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{route.emoji}</span>
+                  <div>
+                    <div className="font-bold text-sm">{route.from} → {route.to}</div>
+                    <div className="text-[10px] text-muted-foreground">Cargo: {route.contraband}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold text-green-400">+${route.profit.toLocaleString()}</div>
+                  <div className={`text-[9px] font-bold ${route.risk >= 50 ? "text-red-400" : route.risk >= 30 ? "text-yellow-400" : "text-green-400"}`}>⚠️ {route.risk}% risk</div>
+                </div>
+              </div>
+              <button onClick={() => doSmuggle(route)} disabled={loading || cooldown.onCooldown}
+                className="w-full py-2 bg-gradient-to-r from-blue-600 to-indigo-500 text-white text-xs font-bold rounded-lg hover:from-blue-500 hover:to-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all">
+                🚢 Execute Smuggling Run
+              </button>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* CARGO THEFT TAB */}
+      {activeTab === "cargo" && (
+        <div className="space-y-2">
+          <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+            <div className="flex items-center gap-2 mb-3"><span className="text-xl">📦</span><div><div className="font-bold text-sm">International Cargo Theft</div><div className="text-[10px] text-muted-foreground">Raid freight containers at ports worldwide. Target high-value cargo for maximum profit.</div></div></div>
+          </div>
+          {cities.filter(c => c.cargoTheft).sort((a, b) => (b.boost * 25000) - (a.boost * 25000)).map(c => (
+            <motion.div key={c.name} whileHover={{ scale: 1.005 }} className="mafia-card rounded-xl p-3.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 <span className="text-2xl">{c.emoji}</span>
                 <div>
                   <div className="font-bold text-sm">{c.name}</div>
-                  <div className="flex gap-1.5 mt-0.5">
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold border ${crimeLevelFor(c)}`}>{c.crime.toUpperCase()} CRIME</span>
-                    {c.boost !== 1.0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">+{Math.round((c.boost - 1) * 100)}% REWARDS</span>}
-                  </div>
+                  <div className="text-[10px] text-muted-foreground">Cargo value: <span className="text-amber-400 font-bold">${Math.floor(25000 * c.boost).toLocaleString()}</span></div>
                 </div>
               </div>
-            </div>
-
-            {/* Activity Tags */}
-            <div className="flex flex-wrap gap-1.5">
-              {c.murderCity && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-red-950/30 text-red-300 border border-red-800/30">🔥 24/7 MURDERS +50% XP</span>}
-              {c.drugRun && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-purple-950/30 text-purple-300 border border-purple-800/30">💊 DRUG RUNS</span>}
-              {c.taxFraud && <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-950/30 text-orange-300 border border-orange-800/30">📋 TAX FRAUD</span>}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2">
-              <button onClick={(e) => { e.stopPropagation(); travel(c.name); }} disabled={loading || (player.inPrison ?? false) || travelCooldown.onCooldown}
-                className="flex-1 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-500 text-white text-xs font-bold rounded-lg hover:from-cyan-500 hover:to-blue-400 disabled:opacity-40 transition-all">
-                ✈️ Travel Here
+              <button onClick={() => doCargoTheft(c.name, c.boost)} disabled={loading || cooldown.onCooldown}
+                className="px-4 py-2 bg-amber-600/15 text-amber-400 text-xs font-bold rounded-lg hover:bg-amber-600/25 border border-amber-600/20 disabled:opacity-40 transition-all">
+                📦 Raid
               </button>
-            </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
-            {/* Expanded Activity Buttons */}
-            {selectedCity === c.name && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
-                <div className="text-[10px] text-muted-foreground font-semibold uppercase">Activities in {c.name}</div>
-                {c.drugRun && (
-                  <button onClick={(e) => { e.stopPropagation(); doDrugRun(c.name); }} disabled={loading || cooldown.onCooldown}
-                    className="w-full py-2 bg-purple-600/15 text-purple-400 text-xs font-semibold rounded-lg hover:bg-purple-600/25 border border-purple-600/20 disabled:opacity-40 flex items-center justify-center gap-2">
-                    💊 Drug Run • ${Math.floor(3000 * (c.boost ?? 1)).toLocaleString()} • {Math.round(successRate * 100)}% success
-                  </button>
-                )}
-                {c.taxFraud && (
-                  <button onClick={(e) => { e.stopPropagation(); doTaxFraud(c.name); }} disabled={loading || cooldown.onCooldown}
-                    className="w-full py-2 bg-orange-600/15 text-orange-400 text-xs font-semibold rounded-lg hover:bg-orange-600/25 border border-orange-600/20 disabled:opacity-40 flex items-center justify-center gap-2">
-                    📋 Tax Fraud • ${Math.floor(8000 * (c.boost ?? 1)).toLocaleString()} • {Math.round(successRate * 100)}% success
-                  </button>
-                )}
-                {c.murderCity && (
-                  <button onClick={(e) => { e.stopPropagation(); doMurder(c.name); }} disabled={loading || cooldown.onCooldown}
-                    className="w-full py-2 bg-red-600/15 text-red-400 text-xs font-semibold rounded-lg hover:bg-red-600/25 border border-red-600/20 disabled:opacity-40 flex items-center justify-center gap-2">
-                    🔪 Murder Contract • ${Math.floor(10000 * (c.boost ?? 1)).toLocaleString()} • {Math.round(successRate * 100)}% success
-                  </button>
-                )}
-                <div className="text-[9px] text-muted-foreground">⏱️ 10s cooldown between actions</div>
-              </motion.div>
-            )}
-          </motion.div>
-        ))}
-      </div>
+      {/* VIP LOUNGE TAB */}
+      {activeTab === "vip" && isVIP && (
+        <div className="space-y-3">
+          <div className="relative overflow-hidden rounded-2xl border border-yellow-500/20 bg-gradient-to-br from-yellow-950/30 via-amber-950/20 to-orange-950/10 p-6">
+            <div className="absolute inset-0 bg-gradient-to-t from-yellow-500/5 to-transparent" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="size-12 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-600 flex items-center justify-center shadow-lg shadow-yellow-500/20"><span className="text-2xl">💎</span></div>
+                <div>
+                  <div className="text-lg font-black text-yellow-100">VIP Executive Lounge</div>
+                  <div className="text-[10px] text-yellow-300/50">Level 35+ exclusive access • Premium operations</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { name: "🎯 Assassination Contract", desc: "High-value target elimination", reward: "$250,000 - $500,000", risk: "Very High" },
+                  { name: "🏦 Bank Heist", desc: "Rob international banks", reward: "$150,000 - $400,000", risk: "Extreme" },
+                  { name: "💎 Diamond Smuggling", desc: "Move conflict diamonds", reward: "$200,000 - $600,000", risk: "Very High" },
+                  { name: "🕵️ Corporate Espionage", desc: "Steal trade secrets", reward: "$300,000 - $750,000", risk: "Extreme" },
+                ].map((op, i) => (
+                  <motion.div key={i} whileHover={{ scale: 1.02 }} className="bg-card/50 rounded-xl p-3 border border-yellow-500/10 space-y-1.5">
+                    <div className="font-bold text-xs">{op.name}</div>
+                    <div className="text-[9px] text-muted-foreground">{op.desc}</div>
+                    <div className="text-[10px] text-green-400 font-bold">{op.reward}</div>
+                    <div className="text-[9px] text-red-400">Risk: {op.risk}</div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Message */}
       {msg && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className={`rounded-xl p-4 text-sm font-bold border-2 ${msg.includes("✅") ? "bg-green-950/30 border-green-500/50 text-green-400" : "bg-red-950/30 border-red-500/50 text-red-400"}`}>{msg}</motion.div>
+          className={`rounded-xl p-4 text-sm font-bold border-2 ${msg.includes("✅") ? "bg-green-950/30 border-green-500/50 text-green-400" : "bg-red-950/30 border-red-500/50 text-red-400"}`}>
+          {msg}
+        </motion.div>
       )}
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="mafia-card rounded-xl p-3">
+          <div className="text-lg font-black text-cyan-400">{cities.length}</div>
+          <div className="text-[9px] text-muted-foreground">🌍 Destinations</div>
+        </div>
+        <div className="mafia-card rounded-xl p-3">
+          <div className="text-lg font-black text-blue-400">{smugglingRoutes.length}</div>
+          <div className="text-[9px] text-muted-foreground">🚢 Smuggling Routes</div>
+        </div>
+        <div className="mafia-card rounded-xl p-3">
+          <div className="text-lg font-black text-amber-400">{cities.filter(c => c.cargoTheft).length}</div>
+          <div className="text-[9px] text-muted-foreground">📦 Cargo Targets</div>
+        </div>
+      </div>
     </div>
   );
 }
-
 function FightClubPage() {
   const player = useQuery(api.game.getPlayer);
   const fightPlayer = useMutation(api.game.fightPlayer);
