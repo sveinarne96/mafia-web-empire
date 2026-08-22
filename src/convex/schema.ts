@@ -34,6 +34,13 @@ const schema = defineSchema({
     lastDailyRaid: v.number(),
     lastRegenAt: v.number(),
     wantedLevel: v.number(),
+
+    marriedTo: v.optional(v.id("users")),
+    deadMansSwitch: v.optional(v.id("users")),
+    personalityRuthless: v.optional(v.number()),
+    personalityLoyal: v.optional(v.number()),
+    personalitySnake: v.optional(v.number()),
+    personalityLegend: v.optional(v.number()),
     reputation: v.number(),
     reputationAlignment: v.string(),
     prestige: v.number(),
@@ -669,6 +676,53 @@ const schema = defineSchema({
   })
     .index("by_player", ["playerId"])
     .index("by_player_mission", ["playerId", "missionId"]),
+
+  aiGangs: defineTable({
+    name: v.string(),
+    strength: v.number(),
+    territory: v.string(),
+    income: v.number(),
+    level: v.number(),
+    lastAttack: v.number(),
+    defeated: v.number(),
+  }),
+  districts: defineTable({
+    name: v.string(),
+    city: v.string(),
+    price: v.number(),
+    income: v.number(),
+    security: v.number(),
+    ownerId: v.optional(v.id("users")),
+  }).index("by_owner", ["ownerId"]),
+  auctions: defineTable({
+    itemName: v.string(),
+    description: v.string(),
+    startingBid: v.number(),
+    currentBid: v.number(),
+    highestBidder: v.optional(v.id("users")),
+    endsAt: v.number(),
+    rarity: v.string(),
+  }),
+  headlines: defineTable({
+    title: v.string(),
+    playerName: v.string(),
+    crimeType: v.string(),
+    timestamp: v.number(),
+  }),
+  radioMessages: defineTable({
+    senderId: v.id("users"),
+    senderName: v.string(),
+    message: v.string(),
+    timestamp: v.number(),
+  }),
+  timeCapsules: defineTable({
+    userId: v.id("users"),
+    itemId: v.id("inventory"),
+    itemName: v.string(),
+    buriedAt: v.number(),
+    diggableAt: v.number(),
+    dug: v.boolean(),
+  }),
 }, {
   schemaValidation: false,
 });

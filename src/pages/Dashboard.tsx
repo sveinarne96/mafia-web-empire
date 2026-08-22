@@ -1113,6 +1113,280 @@ function CrimeMasteryPage() {
   </div>);
 }
 
+
+// ===== ADVANCED FEATURE PAGES =====
+function MarriagePage() {
+  const propose = useMutation(api.advancedFeatures.proposeMarriage);
+  const divorceAction = useMutation(api.advancedFeatures.divorce);
+  const player = useQuery(api.game.getPlayer);
+  const [targetId, setTargetId] = useState("");
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Heart className="size-7 text-pink-400" /><h2 className="text-2xl font-bold">💍 Marriage</h2></div>
+    {(player as any).marriedTo ? (
+      <div className="mafia-card rounded-xl p-5 space-y-3 border border-pink-500/20">
+        <div className="text-center text-5xl">💍</div>
+        <div className="text-center"><div className="text-lg font-bold text-pink-400">You're Married!</div><div className="text-xs text-muted-foreground">Your spouse shares your bank and bonuses</div></div>
+        <button onClick={async () => { try { const r = await divorceAction({}); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="w-full py-3 bg-red-600 text-white font-bold rounded-lg">💔 Divorce</button>
+      </div>
+    ) : (
+      <div className="mafia-card rounded-xl p-5 space-y-3">
+        <div className="text-center text-4xl mb-2">💍</div>
+        <div className="text-center"><div className="font-bold">Propose Marriage</div><div className="text-xs text-muted-foreground">Share bank, combined power, +50% XP together</div></div>
+        <input value={targetId} onChange={e => setTargetId(e.target.value)} placeholder="Enter player ID..." className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm" />
+        <button onClick={async () => { try { const r = await propose({ targetId: targetId as any }); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="w-full py-3 bg-pink-600 text-white font-bold rounded-lg">💍 Propose — $500K Ring</button>
+        {msg && <div className="text-sm text-primary text-center">{msg}</div>}
+      </div>
+    )}
+  </div>);
+}
+
+function FamilyTreePage() {
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Users className="size-7 text-primary" /><h2 className="text-2xl font-bold">🌳 Crime Family Tree</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-4 border border-primary/20">
+      <div className="text-center text-5xl">🌳</div>
+      <div className="text-center"><div className="font-bold">Your Lineage</div><div className="text-xs text-muted-foreground">Your descendants earn you passive XP</div></div>
+      <div className="bg-background/50 rounded-lg p-4 text-center"><div className="text-2xl mb-2">👤</div><div className="font-bold text-sm">You (Founder)</div><div className="text-[10px] text-muted-foreground">0 descendants • +0 XP/hr from lineage</div></div>
+      <div className="text-xs text-center text-muted-foreground">Recruit players to your family tree to earn passive bonuses</div>
+    </div>
+  </div>);
+}
+
+function PersonalityPage() {
+  const traits = [{n:"Ruthless",e:"😈",d:"More crime rewards, more enemies",v:0,c:"red"},{n:"Loyal",e:"🤝",d:"Crew bonuses, harder to betray",v:0,c:"blue"},{n:"Snake",e:"🐍",d:"Better at scams, feared by NPCs",v:0,c:"green"},{n:"Legend",e:"👑",d:"NPC respect, cheaper shops",v:0,c:"yellow"}];
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Star className="size-7 text-primary" /><h2 className="text-2xl font-bold">🎭 Personality</h2></div>
+    <div className="space-y-3">{traits.map((t,i) => (
+      <div key={i} className="mafia-card rounded-xl p-4 flex items-center gap-3 border border-border">
+        <span className="text-3xl">{t.e}</span>
+        <div className="flex-1"><div className="font-bold text-sm">{t.n}</div><div className="text-[10px] text-muted-foreground">{t.d}</div>
+        <div className="h-2 rounded-full bg-sidebar-accent mt-1"><div className={`h-full rounded-full bg-${t.c}-500`} style={{width:`${t.v}%`}} /></div></div>
+        <div className="text-xs font-bold">{t.v}/100</div>
+      </div>))}</div>
+  </div>);
+}
+
+function DeadSwitchPage() {
+  const setSwitch = useMutation(api.advancedFeatures.setDeadMansSwitch);
+  const [targetId, setTargetId] = useState("");
+  const [msg, setMsg] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">💀 Dead Man's Switch</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-3 border border-red-500/20">
+      <div className="text-center text-5xl">💀</div>
+      <div className="text-center"><div className="font-bold">Dead Man's Switch</div><div className="text-xs text-muted-foreground">If you die, your items auto-transfer to a trusted player</div></div>
+      <input value={targetId} onChange={e => setTargetId(e.target.value)} placeholder="Enter beneficiary player ID..." className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm" />
+      <button onClick={async () => { try { const r = await setSwitch({ beneficiaryId: targetId as any }); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="w-full py-3 bg-red-600 text-white font-bold rounded-lg">Arm Dead Switch</button>
+      {msg && <div className="text-sm text-primary text-center">{msg}</div>}
+    </div>
+  </div>);
+}
+
+function AIGangsPage() {
+  const initGangs = useMutation(api.advancedFeatures.initAIGangs);
+  const attackGang = useMutation(api.advancedFeatures.attackAIGang);
+  const gangs = useQuery(api.advancedFeatures.getAIGangs);
+  const [msg, setMsg] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">👹 Rival AI Gangs</h2></div>
+    <button onClick={async () => { const r = await initGangs({}); setMsg(r.message); }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">Spawn Gangs</button>
+    {msg && <div className="text-sm text-primary">{msg}</div>}
+    <div className="space-y-2">{(gangs ?? []).map((g: any) => (
+      <div key={g._id} className="mafia-card rounded-xl p-4 flex items-center justify-between border border-red-500/20">
+        <div className="flex items-center gap-3"><div className="text-2xl">👹</div><div><div className="font-bold text-sm">{g.name}</div><div className="text-[10px] text-muted-foreground">{g.territory} • Lv.{g.level} • Str:{g.strength}</div></div></div>
+        <div className="text-right"><div className="text-xs text-green-400">${g.income.toLocaleString()}/hr</div><button onClick={async () => { try { const r = await attackGang({ gangId: g._id }); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="text-[10px] px-3 py-1 bg-red-600 text-white rounded-lg mt-1">Attack</button></div>
+      </div>))}</div>
+  </div>);
+}
+
+function InformantsPage() {
+  const hire = useMutation(api.advancedFeatures.hireInformant);
+  const [targetId, setTargetId] = useState("");
+  const [intel, setIntel] = useState<any>(null);
+  const [msg, setMsg] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Eye className="size-7 text-purple-400" /><h2 className="text-2xl font-bold">🕵️ Informants</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-3">
+      <div className="text-center text-4xl mb-2">🕵️</div>
+      <div className="text-center"><div className="font-bold">Hire an Informant</div><div className="text-xs text-muted-foreground">Pay $100K to spy on any player</div></div>
+      <input value={targetId} onChange={e => setTargetId(e.target.value)} placeholder="Target player ID..." className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm" />
+      <button onClick={async () => { try { const r = await hire({ targetId: targetId as any }); setMsg(r.message); setIntel(r.intel); } catch(e: any) { setMsg(e.message); } }} className="w-full py-3 bg-purple-600 text-white font-bold rounded-lg">Spy — $100K</button>
+      {msg && <div className="text-sm text-primary text-center">{msg}</div>}
+      {intel && <div className="bg-background/50 rounded-lg p-3 text-xs space-y-1"><div>📍 Location: {intel.location}</div><div>⭐ Level: {intel.level}</div><div>💰 Cash: ~${intel.money.toLocaleString()}</div><div>⚔️ ATK: {intel.attack}</div></div>}
+    </div>
+  </div>);
+}
+
+function DistrictsPage() {
+  const districts = useQuery(api.advancedFeatures.getDistricts);
+  const buyD = useMutation(api.advancedFeatures.buyDistrict);
+  const initD = useMutation(api.advancedFeatures.initDistricts);
+  const collect = useMutation(api.advancedFeatures.collectDistrictIncome);
+  const [msg, setMsg] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Map className="size-7 text-blue-400" /><h2 className="text-2xl font-bold">🏙️ District Ownership</h2></div>
+    <div className="flex gap-2"><button onClick={async () => { const r = await initD({}); setMsg(r.message); }} className="px-3 py-1.5 bg-primary text-primary-foreground rounded-lg text-xs">Init Districts</button>
+    <button onClick={async () => { const r = await collect({}); setMsg(`Collected $${r.totalIncome.toLocaleString()} from ${r.count} districts`); }} className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-xs">💰 Collect Income</button></div>
+    {msg && <div className="text-sm text-primary">{msg}</div>}
+    <div className="grid grid-cols-2 gap-3">{(districts ?? []).map((d: any) => (
+      <div key={d._id} className={`mafia-card rounded-xl p-4 space-y-2 border ${d.ownerId ? "border-green-500/30" : "border-blue-500/20"}`}>
+        <div className="font-bold text-sm">{d.name}</div><div className="text-[10px] text-muted-foreground">{d.city} • Security: {d.security}%</div>
+        <div className="text-xs text-green-400 font-bold">${d.income.toLocaleString()}/hr</div>
+        {d.ownerId ? <div className="text-[10px] text-green-400">✅ Owned</div> : (
+          <button onClick={async () => { try { const r = await buyD({ districtId: d._id }); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="w-full py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg">${d.price.toLocaleString()}</button>)}
+      </div>))}</div>
+  </div>);
+}
+
+function CorruptionPage() {
+  const bribes = [{n:"Street Cop",c:"$50K",e:"👮",d:"-2 wanted levels"},{n:"Judge",c:"$500K",e:"⚖️",d:"Clear all charges"},{n:"FBI Agent",c:"$2M",e:"🕵️",d:"Access FBI database"},{n:"Mayor",c:"$10M",e:"🏛️",d:"District protection"}];
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Shield className="size-7 text-blue-400" /><h2 className="text-2xl font-bold">🔒 Corruption</h2></div>
+    <div className="space-y-2">{bribes.map((b,i) => (
+      <div key={i} className="mafia-card rounded-xl p-4 flex items-center justify-between border border-blue-500/20">
+        <div className="flex items-center gap-3"><span className="text-2xl">{b.e}</span><div><div className="font-bold text-sm">{b.n}</div><div className="text-[10px] text-muted-foreground">{b.d}</div></div></div>
+        <div className="text-right"><div className="text-xs font-bold">{b.c}</div><button className="text-[10px] px-3 py-1 bg-blue-600 text-white rounded-lg mt-1">Bribe</button></div>
+      </div>))}</div>
+  </div>);
+}
+
+function RansomwarePage() {
+  const deploy = useMutation(api.advancedFeatures.deployRansomware);
+  const [targetId, setTargetId] = useState("");
+  const [msg, setMsg] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Bomb className="size-7 text-red-400" /><h2 className="text-2xl font-bold">💻 Ransomware</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-3 border border-red-500/20">
+      <div className="text-center text-5xl">💻</div>
+      <div className="text-center"><div className="font-bold">Deploy Ransomware</div><div className="text-xs text-muted-foreground">Steal 15% of a player's cash. Cost: $50K</div></div>
+      <input value={targetId} onChange={e => setTargetId(e.target.value)} placeholder="Target player ID..." className="w-full bg-background border border-border rounded-lg px-4 py-2.5 text-sm" />
+      <button onClick={async () => { try { const r = await deploy({ targetId: targetId as any }); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="w-full py-3 bg-red-600 text-white font-bold rounded-lg">Deploy — $50K</button>
+      {msg && <div className="text-sm text-primary text-center">{msg}</div>}
+    </div>
+  </div>);
+}
+
+function CraftingPage() {
+  const craft = useMutation(api.advancedFeatures.craftItem);
+  const [msg, setMsg] = useState("");
+  const recipes = [{id:"lockpick_set",n:"Lockpick Set",c:"$5K",a:"+5 ATK",e:"🔓"},{id:"kevlar_vest",n:"Kevlar Vest",c:"$50K",a:"+25 DEF",e:"🦺"},{id:"silencer",n:"Silencer",c:"$25K",a:"+15 ATK",e:"🔇"},{id:"bat_signal",n:"Bat Signal",c:"$100K",a:"+30 ATK +20 DEF",e:"🦇"},{id:"diamond_blade",n:"Diamond Blade",c:"$500K",a:"+50 ATK",e:"💎"},{id:"nano_armor",n:"Nano Armor",c:"$2M",a:"+80 DEF",e:"🤖"}];
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Package className="size-7 text-amber-400" /><h2 className="text-2xl font-bold">🔧 Item Crafting</h2></div>
+    {msg && <div className="text-sm text-primary">{msg}</div>}
+    <div className="grid grid-cols-2 gap-3">{recipes.map((r,i) => (
+      <div key={i} className="mafia-card rounded-xl p-4 space-y-2 border border-amber-500/20 hover:border-amber-500/40 transition-all">
+        <div className="text-3xl text-center">{r.e}</div><div className="font-bold text-sm text-center">{r.n}</div>
+        <div className="text-[10px] text-muted-foreground text-center">{r.a}</div>
+        <button onClick={async () => { try { const res = await craft({ recipe: r.id }); setMsg(res.message); } catch(e: any) { setMsg(e.message); } }} className="w-full py-1.5 bg-amber-600 text-white text-xs font-bold rounded-lg">Craft {r.c}</button>
+      </div>))}</div>
+  </div>);
+}
+
+function AuctionsPage() {
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><DollarSign className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">🏷️ Black Market Auctions</h2></div>
+    <div className="space-y-2">{[{n:"Excalibur Sword",bid:"$2.5M",time:"45m",r:"Legendary"},{n:"Ghost Protocol",bid:"$800K",time:"1h 20m",r:"Epic"},{n:"Nano Suit",bid:"$1.2M",time:"2h",r:"Legendary"},{n:"Diamond Ring",bid:"$500K",time:"30m",r:"Rare"}].map((a,i) => (
+      <div key={i} className="mafia-card rounded-xl p-4 flex items-center justify-between border border-yellow-500/20">
+        <div><div className="font-bold text-sm">{a.n}</div><div className="text-[10px] text-muted-foreground">{a.r} • Ends in {a.time}</div></div>
+        <div className="text-right"><div className="text-xs font-bold text-yellow-400">{a.bid}</div><button className="text-[10px] px-3 py-1 bg-yellow-600 text-white rounded-lg mt-1">Bid</button></div>
+      </div>))}</div>
+  </div>);
+}
+
+function TimeCapsulesPage() {
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Clock className="size-7 text-cyan-400" /><h2 className="text-2xl font-bold">⏳ Time Capsules</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-3 border border-cyan-500/20">
+      <div className="text-center text-5xl">⏳</div>
+      <div className="text-center"><div className="font-bold">Buried Items</div><div className="text-xs text-muted-foreground">Bury items now, dig them up later for bonus value</div></div>
+      <div className="bg-cyan-950/20 rounded-lg p-3 text-xs text-center">💰 Items gain +50% value after being buried for 7+ days</div>
+      <div className="text-center text-sm text-muted-foreground">No capsules buried yet</div>
+    </div>
+  </div>);
+}
+
+function CrimePhotosPage() {
+  const takeP = useMutation(api.advancedFeatures.takePhoto);
+  const [msg, setMsg] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Newspaper className="size-7 text-primary" /><h2 className="text-2xl font-bold">📸 Crime Photography</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-3">
+      <div className="text-center text-5xl mb-2">📸</div>
+      <div className="text-center"><div className="font-bold">Capture the Moment</div><div className="text-xs text-muted-foreground">Take photos of crimes, sell to newspapers for cash</div></div>
+      {["Street Crime","Bank Robbery","Car Theft","Drug Deal","Arson"].map((c,i) => (
+        <div key={i} className="flex items-center justify-between bg-background/50 rounded-lg p-3 border border-border">
+          <span className="text-sm font-bold">{c}</span>
+          <button onClick={async () => { try { const r = await takeP({ crimeType: c }); setMsg(r.message); } catch(e: any) { setMsg(e.message); } }} className="text-[10px] px-3 py-1 bg-primary text-primary-foreground rounded-lg">📸 Capture</button>
+        </div>))}
+      {msg && <div className="text-sm text-primary text-center">{msg}</div>}
+    </div>
+  </div>);
+}
+
+function PurgePage() {
+  const purge = useQuery(api.advancedFeatures.getPurgeStatus);
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Skull className="size-7 text-red-400" /><h2 className="text-2xl font-bold">☠️ Server Purge</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-4 border border-red-500/20">
+      <div className="text-center text-6xl">☠️</div>
+      <div className="text-center"><div className="text-lg font-bold text-red-400">{purge?.isPurge ? "🔴 PURGE ACTIVE!" : "Purge Inactive"}</div>
+      <div className="text-xs text-muted-foreground">{purge?.isPurge ? "ALL CRIMES LEGAL — NO WANTED LEVELS!" : `Next purge in ${Math.floor((purge?.timeUntil ?? 0) / 86400000)} days`}</div></div>
+      <div className="bg-red-950/20 rounded-lg p-3 text-xs text-center">During Purge: 2x XP, no wanted levels, all crimes legal. Pure chaos for 24 hours.</div>
+    </div>
+  </div>);
+}
+
+function HeadlinesPage() {
+  const headlines = useQuery(api.advancedFeatures.getHeadlines);
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Newspaper className="size-7 text-primary" /><h2 className="text-2xl font-bold">📰 Crime Headlines</h2></div>
+    {(headlines ?? []).length === 0 ? (
+      <div className="mafia-card rounded-xl p-5 text-center"><div className="text-4xl mb-2">📰</div><div className="text-sm font-bold">No Headlines Yet</div><div className="text-xs text-muted-foreground">Commit big crimes to make the news!</div></div>
+    ) : (headlines ?? []).map((h: any) => (
+      <div key={h._id} className="mafia-card rounded-xl p-4 border border-border"><div className="font-bold text-sm">{h.title}</div><div className="text-[10px] text-muted-foreground">by {h.playerName} • {h.crimeType}</div></div>))}
+  </div>);
+}
+
+function RadioPage() {
+  const msgs = useQuery(api.advancedFeatures.getRadioMessages);
+  const send = useMutation(api.advancedFeatures.radioMessage);
+  const [msg, setMsg] = useState("");
+  const [text, setText] = useState("");
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><Radio className="size-7 text-green-400" /><h2 className="text-2xl font-bold">📻 Underground Radio</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-3">
+      <div className="text-xs text-muted-foreground text-center">🔒 Level 30+ required • Real-time hidden chat</div>
+      <div className="space-y-2 max-h-60 overflow-y-auto">{(msgs ?? []).map((m: any) => (
+        <div key={m._id} className="bg-background/50 rounded-lg p-2 text-xs"><span className="font-bold text-green-400">{m.senderName}:</span> {m.message}</div>))}</div>
+      <div className="flex gap-2"><input value={text} onChange={e => setText(e.target.value)} placeholder="Broadcast..." className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
+      <button onClick={async () => { try { await send({ message: text }); setText(""); } catch(e: any) { setMsg(e.message); } }} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm">Send</button></div>
+      {msg && <div className="text-xs text-red-400">{msg}</div>}
+    </div>
+  </div>);
+}
+
+function CockroachPage() {
+  const bet = useMutation(api.advancedFeatures.betCockroach);
+  const [amount, setAmount] = useState(10000);
+  const [selected, setSelected] = useState(0);
+  const [result, setResult] = useState<any>(null);
+  const colors = ["🟥","🟧","🟨","🟩","🟦","🟪"];
+  return (<div className="animate-fade-in space-y-6">
+    <div className="flex items-center gap-3"><CircleDot className="size-7 text-amber-400" /><h2 className="text-2xl font-bold">🪳 Cockroach Racing</h2></div>
+    <div className="mafia-card rounded-xl p-5 space-y-4 border border-amber-500/20">
+      <div className="text-center text-5xl">🪳</div>
+      <div className="text-center"><div className="font-bold">Pick Your Roach</div><div className="text-xs text-muted-foreground">5x payout if your roach wins!</div></div>
+      <div className="grid grid-cols-6 gap-2">{colors.map((c,i) => (
+        <button key={i} onClick={() => setSelected(i)} className={`text-3xl p-2 rounded-lg border-2 ${selected===i?"border-primary bg-primary/10":"border-border"}`}>{c}</button>))}</div>
+      <input type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} className="w-full bg-background border border-border rounded-lg px-4 py-2 text-sm text-center" />
+      <button onClick={async () => { try { const r = await bet({ cockroachIndex: selected, amount }); setResult(r); } catch(e: any) { setResult({message: e.message}); } }} className="w-full py-3 bg-amber-600 text-white font-bold rounded-lg">Bet ${amount.toLocaleString()}</button>
+      {result && <div className={`p-4 rounded-lg text-center text-sm ${result.won?"bg-green-950/30 border border-green-500/30":"bg-red-950/30 border border-red-500/30"}`}>{result.message}</div>}
+    </div>
+  </div>);
+}
+
 function SafePage({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   if (error) {
@@ -1259,6 +1533,23 @@ const renderPage = (): React.ReactNode => {
       case "become_admin": return <BecomeAdminPage />;
       case "online_list": return <OnlinePlayersPage />;
       case "send_money": return <SendMoneyPage />;
+      case "marriage": return <MarriagePage />;
+      case "family_tree": return <FamilyTreePage />;
+      case "personality": return <PersonalityPage />;
+      case "dead_switch": return <DeadSwitchPage />;
+      case "ai_gangs": return <AIGangsPage />;
+      case "informants": return <InformantsPage />;
+      case "districts": return <DistrictsPage />;
+      case "corruption": return <CorruptionPage />;
+      case "ransomware": return <RansomwarePage />;
+      case "crafting": return <CraftingPage />;
+      case "auctions": return <AuctionsPage />;
+      case "time_capsules": return <TimeCapsulesPage />;
+      case "crime_photos": return <CrimePhotosPage />;
+      case "purge": return <PurgePage />;
+      case "headlines": return <HeadlinesPage />;
+      case "radio": return <RadioPage />;
+      case "cockroach": return <CockroachPage />;
       default: return <HeadquartersPage />;
     }
   };
