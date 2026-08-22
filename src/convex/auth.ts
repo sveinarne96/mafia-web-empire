@@ -36,6 +36,11 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
     createOrUpdateUser: async (ctx, { existingUserId, ...args }) => {
       // If user already exists, just return their ID (profile already set)
       if (existingUserId) {
+        // Update email if missing
+        const existing = await ctx.db.get(existingUserId);
+        if (existing && args.profile?.email && !(existing as any).email) {
+          await ctx.db.patch(existingUserId, { email: args.profile.email } as any);
+        }
         return existingUserId;
       }
       // Only pick known-safe fields from the auth profile
@@ -47,11 +52,21 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
       if (profile.isAnonymous !== undefined) safeProfile.isAnonymous = profile.isAnonymous;
       if (profile.emailVerificationTime) safeProfile.emailVerificationTime = profile.emailVerificationTime;
 
-      const userId = await ctx.db.insert("users", {
-        ...DEFAULT_GAME_FIELDS,
-        ...safeProfile,
-      } as any);
-      return userId;
+      try {
+        const userId = await ctx.db.insert("users", {
+          ...DEFAULT_GAME_FIELDS,
+          ...safeProfile,
+        } as any);
+        return userId;
+      } catch (e: any) {
+        // If insert fails (e.g. duplicate), try to find existing user by email
+        if (profile.email) {
+          const all = await ctx.db.query("users").collect();
+          const existing = all.find((u: any) => u.email === profile.email);
+          if (existing) return existing._id;
+        }
+        throw e;
+      }
     },
   },
 });

@@ -30,8 +30,10 @@ export const emailOtp = Email({
           },
         },
       );
-    } catch (error) {
-      throw new Error(JSON.stringify(error));
+    } catch (error: any) {
+      const detail = error?.response?.data?.message ?? error?.message ?? String(error);
+      console.error("OTP send failed:", detail);
+      throw new Error("Failed to send verification code: " + detail);
     }
   },
 });
