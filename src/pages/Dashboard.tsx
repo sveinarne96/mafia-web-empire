@@ -1789,7 +1789,7 @@ export default function Dashboard() {
   const player = useQuery(api.game.getPlayer);
   const [registered, setRegistered] = useState(false);
 
-  const isRegistered = (player?.nickname && player?.registeredAt) || registered;
+  const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
 
   if (player === undefined) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="size-8 animate-spin text-primary" /></div>;
   if (!player || !isRegistered) return <PlayerRegistration onRegistered={() => setRegistered(true)} />;

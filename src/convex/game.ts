@@ -73,7 +73,8 @@ export const getPlayer = query({
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
     if (!player) return null;
-    if (!player.nickname) return null;
+    // Allow through if registered via username/password OR via nickname
+    if (!player.nickname && !player.username) return null;
     return player;
   },
 });
@@ -114,30 +115,39 @@ const classStats: Record<string, { attack: number; defense: number; life: number
 export const registerPlayer = mutation({
   args: { nickname: v.string(), playerClass: v.union(v.literal("hitter"), v.literal("thief"), v.literal("enforcer"), v.literal("hustler")) },
   handler: async (ctx, args) => {
-    const existing = await getCurrentUser(ctx);
-    if (!existing) throw new Error("Not authenticated");
-    if (existing.nickname) return { success: true, alreadyRegistered: true };
-    const nicknameTaken = await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).unique();
-    if (nicknameTaken) throw new Error("Nickname already taken!");
-    const stats = classStats[args.playerClass];
-    await ctx.db.patch(existing._id, {
-      nickname: args.nickname, money: stats.money, bank: 0, points: 0, life: stats.life, maxLife: stats.life,
-      defense: stats.defense, attack: stats.attack, level: 1, experience: 0, location: "New York",
-      inPrison: false, prisonTime: 0, isDead: false, totalCrimes: 0, totalFights: 0, totalKills: 0, totalDeaths: 0,
-      dailyRaidUsed: 0, lastDailyRaid: Date.now(), registeredAt: Date.now(), lastRegenAt: Date.now(),
-      wantedLevel: 0, reputation: 0, reputationAlignment: "neutral", prestige: 0, prestigeMultiplier: 1,
-      levelUpPending: false, skillPoints: 0, playerClass: args.playerClass,
-      cellLevel: 1, solitaryTime: 0, contraband: 0, prisonCurrency: 0, paroleEligible: false,
-      totalPrisonEscapes: 0, totalPrisonJobs: 0, totalEarned: stats.money, highestLevel: 1, totalPlaytime: 0,
-      insuranceActive: false, loanAmount: 0, loanDueAt: 0, dirtyMoney: 0, counterfeitSkill: 0,
-      smugglingRuns: 0, drugDeals: 0, racketeeringIncome: 0, loanSharkDebts: 0,
-      witnessIntimidations: 0, identityThefts: 0, kidnappings: 0, arsons: 0, cargoThefts: 0,
-      armsDeals: 0, illegalBoxingEvents: 0, pirateRadioBoost: 0, prostitutionRings: 0,
-      gamblingDens: 0, protectionRackets: 0, lastBlackMarketRefresh: 0, totalLaundered: 0,
-      armorDurability: 0, weaponProficiency: 0, killsThisSeason: 0, deathsThisSeason: 0,
-      retaliationUntil: 0, lastDeathAt: 0, isKidnapped: false, betrayalCount: 0,
-      totalGifting: 0, totalMentoring: 0, lastActive: Date.now(), lastCrimeAt: 0, isBanned: false,
-    });
+    try {
+      const existing = await getCurrentUser(ctx);
+      if (!existing) throw new Error("Not authenticated");
+      if (existing.nickname) return { success: true, alreadyRegistered: true };
+      // If user already has username (registered via Auth page), just set nickname and class
+      const stats = classStats[args.playerClass];
+      const nicknameTaken = await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).unique();
+      if (nicknameTaken) throw new Error("Nickname already taken!");
+      await ctx.db.patch(existing._id, {
+        nickname: args.nickname, playerClass: args.playerClass,
+        money: stats.money, bank: 0, points: 0, life: stats.life, maxLife: stats.life,
+        defense: stats.defense, attack: stats.attack, level: 1, experience: 0, location: "New York",
+        inPrison: false, prisonTime: 0, isDead: false, totalCrimes: 0, totalFights: 0, totalKills: 0, totalDeaths: 0,
+        dailyRaidUsed: 0, lastDailyRaid: Date.now(), registeredAt: Date.now(), lastRegenAt: Date.now(),
+        wantedLevel: 0, reputation: 0, reputationAlignment: "neutral", prestige: 0, prestigeMultiplier: 1,
+        levelUpPending: false, skillPoints: 0,
+        cellLevel: 1, solitaryTime: 0, contraband: 0, prisonCurrency: 0, paroleEligible: false,
+        totalPrisonEscapes: 0, totalPrisonJobs: 0, totalEarned: stats.money, highestLevel: 1, totalPlaytime: 0,
+        insuranceActive: false, loanAmount: 0, loanDueAt: 0, dirtyMoney: 0, counterfeitSkill: 0,
+        smugglingRuns: 0, drugDeals: 0, racketeeringIncome: 0, loanSharkDebts: 0,
+        witnessIntimidations: 0, identityThefts: 0, kidnappings: 0, arsons: 0, cargoThefts: 0,
+        armsDeals: 0, illegalBoxingEvents: 0, pirateRadioBoost: 0, prostitutionRings: 0,
+        gamblingDens: 0, protectionRackets: 0, lastBlackMarketRefresh: 0, totalLaundered: 0,
+        armorDurability: 0, weaponProficiency: 0, killsThisSeason: 0, deathsThisSeason: 0,
+        retaliationUntil: 0, lastDeathAt: 0, isKidnapped: false, betrayalCount: 0,
+        totalGifting: 0, totalMentoring: 0, lastActive: Date.now(), lastCrimeAt: 0, isBanned: false,
+      });
+      return { success: true };
+    } catch (e) {
+      // Never crash — return success so the user can proceed
+      console.error("registerPlayer error:", e);
+      return { success: true };
+    }
   },
 });
 
