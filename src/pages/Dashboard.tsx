@@ -253,11 +253,15 @@ const rightMenuSections = [
     { label: "City Overview", page: "city_overview", icon: "🏙️" },
     { label: "Statistics", page: "statistics", icon: "📊" },
     { label: "World Map", page: "world_map", icon: "🗺️" },
+    { label: "Wanted Status", page: "wanted", icon: "🔴" },
+    { label: "FBI/Military", page: "fbi_status", icon: "🕵️" },
   ]},
   { title: "Communication", icon: MessageSquare, items: [
     { label: "Messages", page: "messages", icon: "📩" },
     { label: "Inbox", page: "inbox", icon: "📥" },
     { label: "Notifications", page: "notifications_page", icon: "🔔" },
+  ]},
+  { title: "Forums", icon: MessageSquare, items: [
     { label: "General Forum", page: "forum_general", icon: "📢" },
     { label: "Sales & Wanted", page: "forum_sales", icon: "💰" },
     { label: "Off-Topic", page: "forum_offtopic", icon: "💭" },
@@ -269,6 +273,7 @@ const rightMenuSections = [
     { label: "Weather", page: "weather", icon: "🌤️" },
     { label: "News Ticker", page: "news_ticker", icon: "📰" },
     { label: "Events", page: "world_events", icon: "🎪" },
+    { label: "City Statistics", page: "city_stats", icon: "📊" },
   ]},
   { title: "Help", icon: HelpCircle, items: [
     { label: "FAQ", page: "faq", icon: "❓" },
@@ -756,6 +761,39 @@ function MonthlyMissionsPage() { return <GenericPage title="Monthly Missions" ic
 
 function CityStatsPage() { return <GenericPage title="City Statistics" icon="📊" />; }
 
+
+function FBIStatusPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const wl = player.wantedLevel ?? 0;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><Shield className="size-7 text-primary" /><h2 className="text-2xl font-bold">FBI / Military Status</h2></div>
+      <div className="mafia-card rounded-xl p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="text-center p-4 rounded-xl bg-red-950/20 border border-red-500/20">
+            <div className="text-3xl mb-2">🕵️</div>
+            <div className="text-sm font-bold">FBI Activity</div>
+            <div className={`text-xs mt-1 ${wl >= 2 ? "text-red-400 font-bold" : "text-muted-foreground"}`}>
+              {wl >= 4 ? "FULLY DEPLOYED" : wl >= 2 ? "Active Investigation" : "No Activity"}
+            </div>
+          </div>
+          <div className="text-center p-4 rounded-xl bg-orange-950/20 border border-orange-500/20">
+            <div className="text-3xl mb-2">🎖️</div>
+            <div className="text-sm font-bold">Military Response</div>
+            <div className={`text-xs mt-1 ${wl >= 4 ? "text-red-400 font-bold" : "text-muted-foreground"}`}>
+              {wl >= 4 ? "DEPLOYED — Escape immediately" : "Standby"}
+            </div>
+          </div>
+        </div>
+        <div className="text-xs text-muted-foreground text-center">
+          Wanted Level: {wl}/5 — {wl === 0 ? "Clean record" : wl < 2 ? "Minor infractions" : wl < 4 ? "Serious criminal" : "Most Wanted"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const renderPage = () => {
     // Prison blocking for crime pages
     const prisonBlockedPages = ["crimes", "steal_from_house", "gta_car_theft", "kill", "hit_list",
@@ -881,6 +919,7 @@ const renderPage = () => {
 
       // Right menu
       case "city_overview": return <CityOverviewPage />;
+      case "fbi_status": return <FBIStatusPage />;
       case "statistics": return <StatisticsPage />;
       case "world_map": return <WorldMapPage />;
       case "messages": return <MessagesPage />;
