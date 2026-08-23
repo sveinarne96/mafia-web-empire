@@ -41,7 +41,7 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
   { title: "\uD83C\uDFE0 Overview", icon: Building2, children: [
     { title: "\uD83C\uDFE2 Headquarters", icon: Building2, page: "headquarters" },
     { title: "\uD83C\uDFE6 Bank", icon: Landmark, page: "bank" },
-    { title: "\uD83C\uDFE5 Hospital", icon: ShieldCheck, page: "hospital" },
+    { title: "Hospital", icon: ShieldCheck, page: "hospital" },
     { title: "\uD83C\uDFC6 Points", icon: Trophy, page: "points" },
     { title: "\uD83D\uDC64 My Profile", icon: User, page: "my_profile" },
     { title: "\uD83D\uDCDC Game Updates", icon: ScrollText, page: "updates" },
@@ -51,7 +51,7 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
     { title: "\uD83D\uDDFA\uFE0F Crime Empire", icon: Map, page: "crime_empire" },
     { title: "\uD83C\uDFAF Heist Planning", icon: Target, page: "heist_planning" },
     { title: "\uD83C\uDF10 World Events", icon: Zap, page: "world_events" },
-    { title: "\uD83D\uDD10 Prison", icon: Lock, page: "prison" },
+    { title: "Prison", icon: Lock, page: "prison" },
     { title: "\u2708\uFE0F Airport", icon: Plane, page: "airport" },
     { title: "\uD83D\uDC65 Organized Crime", icon: Users, page: "organized_crime" },
     { title: "\uD83D\uDCCB Missions", icon: Briefcase, page: "missions" },
@@ -66,7 +66,7 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
   { title: "\u2694\uFE0F Combat", icon: Swords, children: [
     { title: "\uD83E\uDD4A Fight Club", icon: Swords, page: "fight_club" },
     { title: "\uD83C\uDFC6 Bounty Board", icon: Crosshair, page: "bounty_board" },
-    { title: "\uD83D\uDC51 Kill", icon: Skull, page: "kill" },
+    { title: "Kill", icon: Skull, page: "kill" },
     { title: "\uD83C\uDFC6 Season Rankings", icon: Trophy, page: "season_rankings" },
     { title: "\uD83D\uDCCB Combat Log", icon: ScrollText, page: "combat_log" },
     { title: "\uD83E\uDDBE Fighting Styles", icon: Swords, page: "fighting_styles" },
@@ -1931,16 +1931,16 @@ const renderPage = (): React.ReactNode => {
           <div className="flex items-center gap-3">
             <div className="text-sm font-semibold text-foreground/80">{pageNames[activePage] ?? activePage}</div>
             <div className="hidden lg:flex items-center gap-1 ml-2 border-l border-border pl-3">
-              <button onClick={() => setPage("crimes")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "crimes" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Street Crimes">\uD83D\uDD25 Streets</button>
-              <button onClick={() => setPage("steal_from_house")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "steal_from_house" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Steal From House">\uD83D\uDCB5 Houses</button>
-              <button onClick={() => setPage("gta_car_theft")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "gta_car_theft" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="GTA Car Theft">\uD83D\uDE97 Cars</button>
-              <button onClick={() => setPage("kill")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "kill" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Kill">\uD83D\uDC51 Kill</button>
-              <button onClick={() => setPage("prison")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "prison" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Prison">\uD83D\uDD10 Prison</button>
-              <button onClick={() => setPage("hospital")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "hospital" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Hospital">\uD83C\uDFE5 Hospital</button>
+              <button onClick={() => setPage("crimes")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "crimes" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Street Crimes">Street Crimes</button>
+              <button onClick={() => setPage("steal_from_house")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "steal_from_house" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Steal From House">Steal From House</button>
+              <button onClick={() => setPage("gta_car_theft")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "gta_car_theft" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="GTA Car Theft">GTA Car Theft</button>
+              <button onClick={() => setPage("kill")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "kill" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Kill">Kill</button>
+              <button onClick={() => setPage("prison")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "prison" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Prison">Prison</button>
+              <button onClick={() => setPage("hospital")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "hospital" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Hospital">Hospital</button>
             </div>
-            {(player.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-400 font-bold">{"\uD83D\uDD34"} {player.wantedLevel ?? 0} Wanted</span>}
-            {(player.wantedLevel ?? 0) >= 2 && <span className="px-2 py-0.5 bg-orange-950/50 border border-orange-800/50 rounded-full text-[10px] text-orange-400 font-bold animate-pulse">{"\uD83D\uDD75\uFE0F"} FBI</span>}
-            {(player.wantedLevel ?? 0) >= 4 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-300 font-bold animate-pulse">{"\uD83C\uDF96\uFE0F"} MILITARY</span>}
+            {(player.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-400 font-bold">"🔴" {player.wantedLevel ?? 0} Wanted</span>}
+            {(player.wantedLevel ?? 0) >= 2 && <span className="px-2 py-0.5 bg-orange-950/50 border border-orange-800/50 rounded-full text-[10px] text-orange-400 font-bold animate-pulse">"🕵️" FBI</span>}
+            {(player.wantedLevel ?? 0) >= 4 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-300 font-bold animate-pulse">"🎖️" MILITARY</span>}
           </div>
           <button onClick={() => signOut()} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">Sign Out</button>
         </header>
