@@ -116,8 +116,11 @@ const leftMenuSections = [
     { label: "My Profile", page: "profile", icon: "👤" },
     { label: "Game Updates", page: "updates", icon: "📜" },
   ]},
-  { title: "Crime", icon: Flame, items: [
+  { title: "Crimes", icon: Flame, items: [
     { label: "Street Crimes", page: "crimes", icon: "🔪" },
+    { label: "Robberies & Heists", page: "robbery", icon: "💰" },
+    { label: "Fraud & Scams", page: "fraud", icon: "🎭" },
+    { label: "Illegal Transport", page: "transport", icon: "🚛" },
     { label: "Steal From House", page: "steal_from_house", icon: "🏠" },
     { label: "GTA Car Theft", page: "gta_car_theft", icon: "🚗" },
     { label: "Crime Empire", page: "crime_empire", icon: "🗺️" },
@@ -128,22 +131,32 @@ const leftMenuSections = [
     { label: "Crime Spree", page: "crime_spree", icon: "🔥" },
   ]},
   { title: "Combat", icon: Swords, items: [
-    { label: "Fight Club", page: "fight_club", icon: "🥊" },
-    { label: "Bounty Board", page: "hit_list", icon: "🎯" },
-    { label: "Contracts", page: "contracts", icon: "📋" },
-    { label: "Combat Log", page: "combat_log", icon: "📊" },
-    { label: "Fighting Styles", page: "fighting_styles", icon: "🥋" },
-    { label: "Armor & Weapons", page: "armor", icon: "🛡️" },
+    { label: "1v1 Duel", page: "duel_1v1", icon: "⚔️" },
+    { label: "Crew Wars", page: "crew_wars", icon: "🏴" },
+    { label: "Capture the Flag", page: "ctf", icon: "🚩" },
+    { label: "King of the Hill", page: "koth", icon: "👑" },
+    { label: "Battle Royale", page: "battle_royale", icon: "🎯" },
+    { label: "Ladder System", page: "ladder", icon: "📊" },
+    { label: "Champion Title", page: "champion", icon: "🏆" },
+    { label: "Ambush", page: "ambush", icon: "🔥" },
   ]},
   { title: "Gambling", icon: Crown, items: [
     { label: "Blackjack", page: "blackjack", icon: "🃏" },
+    { label: "Poker Texas Holdem", page: "poker_texas", icon: "🂡" },
+    { label: "Poker Omaha", page: "poker_omaha", icon: "🂱" },
     { label: "Roulette", page: "roulette", icon: "🎡" },
+    { label: "Craps", page: "craps", icon: "🎲" },
     { label: "Slots", page: "slots", icon: "🎰" },
-    { label: "Lottery", page: "lotto", icon: "🎲" },
-    { label: "Russian Roulette", page: "russian_roulette", icon: "🔫" },
-    { label: "Gambling Den", page: "gambling_den", icon: "🃏" },
-    { label: "Dog Fight Bets", page: "dog_fight", icon: "🐕" },
-    { label: "Street Racing Bets", page: "street_racing", icon: "🏎️" },
+    { label: "Lottery", page: "lotto", icon: "🎟️" },
+    { label: "Powerball", page: "powerball", icon: "⚡" },
+    { label: "Coin Flip", page: "coin_flip", icon: "🪙" },
+    { label: "Wheel of Fortune", page: "wheel", icon: "🎡" },
+    { label: "Horse Racing", page: "horse_racing", icon: "🏇" },
+    { label: "Scratch Cards", page: "scratch_cards", icon: "🎰" },
+    { label: "Bingo", page: "bingo", icon: "🎯" },
+    { label: "Keno", page: "keno", icon: "🔢" },
+    { label: "Higher or Lower", page: "higher_lower", icon: "⬆️" },
+    { label: "Blackjack Switch", page: "bj_switch", icon: "🔄" },
   ]},
   { title: "Underground", icon: EyeOff, items: [
     { label: "Counterfeiting", page: "counterfeiting", icon: "💵" },
@@ -156,8 +169,20 @@ const leftMenuSections = [
     { label: "Smuggling Routes", page: "smuggling", icon: "🚛" },
   ]},
   { title: "Economy", icon: Coins, items: [
-    { label: "Stock Market", page: "stock_market", icon: "📈" },
+    { label: "Bank Account", page: "bank_account", icon: "🏦" },
+    { label: "Bank Robbery", page: "bank_robbery", icon: "💰" },
+    { label: "Interest Rates", page: "interest_rates", icon: "📈" },
+    { label: "Credit Score", page: "credit_score", icon: "💳" },
+    { label: "Health Insurance", page: "health_insurance", icon: "🏥" },
+    { label: "Life Insurance", page: "life_insurance", icon: "❤️" },
     { label: "Crypto Mining", page: "crypto", icon: "⛏️" },
+    { label: "Crypto Trading", page: "crypto_trading", icon: "📊" },
+    { label: "Auto Shop", page: "auto_shop", icon: "🚗" },
+    { label: "Offshore Accounts", page: "offshore", icon: "🏝️" },
+    { label: "Daily Spin", page: "daily_spin", icon: "🎰" },
+    { label: "Referral System", page: "referral", icon: "🔗" },
+    { label: "Season Rewards", page: "season_rewards", icon: "🏆" },
+    { label: "Battle Pass", page: "battle_pass", icon: "🎫" },
     { label: "Crafting", page: "crafting", icon: "🔧" },
   ]},
   { title: "Assets", icon: Package, items: [
@@ -169,22 +194,49 @@ const leftMenuSections = [
     { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
   ]},
   { title: "Social", icon: Users, items: [
-    { label: "Family", page: "family", icon: "👨‍👩‍👦" },
     { label: "Crew System", page: "crew", icon: "🤝" },
-    { label: "Crime Fame", page: "crime_fame", icon: "🌟" },
-    { label: "Reputation", page: "reputation", icon: "🌍" },
-    { label: "Gifting", page: "gifting", icon: "🎁" },
+    { label: "Crew Ranks", page: "crew_ranks", icon: "📊" },
+    { label: "Crew Chat", page: "crew_chat", icon: "💬" },
+    { label: "Crew Bank", page: "crew_bank", icon: "🏦" },
+    { label: "Crew Safe House", page: "crew_safehouse", icon: "🏠" },
+    { label: "Crew War", page: "crew_war", icon: "⚔️" },
+    { label: "Crew Alliance", page: "crew_alliance", icon: "🤝" },
+    { label: "Crew Territory", page: "crew_territory", icon: "📍" },
+    { label: "Crew Challenges", page: "crew_challenges", icon: "🎯" },
+    { label: "Crew Leaderboard", page: "crew_leaderboard", icon: "🏆" },
+    { label: "Family System", page: "family", icon: "👨‍👩‍👦" },
+  ]},
+  { title: "World", icon: Globe, items: [
+    { label: "City Map", page: "city_map", icon: "🗺️" },
+    { label: "Neighborhoods", page: "neighborhoods", icon: "🏘️" },
+    { label: "Slums", page: "slums", icon: "🏚️" },
+    { label: "Seasons", page: "seasons", icon: "🍂" },
+    { label: "Rain Effects", page: "weather", icon: "🌧️" },
+    { label: "City Statistics", page: "city_stats", icon: "📊" },
   ]},
   { title: "Progression", icon: TrendingUp, items: [
     { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
+    { label: "Combat Skills", page: "combat_skills", icon: "⚔️" },
+    { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
+    { label: "Hacking Skills", page: "hacking_skills", icon: "💻" },
+    { label: "Prestige Tiers", page: "prestige", icon: "⭐" },
+    { label: "Prestige Shop", page: "prestige_shop", icon: "🛒" },
+    { label: "Title System", page: "titles", icon: "👑" },
+    { label: "Season Rewards", page: "season_rewards_prog", icon: "🏆" },
+    { label: "Energy Drinks", page: "energy_drinks", icon: "⚡" },
     { label: "Achievements", page: "achievements", icon: "🏅" },
-    { label: "Titles", page: "titles", icon: "👑" },
     { label: "Legacy", page: "legacy", icon: "📜" },
-    { label: "Prestige", page: "prestige", icon: "⭐" },
     { label: "Leaderboards", page: "leaderboards", icon: "📊" },
     { label: "Season Pass", page: "season_pass", icon: "🎫" },
     { label: "Daily Login", page: "daily_login", icon: "🎁" },
     { label: "Daily Challenges", page: "daily_challenges", icon: "📋" },
+  ]},
+  { title: "Missions", icon: Target, items: [
+    { label: "Storyline Missions", page: "storyline", icon: "📖" },
+    { label: "Side Missions", page: "side_missions", icon: "📋" },
+    { label: "Daily Missions", page: "daily_missions", icon: "📅" },
+    { label: "Weekly Missions", page: "weekly_missions", icon: "📆" },
+    { label: "Monthly Missions", page: "monthly_missions", icon: "🗓️" },
   ]},
   { title: "Special", icon: Sparkles, items: [
     { label: "Ghost Mode", page: "ghost_mode", icon: "👻" },
@@ -587,7 +639,124 @@ export default function Dashboard() {
     );
   }
 
-  const renderPage = () => {
+  
+// ===== NEW PAGE STUBS =====
+function GenericPage({ title, icon }: { title: string; icon: string }) {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">{icon}</span>
+        <h2 className="text-2xl font-bold">{title}</h2>
+      </div>
+      <div className="mafia-card rounded-xl p-8 text-center">
+        <div className="text-4xl mb-3">{icon}</div>
+        <div className="text-sm font-bold mb-1">{title}</div>
+        <div className="text-xs text-muted-foreground">This feature is coming soon. Stay tuned!</div>
+      </div>
+    </div>
+  );
+}
+
+function StorylinePage() {
+  const missions = [
+    { id: "origins", name: "Storyline: Origins", icon: "📖", desc: "Your journey begins. Learn the ropes of the criminal underworld.", chapters: 10, difficulty: "Easy" },
+    { id: "territory", name: "Storyline: Territory", icon: "🗺️", desc: "Claim your first territory. Fight rival gangs for control.", chapters: 15, difficulty: "Medium" },
+    { id: "rivalry", name: "Storyline: Rivalry", icon: "⚔️", desc: "A deadly rivalry begins. Someone wants you dead.", chapters: 20, difficulty: "Hard" },
+    { id: "betrayal", name: "Storyline: Betrayal", icon: "🗡️", desc: "Trust no one. A deep betrayal shakes your empire.", chapters: 25, difficulty: "Hard" },
+    { id: "fbi", name: "Storyline: FBI", icon: "🕵️", desc: "The FBI is onto you. Stay one step ahead.", chapters: 30, difficulty: "Extreme" },
+    { id: "prison", name: "Storyline: Prison", icon: "🔒", desc: "Behind bars. Survive prison and plot your escape.", chapters: 20, difficulty: "Hard" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3"><Target className="size-7 text-primary" /><h2 className="text-2xl font-bold">Storyline Missions</h2></div>
+      <div className="space-y-3">
+        {missions.map(m => (
+          <div key={m.id} className="mafia-card rounded-xl p-5 hover:border-primary/40 transition cursor-pointer">
+            <div className="flex items-center gap-4">
+              <div className="text-4xl">{m.icon}</div>
+              <div className="flex-1">
+                <div className="text-sm font-bold">{m.name}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{m.desc}</div>
+                <div className="flex gap-2 mt-2">
+                  <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">{m.chapters} Chapters</span>
+                  <span className="text-[10px] bg-red-400/10 text-red-400 px-2 py-0.5 rounded-full">{m.difficulty}</span>
+                </div>
+              </div>
+              <ChevronRight className="size-5 text-muted-foreground" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Duel1v1Page() { return <GenericPage title="1v1 Duel" icon="⚔️" />; }
+function CrewWarsPage() { return <GenericPage title="Crew Wars" icon="🏴" />; }
+function CTFPage() { return <GenericPage title="Capture the Flag" icon="🚩" />; }
+function KOTHPage() { return <GenericPage title="King of the Hill" icon="👑" />; }
+function BattleRoyalePage() { return <GenericPage title="Battle Royale" icon="🎯" />; }
+function LadderPage() { return <GenericPage title="Ladder System" icon="📊" />; }
+function ChampionPage() { return <GenericPage title="Champion Title" icon="🏆" />; }
+function AmbushPage() { return <GenericPage title="Ambush" icon="🔥" />; }
+
+function PokerTexasPage() { return <GenericPage title="Poker Texas Holdem" icon="🂡" />; }
+function PokerOmahaPage() { return <GenericPage title="Poker Omaha" icon="🂱" />; }
+function CrapsPage() { return <GenericPage title="Craps" icon="🎲" />; }
+function PowerballPage() { return <GenericPage title="Powerball" icon="⚡" />; }
+function CoinFlipPage() { return <GenericPage title="Coin Flip" icon="🪙" />; }
+function WheelPage() { return <GenericPage title="Wheel of Fortune" icon="🎡" />; }
+function HorseRacingPage() { return <GenericPage title="Horse Racing" icon="🏇" />; }
+function ScratchCardsPage() { return <GenericPage title="Scratch Cards" icon="🎰" />; }
+function BingoPage() { return <GenericPage title="Bingo" icon="🎯" />; }
+function KenoPage() { return <GenericPage title="Keno" icon="🔢" />; }
+function HigherLowerPage() { return <GenericPage title="Higher or Lower" icon="⬆️" />; }
+function BJSwitchPage() { return <GenericPage title="Blackjack Switch" icon="🔄" />; }
+
+function BankAccountPage() { return <GenericPage title="Bank Account" icon="🏦" />; }
+function BankRobberyPage() { return <GenericPage title="Bank Robbery" icon="💰" />; }
+function InterestRatesPage() { return <GenericPage title="Interest Rates" icon="📈" />; }
+function CreditScorePage() { return <GenericPage title="Credit Score" icon="💳" />; }
+function HealthInsurancePage() { return <GenericPage title="Health Insurance" icon="🏥" />; }
+function LifeInsurancePage() { return <GenericPage title="Life Insurance" icon="❤️" />; }
+function CryptoTradingPage() { return <GenericPage title="Crypto Trading" icon="📊" />; }
+function AutoShopPage() { return <GenericPage title="Auto Shop" icon="🚗" />; }
+function OffshorePage() { return <GenericPage title="Offshore Accounts" icon="🏝️" />; }
+function DailySpinPage() { return <GenericPage title="Daily Spin" icon="🎰" />; }
+function ReferralPage() { return <GenericPage title="Referral System" icon="🔗" />; }
+function SeasonRewardsPage() { return <GenericPage title="Season Rewards" icon="🏆" />; }
+function BattlePassPage() { return <GenericPage title="Battle Pass" icon="🎫" />; }
+
+function CrewRanksPage() { return <GenericPage title="Crew Ranks" icon="📊" />; }
+function CrewChatPage() { return <GenericPage title="Crew Chat" icon="💬" />; }
+function CrewBankPage() { return <GenericPage title="Crew Bank" icon="🏦" />; }
+function CrewSafehousePage() { return <GenericPage title="Crew Safe House" icon="🏠" />; }
+function CrewWarPage() { return <GenericPage title="Crew War" icon="⚔️" />; }
+function CrewAlliancePage() { return <GenericPage title="Crew Alliance" icon="🤝" />; }
+function CrewTerritoryPage() { return <GenericPage title="Crew Territory" icon="📍" />; }
+function CrewChallengesPage() { return <GenericPage title="Crew Challenges" icon="🎯" />; }
+function CrewLeaderboardPage() { return <GenericPage title="Crew Leaderboard" icon="🏆" />; }
+
+function CityMapPage() { return <GenericPage title="City Map" icon="🗺️" />; }
+function NeighborhoodsPage() { return <GenericPage title="Neighborhoods" icon="🏘️" />; }
+function SlumsPage() { return <GenericPage title="Slums" icon="🏚️" />; }
+function SeasonsPage() { return <GenericPage title="Seasons" icon="🍂" />; }
+
+function CombatSkillsPage() { return <GenericPage title="Combat Skills" icon="⚔️" />; }
+function StealthSkillsPage() { return <GenericPage title="Stealth Skills" icon="🥷" />; }
+function HackingSkillsPage() { return <GenericPage title="Hacking Skills" icon="💻" />; }
+function PrestigeShopPage() { return <GenericPage title="Prestige Shop" icon="🛒" />; }
+function SeasonRewardsProgPage() { return <GenericPage title="Season Rewards" icon="🏆" />; }
+function EnergyDrinksPage() { return <GenericPage title="Energy Drinks" icon="⚡" />; }
+
+function SideMissionsPage() { return <GenericPage title="Side Missions" icon="📋" />; }
+function DailyMissionsPage() { return <GenericPage title="Daily Missions" icon="📅" />; }
+function WeeklyMissionsPage() { return <GenericPage title="Weekly Missions" icon="📆" />; }
+function MonthlyMissionsPage() { return <GenericPage title="Monthly Missions" icon="🗓️" />; }
+
+function CityStatsPage() { return <GenericPage title="City Statistics" icon="📊" />; }
+
+const renderPage = () => {
     // Prison blocking for crime pages
     const prisonBlockedPages = ["crimes", "steal_from_house", "gta_car_theft", "kill", "hit_list",
       "fight_club", "contracts", "underground", "counterfeiting", "drug_trafficking", "arson",
@@ -733,6 +902,75 @@ export default function Dashboard() {
       case "online_players": return <OnlineList />;
       case "advanced_features": return <AdvancedFeaturesPage />;
 
+            // Combat
+      case "duel_1v1": return <Duel1v1Page />;
+      case "crew_wars": return <CrewWarsPage />;
+      case "ctf": return <CTFPage />;
+      case "koth": return <KOTHPage />;
+      case "battle_royale": return <BattleRoyalePage />;
+      case "ladder": return <LadderPage />;
+      case "champion": return <ChampionPage />;
+      case "ambush": return <AmbushPage />;
+      // Gambling new
+      case "poker_texas": return <PokerTexasPage />;
+      case "poker_omaha": return <PokerOmahaPage />;
+      case "craps": return <CrapsPage />;
+      case "powerball": return <PowerballPage />;
+      case "coin_flip": return <CoinFlipPage />;
+      case "wheel": return <WheelPage />;
+      case "horse_racing": return <HorseRacingPage />;
+      case "scratch_cards": return <ScratchCardsPage />;
+      case "bingo": return <BingoPage />;
+      case "keno": return <KenoPage />;
+      case "higher_lower": return <HigherLowerPage />;
+      case "bj_switch": return <BJSwitchPage />;
+      // Economy
+      case "bank_account": return <BankAccountPage />;
+      case "bank_robbery": return <BankRobberyPage />;
+      case "interest_rates": return <InterestRatesPage />;
+      case "credit_score": return <CreditScorePage />;
+      case "health_insurance": return <HealthInsurancePage />;
+      case "life_insurance": return <LifeInsurancePage />;
+      case "crypto_trading": return <CryptoTradingPage />;
+      case "auto_shop": return <AutoShopPage />;
+      case "offshore": return <OffshorePage />;
+      case "daily_spin": return <DailySpinPage />;
+      case "referral": return <ReferralPage />;
+      case "season_rewards": return <SeasonRewardsPage />;
+      case "battle_pass": return <BattlePassPage />;
+      // Social
+      case "crew_ranks": return <CrewRanksPage />;
+      case "crew_chat": return <CrewChatPage />;
+      case "crew_bank": return <CrewBankPage />;
+      case "crew_safehouse": return <CrewSafehousePage />;
+      case "crew_war": return <CrewWarPage />;
+      case "crew_alliance": return <CrewAlliancePage />;
+      case "crew_territory": return <CrewTerritoryPage />;
+      case "crew_challenges": return <CrewChallengesPage />;
+      case "crew_leaderboard": return <CrewLeaderboardPage />;
+      // World
+      case "city_map": return <CityMapPage />;
+      case "neighborhoods": return <NeighborhoodsPage />;
+      case "slums": return <SlumsPage />;
+      case "seasons": return <SeasonsPage />;
+      case "city_stats": return <CityStatsPage />;
+      // Progression
+      case "combat_skills": return <CombatSkillsPage />;
+      case "stealth_skills": return <StealthSkillsPage />;
+      case "hacking_skills": return <HackingSkillsPage />;
+      case "prestige_shop": return <PrestigeShopPage />;
+      case "season_rewards_prog": return <SeasonRewardsProgPage />;
+      case "energy_drinks": return <EnergyDrinksPage />;
+      // Missions
+      case "storyline": return <StorylinePage />;
+      case "side_missions": return <SideMissionsPage />;
+      case "daily_missions": return <DailyMissionsPage />;
+      case "weekly_missions": return <WeeklyMissionsPage />;
+      case "monthly_missions": return <MonthlyMissionsPage />;
+      // Crime subcategories
+      case "robbery": return <CrimesOverviewPage />;
+      case "fraud": return <CrimesOverviewPage />;
+      case "transport": return <CrimesOverviewPage />;
       default: return <HeadquartersPage />;
     }
   };
@@ -774,18 +1012,14 @@ export default function Dashboard() {
 
       {/* Top Quick Access Bar */}
       <div className="bg-black/40 border-b border-border/50 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
+        <button onClick={() => setPage("storyline")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900/40 hover:bg-amber-800/40 border border-amber-500/20 transition whitespace-nowrap">Storyline</button>
         <button onClick={() => setPage("crimes")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 hover:bg-red-800/40 border border-red-500/20 transition whitespace-nowrap">Street Crimes</button>
         <button onClick={() => setPage("steal_from_house")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-900/40 hover:bg-orange-800/40 border border-orange-500/20 transition whitespace-nowrap">Steal From House</button>
         <button onClick={() => setPage("gta_car_theft")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-900/40 hover:bg-blue-800/40 border border-blue-500/20 transition whitespace-nowrap">GTA Car Theft</button>
         <button onClick={() => setPage("kill")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-900/40 hover:bg-purple-800/40 border border-purple-500/20 transition whitespace-nowrap">Murder</button>
         <button onClick={() => setPage("prison")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-900/40 hover:bg-gray-800/40 border border-gray-500/20 transition whitespace-nowrap">Prison</button>
         <button onClick={() => setPage("hospital")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-900/40 hover:bg-green-800/40 border border-green-500/20 transition whitespace-nowrap">Hospital</button>
-      </div>
-
-      {/* Live Event Banner */}
-      <div className="shrink-0"><LiveEventBanner /></div>
-
-      {/* Main Layout */}
+      </div>{/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
         {showLeft && (

@@ -802,7 +802,7 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{crime.description}</p>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className={`text-[10px] font-bold ${getCrimeTypeColor(crime.risk)}`}>
+                    <span className={`text-[10px] font-bold ${getCrimeTypeColor("street")}`}>
                       ⚠️ Risk: {crime.risk}%
                     </span>
                     <span className="text-[10px] font-bold text-green-400">💰 ${crime.reward.toLocaleString()}</span>
@@ -871,7 +871,7 @@ export function CrimesOverviewPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedCategory(category.id)}
-              className={`text-left p-5 rounded-xl border-2 transition-all ${getCrimeTypeBg(avgRisk)} hover:shadow-lg hover:shadow-primary/5`}
+              className={`text-left p-5 rounded-xl border-2 transition-all ${getCrimeTypeBg("street")} hover:shadow-lg hover:shadow-primary/5`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
@@ -885,7 +885,7 @@ export function CrimesOverviewPage() {
               </div>
               <p className="text-xs text-muted-foreground mb-3">{category.description}</p>
               <div className="flex gap-4 text-[10px]">
-                <span className={getCrimeTypeColor(avgRisk)}>Avg Risk: {avgRisk}%</span>
+                <span className={getCrimeTypeColor("street")}>Avg Risk: {avgRisk}%</span>
                 <span className="text-green-400">Max Reward: ${maxReward.toLocaleString()}</span>
               </div>
             </motion.button>

@@ -13,7 +13,7 @@ import {
   Upload, Terminal, Server, Cpu, HardDrive, GitBranch,
 } from "lucide-react";
 
-const ADMIN_CATEGORIES = {
+const ADMIN_CATEGORIES: Record<string, { id: string; name: string; icon: string; desc: string }[]> = {
   "Player Management": [
     { id: "player_mgmt", name: "Player Management", icon: "👥", desc: "View, edit, ban, unban, reset any player" },
     { id: "ban_system", name: "Ban System", icon: "🚫", desc: "Temporary and permanent bans with reasons" },
@@ -108,7 +108,10 @@ const ADMIN_CATEGORIES = {
   ],
 };
 
-const ALL_FEATURES = Object.values(ADMIN_CATEGORIES).flat();
+const ALL_FEATURES: Array<{ id: string; name: string; icon: string; desc: string; category?: string }> = 
+  (Object.entries(ADMIN_CATEGORIES) as [string, any[]][]).flatMap(([cat, items]) => 
+    items.map(item => ({ ...item, category: cat }))
+  );
 
 // ===== ADMIN ACTION CARD =====
 function AdminActionCard({ feature, onAction }: { feature: any; onAction: (id: string) => void }) {
@@ -182,13 +185,13 @@ function PlayerManagementModal({ players, onClose }: { players: any[]; onClose: 
             <div>HP: {selectedPlayer.life}/{selectedPlayer.maxLife}</div>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={async () => { try { await giveMoney({ playerId: selectedPlayer._id, amount: parseInt(amount) || 1000000 }); alert("Money given!"); } catch(e: any) { alert(e.message); } }}
+            <button onClick={async () => { try { await giveMoney({ targetId: selectedPlayer._id, amount: parseInt(amount) || 1000000 }); alert("Money given!"); } catch(e: any) { alert(e.message); } }}
               className="px-3 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700">💰 Give Money</button>
-            <button onClick={async () => { try { await resetPlayer({ playerId: selectedPlayer._id }); alert("Player reset!"); } catch(e: any) { alert(e.message); } }}
+            <button onClick={async () => { try { await resetPlayer({ targetId: selectedPlayer._id }); alert("Player reset!"); } catch(e: any) { alert(e.message); } }}
               className="px-3 py-2 bg-yellow-600 text-white rounded-lg text-xs font-bold hover:bg-yellow-700">🔄 Reset Player</button>
-            <button onClick={async () => { try { await banPlayer({ playerId: selectedPlayer._id, reason: reason || "Banned by admin" }); alert("Banned!"); } catch(e: any) { alert(e.message); } }}
+            <button onClick={async () => { try { await banPlayer({ targetId: selectedPlayer._id, reason: reason || "Banned by admin" }); alert("Banned!"); } catch(e: any) { alert(e.message); } }}
               className="px-3 py-2 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700">🚫 Ban Player</button>
-            <button onClick={async () => { try { await unbanPlayer({ playerId: selectedPlayer._id }); alert("Unbanned!"); } catch(e: any) { alert(e.message); } }}
+            <button onClick={async () => { try { await unbanPlayer({ targetId: selectedPlayer._id }); alert("Unbanned!"); } catch(e: any) { alert(e.message); } }}
               className="px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700">✅ Unban Player</button>
           </div>
           <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount..."
