@@ -1,4 +1,110 @@
-import { useState } from "react";
+#!/usr/bin/env python3
+"""Build the complete new AdminPanel with all 80 features."""
+
+# All 80 admin features organized by category
+admin_categories = {
+    "Player Management": [
+        {"id": "player_mgmt", "name": "Player Management", "icon": "👥", "desc": "View, edit, ban, unban, reset any player"},
+        {"id": "ban_system", "name": "Ban System", "icon": "🚫", "desc": "Temporary and permanent bans with reasons"},
+        {"id": "vip_manager", "name": "VIP Manager", "icon": "👑", "desc": "Grant/revoke VIP status, track benefits"},
+        {"id": "vip_gift", "name": "VIP Gift Sender", "icon": "🎁", "desc": "Send gifts to all VIPs or specific players"},
+        {"id": "profile_custom", "name": "Profile Customizer", "icon": "🖼️", "desc": "Edit player profiles, add custom flair"},
+        {"id": "title_mgr", "name": "Title Manager", "icon": "🏅", "desc": "Grant/revoke special titles"},
+        {"id": "badge_creator", "name": "Badge Creator", "icon": "🎨", "desc": "Design custom animated badges"},
+        {"id": "prestige_mgr", "name": "Prestige Manager", "icon": "⭐", "desc": "Grant/revoke prestige, adjust bonuses"},
+        {"id": "player_audit", "name": "Player Audit Log", "icon": "📋", "desc": "Full history of every action any player took"},
+        {"id": "ip_tracking", "name": "IP Tracking", "icon": "🔍", "desc": "Track multiple accounts from same IP"},
+        {"id": "reward_dist", "name": "Reward Distribution", "icon": "💰", "desc": "Send items/cash to specific players or groups"},
+        {"id": "heal_players", "name": "Hospital Override", "icon": "🏥", "desc": "Heal players, add injuries, manage death timers"},
+        {"id": "prison_mgmt", "name": "Prison Management", "icon": "🔒", "desc": "Release players, adjust sentences, add solitary"},
+        {"id": "death_timer", "name": "Death Timer Manager", "icon": "💀", "desc": "Adjust death revive timers"},
+        {"id": "wanted_editor", "name": "Wanted Level Editor", "icon": "🔴", "desc": "Adjust police response to wanted levels"},
+        {"id": "fbi_controller", "name": "FBI/Military Controller", "icon": "🕵️", "desc": "Set response thresholds"},
+        {"id": "anti_cheat", "name": "Anti-Cheat Dashboard", "icon": "🛡️", "desc": "Flagged suspicious activities"},
+        {"id": "player_reports", "name": "Player Report Queue", "icon": "📢", "desc": "Handle player reports"},
+    ],
+    "Economy & Finance": [
+        {"id": "economy_ctrl", "name": "Economy Control", "icon": "💹", "desc": "Adjust inflation, tax rates, market prices server-wide"},
+        {"id": "revenue_dash", "name": "Revenue Dashboard", "icon": "📊", "desc": "Track total money earned/spent server-wide"},
+        {"id": "stock_ctrl", "name": "Stock Market Control", "icon": "📈", "desc": "Manipulate stock prices, halt trading"},
+        {"id": "crypto_ctrl", "name": "Crypto Controller", "icon": "⛏️", "desc": "Set mining rates, price fluctuations"},
+        {"id": "real_estate", "name": "Real Estate Editor", "icon": "🏠", "desc": "Add properties, adjust prices/income"},
+        {"id": "biz_mgr", "name": "Business Manager", "icon": "🏢", "desc": "Create businesses, set profit margins"},
+        {"id": "auction_oversight", "name": "Auction Oversight", "icon": "🔨", "desc": "Remove bid items, force sales"},
+        {"id": "loan_adjuster", "name": "Loan Adjuster", "icon": "💳", "desc": "Modify interest rates, forgive debts"},
+        {"id": "insurance_monitor", "name": "Insurance Monitor", "icon": "🛡️", "desc": "Track claims, detect fraud"},
+        {"id": "market_manip", "name": "Market Manipulation Tool", "icon": "🎛️", "desc": "Adjust prices, create items, remove items"},
+        {"id": "cash_boost", "name": "Cash Boost Manager", "icon": "💵", "desc": "Set global cash multipliers"},
+        {"id": "xp_boost", "name": "XP Boost Manager", "icon": "⚡", "desc": "Set global XP multipliers"},
+        {"id": "item_mgmt", "name": "Item Management", "icon": "📦", "desc": "Create, delete, modify any item in the game"},
+        {"id": "black_market_ed", "name": "Black Market Editor", "icon": "🖤", "desc": "Add/remove items, adjust prices"},
+        {"id": "mystery_box_ed", "name": "Mystery Box Editor", "icon": "🎰", "desc": "Define loot tables and drop rates"},
+        {"id": "weapon_arsenal", "name": "Weapon Arsenal Editor", "icon": "🔫", "desc": "Add/remove weapons, adjust damage/cost"},
+        {"id": "crafting_ed", "name": "Crafting Recipe Editor", "icon": "🔧", "desc": "Create/modify crafting combinations"},
+        {"id": "smuggling_ed", "name": "Smuggling Route Editor", "icon": "🚛", "desc": "Create/modify smuggling paths"},
+        {"id": "safe_house_mgr", "name": "Safe House Manager", "icon": "🏠", "desc": "Modify safe house stats/prices"},
+        {"id": "pet_sys_ed", "name": "Pet System Editor", "icon": "🐾", "desc": "Add pets, adjust stats/abilities"},
+        {"id": "skill_tree_ed", "name": "Skill Tree Editor", "icon": "🧠", "desc": "Modify skill points, add new skills"},
+        {"id": "ghost_mode", "name": "Ghost Mode Controller", "icon": "👻", "desc": "Enable/disable server-wide ghost mode"},
+    ],
+    "Events & Seasons": [
+        {"id": "event_mgr", "name": "Event Manager", "icon": "🎪", "desc": "Start/stop custom events with live timers"},
+        {"id": "season_ctrl", "name": "Season Control", "icon": "🗓️", "desc": "Start/end seasons, adjust duration"},
+        {"id": "purge_ctrl", "name": "Purge Controller", "icon": "💀", "desc": "Start/stop purge events manually"},
+        {"id": "crime_event", "name": "Crime Event Creator", "icon": "🔥", "desc": "Create custom crime events with rules"},
+        {"id": "tournament_mgr", "name": "Tournament Manager", "icon": "🏆", "desc": "Create/bracket/manage PvP tournaments"},
+        {"id": "daily_challenge", "name": "Daily Challenge Editor", "icon": "📋", "desc": "Create custom daily challenges"},
+        {"id": "weekly_challenge", "name": "Weekly Challenge Editor", "icon": "📅", "desc": "Create custom weekly challenges"},
+        {"id": "season_pass_ed", "name": "Season Pass Editor", "icon": "🎫", "desc": "Modify season pass rewards/tiers"},
+        {"id": "weather_ctrl", "name": "Weather Control", "icon": "🌤️", "desc": "Force weather events for testing"},
+        {"id": "lotto_ctrl", "name": "Lotto Control", "icon": "🎲", "desc": "Set jackpot amounts, force draws"},
+    ],
+    "Crime & Combat": [
+        {"id": "crime_rate", "name": "Crime Rate Control", "icon": "⚖️", "desc": "Adjust success/fail rates for all crimes"},
+        {"id": "kill_cooldown", "name": "Kill Cooldown Editor", "icon": "⏱️", "desc": "Adjust kill timers"},
+        {"id": "prison_sentence", "name": "Prison Sentence Editor", "icon": "⏰", "desc": "Adjust default sentences"},
+        {"id": "bounty_oversight", "name": "Bounty Oversight", "icon": "🎯", "desc": "View/modify/remove any bounty"},
+        {"id": "crime_stat", "name": "Crime Statistics", "icon": "📊", "desc": "Most committed crimes, success rates, earnings"},
+        {"id": "kill_leader", "name": "Kill Leaderboard", "icon": "💀", "desc": "Admin-only full kill history with details"},
+    ],
+    "Communication": [
+        {"id": "announcements", "name": "Server Announcements", "icon": "📣", "desc": "Broadcast messages to all players instantly"},
+        {"id": "broadcast_sched", "name": "Broadcast Scheduler", "icon": "⏰", "desc": "Schedule announcements for specific times"},
+        {"id": "chat_monitor", "name": "Real-Time Chat Monitor", "icon": "💬", "desc": "Monitor all messages between players"},
+        {"id": "chat_filter", "name": "Chat Filter Editor", "icon": "🚫", "desc": "Manage banned words/phrases"},
+        {"id": "news_ticker", "name": "News Ticker Editor", "icon": "📰", "desc": "Post custom news headlines"},
+        {"id": "forum_mod", "name": "Forum Moderator Tools", "icon": "🔧", "desc": "Delete/pin/lock forum posts"},
+        {"id": "support_ticket", "name": "Support Ticket Manager", "icon": "🎫", "desc": "View/respond/close support tickets"},
+        {"id": "bug_queue", "name": "Bug Report Queue", "icon": "🐛", "desc": "Player-submitted bugs with priority"},
+    ],
+    "World & Systems": [
+        {"id": "live_map", "name": "Live Player Map", "icon": "🗺️", "desc": "See all online players on the world map"},
+        {"id": "faction_mgmt", "name": "Faction Management", "icon": "🏴", "desc": "Create/modify/delete criminal factions"},
+        {"id": "territory_ctrl", "name": "Territory Control", "icon": "📍", "desc": "Manually assign territories to crews"},
+        {"id": "npc_spawner", "name": "NPC Spawner", "icon": "🤖", "desc": "Create AI gangs, police patrols, informants"},
+        {"id": "db_backup", "name": "Database Backup", "icon": "💾", "desc": "Export/import player data"},
+        {"id": "server_health", "name": "Server Health Monitor", "icon": "💓", "desc": "CPU, memory, active connections"},
+        {"id": "mission_creator", "name": "Mission Creator", "icon": "🎯", "desc": "Create custom missions with rewards"},
+        {"id": "achievement_ed", "name": "Achievement Editor", "icon": "🏅", "desc": "Create/modify achievement requirements"},
+        {"id": "leaderboard_rst", "name": "Leaderboard Reset", "icon": "🔄", "desc": "Reset any or all leaderboards"},
+        {"id": "leaderboard_ed", "name": "Leaderboard Editor", "icon": "📊", "desc": "Modify ranking algorithms"},
+        {"id": "legacy_board", "name": "Legacy Board Editor", "icon": "📜", "desc": "Modify legacy achievements"},
+        {"id": "energy_ctrl", "name": "Energy System Control", "icon": "⚡", "desc": "Adjust energy regeneration rates"},
+        {"id": "maintenance", "name": "Maintenance Mode", "icon": "🔧", "desc": "Toggle server maintenance mode"},
+        {"id": "version_ctrl", "name": "Version Control", "icon": "📝", "desc": "Track game version and changelog"},
+        {"id": "ab_testing", "name": "A/B Testing Panel", "icon": "🧪", "desc": "Test different game parameters"},
+        {"id": "analytics", "name": "Analytics Dashboard", "icon": "📈", "desc": "DAU, MAU, retention, engagement metrics"},
+    ],
+}
+
+all_features = []
+for cat, items in admin_categories.items():
+    for item in items:
+        item["category"] = cat
+        all_features.append(item)
+
+# Build the component
+content = '''import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,99 +120,15 @@ import {
 } from "lucide-react";
 
 const ADMIN_CATEGORIES = {
-  "Player Management": [
-    { id: "player_mgmt", name: "Player Management", icon: "👥", desc: "View, edit, ban, unban, reset any player" },
-    { id: "ban_system", name: "Ban System", icon: "🚫", desc: "Temporary and permanent bans with reasons" },
-    { id: "vip_manager", name: "VIP Manager", icon: "👑", desc: "Grant/revoke VIP status, track benefits" },
-    { id: "vip_gift", name: "VIP Gift Sender", icon: "🎁", desc: "Send gifts to all VIPs or specific players" },
-    { id: "profile_custom", name: "Profile Customizer", icon: "🖼️", desc: "Edit player profiles, add custom flair" },
-    { id: "title_mgr", name: "Title Manager", icon: "🏅", desc: "Grant/revoke special titles" },
-    { id: "badge_creator", name: "Badge Creator", icon: "🎨", desc: "Design custom animated badges" },
-    { id: "prestige_mgr", name: "Prestige Manager", icon: "⭐", desc: "Grant/revoke prestige, adjust bonuses" },
-    { id: "player_audit", name: "Player Audit Log", icon: "📋", desc: "Full history of every action any player took" },
-    { id: "ip_tracking", name: "IP Tracking", icon: "🔍", desc: "Track multiple accounts from same IP" },
-    { id: "reward_dist", name: "Reward Distribution", icon: "💰", desc: "Send items/cash to specific players or groups" },
-    { id: "heal_players", name: "Hospital Override", icon: "🏥", desc: "Heal players, add injuries, manage death timers" },
-    { id: "prison_mgmt", name: "Prison Management", icon: "🔒", desc: "Release players, adjust sentences, add solitary" },
-    { id: "death_timer", name: "Death Timer Manager", icon: "💀", desc: "Adjust death revive timers" },
-    { id: "wanted_editor", name: "Wanted Level Editor", icon: "🔴", desc: "Adjust police response to wanted levels" },
-    { id: "fbi_controller", name: "FBI/Military Controller", icon: "🕵️", desc: "Set response thresholds" },
-    { id: "anti_cheat", name: "Anti-Cheat Dashboard", icon: "🛡️", desc: "Flagged suspicious activities" },
-    { id: "player_reports", name: "Player Report Queue", icon: "📢", desc: "Handle player reports" },
-  ],
-  "Economy & Finance": [
-    { id: "economy_ctrl", name: "Economy Control", icon: "💹", desc: "Adjust inflation, tax rates, market prices server-wide" },
-    { id: "revenue_dash", name: "Revenue Dashboard", icon: "📊", desc: "Track total money earned/spent server-wide" },
-    { id: "stock_ctrl", name: "Stock Market Control", icon: "📈", desc: "Manipulate stock prices, halt trading" },
-    { id: "crypto_ctrl", name: "Crypto Controller", icon: "⛏️", desc: "Set mining rates, price fluctuations" },
-    { id: "real_estate", name: "Real Estate Editor", icon: "🏠", desc: "Add properties, adjust prices/income" },
-    { id: "biz_mgr", name: "Business Manager", icon: "🏢", desc: "Create businesses, set profit margins" },
-    { id: "auction_oversight", name: "Auction Oversight", icon: "🔨", desc: "Remove bid items, force sales" },
-    { id: "loan_adjuster", name: "Loan Adjuster", icon: "💳", desc: "Modify interest rates, forgive debts" },
-    { id: "insurance_monitor", name: "Insurance Monitor", icon: "🛡️", desc: "Track claims, detect fraud" },
-    { id: "market_manip", name: "Market Manipulation Tool", icon: "🎛️", desc: "Adjust prices, create items, remove items" },
-    { id: "cash_boost", name: "Cash Boost Manager", icon: "💵", desc: "Set global cash multipliers" },
-    { id: "xp_boost", name: "XP Boost Manager", icon: "⚡", desc: "Set global XP multipliers" },
-    { id: "item_mgmt", name: "Item Management", icon: "📦", desc: "Create, delete, modify any item in the game" },
-    { id: "black_market_ed", name: "Black Market Editor", icon: "🖤", desc: "Add/remove items, adjust prices" },
-    { id: "mystery_box_ed", name: "Mystery Box Editor", icon: "🎰", desc: "Define loot tables and drop rates" },
-    { id: "weapon_arsenal", name: "Weapon Arsenal Editor", icon: "🔫", desc: "Add/remove weapons, adjust damage/cost" },
-    { id: "crafting_ed", name: "Crafting Recipe Editor", icon: "🔧", desc: "Create/modify crafting combinations" },
-    { id: "smuggling_ed", name: "Smuggling Route Editor", icon: "🚛", desc: "Create/modify smuggling paths" },
-    { id: "safe_house_mgr", name: "Safe House Manager", icon: "🏠", desc: "Modify safe house stats/prices" },
-    { id: "pet_sys_ed", name: "Pet System Editor", icon: "🐾", desc: "Add pets, adjust stats/abilities" },
-    { id: "skill_tree_ed", name: "Skill Tree Editor", icon: "🧠", desc: "Modify skill points, add new skills" },
-    { id: "ghost_mode", name: "Ghost Mode Controller", icon: "👻", desc: "Enable/disable server-wide ghost mode" },
-  ],
-  "Events & Seasons": [
-    { id: "event_mgr", name: "Event Manager", icon: "🎪", desc: "Start/stop custom events with live timers" },
-    { id: "season_ctrl", name: "Season Control", icon: "🗓️", desc: "Start/end seasons, adjust duration" },
-    { id: "purge_ctrl", name: "Purge Controller", icon: "💀", desc: "Start/stop purge events manually" },
-    { id: "crime_event", name: "Crime Event Creator", icon: "🔥", desc: "Create custom crime events with rules" },
-    { id: "tournament_mgr", name: "Tournament Manager", icon: "🏆", desc: "Create/bracket/manage PvP tournaments" },
-    { id: "daily_challenge", name: "Daily Challenge Editor", icon: "📋", desc: "Create custom daily challenges" },
-    { id: "weekly_challenge", name: "Weekly Challenge Editor", icon: "📅", desc: "Create custom weekly challenges" },
-    { id: "season_pass_ed", name: "Season Pass Editor", icon: "🎫", desc: "Modify season pass rewards/tiers" },
-    { id: "weather_ctrl", name: "Weather Control", icon: "🌤️", desc: "Force weather events for testing" },
-    { id: "lotto_ctrl", name: "Lotto Control", icon: "🎲", desc: "Set jackpot amounts, force draws" },
-  ],
-  "Crime & Combat": [
-    { id: "crime_rate", name: "Crime Rate Control", icon: "⚖️", desc: "Adjust success/fail rates for all crimes" },
-    { id: "kill_cooldown", name: "Kill Cooldown Editor", icon: "⏱️", desc: "Adjust kill timers" },
-    { id: "prison_sentence", name: "Prison Sentence Editor", icon: "⏰", desc: "Adjust default sentences" },
-    { id: "bounty_oversight", name: "Bounty Oversight", icon: "🎯", desc: "View/modify/remove any bounty" },
-    { id: "crime_stat", name: "Crime Statistics", icon: "📊", desc: "Most committed crimes, success rates, earnings" },
-    { id: "kill_leader", name: "Kill Leaderboard", icon: "💀", desc: "Admin-only full kill history with details" },
-  ],
-  "Communication": [
-    { id: "announcements", name: "Server Announcements", icon: "📣", desc: "Broadcast messages to all players instantly" },
-    { id: "broadcast_sched", name: "Broadcast Scheduler", icon: "⏰", desc: "Schedule announcements for specific times" },
-    { id: "chat_monitor", name: "Real-Time Chat Monitor", icon: "💬", desc: "Monitor all messages between players" },
-    { id: "chat_filter", name: "Chat Filter Editor", icon: "🚫", desc: "Manage banned words/phrases" },
-    { id: "news_ticker", name: "News Ticker Editor", icon: "📰", desc: "Post custom news headlines" },
-    { id: "forum_mod", name: "Forum Moderator Tools", icon: "🔧", desc: "Delete/pin/lock forum posts" },
-    { id: "support_ticket", name: "Support Ticket Manager", icon: "🎫", desc: "View/respond/close support tickets" },
-    { id: "bug_queue", name: "Bug Report Queue", icon: "🐛", desc: "Player-submitted bugs with priority" },
-  ],
-  "World & Systems": [
-    { id: "live_map", name: "Live Player Map", icon: "🗺️", desc: "See all online players on the world map" },
-    { id: "faction_mgmt", name: "Faction Management", icon: "🏴", desc: "Create/modify/delete criminal factions" },
-    { id: "territory_ctrl", name: "Territory Control", icon: "📍", desc: "Manually assign territories to crews" },
-    { id: "npc_spawner", name: "NPC Spawner", icon: "🤖", desc: "Create AI gangs, police patrols, informants" },
-    { id: "db_backup", name: "Database Backup", icon: "💾", desc: "Export/import player data" },
-    { id: "server_health", name: "Server Health Monitor", icon: "💓", desc: "CPU, memory, active connections" },
-    { id: "mission_creator", name: "Mission Creator", icon: "🎯", desc: "Create custom missions with rewards" },
-    { id: "achievement_ed", name: "Achievement Editor", icon: "🏅", desc: "Create/modify achievement requirements" },
-    { id: "leaderboard_rst", name: "Leaderboard Reset", icon: "🔄", desc: "Reset any or all leaderboards" },
-    { id: "leaderboard_ed", name: "Leaderboard Editor", icon: "📊", desc: "Modify ranking algorithms" },
-    { id: "legacy_board", name: "Legacy Board Editor", icon: "📜", desc: "Modify legacy achievements" },
-    { id: "energy_ctrl", name: "Energy System Control", icon: "⚡", desc: "Adjust energy regeneration rates" },
-    { id: "maintenance", name: "Maintenance Mode", icon: "🔧", desc: "Toggle server maintenance mode" },
-    { id: "version_ctrl", name: "Version Control", icon: "📝", desc: "Track game version and changelog" },
-    { id: "ab_testing", name: "A/B Testing Panel", icon: "🧪", desc: "Test different game parameters" },
-    { id: "analytics", name: "Analytics Dashboard", icon: "📈", desc: "DAU, MAU, retention, engagement metrics" },
-  ],
-};
+'''
+
+for cat, items in admin_categories.items():
+    content += f'  "{cat}": [\n'
+    for item in items:
+        content += f'    {{ id: "{item["id"]}", name: "{item["name"]}", icon: "{item["icon"]}", desc: "{item["desc"]}" }},\n'
+    content += '  ],\n'
+
+content += '''};
 
 const ALL_FEATURES = Object.values(ADMIN_CATEGORIES).flat();
 
@@ -413,3 +435,9 @@ export function AdminPanel() {
     </div>
   );
 }
+'''
+
+with open('src/components/AdminPanel.tsx', 'w') as f:
+    f.write(content)
+
+print(f"AdminPanel.tsx written: {len(content)} chars, {len(content.splitlines())} lines")
