@@ -87,6 +87,40 @@ import {
   AuctionHousePage, InsurancePage, LoansPage,
 } from "@/components/NewPages";
 
+
+// ===== RANK SYSTEM =====
+function getRank(level: number): string {
+  if (level >= 90) return "Shadow Emperor";
+  if (level >= 80) return "Godfather";
+  if (level >= 70) return "Don";
+  if (level >= 60) return "Underboss";
+  if (level >= 50) return "Consigliere";
+  if (level >= 40) return "Captain";
+  if (level >= 30) return "Soldier";
+  if (level >= 20) return "Enforcer";
+  if (level >= 10) return "Thug";
+  return "Street Rat";
+}
+
+function getRankStars(level: number): string {
+  const base = level >= 90 ? 8 : level >= 80 ? 4 : level >= 70 ? 4 : level >= 60 ? 4 : level >= 50 ? 4 : level >= 40 ? 4 : level >= 30 ? 4 : level >= 20 ? 4 : level >= 10 ? 4 : 0;
+  const withinRank = level % 10;
+  const stars = Math.min(4, Math.floor(withinRank / 2.5));
+  return "🌟".repeat(stars);
+}
+
+function RankBadge({ level, size = "sm" }: { level: number; size?: "sm" | "lg" }) {
+  const rank = getRank(level);
+  const stars = getRankStars(level);
+  const cls = size === "lg" ? "text-lg font-black" : "text-xs font-bold";
+  return (
+    <span className={`${cls} mafia-gold`}>
+      {rank} {stars && <span className="text-[10px]">{stars}</span>}
+    </span>
+  );
+}
+
+
 type GamePage = string;
 
 function SafePage({ children }: { children: React.ReactNode }) {
@@ -357,7 +391,8 @@ function HeadquartersPage() {
         <div className="mafia-card rounded-xl p-4 text-center">
           <div className="text-2xl mb-1">⭐</div>
           <div className="text-xs text-muted-foreground">Level</div>
-          <div className="text-lg font-bold text-yellow-400">{player.level}</div>
+          <div className="text-sm"><RankBadge level={player.level ?? 1} size="lg" /></div>
+          <div className="text-xs text-muted-foreground">Level {player.level}</div>
         </div>
       </div>
       <div className="mafia-card rounded-xl p-4">
@@ -1709,7 +1744,7 @@ const renderPage = () => {
                   {/* XP Bar */}
                   <div className="px-2">
                     <div className="flex justify-between text-[10px] mb-0.5">
-                      <span className="text-yellow-400 font-bold">⭐ Level {player.level}</span>
+                      <span className="text-yellow-400 font-bold">⭐ <RankBadge level={player.level ?? 1} /> Lv.{player.level}</span>
                       <span className="text-muted-foreground">{xpPercent.toFixed(0)}%</span>
                     </div>
                     <div className="h-2.5 bg-black/40 rounded-full overflow-hidden">
@@ -1800,7 +1835,7 @@ const renderPage = () => {
       <div className="bg-black/40 border-t border-border/50 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground shrink-0">
         <div className="flex items-center gap-4">
           <span>{player?.nickname || "Unknown"}</span>
-          <span>Lv.{player?.level ?? 1}</span>
+          <span><RankBadge level={player?.level ?? 1} /> Lv.{player?.level ?? 1}</span>
           <span>${(player?.money ?? 0).toLocaleString()}</span>
         </div>
         <div className="flex items-center gap-2">
