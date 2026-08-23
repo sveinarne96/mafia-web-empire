@@ -1214,7 +1214,7 @@ const renderPage = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
         {showLeft && (
-          <aside className="w-56 bg-black/30 border-r border-border/50 overflow-y-auto shrink-0 hidden lg:block">
+          <aside className="w-56 bg-black/30 border-r border-border/50 overflow-y-auto shrink-0 hidden md:block">
             <div className="p-3 space-y-1">
               {leftMenuSections.map(section => (
                 <div key={section.title}>
@@ -1276,7 +1276,7 @@ const renderPage = () => {
 
         {/* Right Menu */}
         {showRight && (
-          <aside className="w-56 bg-black/30 border-l border-border/50 overflow-y-auto shrink-0 hidden xl:block">
+          <aside className="w-56 bg-black/30 border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block">
             <div className="p-3 space-y-3">
               {/* Status Panel */}
               {player && (
