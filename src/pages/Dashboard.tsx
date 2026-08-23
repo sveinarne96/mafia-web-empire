@@ -1007,7 +1007,11 @@ const renderPage = () => {
       case "weekly_missions": return <WeeklyMissionsPage />;
       case "monthly_missions": return <MonthlyMissionsPage />;
       // Crime subcategories
-      case "robbery": return <CrimesOverviewPage />;
+      case "robbery": return <SafePage><CrimeCategoryPage categoryId="robbery" /></SafePage>;
+      case "fraud": return <SafePage><CrimeCategoryPage categoryId="fraud" /></SafePage>;
+      case "burglary": return <SafePage><CrimeCategoryPage categoryId="burglary" /></SafePage>;
+      case "drugs": return <SafePage><CrimeCategoryPage categoryId="drugs" /></SafePage>;
+      case "organized": return <SafePage><CrimeCategoryPage categoryId="organized" /></SafePage>;
       case "fraud": return <CrimesOverviewPage />;
       case "transport": return <CrimesOverviewPage />;
       default: return <HeadquartersPage />;
@@ -1052,10 +1056,16 @@ const renderPage = () => {
       {/* Top Quick Access Bar */}
       <div className="bg-black/40 border-b border-border/50 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
         <button onClick={() => setPage("storyline")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900/40 hover:bg-amber-800/40 border border-amber-500/20 transition whitespace-nowrap">Storyline</button>
-        <button onClick={() => setPage("crimes")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 hover:bg-red-800/40 border border-red-500/20 transition whitespace-nowrap">Street Crimes</button>
+        <button onClick={() => setPage("crimes")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-900/40 hover:bg-green-800/40 border border-green-500/20 transition whitespace-nowrap">Street Crimes</button>
+        <button onClick={() => setPage("robbery")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 hover:bg-red-800/40 border border-red-500/20 transition whitespace-nowrap">Robberies</button>
+        <button onClick={() => setPage("fraud")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-900/40 hover:bg-yellow-800/40 border border-yellow-500/20 transition whitespace-nowrap">Fraud</button>
+        <button onClick={() => setPage("burglary")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-900/40 hover:bg-orange-800/40 border border-orange-500/20 transition whitespace-nowrap">Burglary</button>
         <button onClick={() => setPage("steal_from_house")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-900/40 hover:bg-orange-800/40 border border-orange-500/20 transition whitespace-nowrap">Steal From House</button>
         <button onClick={() => setPage("gta_car_theft")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-900/40 hover:bg-blue-800/40 border border-blue-500/20 transition whitespace-nowrap">GTA Car Theft</button>
-        <button onClick={() => setPage("kill")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-900/40 hover:bg-purple-800/40 border border-purple-500/20 transition whitespace-nowrap">Murder</button>
+        <button onClick={() => setPage("drugs")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-900/40 hover:bg-purple-800/40 border border-purple-500/20 transition whitespace-nowrap">Drugs</button>
+        <button onClick={() => setPage("organized")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-900/40 hover:bg-blue-800/40 border border-blue-500/20 transition whitespace-nowrap">Organized</button>
+        <button onClick={() => setPage("underground")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-900/40 hover:bg-gray-800/40 border border-gray-500/20 transition whitespace-nowrap">Underground</button>
+        <button onClick={() => setPage("kill")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 hover:bg-red-800/40 border border-red-500/20 transition whitespace-nowrap">Murder</button>
         <button onClick={() => setPage("prison")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-900/40 hover:bg-gray-800/40 border border-gray-500/20 transition whitespace-nowrap">Prison</button>
         <button onClick={() => setPage("hospital")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-900/40 hover:bg-green-800/40 border border-green-500/20 transition whitespace-nowrap">Hospital</button>
       </div>{/* Main Layout */}
