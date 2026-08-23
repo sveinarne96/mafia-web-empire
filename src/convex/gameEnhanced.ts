@@ -331,6 +331,17 @@ export const stealFromHouse = mutation({
   },
 });
 
+// Helper: add XP and check for level-up
+async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
+  const newXP = (player.experience ?? 0) + xpAmount;
+  const xpNeeded = (player.level ?? 1) * 100;
+  const levelUpNow = newXP >= xpNeeded;
+  return {
+    experience: levelUpNow ? 0 : newXP,
+    levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
+  };
+}
+
 // ===== GTA CAR THEFT (cars show in garage) =====
 export const gtaCarTheft = mutation({
   args: {},
@@ -660,7 +671,7 @@ export const gtaCarTheft = mutation({
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
-      experience: (player.experience ?? 0) + xpEarned,
+      ...(await addXpAndCheckLevel(ctx, player, xpEarned)),
       inPrison: arrested,
       prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 2 : 0)),

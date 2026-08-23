@@ -206,6 +206,17 @@ export const acknowledgeLevelUp = mutation({
   },
 });
 
+// Helper: add XP and check for level-up
+async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
+  const newXP = (player.experience ?? 0) + xpAmount;
+  const xpNeeded = (player.level ?? 1) * 100;
+  const levelUpNow = newXP >= xpNeeded;
+  return {
+    experience: levelUpNow ? 0 : newXP,
+    levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
+  };
+}
+
 export const commitCrime = mutation({
   args: { type: v.union(v.literal("car_theft"), v.literal("burglarize"), v.literal("rob_player")), targetId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
@@ -244,7 +255,7 @@ export const fightPlayer = mutation({ args: { defenderId: v.id("users") }, handl
     const dDmg = Math.max(1, Math.floor((defender.attack ?? 10) * (0.8 + Math.random() * 0.4) - (attacker.defense ?? 10) * 0.3));
     const attackerWins = aDmg > dDmg; const moneyStolen = Math.floor(((attackerWins ? defender : attacker).money ?? 0) * 0.05);
     await ctx.db.insert("fights", { attackerId: attacker._id, defenderId: args.defenderId, attackerDamage: aDmg, defenderDamage: dDmg, winnerId: attackerWins ? attacker._id : args.defenderId, moneyStolen, timestamp: Date.now() });
-    await ctx.db.patch(attacker._id, { life: Math.max(0, (attacker.life ?? 100) - dDmg), totalFights: (attacker.totalFights ?? 0) + 1, totalKills: attackerWins ? (attacker.totalKills ?? 0) + 1 : (attacker.totalKills ?? 0), money: attackerWins ? (attacker.money ?? 0) + moneyStolen : Math.max(0, (attacker.money ?? 0) - moneyStolen), experience: (attacker.experience ?? 0) + 15 });
+    await ctx.db.patch(attacker._id, { life: Math.max(0, (attacker.life ?? 100) - dDmg), totalFights: (attacker.totalFights ?? 0) + 1, totalKills: attackerWins ? (attacker.totalKills ?? 0) + 1 : (attacker.totalKills ?? 0), money: attackerWins ? (attacker.money ?? 0) + moneyStolen : Math.max(0, (attacker.money ?? 0) - moneyStolen), ...(await addXpAndCheckLevel(ctx, attacker, 15)) });
     if (!attackerWins) { 
       await ctx.db.patch(args.defenderId, { money: (defender.money ?? 0) + moneyStolen, totalKills: (defender.totalKills ?? 0) + 1 }); 
     }
@@ -263,7 +274,7 @@ export const gambleDice = mutation({ args: { amount: v.number(), guess: v.union(
     let won = false, multiplier = 0;
     if (args.guess === "high" && total > 7) { won = true; multiplier = 2; } else if (args.guess === "low" && total < 7) { won = true; multiplier = 2; } else if (args.guess === "seven" && total === 7) { won = true; multiplier = 5; }
     const winnings = won ? args.amount * multiplier : 0;
-    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + winnings - args.amount : (player.money ?? 0) - args.amount, experience: (player.experience ?? 0) + 2 });
+    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + winnings - args.amount : (player.money ?? 0) - args.amount, ...(await addXpAndCheckLevel(ctx, player, 2)) });
     return { die1, die2, total, won, winnings };
   },
 });
@@ -271,7 +282,7 @@ export const gambleDice = mutation({ args: { amount: v.number(), guess: v.union(
 export const gambleCoinToss = mutation({ args: { amount: v.number(), guess: v.union(v.literal("heads"), v.literal("tails")) }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (args.amount > (player.money ?? 0)) throw new Error("Not enough money!");
     const result = Math.random() > 0.5 ? "heads" : "tails"; const won = args.guess === result;
-    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + args.amount : (player.money ?? 0) - args.amount, experience: (player.experience ?? 0) + 2 });
+    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + args.amount : (player.money ?? 0) - args.amount, ...(await addXpAndCheckLevel(ctx, player, 2)) });
     return { result, won };
   },
 });
@@ -303,7 +314,7 @@ export const dailyRaid = mutation({ args: { targetId: v.id("users") }, handler: 
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
     const success = Math.random() > 0.25; const moneyStolen = success ? Math.floor((target.money ?? 0) * 0.08) : 0; const damage = Math.floor(Math.random() * 20) + 10;
     await ctx.db.insert("dailyRaids", { userId: player._id, targetUserId: args.targetId, moneyStolen, damage, timestamp: Date.now() });
-    await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyStolen : (player.money ?? 0), dailyRaidUsed: (player.dailyRaidUsed ?? 0) + 1, experience: (player.experience ?? 0) + (success ? 20 : 5) });
+    await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyStolen : (player.money ?? 0), dailyRaidUsed: (player.dailyRaidUsed ?? 0) + 1, ...(await addXpAndCheckLevel(ctx, player, success ? 20 : 5)) });
     if (success) await ctx.db.patch(args.targetId, { money: Math.max(0, (target.money ?? 0) - moneyStolen), life: Math.max(0, (target.life ?? 100) - damage) });
     return { success, moneyStolen, damage };
   },
@@ -312,7 +323,7 @@ export const dailyRaid = mutation({ args: { targetId: v.id("users") }, handler: 
 export const regenHealth = mutation({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const elapsed = Date.now() - (player.lastRegenAt ?? 0); const regenAmount = Math.floor(elapsed / 300000); if (regenAmount <= 0) return { healed: 0 }; const healed = Math.min(regenAmount, (player.maxLife ?? 100) - (player.life ?? 0)); await ctx.db.patch(player._id, { life: (player.life ?? 0) + healed, lastRegenAt: Date.now() }); return { healed }; } });
 export const healAtHospital = mutation({ args: { speed: v.union(v.literal("standard"), v.literal("premium")) }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const cost = args.speed === "premium" ? 500 : 100; if ((player.money ?? 0) < cost) throw new Error("Not enough money!"); const healed = Math.min(args.speed === "premium" ? 50 : 20, (player.maxLife ?? 100) - (player.life ?? 0)); await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost, life: (player.life ?? 0) + healed }); return { healed, cost }; } });
 
-export const defeatBoss = mutation({ args: { bossId: v.string(), reward: v.number(), xp: v.number(), won: v.boolean() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (args.won) { const newXP = (player.experience ?? 0) + args.xp; const levelUpNow = newXP >= (player.level ?? 1) * 100; await ctx.db.patch(player._id, { money: (player.money ?? 0) + args.reward, experience: levelUpNow ? 0 : newXP, levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false), totalCrimes: (player.totalCrimes ?? 0) + 1 }); } return { won: args.won, reward: args.won ? args.reward : 0 }; } });
+export const defeatBoss = mutation({ args: { bossId: v.string(), reward: v.number(), xp: v.number(), won: v.boolean() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (args.won) { const bossXp = await addXpAndCheckLevel(ctx, player, args.xp); await ctx.db.patch(player._id, { money: (player.money ?? 0) + args.reward, ...bossXp, totalCrimes: (player.totalCrimes ?? 0) + 1 }); } return { won: args.won, reward: args.won ? args.reward : 0 }; } });
 
 export const getProperties = query({ args: {}, handler: async (ctx) => await ctx.db.query("properties").collect() });
 export const collectPropertyIncome = mutation({ args: {}, handler: async (ctx) => {
@@ -350,8 +361,8 @@ export const killPlayer = mutation({ args: { targetId: v.id("users") }, handler:
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!");
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
     const success = Math.random() > 0.25;
-    if (success) { await ctx.db.patch(args.targetId, { life: 0, isDead: true }); await ctx.db.patch(player._id, { totalKills: (player.totalKills ?? 0) + 1, wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 3), money: (player.money ?? 0) + Math.floor((target.money ?? 0) * 0.05), experience: (player.experience ?? 0) + 30 }); }
-    else { await ctx.db.patch(player._id, { life: Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 1), experience: (player.experience ?? 0) + 5 }); }
+    if (success) { await ctx.db.patch(args.targetId, { life: 0, isDead: true }); await ctx.db.patch(player._id, { totalKills: (player.totalKills ?? 0) + 1, wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 3), money: (player.money ?? 0) + Math.floor((target.money ?? 0) * 0.05), ...(await addXpAndCheckLevel(ctx, player, 30)) }); }
+    else { await ctx.db.patch(player._id, { life: Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 1), ...(await addXpAndCheckLevel(ctx, player, 5)) }); }
     return { success };
   },
 });
@@ -378,7 +389,7 @@ export const getDuels = query({ args: {}, handler: async (ctx) => await ctx.db.q
 export const getPendingDuels = query({ args: {}, handler: async (ctx) => await ctx.db.query("duels").collect() });
 export const acceptDuel = mutation({ args: { duelId: v.id("duels") }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const duel = await ctx.db.get(args.duelId); if (!duel) throw new Error("Duel not found"); const won = Math.random() > 0.5; await ctx.db.patch(args.duelId, { status: "finished", winnerId: won ? player._id : duel.challengerId }); if (won) await ctx.db.patch(player._id, { money: (player.money ?? 0) + (duel.stake ?? 0) * 2 }); return { won }; } });
 
-export const sparPlayer = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found"); const won = (player.attack ?? 10) + Math.random() * 10 > (target.attack ?? 10) + Math.random() * 10; await ctx.db.patch(player._id, { experience: (player.experience ?? 0) + (won ? 10 : 3), totalFights: (player.totalFights ?? 0) + 1 }); return { won }; } });
+export const sparPlayer = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found"); const won = (player.attack ?? 10) + Math.random() * 10 > (target.attack ?? 10) + Math.random() * 10; await ctx.db.patch(player._id, { ...(await addXpAndCheckLevel(ctx, player, won ? 10 : 3)), totalFights: (player.totalFights ?? 0) + 1 }); return { won }; } });
 
 export const getTournaments = query({ args: {}, handler: async (ctx) => await ctx.db.query("tournaments").collect() });
 export const getStats = query({ args: {}, handler: async (ctx) => { const players = await ctx.db.query("users").collect(); const registered = players.filter((p: any) => p.nickname); const families = await ctx.db.query("families").collect(); return { totalPlayers: registered.length, totalMoney: registered.reduce((s: number, p: any) => s + (p.money ?? 0), 0), totalCrimes: registered.reduce((s: number, p: any) => s + (p.totalCrimes ?? 0), 0), totalKills: registered.reduce((s: number, p: any) => s + (p.totalKills ?? 0), 0), totalFights: registered.reduce((s: number, p: any) => s + (p.totalFights ?? 0), 0), totalFamilies: families.length, topPlayers: registered.sort((a: any, b: any) => (b.level ?? 0) - (a.level ?? 0)).slice(0, 10).map((p: any) => ({ nickname: p.nickname, level: p.level ?? 0, kills: p.totalKills ?? 0, money: p.money ?? 0 })) }; } });

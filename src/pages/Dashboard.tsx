@@ -48,15 +48,11 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
   ]},
   { title: "\uD83D\uDD25 Crime", icon: AlertTriangle, children: [
     { title: "\uD83D\uDD25 Street Crimes", icon: AlertTriangle, page: "crimes" },
-    { title: "\u2B50 Legendary Crimes", icon: Flame, page: "legendary_crimes" },
-    { title: "\uD83D\uDC80 Boss Fights", icon: Skull, page: "boss_fights" },
     { title: "\uD83D\uDDFA\uFE0F Crime Empire", icon: Map, page: "crime_empire" },
     { title: "\uD83C\uDFAF Heist Planning", icon: Target, page: "heist_planning" },
     { title: "\uD83C\uDF10 World Events", icon: Zap, page: "world_events" },
-    { title: "\uD83D\uDC3E Criminal Pets", icon: Users, page: "criminal_pets" },
     { title: "\uD83D\uDD10 Prison", icon: Lock, page: "prison" },
     { title: "\u2708\uFE0F Airport", icon: Plane, page: "airport" },
-    { title: "\uD83C\uDFDB\uFE0F Law Enforcement", icon: Shield, page: "wanted_status" },
     { title: "\uD83D\uDC65 Organized Crime", icon: Users, page: "organized_crime" },
     { title: "\uD83D\uDCCB Missions", icon: Briefcase, page: "missions" },
     { title: "\uD83D\uDCCA Daily Login", icon: Gift, page: "daily_login" },
@@ -70,11 +66,7 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
   { title: "\u2694\uFE0F Combat", icon: Swords, children: [
     { title: "\uD83E\uDD4A Fight Club", icon: Swords, page: "fight_club" },
     { title: "\uD83C\uDFC6 Bounty Board", icon: Crosshair, page: "bounty_board" },
-    { title: "\u2694\uFE0F Duels", icon: Swords, page: "duels" },
     { title: "\uD83D\uDC51 Kill", icon: Skull, page: "kill" },
-    { title: "\uD83E\uDD3F Spar", icon: Heart, page: "spar" },
-    { title: "\uD83C\uDFC6 Tournament", icon: Trophy, page: "tournament" },
-    { title: "\u2620\uFE0F Death Match", icon: Skull, page: "death_match" },
     { title: "\uD83C\uDFC6 Season Rankings", icon: Trophy, page: "season_rankings" },
     { title: "\uD83D\uDCCB Combat Log", icon: ScrollText, page: "combat_log" },
     { title: "\uD83E\uDDBE Fighting Styles", icon: Swords, page: "fighting_styles" },
@@ -102,27 +94,16 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
     { title: "\uD83D\uDCB0 Tax Evasion", icon: DollarSign, page: "tax_evasion" },
     { title: "\uD83C\uDFED Racketeering", icon: Building2, page: "racketeering" },
     { title: "\uD83C\uDFB6 Gambling Dens", icon: CircleDot, page: "gambling_dens" },
-    { title: "\uD83D\uDCB4 Loan Sharking", icon: DollarSign, page: "loan_sharking" },
-    { title: "\uD83D\uDCE6 Cargo Theft", icon: Package, page: "cargo_theft" },
-    { title: "\uD83C\uDFAD Dog Fighting", icon: Skull, page: "dog_fighting" },
-    { title: "\uD83C\uDFCE\uFE0F Street Racing", icon: Gauge, page: "street_racing" },
     { title: "\uD83D\uDEAA Smuggling Routes", icon: Anchor, page: "smuggling_routes" },
   ]},
   { title: "\uD83D\uDCC8 Economy", icon: DollarSign, children: [
     { title: "\uD83D\uDCC9 Stock Market", icon: BarChart3, page: "stock_market" },
-    { title: "\uD83C\uDFE0 Real Estate", icon: Home, page: "real_estate" },
-    { title: "\uD83C\uDFEA Businesses", icon: Briefcase, page: "businesses" },
-    { title: "\uD83D\uDCE6 Auction House", icon: Package, page: "auction_house" },
-    { title: "\uD83D\uDEE1\uFE0F Insurance", icon: Shield, page: "insurance" },
-    { title: "\uD83D\uDCB3 Loans", icon: Landmark, page: "loans" },
     { title: "\u2728 Crypto", icon: Gem, page: "crypto" },
     { title: "\uD83C\uDFB7 Lottery", icon: Sparkles, page: "lottery" },
   ]},
   { title: "\uD83D\uDCE6 Assets", icon: Package, children: [
     { title: "\uD83D\uDE97 Garage", icon: Car, page: "garage" },
     { title: "\uD83C\uDF92 My Items", icon: Package, page: "items" },
-    { title: "\uD83C\uDFDB\uFE0F Safe Houses", icon: Home, page: "safe_houses" },
-    { title: "\uD83D\uDD10 Wanted Board", icon: Target, page: "wanted_board" },
     { title: "\uD83D\uDD2B Black Market", icon: Bomb, page: "black_market" },
     { title: "\uD83C\uDFA8 Mystery Boxes", icon: Sparkles, page: "mystery_boxes" },
     { title: "\uD83C\uDF1F Legendary Items", icon: Gem, page: "legendary_items" },
@@ -130,29 +111,8 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
   { title: "\uD83D\uDCCB Social", icon: Users, children: [
     { title: "\uD83D\uDC68\u200D\uD83D\uDC69\u200D\uD83D\uDC67 Family", icon: Users, page: "family" },
     { title: "\uD83E\uDD1D Crew System", icon: Users, page: "crew_system" },
-    { title: "\uD83D\uDCBC Company", icon: Briefcase, page: "company" },
-    { title: "\uD83C\uDF81 Gifting", icon: Heart, page: "gifting" },
     { title: "\uD83C\uDFC6 Crime Fame", icon: Trophy, page: "crime_fame" },
     { title: "\uD83C\uDF0D Reputation", icon: Globe, page: "reputation" },
-    { title: "\uD83C\uDFF0 Cartel", icon: Users, page: "cartel" },
-  ]},
-  { title: "\uD83D\uDCDD Communication", icon: MessageSquare, children: [
-    { title: "\uD83D\uDCE8 Messages", icon: MessageSquare, page: "messages" },
-    { title: "\uD83D\uDCE5 Inbox", icon: Inbox, page: "inbox" },
-    { title: "\uD83D\uDD14 Notifications", icon: Bell, page: "notifications_page" },
-    { title: "\uD83D\uDCE1 General Forum", icon: MessageSquare, page: "forum_general" },
-    { title: "\uD83D\uDCB0 Sales & Wanted", icon: DollarSign, page: "forum_sales" },
-    { title: "\uD83D\uDCAD Off-Topic", icon: MessageSquare, page: "forum_offtopic" },
-    { title: "\uD83C\uDF11 Shadows", icon: Moon, page: "forum_shadows" },
-    { title: "\uD83D\uDD0D Search Posts", icon: Search, page: "forum_search" },
-  ]},
-  { title: "\uD83C\uDF0D World", icon: Map, children: [
-    { title: "\uD83C\uDFD9\uFE0F City Overview", icon: Map, page: "city_overview" },
-    { title: "\uD83D\uDCCA Statistics", icon: BarChart3, page: "statistics" },
-    { title: "\uD83D\uDDFA\uFE0F World Map", icon: Map, page: "world_map" },
-    { title: "\u26C8\uFE0F Colosseum", icon: Swords, page: "colosseum" },
-    { title: "\uD83C\uDF19 Weather", icon: Cloud, page: "weather" },
-    { title: "\uD83D\uDCF0 News Ticker", icon: Newspaper, page: "news_ticker" },
   ]},
   { title: "\uD83C\uDFAF Progression", icon: Target, children: [
     { title: "\uD83E\uDDE0 Skill Tree", icon: Zap, page: "skill_tree" },
@@ -161,26 +121,13 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
     { title: "\uD83D\uDCDC Legacy", icon: ScrollText, page: "legacy" },
     { title: "\u2B50 Prestige", icon: Star, page: "prestige" },
     { title: "\uD83C\uDFC6 Leaderboards", icon: Trophy, page: "leaderboards" },
-    { title: "\u23F3 Time Machine", icon: Clock, page: "time_machine" },
     { title: "\uD83C\uDFC5 Season Pass", icon: Trophy, page: "season_pass" },
-    { title: "\uD83C\uDFC1 Mastery", icon: Target, page: "crime_mastery" },
   ]},
   { title: "\u26D4\uFE0F Special", icon: Skull, children: [
     { title: "\uD83D\uDE08 Ghost Mode", icon: Eye, page: "ghost_mode" },
-    { title: "\uD83D\uDCAC Crime TV", icon: Newspaper, page: "crime_tv" },
     { title: "\uD83D\uDCB0 Daily Challenges", icon: Target, page: "daily_challenges" },
-    { title: "\uD83C\uDFC6 Raids", icon: Swords, page: "raids" },
-    { title: "\uD83C\uDFAD Arena", icon: Swords, page: "arena" },
     { title: "\uD83D\uDCDC Legacy Board", icon: ScrollText, page: "legacy_board" },
-  ]},
-  { title: "\u2753 Help", icon: HelpCircle, children: [
-    { title: "\u2753 FAQ", icon: HelpCircle, page: "faq" },
-    { title: "\uD83D\uDEA8 Support", icon: Shield, page: "support" },
-  ]},
-  { title: "\u2699\uFE0F System", icon: Settings, children: [
-    { title: "\u2699\uFE0F Admin Panel", icon: Settings, page: "admin_panel" },
-    { title: "\uD83D\uDD11 Become Admin", icon: Shield, page: "become_admin" },
-    { title: "\uD83D\uDC65 Online Players", icon: Users, page: "online_list" },
+    { title: "\uD83D\uDCDD Advanced Features", icon: Zap, page: "advanced_features" },
   ]},
 ];
 
@@ -546,32 +493,31 @@ function LevelUpModal({ player, onDone }: { player: any; onDone: () => void }) {
 }
 
 const rightMenuSections: { title: string; icon: any; items: { title: string; icon: any; page: GamePage }[] }[] = [
-  { title: "📬 Communication", icon: MessageSquare, items: [
-    { title: "📩 Messages", icon: MessageSquare, page: "messages" },
-    { title: "📥 Inbox", icon: Inbox, page: "inbox" },
-    { title: "🔔 Notifications", icon: Bell, page: "notifications_page" },
+  { title: "\uD83D\uDCDD Communication", icon: MessageSquare, items: [
+    { title: "\uD83D\uDCE8 Messages", icon: MessageSquare, page: "messages" },
+    { title: "\uD83D\uDCE5 Inbox", icon: Inbox, page: "inbox" },
+    { title: "\uD83D\uDD14 Notifications", icon: Bell, page: "notifications_page" },
+    { title: "\uD83D\uDCE1 General Forum", icon: MessageSquare, page: "forum_general" },
+    { title: "\uD83D\uDCB0 Sales & Wanted", icon: DollarSign, page: "forum_sales" },
+    { title: "\uD83D\uDCAD Off-Topic", icon: MessageSquare, page: "forum_offtopic" },
+    { title: "\uD83C\uDF11 Shadows", icon: Moon, page: "forum_shadows" },
+    { title: "\uD83D\uDD0D Search Posts", icon: Search, page: "forum_search" },
   ]},
-  { title: "💬 Forums", icon: MessageSquare, items: [
-    { title: "📢 General", icon: MessageSquare, page: "forum_general" },
-    { title: "💰 Sales & Wanted", icon: DollarSign, page: "forum_sales" },
-    { title: "💭 Off-Topic", icon: MessageSquare, page: "forum_offtopic" },
-    { title: "🌑 Shadows", icon: MessageSquare, page: "forum_shadows" },
-    { title: "🔍 Search Posts", icon: Search, page: "forum_search" },
+  { title: "\uD83C\uDF0D World", icon: Map, items: [
+    { title: "\uD83C\uDFD9\uFE0F City Overview", icon: MapPin, page: "city_overview" },
+    { title: "\uD83D\uDCCA Statistics", icon: BarChart3, page: "statistics" },
+    { title: "\uD83D\uDDFA\uFE0F World Map", icon: Map, page: "world_map" },
+    { title: "\uD83C\uDF19 Weather", icon: Cloud, page: "weather" },
+    { title: "\uD83D\uDCF0 News Ticker", icon: Megaphone, page: "news_ticker" },
   ]},
-  { title: "🏙️ World", icon: Map, items: [
-    { title: "🏙️ City Overview", icon: MapPin, page: "city_overview" },
-    { title: "📊 Statistics", icon: BarChart3, page: "statistics" },
-    { title: "👥 Online Players", icon: Users, page: "online_list" },
-    { title: "🌍 Weather", icon: Coffee, page: "weather" },
-    { title: "📰 News Ticker", icon: Megaphone, page: "news_ticker" },
+  { title: "\u2753 Help", icon: HelpCircle, items: [
+    { title: "\u2753 FAQ", icon: HelpCircle, page: "faq" },
+    { title: "\uD83D\uDEA8 Support", icon: Shield, page: "support" },
   ]},
-  { title: "❓ Help", icon: HelpCircle, items: [
-    { title: "❓ FAQ", icon: HelpCircle, page: "faq" },
-    { title: "🆘 Support", icon: Shield, page: "support" },
-  ]},
-  { title: "⚙️ System", icon: Star, items: [
-    { title: "⚙️ Admin Panel", icon: Star, page: "admin_panel" },
-    { title: "🔑 Become Admin", icon: Shield, page: "become_admin" },
+  { title: "\u2699\uFE0F System", icon: Settings, items: [
+    { title: "\u2699\uFE0F Admin Panel", icon: Settings, page: "admin_panel" },
+    { title: "\uD83D\uDD11 Become Admin", icon: Shield, page: "become_admin" },
+    { title: "\uD83D\uDC65 Online Players", icon: Users, page: "online_list" },
   ]},
 ];
 
@@ -1731,6 +1677,78 @@ function SafePage({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// ===== EVENT STATUS BAR =====
+function EventStatusBar({ player }: { player: any }) {
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun
+  const hour = now.getHours();
+  const events: { icon: string; text: string; color: string; active: boolean }[] = [
+    { icon: "\u26A1", text: "Weekend Boost: +1-10 XP on all crimes", color: "from-yellow-900/40 to-amber-900/30 border-yellow-500/30 text-yellow-300", active: (day === 5 && hour >= 0) || day === 6 || (day === 0 && hour < 24) },
+    { icon: "\u2694\uFE0F", text: "Kill Free Zone: No wanted level for kills", color: "from-red-900/40 to-rose-900/30 border-red-500/30 text-red-300", active: day >= 1 && day <= 3 && hour >= 18 && hour <= 20 },
+    { icon: "\u2728", text: "Golden Hour: 2x Points on all actions", color: "from-amber-900/40 to-yellow-900/30 border-amber-500/30 text-amber-300", active: hour >= 12 && hour <= 13 },
+    { icon: "\uD83D\uDD25", text: "Crime Frenzy: All crimes +50% success rate", color: "from-orange-900/40 to-red-900/30 border-orange-500/30 text-orange-300", active: hour >= 22 || hour < 4 },
+    { icon: "\u2744\uFE0F", text: "Arctic Cold Snap: Smuggling profits +50%", color: "from-cyan-900/40 to-blue-900/30 border-cyan-500/30 text-cyan-300", active: day === 0 && hour >= 10 && hour <= 22 },
+    { icon: "\uD83D\uDCB0", text: "Double Cash: Earn 2x money on all crimes", color: "from-green-900/40 to-emerald-900/30 border-green-500/30 text-green-300", active: day === 3 && hour >= 18 && hour <= 22 },
+    { icon: "\uD83D\uDE08", text: "Purge Night: All crimes legal, no wanted", color: "from-red-950/60 to-red-900/40 border-red-600/40 text-red-200 animate-pulse", active: day === 5 && hour >= 22 },
+    { icon: "\uD83C\uDFA6", text: "Black Market Sale: 30% off all items", color: "from-purple-900/40 to-violet-900/30 border-purple-500/30 text-purple-300", active: day === 2 && hour >= 14 && hour <= 18 },
+    { icon: "\uD83D\uDC8E", text: "Diamond Rush: Legendary crimes give bonus XP", color: "from-pink-900/40 to-fuchsia-900/30 border-pink-500/30 text-pink-300", active: day === 4 && hour >= 20 },
+    { icon: "\uD83C\uDF1F", text: "VIP Hour: All bodyguards cost 50% less", color: "from-indigo-900/40 to-blue-900/30 border-indigo-500/30 text-indigo-300", active: day === 6 && hour >= 12 && hour <= 14 },
+  ];
+  const activeEvents = events.filter(e => e.active);
+  if (activeEvents.length === 0) return null;
+  return (
+    <div className="mb-4 space-y-1.5">
+      {activeEvents.map((ev, i) => (
+        <div key={i} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gradient-to-r border text-[11px] font-semibold ${ev.color}`}>
+          <span>{ev.icon}</span>
+          <span>{ev.text}</span>
+          <span className="ml-auto text-[9px] opacity-60">LIVE</span>
+          <span className="size-1.5 rounded-full bg-current animate-pulse" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+// ===== ADVANCED FEATURES PAGE =====
+function AdvancedFeaturesPage() {
+  const features = [
+    { icon: "\uD83D\uDC7C", title: "Marriage System", desc: "Propose to another player. Share bank, combined power. Divorce splits assets.", page: "marriage" },
+    { icon: "\uD83C\uDF33", title: "Crime Family Tree", desc: "Your descendants earn you passive XP. Build a criminal dynasty.", page: "family_tree" },
+    { icon: "\uD83C\uDFAD", title: "Personality System", desc: "Your actions shape your reputation: Ruthless, Loyal, Snake, or Legend.", page: "personality" },
+    { icon: "\uD83D\uDC80", title: "Dead Man's Switch", desc: "Set a beneficiary — on death, your items auto-transfer to them.", page: "dead_switch" },
+    { icon: "\uD83D\uDC79", title: "Rival AI Gangs", desc: "NPC gangs that attack your territory. Fight them for massive rewards.", page: "ai_gangs" },
+    { icon: "\uD83D\uDD75\uFE0F", title: "Informants", desc: "Pay NPCs to spy on any player — reveals location, level, cash, ATK.", page: "informants" },
+    { icon: "\uD83C\uDFD9\uFE0F", title: "District Ownership", desc: "Buy city districts. Earn passive income from every crime committed there.", page: "districts" },
+    { icon: "\uD83D\uDD12", title: "Corruption", desc: "Bribe cops, judges, and politicians. Lower wanted levels, frame rivals.", page: "corruption" },
+    { icon: "\uD83D\uDCBB", title: "Ransomware", desc: "Lock another player's items. They pay YOU to unlock them.", page: "ransomware" },
+    { icon: "\uD83D\uDD27", title: "Item Crafting", desc: "Combine items into better gear. 6 recipes from Lockpick to Nano Armor.", page: "crafting" },
+    { icon: "\uD83D\uDC9C", title: "Black Market Auctions", desc: "Hourly auctions for rare items. Bid against other players.", page: "auctions" },
+    { icon: "\u23F3", title: "Time Capsules", desc: "Bury items now, dig them up later. Items gain +50% value after 7+ days.", page: "time_capsules" },
+    { icon: "\uD83D\uDCF8", title: "Crime Photography", desc: "Capture photos of crimes. Sell to newspapers for massive cash.", page: "crime_photos" },
+    { icon: "\uD83C\uDF10", title: "Server Purge", desc: "Monthly 24-hour event: ALL crimes legal, no wanted levels, 2x XP.", page: "purge" },
+    { icon: "\uD83D\uDCF0", title: "Crime Headlines", desc: "Your biggest crimes generate real headlines that all players see.", page: "headlines" },
+    { icon: "\uD83D\uDCBB", title: "Underground Radio", desc: "Level 30+ hidden real-time chat. Only the elite can broadcast.", page: "radio" },
+    { icon: "\uD83E\uDD1E", title: "Cockroach Racing", desc: "Pick a colored roach, bet any amount. 5x payout if yours wins!", page: "cockroach" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-6">
+      <div className="flex items-center gap-3"><Zap className="size-7 text-amber-400" /><h2 className="text-2xl font-bold">\u26A1 Advanced Features</h2></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {features.map((f, i) => (
+          <button key={i} onClick={() => (window as any).__setPage?.(f.page)} className="text-left p-4 mafia-card rounded-xl border border-primary/10 hover:border-primary/30 transition-all hover:scale-[1.01]">
+            <div className="flex items-center gap-3">
+              <div className="text-2xl">{f.icon}</div>
+              <div><div className="text-sm font-bold">{f.title}</div><div className="text-[10px] text-muted-foreground">{f.desc}</div></div>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function Dashboard() {
   const signOut = () => {};
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
@@ -1894,6 +1912,7 @@ const renderPage = (): React.ReactNode => {
       case "headlines": return <HeadlinesPage />;
       case "radio": return <RadioPage />;
       case "cockroach": return <CockroachPage />;
+      case "advanced_features": return <AdvancedFeaturesPage />;
       default: return <HeadquartersPage />;
     }
   };
@@ -1905,13 +1924,24 @@ const renderPage = (): React.ReactNode => {
         <header className="h-12 border-b border-border flex items-center justify-between px-5 bg-card/30 shrink-0 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="text-sm font-semibold text-foreground/80">{pageNames[activePage] ?? activePage}</div>
+            <div className="hidden lg:flex items-center gap-1 ml-2 border-l border-border pl-3">
+              <button onClick={() => setPage("crimes")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "crimes" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Street Crimes">\uD83D\uDD25 Streets</button>
+              <button onClick={() => setPage("steal_from_house")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "steal_from_house" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Steal From House">\uD83D\uDCB5 Houses</button>
+              <button onClick={() => setPage("gta_car_theft")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "gta_car_theft" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="GTA Car Theft">\uD83D\uDE97 Cars</button>
+              <button onClick={() => setPage("kill")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "kill" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Kill">\uD83D\uDC51 Kill</button>
+              <button onClick={() => setPage("prison")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "prison" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Prison">\uD83D\uDD10 Prison</button>
+              <button onClick={() => setPage("hospital")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "hospital" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Hospital">\uD83C\uDFE5 Hospital</button>
+            </div>
             {(player.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-400 font-bold">{"\uD83D\uDD34"} {player.wantedLevel ?? 0} Wanted</span>}
             {(player.wantedLevel ?? 0) >= 2 && <span className="px-2 py-0.5 bg-orange-950/50 border border-orange-800/50 rounded-full text-[10px] text-orange-400 font-bold animate-pulse">{"\uD83D\uDD75\uFE0F"} FBI</span>}
             {(player.wantedLevel ?? 0) >= 4 && <span className="px-2 py-0.5 bg-red-950/50 border border-red-800/50 rounded-full text-[10px] text-red-300 font-bold animate-pulse">{"\uD83C\uDF96\uFE0F"} MILITARY</span>}
           </div>
           <button onClick={() => signOut()} className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors">Sign Out</button>
         </header>
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">{renderPage()}</div>
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+              <EventStatusBar player={player} />
+              {renderPage()}
+            </div>
       </main>
       {showProfilePopup && player && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowProfilePopup(false)}>
