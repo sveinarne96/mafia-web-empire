@@ -249,20 +249,90 @@ function BankPage() {
 function HospitalPage() {
   const player = useQuery(api.game.getPlayer);
   const [msg, setMsg] = useState("");
-  if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
-  const doHeal = async () => { setMsg("You are healed!"); };
+  const [selected, setSelected] = useState<string | null>(null);
+  if (!player) return <LoadingPage />;
+
+  const life = player.life ?? 100;
+  const maxLife = player.maxLife ?? 100;
+  const lifePercent = Math.round((life / maxLife) * 100);
+
+  const treatments = [
+    { id: "basic", name: "Basic Bandage", icon: "🩹", desc: "Simple wound care", heal: 25, price: 10000, time: "Instant", color: "border-green-500/20" },
+    { id: "standard", name: "Standard Treatment", icon: "💊", desc: "Antibiotics and painkillers", heal: 50, price: 50000, time: "Instant", color: "border-green-500/20" },
+    { id: "iv", name: "IV Drip Therapy", icon: "💉", desc: "Saline and vitamin boost", heal: 75, price: 150000, time: "Instant", color: "border-blue-500/20" },
+    { id: "surgery", name: "Emergency Surgery", icon: "🏥", desc: "Full surgical repair", heal: 100, price: 500000, time: "Instant", color: "border-blue-500/20" },
+    { id: "blood", name: "Blood Transfusion", icon: "🩸", desc: "Complete blood replacement", heal: 100, price: 750000, time: "Instant", color: "border-red-500/20" },
+    { id: "regen", name: "Stem Cell Regen", icon: "🧬", desc: "Regenerate damaged tissue", heal: 100, price: 1000000, time: "Instant", color: "border-purple-500/20" },
+    { id: "nano", name: "Nanobot Repair", icon: "🤖", desc: "Microscopic robots fix you", heal: 100, price: 2000000, time: "Instant", color: "border-purple-500/20" },
+    { id: "clone", name: "Clone Restoration", icon: "🧫", desc: "Full body reconstruction", heal: 100, price: 3500000, time: "Instant", color: "border-cyan-500/20" },
+    { id: "adrenaline", name: "Adrenaline Shot", icon: "⚡", desc: "Instant +50 HP, no questions asked", heal: 50, price: 200000, time: "Instant", color: "border-yellow-500/20" },
+    { id: "painkiller", name: "Painkiller Pack", icon: "💊", desc: "Pain relief, +30 HP over time", heal: 30, price: 75000, time: "Instant", color: "border-green-500/20" },
+    { id: "reconstruct", name: "Full Reconstruction", icon: "🔬", desc: "Maximum HP +50 permanently", heal: 9999, price: 5000000, time: "Permanent", color: "border-amber-500/20" },
+    { id: "concierge", name: "VIP Concierge", icon: "👑", desc: "Full heal + buff for 1 hour", heal: 100, price: 7500000, time: "Instant", color: "border-amber-500/20" },
+    { id: "revive", name: "Death Revival", icon: "💀", desc: "Bring back from the dead", heal: 100, price: 10000000, time: "If Dead", color: "border-red-500/30" },
+    { id: "upgrade_max", name: "Max HP Upgrade", icon: "❤️", desc: "+100 Max HP permanently", heal: 9999, price: 15000000, time: "Permanent", color: "border-red-500/20" },
+    { id: "premium", name: "Premium Package", icon: "💎", desc: "Full heal + Max HP upgrade + ATK/DEF +5", heal: 9999, price: 75000000, time: "All-in-One", color: "border-yellow-500/30" },
+  ];
+
+  const doHeal = (t: typeof treatments[0]) => {
+    if (t.id === "revive" && !player.isDead) { setMsg("❌ You're not dead!"); return; }
+    if (t.id === "revive" && player.isDead) { setMsg("✅ You've been revived from death!"); return; }
+    if (t.id === "reconstruct" || t.id === "upgrade_max" || t.id === "premium") { setMsg("✅ Permanent upgrade applied!"); return; }
+    const newLife = Math.min(maxLife, life + t.heal);
+    if (newLife >= maxLife) { setMsg("✅ Fully healed to " + maxLife + " HP!"); }
+    else { setMsg("✅ Healed +" + t.heal + " HP! Now at " + newLife + "/" + maxLife); }
+  };
+
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-900/30 via-emerald-900/20 to-green-900/30 border border-green-500/20 p-6">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 rounded-full blur-3xl" />
-        <div className="flex items-center gap-3"><ShieldCheck className="size-8 text-green-400" /><div><h2 className="text-2xl font-black">🏥 Emergency Hospital</h2><p className="text-xs text-muted-foreground">Get patched up before your next job</p></div></div>
+    <div className="animate-fade-in space-y-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-green-950/15 via-emerald-950/5 to-transparent pointer-events-none" />
+      <div className="relative flex items-center gap-3">
+        <div className="relative"><ShieldCheck className="size-8 text-green-400" /><div className="absolute -inset-1 bg-green-400/20 rounded-full blur-lg" /></div>
+        <div>
+          <h2 className="text-2xl font-black">🏥 <span className="text-green-400">PREMIUM HOSPITAL</span></h2>
+          <p className="text-xs text-green-400/60 font-mono">ELITE MEDICAL SERVICES</p>
+        </div>
       </div>
-      <div className="mafia-card rounded-xl p-5 text-center space-y-4">
-        <div className="text-4xl">🏥</div>
-        <div className="text-sm text-muted-foreground">Your health: {player.life ?? 100}/{player.maxLife ?? 100}</div>
-        <button onClick={doHeal} className="px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-500">Heal ($1000)</button>
-        {msg && <div className="text-sm text-green-400">{msg}</div>}
+
+      {/* Health Status */}
+      <div className="glass-green rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-bold">❤️ Health Status</div>
+          <div className={`text-sm font-black ${lifePercent > 60 ? "text-green-400" : lifePercent > 30 ? "text-yellow-400" : "text-red-400"}`}>{life}/{maxLife}</div>
+        </div>
+        <div className="w-full h-4 bg-black/30 rounded-full overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-500 ${lifePercent > 60 ? "bg-gradient-to-r from-green-500 to-emerald-400" : lifePercent > 30 ? "bg-gradient-to-r from-yellow-500 to-orange-400" : "bg-gradient-to-r from-red-500 to-red-400"}`} style={{ width: `${lifePercent}%` }} />
+        </div>
+        <div className="text-[10px] text-muted-foreground mt-2 text-center">{lifePercent}% HP • {maxLife > 100 ? "Enhanced" : "Standard"}体质</div>
       </div>
+
+      {/* Treatment Grid */}
+      <div className="space-y-2">
+        {treatments.map((t) => (
+          <button key={t.id} onClick={() => { setSelected(t.id); doHeal(t); }}
+            className={`w-full text-left p-4 rounded-xl border ${t.color} bg-black/20 hover:bg-black/30 transition-all ${selected === t.id ? "ring-2 ring-green-500/40" : ""}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl">{t.icon}</div>
+                <div>
+                  <div className="text-sm font-bold">{t.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{t.desc}</div>
+                  <div className="text-[9px] text-green-400 mt-0.5">+{t.heal.toLocaleString()} HP • {t.time}</div>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-xs font-bold text-green-400">${t.price.toLocaleString()}</div>
+              </div>
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {msg && (
+        <div className="rounded-xl p-4 text-sm font-bold border-2 bg-green-950/30 border-green-500/50 text-green-400 text-center">
+          {msg}
+        </div>
+      )}
     </div>
   );
 }
@@ -1599,6 +1669,51 @@ function GameUpdatesPage() {
   );
 }
 
+
+function PrisonBlocked() {
+  const status = useQuery(api.gameFeatures.getPrisonTimeDisplay);
+  const [countdown, setCountdown] = useState(status?.totalSeconds ?? 0);
+
+  useEffect(() => {
+    if (!status || status.totalSeconds <= 0) return;
+    setCountdown(status.totalSeconds);
+    const timer = setInterval(() => {
+      setCountdown((c: number) => {
+        if (c <= 1) { clearInterval(timer); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [status?.totalSeconds]);
+
+  const hrs = Math.floor(countdown / 3600);
+  const mins = Math.floor((countdown % 3600) / 60);
+  const secs = countdown % 60;
+
+  return (
+    <div className="animate-fade-in space-y-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-red-950/20 via-transparent to-transparent pointer-events-none" />
+      <div className="relative">
+        <div className="rounded-2xl p-8 border-2 border-red-500/30 bg-red-950/15 text-center relative overflow-hidden">
+          <div className="absolute inset-0 animate-prison-bars opacity-10" />
+          <div className="relative space-y-4">
+            <div className="text-7xl animate-bounce">🔒</div>
+            <h2 className="text-2xl font-black text-red-400">IN PRISON</h2>
+            <p className="text-sm text-muted-foreground">You can't do this right now. You're serving time!</p>
+            <div className="inline-block rounded-xl px-6 py-3 bg-black/40 border border-red-500/30">
+              <div className="text-3xl font-black text-red-400 font-mono">
+                {hrs > 0 ? `${String(hrs).padStart(2, "0")}:` : ""}{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">Time remaining</div>
+            </div>
+            <div className="text-xs text-muted-foreground">Auto-releases when timer reaches 0:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SafePage({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   if (error) {
@@ -1643,6 +1758,11 @@ export default function Dashboard() {
   if (player.isDead) return <DeathPage />;
 
 const renderPage = (): React.ReactNode => {
+    // If in prison, only allow prison page and headquarters
+    const inPrison = (player as any).inPrison ?? false;
+    if (inPrison && activePage !== "headquarters" && activePage !== "prison" && activePage !== "messages" && activePage !== "inbox" && activePage !== "notifications_page" && activePage !== "my_profile" && activePage !== "updates" && activePage !== "faq" && activePage !== "support" && activePage !== "statistics" && activePage !== "online_list") {
+      return <PrisonBlocked />;
+    }
     switch (activePage) {
       case "headquarters": return <HeadquartersPage />;
       case "bank": return <BankPage />;
