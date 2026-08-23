@@ -727,7 +727,8 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const player = useQuery(api.game.getPlayer);
   const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
   const [loading, setLoading] = useState(false);
-  const cooldown = useCooldown(15, player?.lastCrimeAt);
+  const categoryCooldown = (player as any)?.crimeCooldowns?.[categoryId] ?? 0;
+  const cooldown = useCooldown(15, categoryCooldown);
   const commitCrime = useMutation(api.game.commitCategoryCrime);
 
   const category = crimeCategories.find(c => c.id === categoryId);

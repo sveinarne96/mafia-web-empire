@@ -1196,20 +1196,44 @@ const renderPage = () => {
       )}
 
       {/* Top Quick Access Bar */}
-      <div className="bg-black/40 border-b border-border/50 px-4 py-2 flex items-center gap-2 overflow-x-auto shrink-0">
-        <button onClick={() => setPage("storyline")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-900/40 hover:bg-amber-800/40 border border-amber-500/20 transition whitespace-nowrap">Storyline</button>
-        <button onClick={() => setPage("crimes")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-900/40 hover:bg-green-800/40 border border-green-500/20 transition whitespace-nowrap">Street Crimes</button>
-        <button onClick={() => setPage("robbery")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 hover:bg-red-800/40 border border-red-500/20 transition whitespace-nowrap">Robberies</button>
-        <button onClick={() => setPage("fraud")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-yellow-900/40 hover:bg-yellow-800/40 border border-yellow-500/20 transition whitespace-nowrap">Fraud</button>
-        <button onClick={() => setPage("burglary")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-900/40 hover:bg-orange-800/40 border border-orange-500/20 transition whitespace-nowrap">Burglary</button>
-        <button onClick={() => setPage("steal_from_house")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-orange-900/40 hover:bg-orange-800/40 border border-orange-500/20 transition whitespace-nowrap">Steal From House</button>
-        <button onClick={() => setPage("gta_car_theft")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-900/40 hover:bg-blue-800/40 border border-blue-500/20 transition whitespace-nowrap">GTA Car Theft</button>
-        <button onClick={() => setPage("drugs")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-purple-900/40 hover:bg-purple-800/40 border border-purple-500/20 transition whitespace-nowrap">Drugs</button>
-        <button onClick={() => setPage("organized")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-900/40 hover:bg-blue-800/40 border border-blue-500/20 transition whitespace-nowrap">Organized</button>
-        <button onClick={() => setPage("underground")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-900/40 hover:bg-gray-800/40 border border-gray-500/20 transition whitespace-nowrap">Underground</button>
-        <button onClick={() => setPage("kill")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 hover:bg-red-800/40 border border-red-500/20 transition whitespace-nowrap">Murder</button>
-        <button onClick={() => setPage("prison")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-900/40 hover:bg-gray-800/40 border border-gray-500/20 transition whitespace-nowrap">Prison</button>
-        <button onClick={() => setPage("hospital")} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-900/40 hover:bg-green-800/40 border border-green-500/20 transition whitespace-nowrap">Hospital</button>
+      <div className="bg-gradient-to-r from-black/60 via-black/40 to-black/60 border-b border-border/50 px-4 py-2.5 flex items-center gap-2 overflow-x-auto shrink-0">
+        <style>{`
+          @keyframes topbar-glow { 0%,100% { box-shadow: 0 0 6px var(--c); } 50% { box-shadow: 0 0 16px var(--c); } }
+          @keyframes topbar-slide { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+          .topbar-btn { --c: rgba(228,130,51,0.3); transition: all 0.3s; position: relative; overflow: hidden; }
+          .topbar-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--c); }
+          .topbar-btn.active { animation: topbar-glow 2s ease-in-out infinite; }
+          .topbar-btn.cooldown::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: topbar-slide 1s linear infinite; width: var(--cd-pct, 100%); }
+        `}</style>
+        {[
+          { page: "storyline", label: "Storyline", color: "#f59e0b", gradient: "from-amber-600 to-amber-800" },
+          { page: "crimes", label: "Street Crimes", color: "#22c55e", gradient: "from-green-600 to-green-800" },
+          { page: "robbery", label: "Robberies", color: "#ef4444", gradient: "from-red-600 to-red-800" },
+          { page: "fraud", label: "Fraud", color: "#eab308", gradient: "from-yellow-600 to-yellow-800" },
+          { page: "burglary", label: "Burglary", color: "#f97316", gradient: "from-orange-600 to-orange-800" },
+          { page: "steal_from_house", label: "Steal From House", color: "#fb923c", gradient: "from-orange-500 to-orange-700" },
+          { page: "gta_car_theft", label: "GTA Car Theft", color: "#3b82f6", gradient: "from-blue-600 to-blue-800" },
+          { page: "drugs", label: "Drugs", color: "#a855f7", gradient: "from-purple-600 to-purple-800" },
+          { page: "organized", label: "Organized", color: "#06b6d4", gradient: "from-cyan-600 to-cyan-800" },
+          { page: "underground", label: "Underground", color: "#6b7280", gradient: "from-gray-600 to-gray-800" },
+          { page: "kill", label: "Murder", color: "#dc2626", gradient: "from-red-700 to-red-900" },
+          { page: "prison", label: "Prison", color: "#64748b", gradient: "from-slate-600 to-slate-800" },
+          { page: "hospital", label: "Hospital", color: "#22c55e", gradient: "from-green-500 to-green-700" },
+        ].map(btn => {
+          const cdKey = `cd_${btn.page}`;
+          const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
+          const now = Date.now();
+          const cdLeft = cdEnd > now ? Math.ceil((cdEnd - now) / 1000) : 0;
+          const onCd = cdLeft > 0;
+          return (
+            <button key={btn.page} onClick={() => setPage(btn.page)}
+              className={`topbar-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r ${btn.gradient} text-white border border-white/10 whitespace-nowrap transition-all ${activePage === btn.page ? "ring-2 ring-white/30 scale-105" : ""} ${onCd ? "cooldown opacity-70" : ""}`}
+              style={{ "--c": btn.color + "40" } as any}>
+              <span className="relative z-10">{btn.label}</span>
+              {onCd && <span className="relative z-10 ml-1.5 text-[9px] opacity-80">{cdLeft}s</span>}
+            </button>
+          );
+        })}
       </div>{/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
