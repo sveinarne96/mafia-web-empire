@@ -128,6 +128,7 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
     { title: "\uD83D\uDCB0 Daily Challenges", icon: Target, page: "daily_challenges" },
     { title: "\uD83D\uDCDC Legacy Board", icon: ScrollText, page: "legacy_board" },
     { title: "\uD83D\uDCDD Advanced Features", icon: Zap, page: "advanced_features" },
+    { title: "\uD83C\uDFC6 Last Man Standing", icon: Trophy, page: "last_man_standing" },
   ]},
 ];
 
@@ -1979,6 +1980,272 @@ function GameUpdatesPage() {
 }
 
 
+
+function LastManStandingPage() {
+  const event = useQuery(api.lastManStanding.getCurrentEvent);
+  const leaderboard = useQuery(api.lastManStanding.getLeaderboard);
+  const myStatus = useQuery(api.lastManStanding.getMyStatus);
+  const recentEvents = useQuery(api.lastManStanding.getRecentEvents, { limit: 20 });
+  const aliveCount = useQuery(api.lastManStanding.getAliveCount);
+  const joinEvent = useMutation(api.lastManStanding.joinEvent);
+  const attackPlayer = useMutation(api.lastManStanding.attack);
+  const players = useQuery(api.game.getAllPlayers);
+  const [targetId, setTargetId] = useState<string>("");
+  const [search, setSearch] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [countdown, setCountdown] = useState("");
+  const [tab, setTab] = useState<"arena" | "leaderboard" | "feed" | "rules">("arena");
+
+  useEffect(() => {
+    if (!event?.endDate) return;
+    const update = () => {
+      const left = Math.max(0, event.endDate - Date.now());
+      if (left <= 0) { setCountdown("ENDED"); return; }
+      const d = Math.floor(left / 86400000);
+      const h = Math.floor((left % 86400000) / 3600000);
+      const m = Math.floor((left % 3600000) / 60000);
+      const s = Math.floor((left % 60000) / 1000);
+      setCountdown(d > 0 ? d + "d " + h + "h " + m + "m " + s + "s" : h + "h " + m + "m " + s + "s");
+    };
+    update();
+    const i = setInterval(update, 1000);
+    return () => clearInterval(i);
+  }, [event?.endDate]);
+
+  const filteredPlayers = (players ?? []).filter((p: any) =>
+    p._id !== myStatus?.userId && p.nickname?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (!event) return (
+    <div className="animate-fade-in space-y-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-red-900/10 via-orange-900/5 to-transparent pointer-events-none" />
+      <div className="relative flex items-center gap-3">
+        <div className="relative"><Trophy className="size-8 text-red-400" /><div className="absolute -inset-2 bg-red-500/20 rounded-full blur-lg" /></div>
+        <div><h2 className="text-2xl font-black text-red-400">LAST MAN STANDING</h2><p className="text-xs text-red-400/60 font-mono">PRE-WIPE BATTLE ROYALE</p></div>
+      </div>
+      <div className="mafia-card rounded-xl p-8 text-center space-y-4 border border-red-500/20">
+        <div className="text-6xl animate-pulse">💀</div>
+        <h3 className="text-xl font-black text-red-400">NO ACTIVE EVENT</h3>
+        <p className="text-sm text-muted-foreground">Last Man Standing activates 2 days before a season wipe. Fight to be the final survivor!</p>
+        <div className="mafia-card rounded-lg p-4 border border-red-500/10 space-y-2">
+          <div className="text-xs font-bold text-red-400">HOW IT WORKS</div>
+          <div className="text-[10px] text-muted-foreground space-y-1 text-left">
+            <p>• Join the arena when the event goes live</p>
+            <p>• Hunt down other players for kills, XP, and cash</p>
+            <p>• Earn kill streaks for massive multipliers (2x-5x)</p>
+            <p>• Survive round events: fires, storms, supply drops</p>
+            <p>• Last player alive wins the entire prize pool + $50M bonus</p>
+            <p>• Losers are eliminated. Only the strongest survive!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const isOver = !event.isActive;
+  const timeLeft = Math.max(0, event.endDate - Date.now());
+  const progress = event.endDate > event.startDate ? ((Date.now() - event.startDate) / (event.endDate - event.startDate)) * 100 : 100;
+
+  return (
+    <div className="animate-fade-in space-y-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-red-900/10 via-transparent to-transparent pointer-events-none" />
+      <div className="relative">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="relative"><Trophy className="size-8 text-red-400" /><div className="absolute -inset-2 bg-red-500/20 rounded-full blur-lg animate-pulse" /></div>
+          <div className="flex-1">
+            <h2 className="text-2xl font-black text-red-400">{isOver ? "EVENT ENDED" : "LAST MAN STANDING"}</h2>
+            <p className="text-xs text-red-400/60 font-mono">PRE-WIPE BATTLE ROYALE - 2 DAYS</p>
+          </div>
+          {!isOver && myStatus?.alive && (
+            <div className="px-3 py-1 bg-red-950/50 border border-red-500/30 rounded-full text-[10px] text-red-400 font-bold animate-pulse">LIVE</div>
+          )}
+        </div>
+
+        {/* Epic countdown banner */}
+        {!isOver && (
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-950/50 via-orange-950/30 to-red-950/50 border border-red-500/20 p-4 mb-4">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 via-orange-500/10 to-red-500/5 animate-pulse" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div className="text-center">
+                <div className="text-3xl font-black text-red-400 font-mono">{countdown}</div>
+                <div className="text-[9px] text-red-400/60 mt-1">UNTIL WIPE</div>
+              </div>
+              <div className="text-center px-6">
+                <div className="text-2xl font-black text-orange-400">${event.prizePool.toLocaleString()}</div>
+                <div className="text-[9px] text-orange-400/60 mt-1">PRIZE POOL</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-black text-yellow-400">{aliveCount ?? 0}</div>
+                <div className="text-[9px] text-yellow-400/60 mt-1">ALIVE</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-black text-red-400">R{event.currentRound}/{event.totalRounds}</div>
+                <div className="text-[9px] text-red-400/60 mt-1">ROUND</div>
+              </div>
+            </div>
+            <div className="relative mt-3 h-2 bg-red-950/50 rounded-full overflow-hidden">
+              <div className="h-full bg-gradient-to-r from-red-600 via-orange-500 to-red-600 rounded-full transition-all" style={{ width: `${Math.min(100, progress)}%` }} />
+            </div>
+          </div>
+        )}
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-4 border-b border-border pb-1 overflow-x-auto">
+          {(["arena", "leaderboard", "feed", "rules"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${tab === t ? "bg-red-950/50 text-red-400 border border-red-500/30" : "text-muted-foreground hover:text-foreground"}`}>
+              {t === "arena" ? "⚔️ Arena" : t === "leaderboard" ? "🏆 Rankings" : t === "feed" ? "📡 Kill Feed" : "📜 Rules"}
+            </button>
+          ))}
+        </div>
+
+        {tab === "arena" && (
+          <div className="space-y-4">
+            {/* Join / Status */}
+            {isOver ? (
+              <div className="mafia-card rounded-xl p-6 text-center border border-red-500/20">
+                <div className="text-4xl mb-2">🏁</div>
+                <div className="text-lg font-black text-red-400">EVENT OVER</div>
+                {event.winnerId && <div className="text-sm text-muted-foreground mt-1">Winner claimed the crown!</div>}
+              </div>
+            ) : !myStatus ? (
+              <button onClick={async () => { try { await joinEvent({}); } catch(e: any) { alert(e.message); } }} className="w-full py-4 bg-gradient-to-r from-red-900/50 to-orange-900/50 border border-red-500/30 rounded-xl font-black text-red-400 hover:from-red-900/70 hover:to-orange-900/70 transition-all text-lg animate-pulse-gold">
+                ENTER THE ARENA
+              </button>
+            ) : !myStatus.alive ? (
+              <div className="mafia-card rounded-xl p-4 text-center border border-red-500/20">
+                <div className="text-3xl mb-2">☠️</div>
+                <div className="font-bold text-red-400">ELIMINATED</div>
+                <div className="text-xs text-muted-foreground">You were eliminated in Round {myStatus.eliminationRound ?? "?"}</div>
+                <div className="text-xs mt-2">Kills: {myStatus.kills} | Score: {myStatus.score.toLocaleString()}</div>
+              </div>
+            ) : (
+              <>
+                {/* My stats */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="mafia-card rounded-lg p-3 text-center border border-red-500/10">
+                    <div className="text-lg font-black text-red-400">{myStatus.kills}</div>
+                    <div className="text-[9px] text-muted-foreground">KILLS</div>
+                  </div>
+                  <div className="mafia-card rounded-lg p-3 text-center border border-orange-500/10">
+                    <div className="text-lg font-black text-orange-400">{myStatus.score.toLocaleString()}</div>
+                    <div className="text-[9px] text-muted-foreground">SCORE</div>
+                  </div>
+                  <div className="mafia-card rounded-lg p-3 text-center border border-yellow-500/10">
+                    <div className="text-lg font-black text-yellow-400">{myStatus.streak}x</div>
+                    <div className="text-[9px] text-muted-foreground">STREAK</div>
+                  </div>
+                  <div className="mafia-card rounded-lg p-3 text-center border border-green-500/10">
+                    <div className="text-lg font-black text-green-400">Lv.{myStatus.level}</div>
+                    <div className="text-[9px] text-muted-foreground">LEVEL</div>
+                  </div>
+                </div>
+                {myStatus.title && (
+                  <div className="text-center text-xs font-black text-yellow-400 animate-fire-text">{myStatus.title}</div>
+                )}
+
+                {/* Attack panel */}
+                <div className="mafia-card rounded-xl p-4 border border-red-500/20 space-y-3">
+                  <div className="text-xs font-bold text-red-400">SELECT TARGET</div>
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search player..." className="w-full bg-background border border-red-500/20 rounded-lg px-3 py-2 text-xs" />
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {filteredPlayers.slice(0, 15).map((p: any) => (
+                      <div key={p._id} className={`flex items-center justify-between p-2 rounded-lg border transition-all ${targetId === p._id ? "border-red-500/50 bg-red-950/20" : "border-border/50 hover:border-red-500/20"}`} onClick={() => setTargetId(p._id)}>
+                        <div className="flex items-center gap-2">
+                          <div className="size-6 rounded-full bg-red-950/30 flex items-center justify-center text-[10px] font-bold text-red-400">{(p.nickname || "?")[0]}</div>
+                          <div>
+                            <div className="text-xs font-bold">{p.nickname}</div>
+                            <div className="text-[9px] text-muted-foreground">Lv.{p.level} ATK:{p.attack} DEF:{p.defense}</div>
+                          </div>
+                        </div>
+                        <div className="text-[9px] text-muted-foreground">${(p.money || 0).toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <button disabled={!targetId} onClick={async () => {
+                    try {
+                      const r = await attackPlayer({ targetId: targetId as any });
+                      setResult(r);
+                    } catch(e: any) { setResult({ won: false, message: e.message }); }
+                  }} className="w-full py-3 bg-gradient-to-r from-red-900 to-red-800 text-white font-black rounded-lg disabled:opacity-30 hover:from-red-800 hover:to-red-700 transition-all">
+                    ATTACK TARGET
+                  </button>
+                  {result && (
+                    <div className={`p-3 rounded-lg text-xs text-center font-bold ${result.won ? "bg-green-950/30 border border-green-500/30 text-green-400" : "bg-red-950/30 border border-red-500/30 text-red-400"}`}>
+                      {result.message}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {tab === "leaderboard" && (
+          <div className="space-y-2">
+            {(!leaderboard || leaderboard.length === 0) ? (
+              <div className="mafia-card rounded-xl p-8 text-center text-muted-foreground text-sm">No participants yet</div>
+            ) : leaderboard.map((p: any, i: number) => (
+              <div key={p._id} className={`mafia-card rounded-lg p-3 flex items-center gap-3 border ${i === 0 ? "border-yellow-500/30 bg-yellow-950/5" : i < 3 ? "border-orange-500/20" : "border-border/50"}`}>
+                <div className={`size-8 rounded-full flex items-center justify-center text-xs font-black ${i === 0 ? "bg-yellow-500/20 text-yellow-400" : i === 1 ? "bg-gray-400/20 text-gray-300" : i === 2 ? "bg-orange-500/20 text-orange-400" : "bg-background text-muted-foreground"}`}>
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold truncate">{p.nickname}</span>
+                    {p.title && <span className="text-[8px] px-1.5 py-0.5 bg-yellow-500/10 text-yellow-400 rounded-full font-bold">{p.title}</span>}
+                    {!p.alive && <span className="text-[8px] px-1.5 py-0.5 bg-red-500/10 text-red-400 rounded-full">DEAD</span>}
+                  </div>
+                  <div className="text-[9px] text-muted-foreground">Lv.{p.level} | Kills: {p.kills} | Streak: {p.streak}x</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-black text-primary">{p.score.toLocaleString()}</div>
+                  <div className="text-[9px] text-muted-foreground">SCORE</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "feed" && (
+          <div className="space-y-2">
+            {(!recentEvents || recentEvents.length === 0) ? (
+              <div className="mafia-card rounded-xl p-8 text-center text-muted-foreground text-sm">No events yet</div>
+            ) : recentEvents.map((e: any) => (
+              <div key={e._id} className={`mafia-card rounded-lg p-3 border ${e.eventType === "kill" ? "border-red-500/20" : e.eventType === "winner" ? "border-yellow-500/30" : "border-border/50"}`}>
+                <div className="flex items-start gap-2">
+                  <div className="text-lg shrink-0">{e.eventType === "kill" ? "💀" : e.eventType === "winner" ? "👑" : e.eventType === "elimination" ? "☠️" : e.eventType === "join" ? "⚔️" : e.eventType === "round_advance" ? "🔥" : "📢"}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs">{e.message}</div>
+                    <div className="text-[9px] text-muted-foreground mt-1">Round {e.round} • {new Date(e.timestamp).toLocaleTimeString()}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "rules" && (
+          <div className="mafia-card rounded-xl p-4 border border-red-500/10 space-y-3">
+            <div className="text-xs font-bold text-red-400">BATTLE ROYALE RULES</div>
+            <div className="text-[10px] text-muted-foreground space-y-2">
+              <p><span className="text-red-400 font-bold">Duration:</span> 2 days. When the timer hits zero, the season wipes!</p>
+              <p><span className="text-red-400 font-bold">Combat:</span> ATK vs DEF with level scaling. Higher level = bigger advantage.</p>
+              <p><span className="text-red-400 font-bold">Kill Rewards:</span> $10K + $5K per target level + XP + Score + Reputation</p>
+              <p><span className="text-red-400 font-bold">Kill Streaks:</span> 2x(3+), 3x(5+), 4x(7+), 5x(10+) multiplier on score!</p>
+              <p><span className="text-red-400 font-bold">Titles:</span> Earn titles at streaks: SLAYER(3), DOMINATOR(5), LEGENDARY(7), UNSTOPPABLE(10)</p>
+              <p><span className="text-red-400 font-bold">Rounds:</span> 10 rounds with random events (fires, supply drops, storms!)</p>
+              <p><span className="text-red-400 font-bold">Elimination:</span> Die = out. Last player alive wins!</p>
+              <p><span className="text-yellow-400 font-bold">Winner Prize:</span> Full prize pool + $50M bonus + "LAST MAN STANDING" title + 100 REP</p>
+              <p><span className="text-yellow-400 font-bold">Admins:</span> Can start/end events and advance rounds</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 function PrisonBlocked() {
   const status = useQuery(api.gameFeatures.getPrisonTimeDisplay);
   const [countdown, setCountdown] = useState(status?.totalSeconds ?? 0);
@@ -2279,6 +2546,7 @@ const renderPage = (): React.ReactNode => {
       case "radio": return <RadioPage />;
       case "cockroach": return <CockroachPage />;
       case "advanced_features": return <AdvancedFeaturesPage />;
+      case "last_man_standing": return <LastManStandingPage />;
       default: return <HeadquartersPage />;
     }
   };
