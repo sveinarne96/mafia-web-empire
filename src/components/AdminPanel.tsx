@@ -204,29 +204,173 @@ function PlayerManagementModal({ players, onClose }: { players: any[]; onClose: 
   );
 }
 
-// ===== GENERIC ADMIN TOOL =====
+// ===== ADMIN TOOL =====
 function AdminTool({ title, icon, description, onClose }: { title: string; icon: string; description: string; onClose: () => void }) {
   const [msg, setMsg] = useState("");
-  const [input1, setInput1] = useState("");
-  const [input2, setInput2] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [action, setAction] = useState("");
+  const [value, setValue] = useState("");
+  const [extra, setExtra] = useState("");
+
+  const getOptions = () => {
+    if (["Player Management","Ban System","VIP Manager","VIP Gift Sender","Profile Customizer","Title Manager","Badge Creator","Prestige Manager"].includes(title)) {
+      return (<div className="space-y-3">
+        <div><label className="text-xs text-muted-foreground">Target</label>
+        <select className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1"><option>All Players</option><option>Top 10</option><option>Banned</option><option>Online</option></select></div>
+        <div><label className="text-xs text-muted-foreground">Action</label>
+        <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          {title==="Ban System" && <><option>Temp Ban 1h</option><option>Temp Ban 24h</option><option>Perm Ban</option><option>Unban</option></>}
+          {title==="VIP Manager" && <><option>Grant VIP</option><option>Revoke VIP</option><option>Upgrade Tier</option></>}
+          {title==="Title Manager" && <><option>Grant Title</option><option>Revoke Title</option><option>List Titles</option></>}
+          {title==="Badge Creator" && <><option>Create Badge</option><option>Assign Badge</option><option>Remove Badge</option></>}
+          {title==="Prestige Manager" && <><option>Grant Prestige</option><option>Revoke Prestige</option><option>Reset</option></>}
+          {title==="Profile Customizer" && <><option>Edit Avatar</option><option>Edit Bio</option><option>Change Language</option><option>Reset</option></>}
+          {title==="VIP Gift Sender" && <><option>Send Cash</option><option>Send Item</option><option>Send to All VIPs</option></>}
+          {title==="Player Management" && <><option>View Player</option><option>Edit Player</option><option>Reset Player</option><option>Set Level</option><option>Set Money</option><option>Wipe Account</option></>}
+          {!["Ban System","VIP Manager","Title Manager","Badge Creator","Prestige Manager","Profile Customizer","VIP Gift Sender","Player Management"].includes(title) && <><option>View</option><option>Modify</option><option>Reset</option></>}
+        </select></div>
+        <div><label className="text-xs text-muted-foreground">Reason</label>
+        <input value={extra} onChange={e => setExtra(e.target.value)} placeholder="Enter reason..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+      </div>);
+    }
+    if (["XP Boost Manager","Cash Boost Manager","Ghost Mode Controller","Stock Market Control","Crypto Controller","Item Management","Weapon Arsenal Editor","Black Market Editor","Real Estate Editor","Business Manager","Loan Adjuster","Insurance Monitor","Auction Oversight","Economy Control","Revenue Dashboard","Smuggling Route Editor","Safe House Manager","Pet System Editor","Skill Tree Editor","Mystery Box Editor","Crafting Recipe Editor"].includes(title)) {
+      return (<div className="space-y-3">
+        <div><label className="text-xs text-muted-foreground">Setting</label>
+        <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          {title==="XP Boost Manager" && <><option>1x Normal</option><option>2x XP</option><option>5x XP</option><option>10x XP</option><option>25x XP</option><option>50x XP</option><option>100x XP</option></>}
+          {title==="Cash Boost Manager" && <><option>1x Normal</option><option>2x Cash</option><option>5x Cash</option><option>10x Cash</option><option>25x Cash</option></>}
+          {title==="Ghost Mode Controller" && <><option>Enable</option><option>Disable</option><option>Duration 1h</option><option>Duration 6h</option></>}
+          {title==="Stock Market Control" && <><option>Manipulate Price</option><option>Halt Trading</option><option>Resume</option><option>Crash</option><option>Pump</option></>}
+          {title==="Crypto Controller" && <><option>Mining Rate</option><option>Price Floor</option><option>Crash</option><option>Pump</option><option>Reset</option></>}
+          {title==="Item Management" && <><option>Create</option><option>Modify</option><option>Delete</option><option>Set Price</option><option>Set Rarity</option></>}
+          {title==="Weapon Arsenal Editor" && <><option>Add Weapon</option><option>Modify Damage</option><option>Modify Cost</option><option>Remove</option></>}
+          {title==="Black Market Editor" && <><option>Add Item</option><option>Remove</option><option>Set Price</option><option>Refresh</option></>}
+          {title==="Real Estate Editor" && <><option>Add Property</option><option>Modify Price</option><option>Modify Income</option><option>Remove</option></>}
+          {title==="Business Manager" && <><option>Create</option><option>Profit Margin</option><option>Upgrade</option><option>Shut Down</option></>}
+          {title==="Loan Adjuster" && <><option>Interest Rate</option><option>Forgive Debt</option><option>Call In</option></>}
+          {title==="Insurance Monitor" && <><option>View Claims</option><option>Approve</option><option>Deny</option><option>Detect Fraud</option></>}
+          {title==="Auction Oversight" && <><option>Remove</option><option>Force Sale</option><option>Cancel</option></>}
+          {title==="Economy Control" && <><option>Tax Rate</option><option>Inflation</option><option>Recession</option><option>Boom</option></>}
+          {title==="Revenue Dashboard" && <><option>Total Revenue</option><option>By Category</option><option>Export</option></>}
+          {title==="Smuggling Route Editor" && <><option>Create Route</option><option>Modify</option><option>Delete</option></>}
+          {title==="Safe House Manager" && <><option>Modify Stats</option><option>Set Price</option><option>Upgrade Defense</option></>}
+          {title==="Pet System Editor" && <><option>Add Pet</option><option>Modify Stats</option><option>Remove</option></>}
+          {title==="Skill Tree Editor" && <><option>Add Skill</option><option>Modify Cost</option><option>Remove</option></>}
+          {title==="Mystery Box Editor" && <><option>Add Loot</option><option>Drop Rate</option><option>Remove</option></>}
+          {title==="Crafting Recipe Editor" && <><option>Add Recipe</option><option>Modify</option><option>Delete</option></>}
+          {!["XP Boost Manager","Cash Boost Manager","Ghost Mode Controller","Stock Market Control","Crypto Controller","Item Management","Weapon Arsenal Editor","Black Market Editor","Real Estate Editor","Business Manager","Loan Adjuster","Insurance Monitor","Auction Oversight","Economy Control","Revenue Dashboard","Smuggling Route Editor","Safe House Manager","Pet System Editor","Skill Tree Editor","Mystery Box Editor","Crafting Recipe Editor"].includes(title) && <><option>View</option><option>Modify</option><option>Reset</option></>}
+        </select></div>
+        <div><label className="text-xs text-muted-foreground">Value</label>
+        <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="Enter value..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+        {["Item Management","Weapon Arsenal Editor","Black Market Editor","Real Estate Editor","Business Manager","Mystery Box Editor","Crafting Recipe Editor"].includes(title) && (
+          <div><label className="text-xs text-muted-foreground">Name</label>
+          <input value={extra} onChange={e => setExtra(e.target.value)} placeholder="Enter name..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+        )}
+      </div>);
+    }
+    if (["Crime Rate Control","Kill Cooldown Editor","Prison Sentence Editor","Bounty Oversight","Crime Statistics","Kill Leaderboard"].includes(title)) {
+      return (<div className="space-y-3">
+        <div><label className="text-xs text-muted-foreground">Setting</label>
+        <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          {title==="Crime Rate Control" && <><option>Success Rate (All)</option><option>Street Crime Rate</option><option>Heist Rate</option><option>Murder Rate</option><option>Reset Default</option></>}
+          {title==="Kill Cooldown Editor" && <><option>5 sec</option><option>10 sec</option><option>15 sec</option><option>30 sec</option><option>60 sec</option><option>Remove</option></>}
+          {title==="Prison Sentence Editor" && <><option>10 sec</option><option>15 sec</option><option>30 sec</option><option>60 sec</option><option>5 min</option><option>1 hour</option></>}
+          {title==="Bounty Oversight" && <><option>View All</option><option>Cancel</option><option>Claim</option><option>Clear All</option></>}
+          {title==="Crime Statistics" && <><option>By Type</option><option>By Player</option><option>Success Rates</option><option>Export</option></>}
+          {title==="Kill Leaderboard" && <><option>Top 50</option><option>By Weapon</option><option>Reset</option></>}
+        </select></div>
+        {["Crime Rate Control","Kill Cooldown Editor","Prison Sentence Editor"].includes(title) && (
+          <div><label className="text-xs text-muted-foreground">Value</label>
+          <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="Enter value..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+        )}
+      </div>);
+    }
+    if (["Event Manager","Season Control","Purge Controller","Crime Event Creator","Tournament Manager","Daily Challenge Editor","Weekly Challenge Editor","Season Pass Editor","Weather Control","Lotto Control"].includes(title)) {
+      return (<div className="space-y-3">
+        <div><label className="text-xs text-muted-foreground">Action</label>
+        <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          {title==="Event Manager" && <><option>Start Event</option><option>Stop Event</option><option>View Active</option><option>Schedule</option></>}
+          {title==="Season Control" && <><option>Start New Season</option><option>End Current</option><option>Extend 7 Days</option><option>Extend 30 Days</option></>}
+          {title==="Purge Controller" && <><option>Start Purge</option><option>Stop Purge</option><option>Duration 6h</option><option>Duration 24h</option></>}
+          {title==="Crime Event Creator" && <><option>Create Event</option><option>Set Duration</option><option>Set Rewards</option><option>Activate</option></>}
+          {title==="Tournament Manager" && <><option>Create</option><option>Start</option><option>End</option><option>Set Prize Pool</option></>}
+          {title==="Daily Challenge Editor" && <><option>Create</option><option>Modify</option><option>Set Difficulty</option><option>Activate</option></>}
+          {title==="Weekly Challenge Editor" && <><option>Create</option><option>Modify</option><option>Duration</option><option>Activate</option></>}
+          {title==="Season Pass Editor" && <><option>Edit Tiers</option><option>Add Tier</option><option>Set Price</option></>}
+          {title==="Weather Control" && <><option>Sunny</option><option>Rain</option><option>Storm</option><option>Snow</option><option>Heatwave</option><option>Auto</option></>}
+          {title==="Lotto Control" && <><option>Set Jackpot</option><option>Force Draw</option><option>Reset</option><option>History</option></>}
+        </select></div>
+        <div><label className="text-xs text-muted-foreground">Duration</label>
+        <select value={value} onChange={e => setValue(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          <option value="1h">1 hour</option><option value="6h">6 hours</option><option value="12h">12 hours</option><option value="24h">24 hours</option><option value="48h">48 hours</option><option value="7d">7 days</option><option value="30d">30 days</option>
+        </select></div>
+      </div>);
+    }
+    if (["Server Announcements","Broadcast Scheduler","Real-Time Chat Monitor","Chat Filter Editor","News Ticker Editor","Forum Moderator Tools","Support Ticket Manager","Bug Report Queue"].includes(title)) {
+      return (<div className="space-y-3">
+        <div><label className="text-xs text-muted-foreground">Action</label>
+        <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          {title==="Server Announcements" && <><option>Broadcast Now</option><option>Schedule</option><option>History</option></>}
+          {title==="Broadcast Scheduler" && <><option>Schedule</option><option>View Queue</option><option>Cancel</option></>}
+          {title==="Real-Time Chat Monitor" && <><option>View All</option><option>Filter Player</option><option>Flag Message</option><option>Mute Player</option></>}
+          {title==="Chat Filter Editor" && <><option>Add Word</option><option>Remove Word</option><option>View List</option></>}
+          {title==="News Ticker Editor" && <><option>Post Headline</option><option>Remove</option><option>Pin</option></>}
+          {title==="Forum Moderator Tools" && <><option>Delete Post</option><option>Pin Post</option><option>Lock Post</option><option>Ban User</option></>}
+          {title==="Support Ticket Manager" && <><option>View Open</option><option>Respond</option><option>Close</option><option>Escalate</option></>}
+          {title==="Bug Report Queue" && <><option>View</option><option>Mark Fixed</option><option>Set Priority</option></>}
+        </select></div>
+        {["Server Announcements","Broadcast Scheduler","News Ticker Editor"].includes(title) && (
+          <div><label className="text-xs text-muted-foreground">Message</label>
+          <textarea value={extra} onChange={e => setExtra(e.target.value)} placeholder="Enter message..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm h-20 resize-none mt-1" /></div>
+        )}
+      </div>);
+    }
+    if (["Live Player Map","Faction Management","Territory Control","NPC Spawner","Database Backup","Server Health Monitor","Mission Creator","Achievement Editor","Leaderboard Reset","Leaderboard Editor","Legacy Board Editor","Energy System Control","Maintenance Mode","Version Control","A/B Testing Panel","Analytics Dashboard"].includes(title)) {
+      return (<div className="space-y-3">
+        <div><label className="text-xs text-muted-foreground">Action</label>
+        <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+          {title==="Live Player Map" && <><option>View Map</option><option>Refresh</option><option>Filter City</option></>}
+          {title==="Faction Management" && <><option>Create</option><option>Delete</option><option>Modify</option><option>Declare War</option><option>Form Alliance</option></>}
+          {title==="Territory Control" && <><option>Assign</option><option>Remove</option><option>View All</option><option>Reset</option></>}
+          {title==="NPC Spawner" && <><option>Spawn Gang</option><option>Spawn Police</option><option>Spawn Informant</option><option>Remove</option></>}
+          {title==="Database Backup" && <><option>Create</option><option>Restore</option><option>View</option><option>Download</option></>}
+          {title==="Server Health Monitor" && <><option>CPU</option><option>Memory</option><option>Connections</option><option>Uptime</option></>}
+          {title==="Mission Creator" && <><option>Create</option><option>Edit</option><option>Delete</option><option>Set Rewards</option></>}
+          {title==="Achievement Editor" && <><option>Create</option><option>Modify</option><option>Delete</option><option>Requirements</option></>}
+          {title==="Leaderboard Reset" && <><option>Reset Level</option><option>Reset Money</option><option>Reset Kills</option><option>Reset All</option></>}
+          {title==="Leaderboard Editor" && <><option>Modify Ranking</option><option>Algorithm</option><option>Add Category</option></>}
+          {title==="Legacy Board Editor" && <><option>Modify</option><option>Add</option><option>Reset</option></>}
+          {title==="Energy System Control" && <><option>Regen Rate</option><option>Max Energy</option><option>Disable</option></>}
+          {title==="Maintenance Mode" && <><option>Enable</option><option>Disable</option><option>Set Message</option></>}
+          {title==="Version Control" && <><option>Update</option><option>Changelog</option><option>Rollback</option></>}
+          {title==="A/B Testing Panel" && <><option>Create Test</option><option>Results</option><option>End Test</option></>}
+          {title==="Analytics Dashboard" && <><option>DAU</option><option>MAU</option><option>Retention</option><option>Export</option></>}
+        </select></div>
+        {title==="Mission Creator" && (<>
+          <div><label className="text-xs text-muted-foreground">Name</label>
+          <input value={extra} onChange={e => setExtra(e.target.value)} placeholder="Mission name..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+          <div><label className="text-xs text-muted-foreground">Reward</label>
+          <input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="Reward amount..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1" /></div>
+        </>)}
+      </div>);
+    }
+    return (<div className="space-y-3"><div><label className="text-xs text-muted-foreground">Action</label>
+    <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
+      <option>View</option><option>Modify</option><option>Reset</option></select></div></div>);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{icon}</span>
-          <h3 className="text-lg font-bold">{title}</h3>
-        </div>
+        <div className="flex items-center gap-2"><span className="text-2xl">{icon}</span><h3 className="text-lg font-bold">{title}</h3></div>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-sm">✕ Close</button>
       </div>
       <p className="text-xs text-muted-foreground">{description}</p>
       <div className="mafia-card rounded-xl p-4 space-y-3">
-        <input value={input1} onChange={e => setInput1(e.target.value)} placeholder="Parameter 1..."
-          className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm" />
-        <input value={input2} onChange={e => setInput2(e.target.value)} placeholder="Parameter 2..."
-          className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm" />
-        <button onClick={() => setMsg("Action performed successfully!")}
-          className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:opacity-90">
-          Execute
+        {getOptions()}
+        <button onClick={() => { setLoading(true); setTimeout(() => { setMsg("Action performed successfully!"); setLoading(false); }, 800); }}
+          disabled={loading} className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-bold hover:opacity-90 disabled:opacity-50">
+          {loading ? "Executing..." : "Execute"}
         </button>
         {msg && <div className="text-xs text-green-400 text-center bg-green-400/10 rounded-lg p-2">{msg}</div>}
       </div>
@@ -234,7 +378,6 @@ function AdminTool({ title, icon, description, onClose }: { title: string; icon:
   );
 }
 
-// ===== BROADCAST PANEL =====
 function BroadcastPanel({ onClose }: { onClose: () => void }) {
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
@@ -258,7 +401,6 @@ function BroadcastPanel({ onClose }: { onClose: () => void }) {
   );
 }
 
-// ===== MAIN ADMIN PANEL =====
 export function AdminPanel() {
   const isAdmin = useQuery(api.admin.isAdminCheck);
   const stats = useQuery(api.admin.getGameStats);
