@@ -322,15 +322,38 @@ function BecomeAdminPage() {
   const becomeAdmin = useMutation(api.admin.becomeAdmin);
   const [msg, setMsg] = useState("");
   const [key, setKey] = useState("");
-  const doBecome = async () => { try { await becomeAdmin({ secretKey: key || "admin" }); setMsg("You are now an admin!"); } catch (e: any) { setMsg(e.message); } };
+  const [loading, setLoading] = useState(false);
+  const doBecome = async () => {
+    if (!key) { setMsg("Please enter the admin key"); return; }
+    setLoading(true); setMsg("");
+    try {
+      const res = await becomeAdmin({ secretKey: key });
+      setMsg(res.message || "You are now an admin!");
+    } catch (e: any) { setMsg(e.message || "Invalid admin key"); }
+    setLoading(false);
+  };
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Shield className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">Become Admin</h2></div>
-      <div className="mafia-card rounded-xl p-5 text-center space-y-4">
-        <div className="text-4xl">🛡️</div>
-        <div className="text-sm text-muted-foreground">Click below to gain admin privileges.</div>
-        <button onClick={doBecome} className="px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-500">Get Admin</button>
-        {msg && <div className="text-sm text-primary">{msg}</div>}
+      <div className="flex items-center gap-3"><Shield className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">🔑 Become Admin</h2></div>
+      <div className="mafia-card rounded-xl p-5 space-y-4">
+        <div className="text-center">
+          <div className="text-4xl mb-2">🛡️</div>
+          <div className="text-sm font-bold">Admin Access</div>
+          <div className="text-[10px] text-muted-foreground">Enter the admin secret key to gain admin privileges</div>
+        </div>
+        <input
+          type="password"
+          placeholder="Enter admin secret key..."
+          value={key}
+          onChange={(e) => setKey(e.target.value)}
+          className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm"
+          onKeyDown={(e) => { if (e.key === 'Enter') doBecome(); }}
+        />
+        <button onClick={doBecome} disabled={loading || !key}
+          className="w-full px-6 py-3 bg-yellow-600 text-white font-bold rounded-lg hover:bg-yellow-500 disabled:opacity-50">
+          {loading ? "⏳ Activating..." : "🔑 Activate Admin"}
+        </button>
+        {msg && <div className={`text-sm p-2 rounded-lg ${msg.includes("admin") || msg.includes("Admin") ? "bg-green-950/30 text-green-400" : "bg-red-950/30 text-red-400"}`}>{msg}</div>}
       </div>
     </div>
   );
