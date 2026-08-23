@@ -563,6 +563,9 @@ function RightPanel({ setPage, activePage }: { setPage: (p: GamePage) => void; a
           <div className="flex justify-between"><span className="text-sidebar-foreground/60">Online</span><span className="text-green-400 font-bold">{onlineCount ?? 0}</span></div>
           <div className="flex justify-between"><span className="text-sidebar-foreground/60">Location</span><span className="font-bold">{player?.location ?? "New York"}</span></div>
           <div className="flex justify-between"><span className="text-sidebar-foreground/60">Prestige</span><span className="font-bold text-yellow-400">{player?.prestige ?? 0}</span></div>
+          {(player?.wantedLevel ?? 0) > 0 && <div className="flex justify-between"><span className="text-sidebar-foreground/60">🔴 Wanted</span><span className="font-bold text-red-400">{player?.wantedLevel}/10</span></div>}
+          {(player?.wantedLevel ?? 0) >= 2 && <div className="flex justify-between"><span className="text-sidebar-foreground/60">🕵️ FBI</span><span className="font-bold text-orange-400">Active</span></div>}
+          {(player?.wantedLevel ?? 0) >= 4 && <div className="flex justify-between"><span className="text-sidebar-foreground/60">🎖️ Military</span><span className="font-bold text-red-300">Deployed</span></div>}
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">

@@ -284,11 +284,10 @@ export const placeBounty = mutation({
     await ctx.db.patch(player._id, { money: (player.money ?? 0) - args.amount });
     await ctx.db.insert("bounties", {
       targetId: args.targetId,
-      posterId: player._id,
-      amount: args.amount,
+      placerId: player._id,
+      reward: args.amount,
       active: true,
       createdAt: Date.now(),
-      claimedBy: undefined,
     });
     await ctx.db.insert("notifications", {
       userId: args.targetId,
