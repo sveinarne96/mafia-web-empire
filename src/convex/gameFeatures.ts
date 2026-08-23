@@ -1203,13 +1203,16 @@ export const getPrisonTimeDisplay = query({
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
     if (!player.inPrison) return null;
-    const remaining = Math.max(0, player.prisonTime);
+    const prisonTimeMs = player.prisonTime ?? 15000;
+    const timeSinceArrest = Date.now() - (player.lastCrimeAt ?? Date.now());
+    const remaining = Math.max(0, prisonTimeMs - timeSinceArrest);
     const totalSeconds = Math.ceil(remaining / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
     return {
       remaining, hours, minutes, seconds,
+      totalSeconds,
       cellLevel: player.cellLevel,
       job: player.prisonJob,
       gang: player.prisonGang,

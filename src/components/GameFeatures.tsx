@@ -19,15 +19,50 @@ import { getDailyLegendaryCrimes, getTimeUntilReset, RARITY_CONFIG, type Legenda
 // ===== #20 PRISON TIME DISPLAY =====
 export function PrisonTimeDisplay() {
   const status = useQuery(api.gameFeatures.getPrisonTimeDisplay);
+  const [countdown, setCountdown] = useState(status?.totalSeconds ?? 0);
+
+  useEffect(() => {
+    if (!status || status.totalSeconds <= 0) return;
+    setCountdown(status.totalSeconds);
+    const timer = setInterval(() => {
+      setCountdown((c: number) => {
+        if (c <= 1) { clearInterval(timer); return 0; }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [status?.totalSeconds]);
+
   if (!status) return null;
+
+  const hrs = Math.floor(countdown / 3600);
+  const mins = Math.floor((countdown % 3600) / 60);
+  const secs = countdown % 60;
+  const progress = status.totalSeconds > 0 ? ((status.totalSeconds - countdown) / status.totalSeconds) * 100 : 100;
+
   return (
-    <div className="mafia-card rounded-xl p-4 border border-red-900/30">
-      <div className="flex items-center gap-2 mb-2"><Clock className="size-4 text-red-400" /><span className="font-bold text-sm">Time Remaining</span></div>
-      <div className="text-2xl font-bold text-red-400">{status.hours}h {status.minutes}m</div>
-      {status.job && <div className="text-xs text-muted-foreground mt-1">Job: {status.job}</div>}
-      {status.gang && <div className="text-xs text-muted-foreground">Gang: {status.gang}</div>}
-      {status.solitary && <div className="text-xs text-red-400 mt-1">🔒 In Solitary</div>}
-      <div className="text-xs text-muted-foreground mt-1">Cell Level: {status.cellLevel}</div>
+    <div className="space-y-4">
+      <div className="rounded-2xl p-6 border-2 border-red-500/40 bg-red-950/20 text-center relative overflow-hidden">
+        <div className="absolute inset-0 animate-prison-bars opacity-10" />
+        <div className="relative">
+          <div className="text-5xl mb-3">🔒</div>
+          <div className="text-xs text-red-400/60 font-mono tracking-widest mb-2">IN PRISON</div>
+          <div className="text-4xl font-black text-red-400 font-mono">
+            {hrs > 0 ? `${String(hrs).padStart(2, "0")}:` : ""}{String(mins).padStart(2, "0")}:{String(secs).padStart(2, "0")}
+          </div>
+          <div className="w-full h-3 bg-black/40 rounded-full mt-4 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full transition-all duration-1000" style={{ width: `${progress}%` }} />
+          </div>
+          <div className="text-[10px] text-muted-foreground mt-2">Sentence: {Math.ceil((status.totalSeconds) / 60)} min • Auto-release when timer hits 0:00</div>
+          {countdown <= 0 && <div className="text-green-400 font-bold mt-2 animate-pulse">✅ TIME SERVED — RELEASING...</div>}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        {status.job && <div className="mafia-card rounded-xl p-3 text-center"><div className="text-lg">🔨</div><div className="text-[10px] font-bold">Prison Job</div><div className="text-[9px] text-muted-foreground">{status.job}</div></div>}
+        {status.gang && <div className="mafia-card rounded-xl p-3 text-center"><div className="text-lg">👊</div><div className="text-[10px] font-bold">Prison Gang</div><div className="text-[9px] text-muted-foreground">{status.gang}</div></div>}
+        {status.solitary && <div className="mafia-card rounded-xl p-3 text-center border border-red-500/30"><div className="text-lg">🔒</div><div className="text-[10px] font-bold text-red-400">SOLITARY</div><div className="text-[9px] text-red-400">Locked down</div></div>}
+        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-lg">🏠</div><div className="text-[10px] font-bold">Cell Level</div><div className="text-[9px] text-muted-foreground">Level {status.cellLevel}</div></div>
+      </div>
     </div>
   );
 }

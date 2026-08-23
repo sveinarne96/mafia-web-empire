@@ -68,6 +68,25 @@ async function getCurrentUser(ctx: { auth: any; db: any }) {
   return ensurePlayerDefaults(user);
 }
 
+// Auto-release from prison when time is up (called by frontend timer)
+export const releaseFromPrison = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { released: false };
+    const player = await ctx.db.get(userId);
+    if (!player) return { released: false };
+    if (!player.inPrison) return { released: false };
+    const prisonTimeMs = player.prisonTime ?? 15000;
+    const timeSinceArrest = Date.now() - (player.lastCrimeAt ?? Date.now());
+    if (timeSinceArrest >= prisonTimeMs) {
+      await ctx.db.patch(userId, { inPrison: false, prisonTime: 0 });
+      return { released: true };
+    }
+    return { released: false, remaining: prisonTimeMs - timeSinceArrest };
+  },
+});
+
 export const getPlayer = query({
   args: {},
   handler: async (ctx) => {

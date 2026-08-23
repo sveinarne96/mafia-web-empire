@@ -1620,10 +1620,21 @@ export default function Dashboard() {
   const signOut = () => {};
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
   const player = useQuery(api.game.getPlayer);
+  const releaseFromPrison = useMutation(api.game.releaseFromPrison);
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [dismissedLevelUp, setDismissedLevelUp] = useState(false);
   const setPage = useCallback((p: GamePage) => setActivePage(p), []);
+
+  // Auto-release from prison when 15 seconds have passed
+  useEffect(() => {
+    if (!player || !player.inPrison) return;
+    const check = async () => {
+      try { await releaseFromPrison({}); } catch {}
+    };
+    const timer = setInterval(check, 1000);
+    return () => clearInterval(timer);
+  }, [player?.inPrison]);
 
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
 
