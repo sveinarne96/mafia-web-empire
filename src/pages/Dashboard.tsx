@@ -747,6 +747,7 @@ function KillPage() {
   const [selectedWeapon, setSelectedWeapon] = useState<string | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const [targetSearch, setTargetSearch] = useState("");
   const [useGloves, setUseGloves] = useState(false);
   const [useAlibi, setUseAlibi] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -982,9 +983,15 @@ function KillPage() {
 
       {activeTab === "targets" && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-red-400">🎯 TARGET LIST — {targets.length} players available</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-bold text-red-400">🎯 TARGET LIST — {targets.filter((t: any) => !targetSearch || t.nickname?.toLowerCase().includes(targetSearch.toLowerCase()) || String(t.level).includes(targetSearch) || t.location?.toLowerCase().includes(targetSearch.toLowerCase())).length} results</h3>
+            <div className="flex-1">
+              <input type="text" value={targetSearch} onChange={(e) => setTargetSearch(e.target.value)} placeholder="Search by name, level, or location..."
+                className="w-full bg-background border border-red-500/20 rounded-lg px-3 py-1.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-red-500/40" />
+            </div>
+          </div>
           <div className="space-y-2">
-            {targets.map((t: any) => (
+            {targets.filter((t: any) => !targetSearch || t.nickname?.toLowerCase().includes(targetSearch.toLowerCase()) || String(t.level).includes(targetSearch) || t.location?.toLowerCase().includes(targetSearch.toLowerCase())).map((t: any) => (
               <button key={t._id} onClick={() => { setSelectedTarget(t._id); setActiveTab("weapons"); }}
                 className={`w-full text-left p-4 rounded-xl border transition-all ${selectedTarget === t._id ? "border-red-500/40 bg-red-950/30" : "border-border bg-card hover:border-red-500/20"}`}>
                 <div className="flex items-center justify-between">
