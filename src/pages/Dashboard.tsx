@@ -120,14 +120,16 @@ const leftMenuSections = [
     { label: "Street Crimes", page: "crimes", icon: "🔪" },
     { label: "Robberies & Heists", page: "robbery", icon: "💰" },
     { label: "Fraud & Scams", page: "fraud", icon: "🎭" },
+    { label: "Burglary", page: "burglary", icon: "🏠" },
+    { label: "Drug Operations", page: "drugs", icon: "💊" },
+    { label: "Organized Crime", page: "organized", icon: "👥" },
+    { label: "Underground", page: "underground", icon: "💣" },
     { label: "Illegal Transport", page: "transport", icon: "🚛" },
     { label: "Steal From House", page: "steal_from_house", icon: "🏠" },
     { label: "GTA Car Theft", page: "gta_car_theft", icon: "🚗" },
     { label: "Crime Empire", page: "crime_empire", icon: "🗺️" },
     { label: "Heist Planning", page: "heist_planning", icon: "🎯" },
-    { label: "Organized Crime", page: "organized_crime", icon: "👥" },
     { label: "Murder", page: "kill", icon: "🗡️" },
-    { label: "Underground", page: "underground", icon: "💣" },
     { label: "Crime Spree", page: "crime_spree", icon: "🔥" },
   ]},
   { title: "Combat", icon: Swords, items: [
@@ -158,15 +160,12 @@ const leftMenuSections = [
     { label: "Higher or Lower", page: "higher_lower", icon: "⬆️" },
     { label: "Blackjack Switch", page: "bj_switch", icon: "🔄" },
   ]},
-  { title: "Underground", icon: EyeOff, items: [
-    { label: "Counterfeiting", page: "counterfeiting", icon: "💵" },
-    { label: "Drug Trafficking", page: "drug_trafficking", icon: "💊" },
-    { label: "Arson", page: "arson", icon: "🔥" },
-    { label: "Identity Theft", page: "identity_theft", icon: "🪪" },
-    { label: "Arms Dealing", page: "arms_deal", icon: "🔫" },
-    { label: "Tax Evasion", page: "tax_evasion", icon: "📋" },
-    { label: "Racketeering", page: "racketeering", icon: "💰" },
-    { label: "Smuggling Routes", page: "smuggling", icon: "🚛" },
+  { title: "Missions", icon: Target, items: [
+    { label: "Storyline Missions", page: "storyline", icon: "📖" },
+    { label: "Side Missions", page: "side_missions", icon: "📋" },
+    { label: "Daily Missions", page: "daily_missions", icon: "📅" },
+    { label: "Weekly Missions", page: "weekly_missions", icon: "📆" },
+    { label: "Monthly Missions", page: "monthly_missions", icon: "🗓️" },
   ]},
   { title: "Economy", icon: Coins, items: [
     { label: "Bank Account", page: "bank_account", icon: "🏦" },
@@ -181,24 +180,29 @@ const leftMenuSections = [
     { label: "Offshore Accounts", page: "offshore", icon: "🏝️" },
     { label: "Daily Spin", page: "daily_spin", icon: "🎰" },
     { label: "Referral System", page: "referral", icon: "🔗" },
-    { label: "Season Rewards", page: "season_rewards", icon: "🏆" },
-    { label: "Battle Pass", page: "battle_pass", icon: "🎫" },
     { label: "Crafting", page: "crafting", icon: "🔧" },
   ]},
   { title: "Assets", icon: Package, items: [
     { label: "Garage", page: "garage", icon: "🚗" },
     { label: "My Items", page: "items", icon: "🎒" },
     { label: "Black Market", page: "black_market", icon: "🖤" },
-    { label: "Mystery Boxes", page: "mystery_boxes", icon: "📦" },
     { label: "Legendary Items", page: "legendary_items", icon: "✨" },
     { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
+    { label: "Mystery Boxes", icon: "📦", children: [
+      { label: "Standard Box", page: "box_standard", icon: "📦" },
+      { label: "Premium Box", page: "box_premium", icon: "💎" },
+      { label: "Legendary Box", page: "box_legendary", icon: "👑" },
+      { label: "Seasonal Box", page: "box_seasonal", icon: "🎄" },
+      { label: "Crime Box", page: "box_crime", icon: "🔪" },
+      { label: "Combat Box", page: "box_combat", icon: "⚔️" },
+      { label: "Guaranteed Legendary", page: "box_guaranteed", icon: "⭐" },
+      { label: "Limited Edition", page: "box_limited", icon: "🔥" },
+    ]},
   ]},
   { title: "Social", icon: Users, items: [
     { label: "Crew System", page: "crew", icon: "🤝" },
     { label: "Crew Ranks", page: "crew_ranks", icon: "📊" },
-    { label: "Crew Chat", page: "crew_chat", icon: "💬" },
     { label: "Crew Bank", page: "crew_bank", icon: "🏦" },
-    { label: "Crew Safe House", page: "crew_safehouse", icon: "🏠" },
     { label: "Crew War", page: "crew_war", icon: "⚔️" },
     { label: "Crew Alliance", page: "crew_alliance", icon: "🤝" },
     { label: "Crew Territory", page: "crew_territory", icon: "📍" },
@@ -206,78 +210,114 @@ const leftMenuSections = [
     { label: "Crew Leaderboard", page: "crew_leaderboard", icon: "🏆" },
     { label: "Family System", page: "family", icon: "👨‍👩‍👦" },
   ]},
-  { title: "World", icon: Globe, items: [
-    { label: "City Map", page: "city_map", icon: "🗺️" },
-    { label: "Neighborhoods", page: "neighborhoods", icon: "🏘️" },
-    { label: "Slums", page: "slums", icon: "🏚️" },
-    { label: "Seasons", page: "seasons", icon: "🍂" },
-    { label: "Rain Effects", page: "weather", icon: "🌧️" },
-    { label: "City Statistics", page: "city_stats", icon: "📊" },
-  ]},
   { title: "Progression", icon: TrendingUp, items: [
     { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
     { label: "Combat Skills", page: "combat_skills", icon: "⚔️" },
     { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
     { label: "Hacking Skills", page: "hacking_skills", icon: "💻" },
-    { label: "Prestige Tiers", page: "prestige", icon: "⭐" },
+    { label: "Prestige", page: "prestige", icon: "⭐" },
     { label: "Prestige Shop", page: "prestige_shop", icon: "🛒" },
-    { label: "Title System", page: "titles", icon: "👑" },
-    { label: "Season Rewards", page: "season_rewards_prog", icon: "🏆" },
-    { label: "Energy Drinks", page: "energy_drinks", icon: "⚡" },
+    { label: "Titles", page: "titles", icon: "👑" },
     { label: "Achievements", page: "achievements", icon: "🏅" },
     { label: "Legacy", page: "legacy", icon: "📜" },
-    { label: "Leaderboards", page: "leaderboards", icon: "📊" },
+    { label: "Leaderboards", icon: "📊", children: [
+      { label: "Level Board", page: "lb_level", icon: "📊" },
+      { label: "Money Board", page: "lb_money", icon: "💰" },
+      { label: "Kill Board", page: "lb_kills", icon: "💀" },
+      { label: "Crime Board", page: "lb_crimes", icon: "🔥" },
+      { label: "Crew Board", page: "lb_crew", icon: "🤝" },
+      { label: "Family Board", page: "lb_family", icon: "👨‍👩‍👦" },
+      { label: "Territory Board", page: "lb_territory", icon: "📍" },
+      { label: "Gambling Board", page: "lb_gambling", icon: "🎲" },
+      { label: "Mission Board", page: "lb_missions", icon: "🎯" },
+      { label: "Season Board", page: "lb_season", icon: "🗓️" },
+    ]},
     { label: "Season Pass", page: "season_pass", icon: "🎫" },
     { label: "Daily Login", page: "daily_login", icon: "🎁" },
     { label: "Daily Challenges", page: "daily_challenges", icon: "📋" },
-  ]},
-  { title: "Missions", icon: Target, items: [
-    { label: "Storyline Missions", page: "storyline", icon: "📖" },
-    { label: "Side Missions", page: "side_missions", icon: "📋" },
-    { label: "Daily Missions", page: "daily_missions", icon: "📅" },
-    { label: "Weekly Missions", page: "weekly_missions", icon: "📆" },
-    { label: "Monthly Missions", page: "monthly_missions", icon: "🗓️" },
+    { label: "Energy Drinks", page: "energy_drinks", icon: "⚡" },
   ]},
   { title: "Special", icon: Sparkles, items: [
-    { label: "Ghost Mode", page: "ghost_mode", icon: "👻" },
-    { label: "Missions", page: "missions", icon: "🎯" },
+    { label: "Ghost Mode", icon: "👻", children: [
+      { label: "Activate Ghost", page: "ghost_mode", icon: "👻" },
+      { label: "Ghost Status", page: "ghost_status", icon: "👁️" },
+      { label: "Ghost History", page: "ghost_history", icon: "📋" },
+    ]},
+    { label: "Secret Challenges", icon: "🔮", children: [
+      { label: "Daily Secret", page: "secret_daily", icon: "🔮" },
+      { label: "Weekly Secret", page: "secret_weekly", icon: "💎" },
+      { label: "Hidden Achievements", page: "secret_achievements", icon: "🏆" },
+      { label: "Easter Eggs", page: "secret_eggs", icon: "🥚" },
+      { label: "Secret Crime", page: "secret_crime", icon: "🕵️" },
+    ]},
+    { label: "Reputation", page: "reputation", icon: "🌍" },
     { label: "Wanted Status", page: "wanted", icon: "🔴" },
+    { label: "Prison", page: "prison", icon: "🔒" },
     { label: "Colosseum", page: "colosseum", icon: "🏟️" },
     { label: "Last Man Standing", page: "last_man_standing", icon: "🏆" },
-    { label: "Prison", page: "prison", icon: "🔒" },
   ]},
 ];
 
 const rightMenuSections = [
-  { title: "Quick Info", icon: Zap, items: [
-    { label: "City Overview", page: "city_overview", icon: "🏙️" },
-    { label: "Statistics", page: "statistics", icon: "📊" },
-    { label: "World Map", page: "world_map", icon: "🗺️" },
-    { label: "Wanted Status", page: "wanted", icon: "🔴" },
-    { label: "FBI/Military", page: "fbi_status", icon: "🕵️" },
-  ]},
   { title: "Communication", icon: MessageSquare, items: [
-    { label: "Messages", page: "messages", icon: "📩" },
+    { label: "Direct Messages", page: "messages", icon: "📩" },
     { label: "Inbox", page: "inbox", icon: "📥" },
     { label: "Notifications", page: "notifications_page", icon: "🔔" },
   ]},
   { title: "Forums", icon: MessageSquare, items: [
     { label: "General Forum", page: "forum_general", icon: "📢" },
-    { label: "Sales & Wanted", page: "forum_sales", icon: "💰" },
+    { label: "Sales Forum", page: "forum_sales", icon: "💰" },
     { label: "Off-Topic", page: "forum_offtopic", icon: "💭" },
     { label: "Shadows Forum", page: "forum_shadows", icon: "🌑" },
     { label: "Search Posts", page: "forum_search", icon: "🔍" },
+  ]},
+  { title: "Chat", icon: MessageSquare, items: [
+    { label: "Crew Chat", page: "crew_chat", icon: "💬" },
+    { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
+    { label: "Global Chat", page: "global_chat", icon: "🌐" },
+    { label: "Trade Chat", page: "trade_chat", icon: "💹" },
+    { label: "Looking for Group", page: "lfg", icon: "👥" },
   ]},
   { title: "World", icon: Globe, items: [
     { label: "Airport", page: "airport", icon: "✈️" },
     { label: "Weather", page: "weather", icon: "🌤️" },
     { label: "News Ticker", page: "news_ticker", icon: "📰" },
-    { label: "Events", page: "world_events", icon: "🎪" },
-    { label: "City Statistics", page: "city_stats", icon: "📊" },
+    { label: "City Map", page: "city_map", icon: "🗺️" },
+    { label: "City Overview", page: "city_overview", icon: "🏙️" },
+    { label: "Statistics", page: "statistics", icon: "📊" },
+    { label: "World Map", page: "world_map", icon: "🗺️" },
+  ]},
+  { title: "Seasonal Events", icon: Flame, items: [
+    { label: "New Year's Heist", page: "evt_newyear", icon: "🎆" },
+    { label: "Valentine's Crime", page: "evt_valentine", icon: "❤️" },
+    { label: "St. Patrick's Gold", page: "evt_patricks", icon: "☘️" },
+    { label: "Easter Egg Hunt", page: "evt_easter", icon: "🥚" },
+    { label: "Summer Crime Wave", page: "evt_summer", icon: "☀️" },
+    { label: "Halloween Horror", page: "evt_halloween", icon: "🎃" },
+    { label: "Christmas Heist", page: "evt_christmas", icon: "🎄" },
+    { label: "Cyber Monday", page: "evt_cyber", icon: "💻" },
+    { label: "Black Friday Heist", page: "evt_blackfriday", icon: "🛒" },
+    { label: "Tax Season Scam", page: "evt_tax", icon: "📋" },
+    { label: "Spring Break Crime", page: "evt_spring", icon: "🌸" },
+    { label: "Winter Wonderland", page: "evt_winter", icon: "❄️" },
+  ]},
+  { title: "Server Events", icon: Zap, items: [
+    { label: "Purge Night", page: "evt_purge", icon: "💀" },
+    { label: "Blood Moon", page: "evt_bloodmoon", icon: "🌑" },
+    { label: "Robber's Moon", page: "evt_robbersmoon", icon: "🌙" },
+    { label: "Full Moon", page: "evt_fullmoon", icon: "🌕" },
+    { label: "Grand Heist", page: "evt_grandheist", icon: "🏦" },
+    { label: "Tournament Championship", page: "evt_tournament", icon: "🏆" },
+    { label: "Family War Week", page: "evt_familywar", icon: "⚔️" },
+    { label: "Territory Takeover", page: "evt_territory", icon: "📍" },
+    { label: "Underground Championship", page: "evt_underground", icon: "💣" },
+    { label: "Crime Empire Week", page: "evt_empire", icon: "👑" },
   ]},
   { title: "Help", icon: HelpCircle, items: [
     { label: "FAQ", page: "faq", icon: "❓" },
     { label: "Support", page: "support", icon: "🆘" },
+    { label: "Community Guidelines", page: "community", icon: "📜" },
+    { label: "Player Reports", page: "reports", icon: "📢" },
   ]},
   { title: "System", icon: Settings, items: [
     { label: "Admin Panel", page: "admin_panel", icon: "⚙️" },
@@ -622,6 +662,7 @@ export default function Dashboard() {
 
   const [leftExpanded, setLeftExpanded] = useState<string[]>(leftMenuSections.map(s => s.title));
   const [rightExpanded, setRightExpanded] = useState<string[]>(rightMenuSections.map(s => s.title));
+  const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
   const [showLeft, setShowLeft] = useState(true);
   const [showRight, setShowRight] = useState(true);
 
@@ -794,6 +835,45 @@ function FBIStatusPage() {
   );
 }
 
+
+// ===== EVENT PAGE STUB =====
+function EventPage({ name, icon, desc }: { name: string; icon: string; desc: string }) {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{name}</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center"><div className="text-4xl mb-3">{icon}</div><div className="text-sm font-bold mb-1">{name}</div><div className="text-xs text-muted-foreground">{desc}</div></div>
+    </div>
+  );
+}
+
+function GenericStub({ title, icon }: { title: string; icon: string }) {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{title}</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center"><div className="text-4xl mb-3">{icon}</div><div className="text-sm font-bold mb-1">{title}</div><div className="text-xs text-muted-foreground">Coming soon!</div></div>
+    </div>
+  );
+}
+
+function LeaderboardPage({ title, icon }: { title: string; icon: string }) {
+  const players = useQuery(api.admin.getAllPlayers);
+  const sorted = [...(players || [])].sort((a: any, b: any) => (b.level || 0) - (a.level || 0)).slice(0, 50);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{title}</h2></div>
+      <div className="space-y-1">
+        {sorted.map((p: any, i: number) => (
+          <div key={p._id} className={`mafia-card rounded-lg p-3 flex items-center gap-3 ${i < 3 ? "border-yellow-500/30" : ""}`}>
+            <span className={`text-lg font-black ${i === 0 ? "text-yellow-400" : i === 1 ? "text-gray-300" : i === 2 ? "text-orange-400" : "text-muted-foreground"}`}>#{i + 1}</span>
+            <span className="text-sm font-bold flex-1">{p.nickname || p.username || "Unknown"}</span>
+            <span className="text-xs text-muted-foreground">Lv.{p.level}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const renderPage = () => {
     // Prison blocking for crime pages
     const prisonBlockedPages = ["crimes", "steal_from_house", "gta_car_theft", "kill", "hit_list",
@@ -918,6 +998,68 @@ const renderPage = () => {
       case "prison": return <SafePage><PrisonTimeDisplay /></SafePage>;
 
       // Right menu
+      // Event pages
+      case "evt_newyear": return <EventPage name="New Year's Heist" icon="🎆" desc="Special New Year event! Fireworks + heists!" />;
+      case "evt_valentine": return <EventPage name="Valentine's Crime" icon="❤️" desc="Crime of passion! Romance scams +5x payout!" />;
+      case "evt_patricks": return <EventPage name="St. Patrick's Gold" icon="☘️" desc="Gold rush! All rewards have gold bonus +100%!" />;
+      case "evt_easter": return <EventPage name="Easter Egg Hunt" icon="🥚" desc="Find hidden eggs across cities for prizes!" />;
+      case "evt_summer": return <EventPage name="Summer Crime Wave" icon="☀️" desc="Summer heat brings crime heat! All crimes boosted!" />;
+      case "evt_halloween": return <EventPage name="Halloween Horror" icon="🎃" desc="Spooky crimes pay 3x! Ghost mode free!" />;
+      case "evt_christmas": return <EventPage name="Christmas Heist" icon="🎄" desc="Steal presents from Santa! Legendary loot!" />;
+      case "evt_cyber": return <EventPage name="Cyber Monday" icon="💻" desc="Hacking skills +5x. Digital crimes boosted!" />;
+      case "evt_blackfriday": return <EventPage name="Black Friday Heist" icon="🛒" desc="Everything on sale! Crime costs reduced 50%!" />;
+      case "evt_tax": return <EventPage name="Tax Season Scam" icon="📋" desc="Tax evasion +10x rewards! IRS is busy!" />;
+      case "evt_spring": return <EventPage name="Spring Break Crime" icon="🌸" desc="College town crime wave! Easy targets everywhere!" />;
+      case "evt_winter": return <EventPage name="Winter Wonderland" icon="❄️" desc="Blizzard = easy heists! Reduced patrols!" />;
+      case "evt_purge": return <EventPage name="Purge Night" icon="💀" desc="24 hours of lawlessness. No police. Maximum chaos!" />;
+      case "evt_bloodmoon": return <EventPage name="Blood Moon" icon="🌑" desc="All combat damage doubled. Kills give 5x XP!" />;
+      case "evt_robbersmoon": return <EventPage name="Robber's Moon" icon="🌙" desc="Full moon = all crimes have 20% better success!" />;
+      case "evt_fullmoon": return <EventPage name="Full Moon" icon="🌕" desc="ALL boosts active! Crime + Combat + Gambling!" />;
+      case "evt_grandheist": return <EventPage name="Grand Heist" icon="🏦" desc="Special heist event. 10x rewards on bank heists!" />;
+      case "evt_tournament": return <EventPage name="Tournament Championship" icon="🏆" desc="Server-wide PvP tournament. Winner takes $500K!" />;
+      case "evt_familywar": return <EventPage name="Family War Week" icon="⚔️" desc="Family wars give 5x reputation!" />;
+      case "evt_territory": return <EventPage name="Territory Takeover" icon="📍" desc="Fight for territory! +300% income!" />;
+      case "evt_underground": return <EventPage name="Underground Championship" icon="💣" desc="Underground tournament. Best fighter wins!" />;
+      case "evt_empire": return <EventPage name="Crime Empire Week" icon="👑" desc="All empire operations +5x reward!" />;
+      // Chat pages
+      case "crew_chat": return <GenericStub title="Crew Chat" icon="💬" />;
+      case "family_chat": return <GenericStub title="Family Chat" icon="👨‍👩‍👦" />;
+      case "global_chat": return <GenericStub title="Global Chat" icon="🌐" />;
+      case "trade_chat": return <GenericStub title="Trade Chat" icon="💹" />;
+      case "lfg": return <GenericStub title="Looking for Group" icon="👥" />;
+      // Leaderboards
+      case "lb_level": return <LeaderboardPage title="Level Leaderboard" icon="📊" />;
+      case "lb_money": return <LeaderboardPage title="Money Leaderboard" icon="💰" />;
+      case "lb_kills": return <LeaderboardPage title="Kill Leaderboard" icon="💀" />;
+      case "lb_crimes": return <LeaderboardPage title="Crime Leaderboard" icon="🔥" />;
+      case "lb_crew": return <LeaderboardPage title="Crew Leaderboard" icon="🤝" />;
+      case "lb_family": return <LeaderboardPage title="Family Leaderboard" icon="👨‍👩‍👦" />;
+      case "lb_territory": return <LeaderboardPage title="Territory Leaderboard" icon="📍" />;
+      case "lb_gambling": return <LeaderboardPage title="Gambling Leaderboard" icon="🎲" />;
+      case "lb_missions": return <LeaderboardPage title="Mission Leaderboard" icon="🎯" />;
+      case "lb_season": return <LeaderboardPage title="Season Leaderboard" icon="🗓️" />;
+      // Mystery boxes
+      case "box_standard": return <GenericStub title="Standard Box" icon="📦" />;
+      case "box_premium": return <GenericStub title="Premium Box" icon="💎" />;
+      case "box_legendary": return <GenericStub title="Legendary Box" icon="👑" />;
+      case "box_seasonal": return <GenericStub title="Seasonal Box" icon="🎄" />;
+      case "box_crime": return <GenericStub title="Crime Box" icon="🔪" />;
+      case "box_combat": return <GenericStub title="Combat Box" icon="⚔️" />;
+      case "box_guaranteed": return <GenericStub title="Guaranteed Legendary" icon="⭐" />;
+      case "box_limited": return <GenericStub title="Limited Edition" icon="🔥" />;
+      // Ghost mode
+      case "ghost_status": return <GenericStub title="Ghost Status" icon="👁️" />;
+      case "ghost_history": return <GenericStub title="Ghost History" icon="📋" />;
+      // Secret challenges
+      case "secret_daily": return <GenericStub title="Daily Secret Challenge" icon="🔮" />;
+      case "secret_weekly": return <GenericStub title="Weekly Secret Challenge" icon="💎" />;
+      case "secret_achievements": return <GenericStub title="Hidden Achievements" icon="🏆" />;
+      case "secret_eggs": return <GenericStub title="Easter Eggs" icon="🥚" />;
+      case "secret_crime": return <GenericStub title="Secret Crime" icon="🕵️" />;
+      // Community
+      case "community": return <GenericStub title="Community Guidelines" icon="📜" />;
+      case "reports": return <GenericStub title="Player Reports" icon="📢" />;
+      // Other
       case "city_overview": return <CityOverviewPage />;
       case "fbi_status": return <FBIStatusPage />;
       case "statistics": return <StatisticsPage />;
@@ -1087,13 +1229,37 @@ const renderPage = () => {
                   {leftExpanded.includes(section.title) && (
                     <div className="ml-2 space-y-0.5">
                       {section.items.map(item => (
-                        <button key={item.page} onClick={() => setPage(item.page)}
+                        (item as any).children ? (
+                          <div key={item.label}>
+                            <button onClick={() => setLeftItemsExpanded((prev: string[]) => prev.includes(item.label) ? prev.filter((t: string) => t !== item.label) : [...prev, item.label])}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition text-muted-foreground hover:text-foreground hover:bg-white/5">
+                              <span className="text-xs">{item.icon}</span>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              {leftItemsExpanded.includes(item.label) ? <ChevronDown className="size-2.5" /> : <ChevronRight className="size-2.5" />}
+                            </button>
+                            {leftItemsExpanded.includes(item.label) && (
+                              <div className="ml-4 space-y-0.5">
+                                {(item as any).children.map((child: any) => (
+                                  <button key={child.page} onClick={() => setPage(child.page)}
+                                    className={`w-full flex items-center gap-2 px-3 py-1 rounded-lg text-[11px] transition ${
+                                      activePage === child.page ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                                    }`}>
+                                    <span className="text-[11px]">{child.icon}</span>
+                                    <span>{child.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                        <button key={item.label} onClick={() => setPage(item.page || "")}
                           className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition ${
                             activePage === item.page ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                           }`}>
                           <span className="text-xs">{item.icon}</span>
                           <span>{item.label}</span>
                         </button>
+                        )
                       ))}
                     </div>
                   )}
@@ -1176,13 +1342,37 @@ const renderPage = () => {
                   {rightExpanded.includes(section.title) && (
                     <div className="ml-2 space-y-0.5">
                       {section.items.map(item => (
-                        <button key={item.page} onClick={() => setPage(item.page)}
+                        (item as any).children ? (
+                          <div key={item.label}>
+                            <button onClick={() => setLeftItemsExpanded((prev: string[]) => prev.includes(item.label) ? prev.filter((t: string) => t !== item.label) : [...prev, item.label])}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition text-muted-foreground hover:text-foreground hover:bg-white/5">
+                              <span className="text-xs">{item.icon}</span>
+                              <span className="flex-1 text-left">{item.label}</span>
+                              {leftItemsExpanded.includes(item.label) ? <ChevronDown className="size-2.5" /> : <ChevronRight className="size-2.5" />}
+                            </button>
+                            {leftItemsExpanded.includes(item.label) && (
+                              <div className="ml-4 space-y-0.5">
+                                {(item as any).children.map((child: any) => (
+                                  <button key={child.page} onClick={() => setPage(child.page)}
+                                    className={`w-full flex items-center gap-2 px-3 py-1 rounded-lg text-[11px] transition ${
+                                      activePage === child.page ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                                    }`}>
+                                    <span className="text-[11px]">{child.icon}</span>
+                                    <span>{child.label}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                        <button key={item.label} onClick={() => setPage(item.page || "")}
                           className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition ${
                             activePage === item.page ? "bg-primary/20 text-primary font-bold" : "text-muted-foreground hover:text-foreground hover:bg-white/5"
                           }`}>
                           <span className="text-xs">{item.icon}</span>
                           <span>{item.label}</span>
                         </button>
+                        )
                       ))}
                     </div>
                   )}
