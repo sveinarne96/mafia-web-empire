@@ -735,20 +735,373 @@ function DuelsPage() {
 }
 
 function KillPage() {
-  return (<div className="animate-fade-in space-y-6">
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-900/50 via-red-800/30 to-red-900/50 border border-red-500/30 p-6">
-      <div className="absolute inset-0 animate-pulse bg-red-500/5" />
-      <div className="absolute top-0 right-0 w-40 h-40 bg-red-500/10 rounded-full blur-3xl" />
-      <div className="relative z-10 text-center"><div className="text-6xl mb-3 animate-bounce">💀</div><h2 className="text-2xl font-black text-red-400">ASSASSINATION</h2><p className="text-xs text-red-400/60">Put a price on someone's life. Available 24/7.</p></div>
+  const player = useQuery(api.game.getPlayer);
+  const weapons = useQuery(api.murderSystem.getWeapons);
+  const methods = useQuery(api.murderSystem.getMethods);
+  const targets = useQuery(api.murderSystem.getTargets);
+  const stats = useQuery(api.murderSystem.getMurderStats);
+  const feed = useQuery(api.murderSystem.getMurderFeed);
+  const investigations = useQuery(api.murderSystem.getInvestigations);
+  const commitMurder = useMutation(api.murderSystem.commitMurder);
+
+  const [selectedWeapon, setSelectedWeapon] = useState<string | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [selectedTarget, setSelectedTarget] = useState<string | null>(null);
+  const [useGloves, setUseGloves] = useState(false);
+  const [useAlibi, setUseAlibi] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"weapons" | "targets" | "methods" | "stats" | "feed" | "investigations">("weapons");
+
+  if (!player) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading...</div>;
+  if (!weapons || !methods || !targets) return <div className="animate-pulse text-muted-foreground text-center py-20">Loading murder system...</div>;
+
+  const selWeapon = weapons.find((w: any) => w.id === selectedWeapon);
+  const selMethod = methods.find((m: any) => m.id === selectedMethod);
+  const selTarget = targets.find((t: any) => t._id === selectedTarget);
+
+  const canExecute = selectedWeapon && selectedMethod && selectedTarget && !loading;
+  const totalCost = (selWeapon?.cost ?? 0) + (selMethod?.bonusCost ?? 0);
+
+  const doMurder = async () => {
+    if (!canExecute || !selectedTarget || !selectedWeapon || !selectedMethod) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await commitMurder({
+        targetId: selectedTarget as any,
+        weaponId: selectedWeapon,
+        methodId: selectedMethod,
+        useGloves,
+        useAlibi,
+      });
+      setResult(res);
+    } catch (e: any) {
+      setResult({ error: e.message });
+    }
+    setLoading(false);
+  };
+
+  const getWeaponColor = (type: string) => {
+    switch(type) {
+      case "melee": return "border-red-500/30 bg-red-950/20";
+      case "ranged": return "border-orange-500/30 bg-orange-950/20";
+      case "firearm": return "border-yellow-500/30 bg-yellow-950/20";
+      case "chemical": return "border-purple-500/30 bg-purple-950/20";
+      case "explosive": return "border-red-600/30 bg-red-950/30";
+      default: return "border-border bg-card";
+    }
+  };
+
+  const getTypeIcon = (type: string) => {
+    switch(type) {
+      case "melee": return "🗡️";
+      case "ranged": return "🎯";
+      case "firearm": return "🔫";
+      case "chemical": return "☠️";
+      case "explosive": return "💣";
+      default: return "⚔️";
+    }
+  };
+
+  const tabs = [
+    { id: "weapons" as const, label: "Arsenal", icon: "⚔️" },
+    { id: "targets" as const, label: "Targets", icon: "🎯" },
+    { id: "methods" as const, label: "Methods", icon: "🎭" },
+    { id: "stats" as const, label: "Stats", icon: "📊" },
+    { id: "feed" as const, label: "Kill Feed", icon: "📰" },
+    { id: "investigations" as const, label: "Investigations", icon: "🕵️" },
+  ];
+
+  return (
+    <div className="animate-fade-in space-y-6">
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-red-950 via-red-900/50 to-red-950 border border-red-500/30 p-8">
+        <div className="absolute inset-0 animate-pulse bg-red-500/5" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-60 h-60 bg-red-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-40 h-40 bg-red-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-0 w-40 h-40 bg-red-400/10 rounded-full blur-3xl" />
+        <div className="relative z-10 text-center">
+          <div className="text-7xl mb-3 animate-bounce">💀</div>
+          <h1 className="text-3xl font-black text-red-400 tracking-wider">MURDER INC.</h1>
+          <p className="text-xs text-red-400/60 mt-1 font-mono">PROFESSIONAL ELIMINATION SERVICES — EST. 1947</p>
+          <div className="flex justify-center gap-6 mt-4 text-[10px]">
+            <div className="bg-red-950/40 rounded-lg px-3 py-1.5 border border-red-800/30"><span className="text-red-300">Kills:</span> <span className="font-bold text-red-400">{stats?.totalMurders ?? 0}</span></div>
+            <div className="bg-red-950/40 rounded-lg px-3 py-1.5 border border-red-800/30"><span className="text-red-300">Success:</span> <span className="font-bold text-green-400">{stats?.killRate ?? 0}%</span></div>
+            <div className="bg-red-950/40 rounded-lg px-3 py-1.5 border border-red-800/30"><span className="text-red-300">Rep:</span> <span className="font-bold text-yellow-400">{stats?.reputation ?? 0}</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Execution Panel - always visible */}
+      {(selWeapon || selMethod || selTarget) && (
+        <div className="rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-red-950/40 via-red-900/20 to-red-950/40 p-5 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl animate-pulse">🎯</div>
+            <div>
+              <h3 className="text-lg font-black text-red-400">EXECUTION ORDER</h3>
+              <p className="text-[10px] text-red-400/60">Review your setup before executing</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className={`rounded-xl p-3 border ${selWeapon ? getWeaponColor(selWeapon.type) : "border-border bg-card/50"}`}>
+              <div className="text-[10px] text-muted-foreground">Weapon</div>
+              <div className="text-sm font-bold mt-1">{selWeapon ? `${selWeapon.icon} ${selWeapon.name}` : "⚠️ Select weapon"}</div>
+              {selWeapon && <div className="text-[10px] text-red-400 mt-1">DMG: {selWeapon.damage} • ${selWeapon.cost.toLocaleString()}</div>}
+            </div>
+            <div className={`rounded-xl p-3 border ${selMethod ? "border-purple-500/30 bg-purple-950/20" : "border-border bg-card/50"}`}>
+              <div className="text-[10px] text-muted-foreground">Method</div>
+              <div className="text-sm font-bold mt-1">{selMethod ? `${selMethod.icon} ${selMethod.name}` : "⚠️ Select method"}</div>
+              {selMethod && <div className="text-[10px] text-purple-400 mt-1">+{Math.floor(selMethod.bonusSuccess * 100)}% Success</div>}
+            </div>
+            <div className={`rounded-xl p-3 border ${selTarget ? "border-orange-500/30 bg-orange-950/20" : "border-border bg-card/50"}`}>
+              <div className="text-[10px] text-muted-foreground">Target</div>
+              <div className="text-sm font-bold mt-1">{selTarget ? `🎯 ${selTarget.nickname}` : "⚠️ Select target"}</div>
+              {selTarget && <div className="text-[10px] text-orange-400 mt-1">Lv.{selTarget.level} • ${selTarget.money.toLocaleString()}</div>}
+            </div>
+            <div className="rounded-xl p-3 border border-amber-500/30 bg-amber-950/20">
+              <div className="text-[10px] text-muted-foreground">Total Cost</div>
+              <div className="text-lg font-black text-amber-400">${totalCost.toLocaleString()}</div>
+              <div className="text-[10px] text-muted-foreground">Cash: ${(player.money ?? 0).toLocaleString()}</div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="checkbox" checked={useGloves} onChange={(e) => setUseGloves(e.target.checked)} className="rounded" />
+              <span>🧤 Gloves (-5% trace, $500)</span>
+            </label>
+            <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <input type="checkbox" checked={useAlibi} onChange={(e) => setUseAlibi(e.target.checked)} className="rounded" />
+              <span>🎭 Alibi (+5% success, $10K)</span>
+            </label>
+          </div>
+          <button onClick={doMurder} disabled={!canExecute || (player.money ?? 0) < totalCost}
+            className={`w-full py-4 text-lg font-black rounded-xl transition-all ${canExecute && (player.money ?? 0) >= totalCost
+              ? "bg-gradient-to-r from-red-700 to-red-600 text-white hover:from-red-600 hover:to-red-500 animate-pulse-gold shadow-lg shadow-red-500/20"
+              : "bg-gray-800 text-gray-500 cursor-not-allowed"}`}>
+            {loading ? "💀 EXECUTING..." : canExecute ? `💀 EXECUTE MURDER — $${totalCost.toLocaleString()}` : "⚠️ Select weapon, method & target"}
+          </button>
+        </div>
+      )}
+
+      {/* Result */}
+      {result && (
+        <div className={`rounded-2xl p-6 border-2 ${result.error ? "border-red-500 bg-red-950/30" : result.success ? "border-green-500 bg-green-950/30" : "border-orange-500 bg-orange-950/30"}`}>
+          {result.error ? (
+            <div className="text-center"><div className="text-4xl mb-2">❌</div><div className="text-red-400 font-bold">{result.error}</div></div>
+          ) : result.success ? (
+            <div className="space-y-3">
+              <div className="text-center"><div className="text-6xl mb-2">💀</div><h3 className="text-xl font-black text-green-400">TARGET ELIMINATED</h3><p className="text-sm text-green-300">{result.killed} has been murdered!</p></div>
+              <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                <div className="bg-green-950/30 rounded-lg p-3"><div className="text-green-400 font-bold">${result.stolenCash.toLocaleString()}</div><div className="text-muted-foreground">Cash Stolen</div></div>
+                <div className="bg-green-950/30 rounded-lg p-3"><div className="text-green-400 font-bold">+{result.xpGained} XP</div><div className="text-muted-foreground">Experience</div></div>
+                <div className="bg-green-950/30 rounded-lg p-3"><div className="text-green-400 font-bold">+{result.reputationGain}</div><div className="text-muted-foreground">Reputation</div></div>
+              </div>
+              {result.evidence?.length > 0 && (
+                <div className="bg-orange-950/20 rounded-lg p-3 border border-orange-500/20">
+                  <div className="text-xs font-bold text-orange-400 mb-2">⚠️ Evidence Found:</div>
+                  <div className="flex flex-wrap gap-2">{result.evidence.map((e: string, i: number) => (
+                    <span key={i} className="px-2 py-0.5 bg-orange-900/30 rounded text-[10px] text-orange-300 border border-orange-500/20">
+                      {e === "fingerprints" ? "🖐️ Fingerprints" : e === "shell_casings" ? "🔫 Shell Casings" : e === "dna" ? "🧬 DNA" : e === "witness" ? "👁️ Witness" : e === "cctv" ? "📹 CCTV" : e}
+                    </span>
+                  ))}</div>
+                </div>
+              )}
+              {result.detectiveInvestigating && (
+                <div className="bg-red-950/30 rounded-lg p-3 border border-red-500/30 animate-pulse">
+                  <div className="text-xs font-bold text-red-400">🕵️ Detective is investigating this murder! Be careful.</div>
+                </div>
+              )}
+              <button onClick={() => setResult(null)} className="w-full py-2 bg-green-600 text-white font-bold rounded-lg">Continue</button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="text-center"><div className="text-6xl mb-2">⚔️</div><h3 className="text-xl font-black text-orange-400">MURDER FAILED</h3><p className="text-sm text-orange-300">{result.targetDodged} fought back!</p></div>
+              <div className="grid grid-cols-2 gap-3 text-center text-xs">
+                <div className="bg-orange-950/20 rounded-lg p-3"><div className="text-orange-400 font-bold">-{result.damageTaken} HP</div><div className="text-muted-foreground">Damage Taken</div></div>
+                <div className="bg-orange-950/20 rounded-lg p-3"><div className="text-orange-400 font-bold">+{result.wantedGain}</div><div className="text-muted-foreground">Wanted Level</div></div>
+              </div>
+              {result.arrested && <div className="bg-red-950/30 rounded-lg p-3 border border-red-500/30 text-center text-xs text-red-400">🔒 ARRESTED! You've been sent to prison!</div>}
+              {result.killedSelf && <div className="bg-red-950/30 rounded-lg p-3 border border-red-500/30 text-center text-xs text-red-400">💀 You died during the attempt!</div>}
+              <button onClick={() => setResult(null)} className="w-full py-2 bg-orange-600 text-white font-bold rounded-lg">Try Again</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab Navigation */}
+      <div className="flex gap-1 overflow-x-auto scrollbar-thin pb-1">
+        {tabs.map((tab) => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold whitespace-nowrap transition-colors ${activeTab === tab.id ? "bg-red-950/40 text-red-400 border border-red-500/30" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`}>
+            {tab.icon} {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "weapons" && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold text-red-400">⚔️ WEAPON ARSENAL — {weapons.length} weapons available</h3>
+          {["melee", "ranged", "firearm", "chemical", "explosive"].map(type => {
+            const typeWeapons = weapons.filter((w: any) => w.type === type);
+            if (typeWeapons.length === 0) return null;
+            return (
+              <div key={type}>
+                <div className="text-[10px] text-muted-foreground uppercase tracking-widest mb-2">{getTypeIcon(type)} {type} weapons</div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {typeWeapons.map((w: any) => (
+                    <button key={w.id} onClick={() => setSelectedWeapon(w.id)} disabled={(player.level ?? 1) < w.unlockLevel}
+                      className={`text-left p-3 rounded-xl border transition-all ${selectedWeapon === w.id ? getWeaponColor(w.type) + " ring-1 ring-red-500/40" : (player.level ?? 1) < w.unlockLevel ? "border-border bg-card/30 opacity-40" : "border-border bg-card hover:border-red-500/20"}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{w.icon}</span>
+                          <div>
+                            <div className="text-sm font-bold">{w.name}</div>
+                            <div className="text-[10px] text-muted-foreground">{w.description}</div>
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 ml-2">
+                          <div className="text-[10px] text-red-400 font-bold">DMG {w.damage}</div>
+                          <div className="text-[10px] text-green-400">{Math.floor(w.successBase * 100)}%</div>
+                          <div className="text-[10px] text-amber-400">${w.cost.toLocaleString()}</div>
+                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-2 text-[9px]">
+                        <span className="text-red-300">Trace: {Math.floor(w.traceChance * 100)}%</span>
+                        <span className="text-muted-foreground">Unlock: Lv.{w.unlockLevel}</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {activeTab === "targets" && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-red-400">🎯 TARGET LIST — {targets.length} players available</h3>
+          <div className="space-y-2">
+            {targets.map((t: any) => (
+              <button key={t._id} onClick={() => { setSelectedTarget(t._id); setActiveTab("weapons"); }}
+                className={`w-full text-left p-4 rounded-xl border transition-all ${selectedTarget === t._id ? "border-red-500/40 bg-red-950/30" : "border-border bg-card hover:border-red-500/20"}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-full bg-red-950/30 flex items-center justify-center border border-red-500/20"><span className="text-lg">🎯</span></div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold">{t.nickname}</span>
+                        {t.isOnline && <span className="size-1.5 rounded-full bg-green-400 animate-pulse" />}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Lv.{t.level} • {t.location} • ATK:{t.attack} DEF:{t.defense}</div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm font-bold text-green-400">${t.money.toLocaleString()}</div>
+                    <div className="text-[10px] text-red-400">HP: {t.life}/{t.maxLife}</div>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-2 text-[9px]">
+                  <span className="text-yellow-400">Rep: {t.reputation}</span>
+                  <span className="text-red-400">Kills: {t.totalKills}</span>
+                  <span className="text-orange-400">Wanted: {t.wantedLevel}/10</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "methods" && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-purple-400">🎭 MURDER METHODS — {methods.length} techniques</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            {methods.map((m: any) => (
+              <button key={m.id} onClick={() => setSelectedMethod(m.id)}
+                className={`text-left p-4 rounded-xl border transition-all ${selectedMethod === m.id ? "border-purple-500/40 bg-purple-950/30 ring-1 ring-purple-500/30" : "border-border bg-card hover:border-purple-500/20"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{m.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold">{m.name}</div>
+                    <div className="text-[10px] text-muted-foreground">{m.description}</div>
+                    <div className="flex gap-3 mt-1 text-[9px]">
+                      <span className="text-green-400">+{Math.floor(m.bonusSuccess * 100)}% Success</span>
+                      <span className="text-blue-400">-{Math.floor(m.witnessReduction * 100)}% Witnesses</span>
+                      <span className="text-amber-400">{m.bonusCost > 0 ? `$${m.bonusCost.toLocaleString()}` : "Free"}</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "stats" && (
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold text-amber-400">📊 MURDER STATISTICS</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-red-950/20 rounded-xl p-4 text-center border border-red-500/20"><div className="text-2xl mb-1">💀</div><div className="text-2xl font-black text-red-400">{stats?.totalMurders ?? 0}</div><div className="text-[10px] text-muted-foreground">Total Murders</div></div>
+            <div className="bg-green-950/20 rounded-xl p-4 text-center border border-green-500/20"><div className="text-2xl mb-1">✅</div><div className="text-2xl font-black text-green-400">{stats?.successful ?? 0}</div><div className="text-[10px] text-muted-foreground">Successful</div></div>
+            <div className="bg-orange-950/20 rounded-xl p-4 text-center border border-orange-500/20"><div className="text-2xl mb-1">❌</div><div className="text-2xl font-black text-orange-400">{stats?.failed ?? 0}</div><div className="text-[10px] text-muted-foreground">Failed</div></div>
+            <div className="bg-amber-950/20 rounded-xl p-4 text-center border border-amber-500/20"><div className="text-2xl mb-1">📈</div><div className="text-2xl font-black text-amber-400">{stats?.killRate ?? 0}%</div><div className="text-[10px] text-muted-foreground">Kill Rate</div></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-card rounded-xl p-4 border border-border"><div className="text-sm font-bold">💰 Total Earnings</div><div className="text-lg text-green-400 font-bold">${(stats?.totalEarnings ?? 0).toLocaleString()}</div></div>
+            <div className="bg-card rounded-xl p-4 border border-border"><div className="text-sm font-bold">🌍 Reputation</div><div className="text-lg text-purple-400 font-bold">{stats?.reputation ?? 0}/100</div></div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "feed" && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-red-400">📰 MURDER FEED — Recent hits across the city</h3>
+          <div className="space-y-2">
+            {(feed ?? []).map((f: any, i: number) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border">
+                <div className={`size-8 rounded-full flex items-center justify-center ${f.success ? "bg-red-950/30 border border-red-500/20" : "bg-orange-950/30 border border-orange-500/20"}`}>
+                  {f.success ? "💀" : "⚔️"}
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs"><span className="font-bold text-red-400">{f.killer}</span> <span className="text-muted-foreground">{f.success ? "murdered" : "tried to murder"}</span> <span className="font-bold text-orange-400">{f.target}</span></div>
+                  <div className="text-[10px] text-muted-foreground">Lv.{f.killerLevel} • ${f.money.toLocaleString()} stolen • +{f.xp} XP</div>
+                </div>
+                <div className="text-[10px] text-muted-foreground shrink-0">{new Date(f.timestamp).toLocaleTimeString()}</div>
+              </div>
+            ))}
+            {(!feed || feed.length === 0) && <div className="text-center text-sm text-muted-foreground py-8">No murders recorded yet. Be the first.</div>}
+          </div>
+        </div>
+      )}
+
+      {activeTab === "investigations" && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-amber-400">🕵️ ACTIVE INVESTIGATIONS</h3>
+          <div className="space-y-2">
+            {(investigations ?? []).map((inv: any, i: number) => (
+              <div key={i} className={`p-4 rounded-xl border ${inv.status === "investigating" ? "border-amber-500/30 bg-amber-950/20" : "border-gray-600/20 bg-gray-950/20"}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-bold">{inv.status === "investigating" ? "🔍 Under Investigation" : "📁 Cold Case"}</div>
+                    <div className="text-[10px] text-muted-foreground">Victim: {inv.target}</div>
+                  </div>
+                  <div className={`text-[10px] px-2 py-0.5 rounded-full ${inv.status === "investigating" ? "bg-amber-900/30 text-amber-400" : "bg-gray-800 text-gray-400"}`}>
+                    {inv.status === "investigating" ? "ACTIVE" : "COLD"}
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-2">{inv.evidence?.map((e: string, j: number) => (
+                  <span key={j} className="text-[9px] px-1.5 py-0.5 bg-red-900/20 rounded text-red-300">{e}</span>
+                ))}</div>
+              </div>
+            ))}
+            {(!investigations || investigations.length === 0) && <div className="text-center text-sm text-muted-foreground py-8">No active investigations. Stay invisible.</div>}
+          </div>
+        </div>
+      )}
     </div>
-    <div className="mafia-card rounded-xl p-5 space-y-4 border border-red-500/20">
-      <div className="text-center text-6xl">💀</div>
-      <div className="text-center"><div className="text-sm font-bold">Assassination Contract</div><div className="text-[10px] text-red-400">Available 24/7</div></div>
-      <div className="grid grid-cols-3 gap-2 text-center text-xs">{[{n:"Stab",e:"🔪",ch:60,c:"$5K"},{n:"Shoot",e:"🔫",ch:45,c:"$20K"},{n:"Poison",e:"☠️",ch:70,c:"$50K"}].map((w,i) => (
-        <div key={i} className="bg-red-950/20 rounded-lg p-3 border border-red-500/10"><div className="text-2xl mb-1">{w.e}</div><div className="font-bold">{w.n}</div><div className="text-[10px] text-muted-foreground">Success: {w.ch}%</div><div className="text-[10px] text-green-400">Cost: {w.c}</div></div>))}</div>
-      <div className="bg-red-950/20 rounded-lg p-3 text-xs text-center"><span className="text-red-400">⚠️</span> Failed kills increase wanted level</div>
-    </div>
-  </div>);
+  );
 }
 
 function SparPage() {
