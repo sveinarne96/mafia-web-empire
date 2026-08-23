@@ -66,7 +66,7 @@ const leftMenuSections: { title: string; icon: any; page?: GamePage; children?: 
   { title: "\u2694\uFE0F Combat", icon: Swords, children: [
     { title: "\uD83E\uDD4A Fight Club", icon: Swords, page: "fight_club" },
     { title: "\uD83C\uDFC6 Bounty Board", icon: Crosshair, page: "bounty_board" },
-    { title: "Kill", icon: Skull, page: "kill" },
+    { title: "Murder", icon: Skull, page: "kill" },
     { title: "\uD83C\uDFC6 Season Rankings", icon: Trophy, page: "season_rankings" },
     { title: "\uD83D\uDCCB Combat Log", icon: ScrollText, page: "combat_log" },
     { title: "\uD83E\uDDBE Fighting Styles", icon: Swords, page: "fighting_styles" },
@@ -646,7 +646,7 @@ const pageNames: Record<string, string> = {
   organized_crime: "Organized Crime", missions: "Missions", daily_login: "Daily Login",
   bodyguards: "Bodyguards", secret_challenges: "Secret Challenges", boosts: "Boosts",
   crime_spree: "Crime Spree", steal_from_house: "Steal From House", gta_car_theft: "GTA Car Theft",
-  fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels", kill: "Kill",
+  fight_club: "Fight Club", bounty_board: "Bounty Board", duels: "Duels",  kill: "Murder",
   spar: "Spar", tournament: "Tournament", death_match: "Death Match",
   season_rankings: "Season Rankings", combat_log: "Combat Log", fighting_styles: "Fighting Styles",
   armor: "Armor Shop", gambling_dice: "Dice", gambling_lotto: "Lotto", gambling_blackjack: "Blackjack",
@@ -1934,7 +1934,7 @@ const renderPage = (): React.ReactNode => {
               <button onClick={() => setPage("crimes")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "crimes" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Street Crimes">Street Crimes</button>
               <button onClick={() => setPage("steal_from_house")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "steal_from_house" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Steal From House">Steal From House</button>
               <button onClick={() => setPage("gta_car_theft")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "gta_car_theft" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="GTA Car Theft">GTA Car Theft</button>
-              <button onClick={() => setPage("kill")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "kill" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Kill">Kill</button>
+              <button onClick={() => setPage("kill")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "kill" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Murder">Murder</button>
               <button onClick={() => setPage("prison")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "prison" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Prison">Prison</button>
               <button onClick={() => setPage("hospital")} className={`px-2 py-0.5 rounded text-[10px] transition-colors ${activePage === "hospital" ? "bg-primary/20 text-primary" : "text-muted-foreground hover:text-foreground hover:bg-accent"}`} title="Hospital">Hospital</button>
             </div>
