@@ -871,7 +871,7 @@ export function CrimesOverviewPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setSelectedCategory(category.id)}
-              className={`text-left p-5 rounded-xl border-2 transition-all ${getCrimeTypeBg("street")} hover:shadow-lg hover:shadow-primary/5`}
+              className={`text-left p-5 rounded-xl border-2 transition-all ${getCrimeTypeBg(category.id)} hover:shadow-lg hover:shadow-primary/5`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
@@ -885,7 +885,7 @@ export function CrimesOverviewPage() {
               </div>
               <p className="text-xs text-muted-foreground mb-3">{category.description}</p>
               <div className="flex gap-4 text-[10px]">
-                <span className={getCrimeTypeColor("street")}>Avg Risk: {avgRisk}%</span>
+                <span className={getCrimeTypeColor(category.id)}>Avg Risk: {avgRisk}%</span>
                 <span className="text-green-400">Max Reward: ${maxReward.toLocaleString()}</span>
               </div>
             </motion.button>
