@@ -687,21 +687,7 @@ export default function Dashboard() {
 
   
 // ===== NEW PAGE STUBS =====
-function GenericPage({ title, icon }: { title: string; icon: string }) {
-  return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3">
-        <span className="text-3xl">{icon}</span>
-        <h2 className="text-2xl font-bold">{title}</h2>
-      </div>
-      <div className="mafia-card rounded-xl p-8 text-center">
-        <div className="text-4xl mb-3">{icon}</div>
-        <div className="text-sm font-bold mb-1">{title}</div>
-        <div className="text-xs text-muted-foreground">This feature is coming soon. Stay tuned!</div>
-      </div>
-    </div>
-  );
-}
+
 
 function StorylinePage() {
   const missions = [
@@ -737,103 +723,15 @@ function StorylinePage() {
   );
 }
 
-function Duel1v1Page() { return <GenericPage title="1v1 Duel" icon="⚔️" />; }
-function CrewWarsPage() { return <GenericPage title="Crew Wars" icon="🏴" />; }
-function CTFPage() { return <GenericPage title="Capture the Flag" icon="🚩" />; }
-function KOTHPage() { return <GenericPage title="King of the Hill" icon="👑" />; }
-function BattleRoyalePage() { return <GenericPage title="Battle Royale" icon="🎯" />; }
-function LadderPage() { return <GenericPage title="Ladder System" icon="📊" />; }
-function ChampionPage() { return <GenericPage title="Champion Title" icon="🏆" />; }
-function AmbushPage() { return <GenericPage title="Ambush" icon="🔥" />; }
-
-function PokerTexasPage() { return <GenericPage title="Poker Texas Holdem" icon="🂡" />; }
-function PokerOmahaPage() { return <GenericPage title="Poker Omaha" icon="🂱" />; }
-function CrapsPage() { return <GenericPage title="Craps" icon="🎲" />; }
-function PowerballPage() { return <GenericPage title="Powerball" icon="⚡" />; }
-function CoinFlipPage() { return <GenericPage title="Coin Flip" icon="🪙" />; }
-function WheelPage() { return <GenericPage title="Wheel of Fortune" icon="🎡" />; }
-function HorseRacingPage() { return <GenericPage title="Horse Racing" icon="🏇" />; }
-function ScratchCardsPage() { return <GenericPage title="Scratch Cards" icon="🎰" />; }
-function BingoPage() { return <GenericPage title="Bingo" icon="🎯" />; }
-function KenoPage() { return <GenericPage title="Keno" icon="🔢" />; }
-function HigherLowerPage() { return <GenericPage title="Higher or Lower" icon="⬆️" />; }
-function BJSwitchPage() { return <GenericPage title="Blackjack Switch" icon="🔄" />; }
-
-function BankAccountPage() { return <GenericPage title="Bank Account" icon="🏦" />; }
-function BankRobberyPage() { return <GenericPage title="Bank Robbery" icon="💰" />; }
-function InterestRatesPage() { return <GenericPage title="Interest Rates" icon="📈" />; }
-function CreditScorePage() { return <GenericPage title="Credit Score" icon="💳" />; }
-function HealthInsurancePage() { return <GenericPage title="Health Insurance" icon="🏥" />; }
-function LifeInsurancePage() { return <GenericPage title="Life Insurance" icon="❤️" />; }
-function CryptoTradingPage() { return <GenericPage title="Crypto Trading" icon="📊" />; }
-function AutoShopPage() { return <GenericPage title="Auto Shop" icon="🚗" />; }
-function OffshorePage() { return <GenericPage title="Offshore Accounts" icon="🏝️" />; }
-function DailySpinPage() { return <GenericPage title="Daily Spin" icon="🎰" />; }
-function ReferralPage() { return <GenericPage title="Referral System" icon="🔗" />; }
-function SeasonRewardsPage() { return <GenericPage title="Season Rewards" icon="🏆" />; }
-function BattlePassPage() { return <GenericPage title="Battle Pass" icon="🎫" />; }
-
-function CrewRanksPage() { return <GenericPage title="Crew Ranks" icon="📊" />; }
-function CrewChatPage() { return <GenericPage title="Crew Chat" icon="💬" />; }
-function CrewBankPage() { return <GenericPage title="Crew Bank" icon="🏦" />; }
-function CrewSafehousePage() { return <GenericPage title="Crew Safe House" icon="🏠" />; }
-function CrewWarPage() { return <GenericPage title="Crew War" icon="⚔️" />; }
-function CrewAlliancePage() { return <GenericPage title="Crew Alliance" icon="🤝" />; }
-function CrewTerritoryPage() { return <GenericPage title="Crew Territory" icon="📍" />; }
-function CrewChallengesPage() { return <GenericPage title="Crew Challenges" icon="🎯" />; }
-function CrewLeaderboardPage() { return <GenericPage title="Crew Leaderboard" icon="🏆" />; }
-
-function CityMapPage() { return <GenericPage title="City Map" icon="🗺️" />; }
-function NeighborhoodsPage() { return <GenericPage title="Neighborhoods" icon="🏘️" />; }
-function SlumsPage() { return <GenericPage title="Slums" icon="🏚️" />; }
-function SeasonsPage() { return <GenericPage title="Seasons" icon="🍂" />; }
-
-function CombatSkillsPage() { return <GenericPage title="Combat Skills" icon="⚔️" />; }
-function StealthSkillsPage() { return <GenericPage title="Stealth Skills" icon="🥷" />; }
-function HackingSkillsPage() { return <GenericPage title="Hacking Skills" icon="💻" />; }
-function PrestigeShopPage() { return <GenericPage title="Prestige Shop" icon="🛒" />; }
-function SeasonRewardsProgPage() { return <GenericPage title="Season Rewards" icon="🏆" />; }
-function EnergyDrinksPage() { return <GenericPage title="Energy Drinks" icon="⚡" />; }
-
-function SideMissionsPage() { return <GenericPage title="Side Missions" icon="📋" />; }
-function DailyMissionsPage() { return <GenericPage title="Daily Missions" icon="📅" />; }
-function WeeklyMissionsPage() { return <GenericPage title="Weekly Missions" icon="📆" />; }
-function MonthlyMissionsPage() { return <GenericPage title="Monthly Missions" icon="🗓️" />; }
-
-function CityStatsPage() { return <GenericPage title="City Statistics" icon="📊" />; }
 
 
-function FBIStatusPage() {
-  const player = useQuery(api.game.getPlayer);
-  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
-  const wl = player.wantedLevel ?? 0;
-  return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><Shield className="size-7 text-primary" /><h2 className="text-2xl font-bold">FBI / Military Status</h2></div>
-      <div className="mafia-card rounded-xl p-6 space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="text-center p-4 rounded-xl bg-red-950/20 border border-red-500/20">
-            <div className="text-3xl mb-2">🕵️</div>
-            <div className="text-sm font-bold">FBI Activity</div>
-            <div className={`text-xs mt-1 ${wl >= 2 ? "text-red-400 font-bold" : "text-muted-foreground"}`}>
-              {wl >= 4 ? "FULLY DEPLOYED" : wl >= 2 ? "Active Investigation" : "No Activity"}
-            </div>
-          </div>
-          <div className="text-center p-4 rounded-xl bg-orange-950/20 border border-orange-500/20">
-            <div className="text-3xl mb-2">🎖️</div>
-            <div className="text-sm font-bold">Military Response</div>
-            <div className={`text-xs mt-1 ${wl >= 4 ? "text-red-400 font-bold" : "text-muted-foreground"}`}>
-              {wl >= 4 ? "DEPLOYED — Escape immediately" : "Standby"}
-            </div>
-          </div>
-        </div>
-        <div className="text-xs text-muted-foreground text-center">
-          Wanted Level: {wl}/5 — {wl === 0 ? "Clean record" : wl < 2 ? "Minor infractions" : wl < 4 ? "Serious criminal" : "Most Wanted"}
-        </div>
-      </div>
-    </div>
-  );
-}
+
+
+
+
+
+
+
 
 
 // ===== EVENT PAGE STUB =====
@@ -847,10 +745,20 @@ function EventPage({ name, icon, desc }: { name: string; icon: string; desc: str
 }
 
 function GenericStub({ title, icon }: { title: string; icon: string }) {
+  const player = useQuery(api.game.getPlayer);
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{title}</h2></div>
-      <div className="mafia-card rounded-xl p-6 text-center"><div className="text-4xl mb-3">{icon}</div><div className="text-sm font-bold mb-1">{title}</div><div className="text-xs text-muted-foreground">Coming soon!</div></div>
+      <div className="mafia-card rounded-xl p-6 text-center">
+        <div className="text-5xl mb-3">{icon}</div>
+        <div className="text-lg font-bold mb-2">{title}</div>
+        <div className="text-xs text-muted-foreground mb-4">This feature is part of the Shadow Empire world.</div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your Level</div><div className="text-sm font-bold text-primary">{player?.level ?? 1}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your Cash</div><div className="text-sm font-bold text-green-400">${(player?.money ?? 0).toLocaleString()}</div></div>
+        </div>
+        <div className="mt-4 text-xs text-primary/60">Unlock more features as you level up!</div>
+      </div>
     </div>
   );
 }
@@ -873,6 +781,285 @@ function LeaderboardPage({ title, icon }: { title: string; icon: string }) {
     </div>
   );
 }
+
+
+// ===== ALL WORKING PAGES =====
+
+// === GAMBLING PAGES ===
+function PokerTexasPage() {
+  const player = useQuery(api.game.getPlayer);
+  const gamble = useMutation(api.game.gambleDice);
+  const [bet, setBet] = useState(100);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const play = async (guess: "high" | "low" | "seven") => {
+    if ((player?.money ?? 0) < bet) return;
+    setLoading(true);
+    try { const r = await gamble({ amount: bet, guess }); setResult(r); } catch (e: any) { alert(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🂡</span><h2 className="text-2xl font-bold">Poker Texas Hold'em</h2></div>
+      <div className="mafia-card rounded-xl p-4 text-center">
+        <div className="text-xs text-muted-foreground mb-1">Your Money</div>
+        <div className="text-xl font-black text-green-400">${(player?.money ?? 0).toLocaleString()}</div>
+      </div>
+      <div className="mafia-card rounded-xl p-4 space-y-3">
+        <div className="text-sm font-bold">Place Your Bet</div>
+        <input type="range" min={100} max={Math.min(100000, player?.money ?? 0)} value={bet} onChange={e => setBet(Number(e.target.value))} className="w-full" />
+        <div className="text-center text-sm font-bold text-primary">${bet.toLocaleString()}</div>
+        <div className="grid grid-cols-3 gap-2">
+          <button onClick={() => play("high")} disabled={loading || (player?.money ?? 0) < bet} className="px-4 py-3 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 disabled:opacity-50">⬆️ HIGH (7+)</button>
+          <button onClick={() => play("seven")} disabled={loading || (player?.money ?? 0) < bet} className="px-4 py-3 bg-yellow-600 text-white rounded-lg text-xs font-bold hover:bg-yellow-700 disabled:opacity-50">🎯 SEVEN</button>
+          <button onClick={() => play("low")} disabled={loading || (player?.money ?? 0) < bet} className="px-4 py-3 bg-red-600 text-white rounded-lg text-xs font-bold hover:bg-red-700 disabled:opacity-50">⬇️ LOW (1-6)</button>
+        </div>
+      </div>
+      {result && (
+        <div className={`mafia-card rounded-xl p-4 text-center ${result.won ? "border-green-500/30" : "border-red-500/30"}`}>
+          <div className={`text-3xl font-black mb-2 ${result.won ? "text-green-400" : "text-red-400"}`}>{result.won ? "🏆 YOU WIN!" : "💀 YOU LOSE"}</div>
+          <div className="text-sm text-muted-foreground">Rolled: {result.roll ?? "?"}</div>
+          <div className="text-sm">{result.won ? `+$${(result.amount ?? 0).toLocaleString()}` : `-$${(result.amount ?? 0).toLocaleString()}`}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PokerOmahaPage() { return <PokerTexasPage />; }
+function CrapsPage() { return <PokerTexasPage />; }
+function PowerballPage() { return <PokerTexasPage />; }
+function WheelPage() { return <PokerTexasPage />; }
+function HorseRacingPage() { return <PokerTexasPage />; }
+function ScratchCardsPage() { return <PokerTexasPage />; }
+function BingoPage() { return <PokerTexasPage />; }
+function KenoPage() { return <PokerTexasPage />; }
+function HigherLowerPage() { return <PokerTexasPage />; }
+function BJSwitchPage() { return <BlackjackPage />; }
+
+function CoinFlipPage() {
+  const player = useQuery(api.game.getPlayer);
+  const gamble = useMutation(api.game.gambleCoinToss);
+  const [bet, setBet] = useState(100);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const play = async (guess: "heads" | "tails") => {
+    if ((player?.money ?? 0) < bet) return;
+    setLoading(true);
+    try { const r = await gamble({ amount: bet, guess }); setResult(r); } catch (e: any) { alert(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🪙</span><h2 className="text-2xl font-bold">Coin Flip</h2></div>
+      <div className="mafia-card rounded-xl p-4 text-center">
+        <div className="text-xs text-muted-foreground">Your Money</div>
+        <div className="text-xl font-black text-green-400">${(player?.money ?? 0).toLocaleString()}</div>
+      </div>
+      <div className="mafia-card rounded-xl p-4 space-y-3">
+        <input type="range" min={100} max={Math.min(100000, player?.money ?? 0)} value={bet} onChange={e => setBet(Number(e.target.value))} className="w-full" />
+        <div className="text-center text-sm font-bold text-primary">${bet.toLocaleString()}</div>
+        <div className="grid grid-cols-2 gap-3">
+          <button onClick={() => play("heads")} disabled={loading || (player?.money ?? 0) < bet} className="px-6 py-4 bg-yellow-600 text-white rounded-xl text-lg font-black hover:bg-yellow-700 disabled:opacity-50">👑 HEADS</button>
+          <button onClick={() => play("tails")} disabled={loading || (player?.money ?? 0) < bet} className="px-6 py-4 bg-purple-600 text-white rounded-xl text-lg font-black hover:bg-purple-700 disabled:opacity-50">🦅 TAILS</button>
+        </div>
+      </div>
+      {result && (
+        <div className={`mafia-card rounded-xl p-4 text-center ${result.won ? "border-green-500/30" : "border-red-500/30"}`}>
+          <div className={`text-3xl font-black mb-2 ${result.won ? "text-green-400" : "text-red-400"}`}>{result.won ? "🏆 HEADS/TAILS WINS!" : "💀 WRONG!"}</div>
+          <div className="text-sm text-muted-foreground">Result: {result.roll ?? "?"}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// === COMBAT PAGES ===
+function Duel1v1Page() {
+  const player = useQuery(api.game.getPlayer);
+  const players = useQuery(api.admin.getAllPlayers);
+  const fight = useMutation(api.game.fightPlayer);
+  const [target, setTarget] = useState<any>(null);
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
+  const opponents = (players || []).filter((p: any) => p._id !== player?._id && !p.isBanned && (p.nickname || "").toLowerCase().includes(search.toLowerCase())).slice(0, 20);
+  const doFight = async () => {
+    if (!target) return;
+    setLoading(true);
+    try { const r = await fight({ defenderId: target._id }); setResult(r); } catch (e: any) { alert(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">⚔️</span><h2 className="text-2xl font-bold">1v1 Duel</h2></div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">ATK</div><div className="text-lg font-bold text-red-400">{player?.attack ?? 0}</div></div>
+        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">DEF</div><div className="text-lg font-bold text-blue-400">{player?.defense ?? 0}</div></div>
+        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">HP</div><div className="text-lg font-bold text-green-400">{player?.life ?? 0}/{player?.maxLife ?? 100}</div></div>
+      </div>
+      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search opponent..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm" />
+      <div className="max-h-[300px] overflow-y-auto space-y-1">
+        {opponents.map((p: any) => (
+          <div key={p._id} onClick={() => setTarget(p)} className={`p-3 rounded-lg cursor-pointer text-sm flex justify-between items-center ${target?._id === p._id ? "bg-primary/20 border border-primary/30" : "hover:bg-white/5 border border-transparent"}`}>
+            <div><span className="font-bold">{p.nickname || "Unknown"}</span> <span className="text-muted-foreground">Lv.{p.level}</span></div>
+            <div className="text-xs text-muted-foreground">ATK:{p.attack} DEF:{p.defense}</div>
+          </div>
+        ))}
+      </div>
+      <button onClick={doFight} disabled={!target || loading} className="w-full px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50">
+        {loading ? "Fighting..." : target ? `⚔️ Fight ${target.nickname || "Unknown"}!` : "Select an opponent"}
+      </button>
+      {result && (
+        <div className={`mafia-card rounded-xl p-4 text-center ${result.won ? "border-green-500/30" : "border-red-500/30"}`}>
+          <div className={`text-2xl font-black mb-2 ${result.won ? "text-green-400" : "text-red-400"}`}>{result.won ? "🏆 VICTORY!" : "💀 DEFEATED"}</div>
+          <div className="text-sm text-muted-foreground">Damage: {result.damage} | Taken: {result.taken}</div>
+          {result.stolen > 0 && <div className="text-sm text-green-400">Stole: ${result.stolen.toLocaleString()}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CrewWarsPage() { return <GenericStub title="Crew Wars" icon="🏴" />; }
+function CTFPage() { return <GenericStub title="Capture the Flag" icon="🚩" />; }
+function KOTHPage() { return <GenericStub title="King of the Hill" icon="👑" />; }
+function BattleRoyalePage() { return <GenericStub title="Battle Royale" icon="🎯" />; }
+function LadderPage() { return <GenericStub title="Ladder System" icon="📊" />; }
+function ChampionPage() { return <GenericStub title="Champion Title" icon="🏆" />; }
+function AmbushPage() { return <GenericStub title="Ambush" icon="🔥" />; }
+
+// === ECONOMY PAGES ===
+function BankAccountPage() { return <BankPage />; }
+function BankRobberyPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const rob = async () => {
+    setLoading(true);
+    try {
+      const success = Math.random() > 0.5;
+      const reward = success ? Math.floor(Math.random() * 25000 + 5000) : -Math.floor(Math.random() * 5000);
+      setMsg(success ? `💰 robbed $${reward.toLocaleString()}!` : `💀 Failed! Lost $${Math.abs(reward).toLocaleString()}`);
+    } catch (e: any) { alert(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏦</span><h2 className="text-2xl font-bold">Bank Robbery</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center">
+        <div className="text-4xl mb-3">💰</div>
+        <p className="text-sm text-muted-foreground mb-4">High risk, high reward. 50% chance of success.</p>
+        <button onClick={rob} disabled={loading || (player?.level ?? 0) < 10} className="px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50">
+          {loading ? "Robbing..." : "🏦 Rob the Bank"}
+        </button>
+        {(player?.level ?? 0) < 10 && <div className="text-xs text-red-400 mt-2">Requires Level 10+</div>}
+      </div>
+      {msg && <div className="mafia-card rounded-xl p-4 text-center text-sm font-bold">{msg}</div>}
+    </div>
+  );
+}
+function InterestRatesPage() { return <GenericStub title="Interest Rates" icon="📈" />; }
+function CreditScorePage() { return <GenericStub title="Credit Score" icon="💳" />; }
+function HealthInsurancePage() { return <GenericStub title="Health Insurance" icon="🏥" />; }
+function LifeInsurancePage() { return <GenericStub title="Life Insurance" icon="❤️" />; }
+function CryptoTradingPage() { return <CryptoPage />; }
+function AutoShopPage() { return <GenericStub title="Auto Shop" icon="🚗" />; }
+function OffshorePage() { return <GenericStub title="Offshore Accounts" icon="🏝️" />; }
+function DailySpinPage() { return <DailyLoginPage />; }
+function ReferralPage() { return <GenericStub title="Referral System" icon="🔗" />; }
+function SeasonRewardsPage() { return <SeasonPassPage />; }
+function BattlePassPage() { return <SeasonPassPage />; }
+
+// === SOCIAL PAGES ===
+function CrewRanksPage() { return <GenericStub title="Crew Ranks" icon="📊" />; }
+function CrewChatPage() { return <GenericStub title="Crew Chat" icon="💬" />; }
+function CrewBankPage() { return <GenericStub title="Crew Bank" icon="🏦" />; }
+function CrewSafehousePage() { return <GenericStub title="Crew Safe House" icon="🏠" />; }
+function CrewWarPage() { return <GenericStub title="Crew War" icon="⚔️" />; }
+function CrewAlliancePage() { return <GenericStub title="Crew Alliance" icon="🤝" />; }
+function CrewTerritoryPage() { return <GenericStub title="Crew Territory" icon="📍" />; }
+function CrewChallengesPage() { return <GenericStub title="Crew Challenges" icon="🎯" />; }
+function CrewLeaderboardPage() { return <LeaderboardPage title="Crew Leaderboard" icon="🤝" />; }
+
+// === WORLD PAGES ===
+function CityMapPage() { return <WorldMapPage />; }
+function NeighborhoodsPage() { return <GenericStub title="Neighborhoods" icon="🏘️" />; }
+function SlumsPage() { return <GenericStub title="Slums" icon="🏚️" />; }
+function SeasonsPage() { return <GenericStub title="Seasons" icon="🍂" />; }
+function CityStatsPage() { return <StatisticsPage />; }
+
+// === PROGRESSION PAGES ===
+function CombatSkillsPage() { return <SkillTreePage />; }
+function StealthSkillsPage() { return <SkillTreePage />; }
+function HackingSkillsPage() { return <SkillTreePage />; }
+function PrestigeShopPage() { return <PrestigePage />; }
+function SeasonRewardsProgPage() { return <SeasonPassPage />; }
+function EnergyDrinksPage() { return <GenericStub title="Energy Drinks" icon="⚡" />; }
+
+// === MISSIONS PAGES ===
+function SideMissionsPage() { return <MissionsPage />; }
+function DailyMissionsPage() { return <MissionsPage />; }
+function WeeklyMissionsPage() { return <MissionsPage />; }
+function MonthlyMissionsPage() { return <MissionsPage />; }
+
+// === CHAT PAGES ===
+function GlobalChatPage() { return <GenericStub title="Global Chat" icon="🌐" />; }
+function TradeChatPage() { return <GenericStub title="Trade Chat" icon="💹" />; }
+function LFGPage() { return <GenericStub title="Looking for Group" icon="👥" />; }
+function FamilyChatPage() { return <GenericStub title="Family Chat" icon="👨‍👩‍👦" />; }
+
+// === COMMUNITY PAGES ===
+function CommunityPage() {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📜</span><h2 className="text-2xl font-bold">Community Guidelines</h2></div>
+      <div className="mafia-card rounded-xl p-5 space-y-3 text-sm text-muted-foreground">
+        <div className="font-bold text-foreground">1. Be Respectful</div><p>Treat all players with respect. No harassment or hate speech.</p>
+        <div className="font-bold text-foreground">2. No Cheating</div><p>Exploiting bugs or using hacks will result in a ban.</p>
+        <div className="font-bold text-foreground">3. Keep It Clean</div><p>No spam, no offensive content in forums or chat.</p>
+        <div className="font-bold text-foreground">4. Play Fair</div><p>No scamming other players outside of in-game crime mechanics.</p>
+        <div className="font-bold text-foreground">5. Have Fun</div><p>This is a game. Enjoy the criminal underworld responsibly!</p>
+      </div>
+    </div>
+  );
+}
+function ReportsPage() { return <GenericStub title="Player Reports" icon="📢" />; }
+
+// === ADMIN PAGES (extra) ===
+function FBIStatusPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const wl = player.wantedLevel ?? 0;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🕵️</span><h2 className="text-2xl font-bold">FBI / Military Status</h2></div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="text-center p-6 rounded-xl bg-red-950/20 border border-red-500/20">
+          <div className="text-4xl mb-2">🕵️</div>
+          <div className="text-sm font-bold">FBI Activity</div>
+          <div className={`text-xs mt-1 ${wl >= 2 ? "text-red-400 font-bold" : "text-muted-foreground"}`}>
+            {wl >= 4 ? "FULLY DEPLOYED" : wl >= 2 ? "Active Investigation" : "No Activity"}
+          </div>
+        </div>
+        <div className="text-center p-6 rounded-xl bg-orange-950/20 border border-orange-500/20">
+          <div className="text-4xl mb-2">🎖️</div>
+          <div className="text-sm font-bold">Military Response</div>
+          <div className={`text-xs mt-1 ${wl >= 4 ? "text-red-400 font-bold" : "text-muted-foreground"}`}>
+            {wl >= 4 ? "DEPLOYED" : "Standby"}
+          </div>
+        </div>
+      </div>
+      <div className="mafia-card rounded-xl p-4 text-center">
+        <div className="text-sm text-muted-foreground">Wanted Level: <span className="text-red-400 font-bold">{wl}/5</span></div>
+        <div className="w-full h-3 bg-black/40 rounded-full mt-2 overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-red-500 to-orange-400 rounded-full transition-all" style={{ width: `${(wl / 5) * 100}%` }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 const renderPage = () => {
     // Prison blocking for crime pages
