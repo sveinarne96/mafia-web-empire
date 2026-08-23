@@ -723,6 +723,14 @@ const schema = defineSchema({
     diggableAt: v.number(),
     dug: v.boolean(),
   }),
+  gameUpdates: defineTable({
+    title: v.string(),
+    description: v.string(),
+    type: v.string(),
+    icon: v.optional(v.string()),
+    timestamp: v.number(),
+    pinned: v.optional(v.boolean()),
+  }),
 }, {
   schemaValidation: false,
 });

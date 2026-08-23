@@ -1540,6 +1540,65 @@ function CockroachPage() {
   </div>);
 }
 
+
+function GameUpdatesPage() {
+  const updates = useQuery(api.gameUpdates.getUpdates);
+  const seedUpdates = useMutation(api.gameUpdates.seedUpdates);
+  const [seeded, setSeeded] = useState(false);
+
+  useEffect(() => {
+    if (updates && updates.length === 0 && !seeded) {
+      seedUpdates({}).then(() => setSeeded(true)).catch(() => {});
+    }
+  }, [updates, seeded]);
+
+  if (!updates) return <LoadingPage />;
+
+  const typeColors: Record<string, string> = {
+    major: "border-yellow-500/30 bg-yellow-950/10",
+    feature: "border-green-500/20 bg-green-950/5",
+    improvement: "border-blue-500/20 bg-blue-950/5",
+    reward: "border-purple-500/20 bg-purple-950/5",
+    visual: "border-pink-500/20 bg-pink-950/5",
+    event: "border-orange-500/20 bg-orange-950/5",
+    system: "border-cyan-500/20 bg-cyan-950/5",
+  };
+  const typeLabels: Record<string, string> = {
+    major: "🔥 MAJOR", feature: "✨ NEW", improvement: "⬆️ IMPROVED", reward: "🎁 REWARD", visual: "🎨 VISUAL", event: "📅 EVENT", system: "⚙️ SYSTEM",
+  };
+
+  return (
+    <div className="animate-fade-in space-y-6 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-transparent pointer-events-none" />
+      <div className="relative flex items-center gap-3">
+        <div className="relative"><ScrollText className="size-8 text-primary" /><div className="absolute -inset-1 bg-primary/20 rounded-full blur-lg" /></div>
+        <div>
+          <h2 className="text-2xl font-black">📜 <span className="text-primary">GAME UPDATES</span></h2>
+          <p className="text-xs text-primary/60 font-mono">SHADOW EMPIRE CHANGELOG</p>
+        </div>
+      </div>
+      <div className="space-y-3">
+        {updates.map((u: any) => (
+          <div key={u._id} className={`rounded-xl p-4 border ${typeColors[u.type] ?? "border-border/50"} ${u.pinned ? "ring-1 ring-yellow-500/30" : ""} hover:scale-[1.005] transition-all`}>
+            <div className="flex items-start gap-3">
+              <div className="text-2xl shrink-0 mt-0.5">{u.icon ?? "📢"}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-primary/20 text-primary">{typeLabels[u.type] ?? u.type}</span>
+                  {u.pinned && <span className="text-[9px] px-2 py-0.5 rounded-full font-bold bg-yellow-500/20 text-yellow-400">📌 PINNED</span>}
+                </div>
+                <div className="text-sm font-bold mt-1">{u.title}</div>
+                <div className="text-[11px] text-muted-foreground mt-1 leading-relaxed">{u.description}</div>
+                <div className="text-[9px] text-muted-foreground/50 mt-2">{new Date(u.timestamp).toLocaleDateString()} {new Date(u.timestamp).toLocaleTimeString()}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SafePage({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   if (error) {
@@ -1579,7 +1638,7 @@ const renderPage = (): React.ReactNode => {
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
       case "my_profile": return <MyProfilePage />;
-      case "updates": return <div className="animate-fade-in space-y-4"><div className="flex items-center gap-3"><ScrollText className="size-7 text-primary" /><h2 className="text-2xl font-bold">Game Updates</h2></div><div className="mafia-card rounded-xl p-5 text-sm text-muted-foreground">Latest updates and changelog coming soon!</div></div>;
+      case "updates": return <GameUpdatesPage />;
       case "crimes": return <CrimesOverviewPage />;
       case "legendary_crimes": return <LegendaryCrimePage />;
       case "boss_fights": return <BossFightsPage />;
