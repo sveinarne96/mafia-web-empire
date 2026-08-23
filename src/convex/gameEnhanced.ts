@@ -313,7 +313,7 @@ export const stealFromHouse = mutation({
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;
-    const levelUpNow = newXP >= xpNeeded && succeeded;
+    const levelUpNow = newXP >= xpNeeded;
 
     await ctx.db.patch(player._id, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
@@ -336,9 +336,20 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   const newXP = (player.experience ?? 0) + xpAmount;
   const xpNeeded = (player.level ?? 1) * 100;
   const levelUpNow = newXP >= xpNeeded;
+  if (!levelUpNow) {
+    return { experience: newXP };
+  }
+  // Level up! Apply all stats immediately
   return {
-    experience: levelUpNow ? 0 : newXP,
-    levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
+    experience: 0,
+    level: (player.level ?? 1) + 1,
+    levelUpPending: false,
+    attack: (player.attack ?? 10) + 10,
+    defense: (player.defense ?? 10) + 10,
+    maxLife: (player.maxLife ?? 100) + 75,
+    life: (player.maxLife ?? 100) + 75,
+    skillPoints: (player.skillPoints ?? 0) + 1,
+    highestLevel: Math.max(player.highestLevel ?? 0, (player.level ?? 1) + 1),
   };
 }
 

@@ -211,9 +211,20 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   const newXP = (player.experience ?? 0) + xpAmount;
   const xpNeeded = (player.level ?? 1) * 100;
   const levelUpNow = newXP >= xpNeeded;
+  if (!levelUpNow) {
+    return { experience: newXP };
+  }
+  // Level up! Apply all stats immediately
   return {
-    experience: levelUpNow ? 0 : newXP,
-    levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
+    experience: 0,
+    level: (player.level ?? 1) + 1,
+    levelUpPending: false,
+    attack: (player.attack ?? 10) + 10,
+    defense: (player.defense ?? 10) + 10,
+    maxLife: (player.maxLife ?? 100) + 75,
+    life: (player.maxLife ?? 100) + 75,
+    skillPoints: (player.skillPoints ?? 0) + 1,
+    highestLevel: Math.max(player.highestLevel ?? 0, (player.level ?? 1) + 1),
   };
 }
 
@@ -238,7 +249,7 @@ export const commitCrime = mutation({
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
         // XP: 185% bonus + 10% per 15 levels
     const levelBonusXp = 1 + (Math.floor((player.level ?? 1) / 15) * 0.10);
-    const xpGain = Math.floor((success ? 15 : 3) * 6.0 * levelBonusXp); const newXP = (player.experience ?? 0) + xpGain; const levelUpNow = newXP >= (player.level ?? 1) * 100 && !arrested;
+    const xpGain = Math.floor((success ? 15 : 3) * 6.0 * levelBonusXp); const newXP = (player.experience ?? 0) + xpGain; const levelUpNow = newXP >= (player.level ?? 1) * 100;
     await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyEarned : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned, life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, experience: levelUpNow ? 0 : newXP, levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false), inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5) });
     if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "You were arrested during a crime!", read: false, timestamp: Date.now() });
     return { success, moneyEarned, pointsEarned, damageTaken, arrested };
@@ -255,7 +266,7 @@ export const fightPlayer = mutation({ args: { defenderId: v.id("users") }, handl
     const dDmg = Math.max(1, Math.floor((defender.attack ?? 10) * (0.8 + Math.random() * 0.4) - (attacker.defense ?? 10) * 0.3));
     const attackerWins = aDmg > dDmg; const moneyStolen = Math.floor(((attackerWins ? defender : attacker).money ?? 0) * 0.05);
     await ctx.db.insert("fights", { attackerId: attacker._id, defenderId: args.defenderId, attackerDamage: aDmg, defenderDamage: dDmg, winnerId: attackerWins ? attacker._id : args.defenderId, moneyStolen, timestamp: Date.now() });
-    await ctx.db.patch(attacker._id, { life: Math.max(0, (attacker.life ?? 100) - dDmg), totalFights: (attacker.totalFights ?? 0) + 1, totalKills: attackerWins ? (attacker.totalKills ?? 0) + 1 : (attacker.totalKills ?? 0), money: attackerWins ? (attacker.money ?? 0) + moneyStolen : Math.max(0, (attacker.money ?? 0) - moneyStolen), ...(await addXpAndCheckLevel(ctx, attacker, 15)) });
+    const fightXp = await addXpAndCheckLevel(ctx, attacker, 15); await ctx.db.patch(attacker._id, { life: fightXp.life ?? Math.max(0, (attacker.life ?? 100) - dDmg), totalFights: (attacker.totalFights ?? 0) + 1, totalKills: attackerWins ? (attacker.totalKills ?? 0) + 1 : (attacker.totalKills ?? 0), money: attackerWins ? (attacker.money ?? 0) + moneyStolen : Math.max(0, (attacker.money ?? 0) - moneyStolen), ...fightXp });
     if (!attackerWins) { 
       await ctx.db.patch(args.defenderId, { money: (defender.money ?? 0) + moneyStolen, totalKills: (defender.totalKills ?? 0) + 1 }); 
     }
@@ -342,7 +353,9 @@ export const collectBusinessIncome = mutation({ args: {}, handler: async (ctx) =
 
 export const levelUp = mutation({ args: { stat: v.optional(v.union(v.literal("attack"), v.literal("defense"), v.literal("maxLife"))) }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
-    if (!(player.levelUpPending ?? false)) throw new Error("No level up pending!");
+    const xpNeeded = (player.level ?? 1) * 100;
+    // Auto-detect if level up is due (don't require flag)
+    if (!(player.levelUpPending ?? false) && (player.experience ?? 0) < xpNeeded) throw new Error("No level up available!");
     const newLevel = (player.level ?? 1) + 1;
     const patch: Record<string, unknown> = { level: newLevel, levelUpPending: false, skillPoints: (player.skillPoints ?? 0) + 1, maxLife: (player.maxLife ?? 100) + 75, life: (player.maxLife ?? 100) + 75, attack: (player.attack ?? 10) + 10, defense: (player.defense ?? 10) + 10, highestLevel: Math.max(player.highestLevel ?? 0, newLevel) };
         // +10 ATK, +10 DEF, +75HP on EVERY level up
@@ -362,7 +375,7 @@ export const killPlayer = mutation({ args: { targetId: v.id("users") }, handler:
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
     const success = Math.random() > 0.25;
     if (success) { await ctx.db.patch(args.targetId, { life: 0, isDead: true }); await ctx.db.patch(player._id, { totalKills: (player.totalKills ?? 0) + 1, wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 3), money: (player.money ?? 0) + Math.floor((target.money ?? 0) * 0.05), ...(await addXpAndCheckLevel(ctx, player, 30)) }); }
-    else { await ctx.db.patch(player._id, { life: Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 1), ...(await addXpAndCheckLevel(ctx, player, 5)) }); }
+    else { const killFailXp = await addXpAndCheckLevel(ctx, player, 5); await ctx.db.patch(player._id, { life: killFailXp.life ?? Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 1), ...killFailXp }); }
     return { success };
   },
 });
@@ -400,4 +413,4 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
 export const commitCategoryCrime = mutation({ args: { crimeId: v.string(), reward: v.number(), risk: v.number(), xp: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!"); if (player.isDead) throw new Error("You are dead!");    // Level-based success rate: base 60% + 0.5% per level, max 95%
     const levelBonus = Math.min(0.35, ((player.level ?? 1) * 0.005));
     const succeeded = Math.random() < Math.min(0.95, 0.75 + levelBonus);
-    const moneyEarned = succeeded ? args.reward + Math.floor(Math.random() * args.reward * 0.2) : -Math.floor(Math.random() * 500 + 100); const xpEarned = succeeded ? Math.floor(args.xp * 6.0) : Math.floor(args.xp * 0.15); const lifeDamage = succeeded ? 0 : Math.floor(Math.random() * 20 + 5); const newLife = Math.max(0, (player.life ?? 100) - lifeDamage); const newXP = (player.experience ?? 0) + xpEarned; const levelUpNow = newXP >= (player.level ?? 1) * 100 && succeeded; const arrested = !succeeded && Math.random() > 0.6; await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, experience: levelUpNow ? 0 : newXP, levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false), inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3) }); await ctx.db.insert("crimes", { userId: player._id, type: args.crimeId, target: "environment", success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "Arrested!", read: false, timestamp: Date.now() }); return { success: succeeded, moneyEarned, xpEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow }; } });
+    const moneyEarned = succeeded ? args.reward + Math.floor(Math.random() * args.reward * 0.2) : -Math.floor(Math.random() * 500 + 100); const xpEarned = succeeded ? Math.floor(args.xp * 6.0) : Math.floor(args.xp * 0.15); const lifeDamage = succeeded ? 0 : Math.floor(Math.random() * 20 + 5); const newLife = Math.max(0, (player.life ?? 100) - lifeDamage); const newXP = (player.experience ?? 0) + xpEarned; const levelUpNow = newXP >= (player.level ?? 1) * 100; const arrested = !succeeded && Math.random() > 0.6; await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, experience: levelUpNow ? 0 : newXP, levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false), inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3) }); await ctx.db.insert("crimes", { userId: player._id, type: args.crimeId, target: "environment", success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "Arrested!", read: false, timestamp: Date.now() }); return { success: succeeded, moneyEarned, xpEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow }; } });
