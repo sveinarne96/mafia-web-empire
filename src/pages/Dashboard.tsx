@@ -1762,6 +1762,9 @@ export default function Dashboard() {
   const [dismissedLevelUp, setDismissedLevelUp] = useState(false);
   const setPage = useCallback((p: GamePage) => setActivePage(p), []);
 
+  // Reset dismissedLevelUp when a NEW level-up is pending
+  useEffect(() => { if (player?.levelUpPending) setDismissedLevelUp(false); }, [player?.levelUpPending]);
+
   // Auto-release from prison when 15 seconds have passed
   useEffect(() => {
     if (!player || !player.inPrison) return;
