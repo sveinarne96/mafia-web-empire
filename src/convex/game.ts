@@ -170,8 +170,20 @@ export const acknowledgeLevelUp = mutation({
     if (!userId) throw new Error("Not authenticated");
     const player = await ctx.db.get(userId);
     if (!player) throw new Error("Player not found");
-    await ctx.db.patch(userId, { levelUpPending: false });
-    return { success: true };
+    // Actually apply the level up: level+1, +10 ATK, +10 DEF, +75 HP
+    const newLevel = (player.level ?? 1) + 1;
+    const newMaxLife = (player.maxLife ?? 100) + 75;
+    await ctx.db.patch(userId, {
+      level: newLevel,
+      levelUpPending: false,
+      skillPoints: (player.skillPoints ?? 0) + 1,
+      attack: (player.attack ?? 10) + 10,
+      defense: (player.defense ?? 10) + 10,
+      maxLife: newMaxLife,
+      life: newMaxLife,
+      highestLevel: Math.max(player.highestLevel ?? 0, newLevel),
+    });
+    return { success: true, newLevel };
   },
 });
 
