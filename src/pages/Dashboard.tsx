@@ -2517,7 +2517,11 @@ const renderPage = () => {
               {/* Status Panel */}
               {player && (
                 <div className="space-y-2">
-                  <div className="text-xs font-bold text-muted-foreground px-2">Status</div>
+                  {/* Username + Rank */}
+                  <div className="px-2 text-center mb-1">
+                    <div className="text-sm font-black text-primary truncate">{player.nickname || player.username || "Unknown"}</div>
+                    <div className="text-[10px] text-muted-foreground"><RankBadge level={player.level ?? 1} /> <span className="text-yellow-400 font-bold">Lv.{player.level ?? 1}</span></div>
+                  </div>
                   {/* Life Bar */}
                   <div className="px-2">
                     <div className="flex justify-between text-[10px] mb-0.5">
@@ -2532,7 +2536,7 @@ const renderPage = () => {
                   {/* XP Bar */}
                   <div className="px-2">
                     <div className="flex justify-between text-[10px] mb-0.5">
-                      <span className="text-yellow-400 font-bold">⭐ <RankBadge level={player.level ?? 1} /> Lv.{player.level}</span>
+                      <span className="text-yellow-400 font-bold">⭐ XP</span>
                       <span className="text-muted-foreground">{xpPercent.toFixed(0)}%</span>
                     </div>
                     <div className="h-2.5 bg-[oklch(0.14_0.012_35)] rounded-full overflow-hidden">
@@ -2540,25 +2544,37 @@ const renderPage = () => {
                         style={{ width: `${xpPercent}%` }} />
                     </div>
                   </div>
-                  {/* Cash */}
-                  <div className="px-2 mafia-card rounded-lg p-2">
-                    <div className="text-[10px] text-muted-foreground">💰 Cash</div>
-                    <div className="text-sm font-bold text-green-400">${(player.money ?? 0).toLocaleString()}</div>
-                  </div>
-                  {/* Points */}
-                  <div className="px-2 mafia-card rounded-lg p-2">
-                    <div className="text-[10px] text-muted-foreground">🏆 Points</div>
-                    <div className="text-sm font-bold text-yellow-400">{(player.points ?? 0).toLocaleString()}</div>
-                  </div>
-                  {/* Reputation */}
-                  <div className="px-2 mafia-card rounded-lg p-2">
-                    <div className="text-[10px] text-muted-foreground">🌍 Reputation</div>
-                    <div className="text-sm font-bold text-purple-400">{(player.reputation ?? 0).toLocaleString()}</div>
+                  {/* Stats Grid */}
+                  <div className="px-2 grid grid-cols-2 gap-1.5">
+                    <div className="mafia-card rounded p-1.5 text-center">
+                      <div className="text-[9px] text-muted-foreground">💰 Cash</div>
+                      <div className="text-[11px] font-bold text-green-400">${(player.money ?? 0).toLocaleString()}</div>
+                    </div>
+                    <div className="mafia-card rounded p-1.5 text-center">
+                      <div className="text-[9px] text-muted-foreground">🏆 Points</div>
+                      <div className="text-[11px] font-bold text-yellow-400">{(player.points ?? 0).toLocaleString()}</div>
+                    </div>
+                    <div className="mafia-card rounded p-1.5 text-center">
+                      <div className="text-[9px] text-muted-foreground">🌍 Rep</div>
+                      <div className="text-[11px] font-bold text-purple-400">{(player.reputation ?? 0).toLocaleString()}</div>
+                    </div>
+                    <div className="mafia-card rounded p-1.5 text-center">
+                      <div className="text-[9px] text-muted-foreground">⚔️ ATK</div>
+                      <div className="text-[11px] font-bold text-red-400">{(player.attack ?? 0) + 10}</div>
+                    </div>
+                    <div className="mafia-card rounded p-1.5 text-center">
+                      <div className="text-[9px] text-muted-foreground">🛡️ DEF</div>
+                      <div className="text-[11px] font-bold text-blue-400">{(player.defense ?? 0) + 10}</div>
+                    </div>
+                    <div className="mafia-card rounded p-1.5 text-center">
+                      <div className="text-[9px] text-muted-foreground">💀 Kills</div>
+                      <div className="text-[11px] font-bold text-orange-400">{player.kills ?? 0}</div>
+                    </div>
                   </div>
                   {/* Quick Info */}
                   {(player.wantedLevel ?? 0) > 0 && (
-                    <div className="px-2 mafia-card rounded-lg p-2 border-red-500/30">
-                      <div className="text-[10px] text-red-400 font-bold">🔴 Wanted: {player.wantedLevel}</div>
+                    <div className="px-2 mafia-card rounded-lg p-1.5 border-red-500/30">
+                      <div className="text-[10px] text-red-400 font-bold text-center">🔴 Wanted: {player.wantedLevel}</div>
                     </div>
                   )}
                 </div>
