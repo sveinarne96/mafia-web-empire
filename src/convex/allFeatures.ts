@@ -1,13 +1,12 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // ===== HELPER =====
 async function getUser(ctx: any) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Not authenticated");
-  const player = await ctx.db
-    .query("users")
-    .unique();
+  const userId = await getAuthUserId(ctx);
+  if (!userId) throw new Error("Not authenticated");
+  const player = await ctx.db.get(userId);
   if (!player) throw new Error("Player not found");
   return player;
 }
@@ -50,7 +49,7 @@ export const prestige = mutation({
       experience: 0,
       prestige: currentPrestige + 1,
       prestigeMultiplier: mult,
-      money: Math.floor(player.money * 0.5),
+      money: Math.floor((player.money ?? 0) * 0.5),
     });
     return { success: true, newPrestige: currentPrestige + 1, multiplier: mult };
   },
