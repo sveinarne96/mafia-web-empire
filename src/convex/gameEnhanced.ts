@@ -309,7 +309,7 @@ export const stealFromHouse = mutation({
         // XP scales with total value of items stolen + level multiplier
     const levelMult = 1 + ((player.level ?? 1) * 0.05); // +5% per level
     const valueXp = succeeded ? Math.max(25, Math.floor(moneyEarned / 500)) : 6; // $1 per 500 value, min 25
-    const xpEarned = Math.floor(valueXp * 6.0 * levelMult);
+    const xpEarned = Math.floor(valueXp * 11.0 * levelMult);
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;
@@ -676,7 +676,7 @@ export const gtaCarTheft = mutation({
         // XP scales with car price + level multiplier
     const levelMult = 1 + ((player.level ?? 1) * 0.05); // +5% per level
     const valueXp = succeeded ? Math.max(20, Math.floor(moneyEarned / 1000)) : 4; // $1 per 1000 value, min 20
-    const xpEarned = Math.floor(valueXp * 6.0 * levelMult);
+    const xpEarned = Math.floor(valueXp * 11.0 * levelMult);
 
     await ctx.db.patch(userId, {
       money: Math.max(0, (player.money ?? 0) + moneyEarned),
