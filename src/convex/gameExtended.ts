@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { rollEggPoolItem } from "./easterEggItems";
 
 async function getPlayer(ctx: { auth: any; db: any }) {
   const userId = await getAuthUserId(ctx);
@@ -75,46 +76,44 @@ export const openEasterEgg = mutation({
       });
       return { prize: "GOLDEN EGG!", icon: "🌟", message: `🌟 GOLDEN EGG! $${cash.toLocaleString()} + 3x XP & Cash Boost for 2 hours!`, cash };
     }
-    // ⚡ Triple XP Boost 2h (15%)
-    if (roll < 0.20) {
+    // ⚡ Triple XP Boost 2h (7%)
+    if (roll < 0.10) {
       await ctx.db.patch(player._id, { xpBoostUntil: Math.max(player.xpBoostUntil ?? 0, twoHours) });
       return { prize: "Triple XP Boost", icon: "⚡", message: "⚡ Triple XP Boost activated for 2 HOURS! All crimes earn 3x XP!", cash: 0 };
     }
-    // 💰 Triple Cash Boost 2h (15%)
-    if (roll < 0.35) {
+    // 💰 Triple Cash Boost 2h (7%)
+    if (roll < 0.17) {
       await ctx.db.patch(player._id, { cashBoostUntil: Math.max(player.cashBoostUntil ?? 0, twoHours) });
       return { prize: "Triple Cash Boost", icon: "💰", message: "💰 Triple Cash Boost activated for 2 HOURS! All crimes pay 3x cash!", cash: 0 };
     }
-    // ⚔️ Legendary Weapon (12%)
-    if (roll < 0.47) {
+    // ⚔️ Legendary Weapon (6%)
+    if (roll < 0.23) {
       const atk = 50 + Math.floor(Math.random() * 100);
       await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_weapon_${Date.now()}`, name: `⚔️ Egg-Forged Blade (+${atk} ATK)`, type: "weapon", equipped: false, quantity: 1, attack: atk, rarity: "legendary", price: atk * 20000 });
       return { prize: "Legendary Weapon", icon: "⚔️", message: `⚔️ Legendary weapon found! Egg-Forged Blade (+${atk} ATK) added to your items!`, cash: 0 };
     }
-    // 🛡️ Legendary Armor (12%)
-    if (roll < 0.59) {
+    // 🛡️ Legendary Armor (6%)
+    if (roll < 0.29) {
       const def = 50 + Math.floor(Math.random() * 100);
       await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_armor_${Date.now()}`, name: `🛡️ Egg-Plated Vest (+${def} DEF)`, type: "armor", equipped: false, quantity: 1, defense: def, rarity: "legendary", price: def * 20000 });
       return { prize: "Legendary Armor", icon: "🛡️", message: `🛡️ Legendary armor found! Egg-Plated Vest (+${def} DEF) added to your items!`, cash: 0 };
     }
-    // 💵 Instant Cash (18%)
-    if (roll < 0.80) {
+    // 💵 Instant Cash (13%)
+    if (roll < 0.42) {
       const cash = (1000000 + Math.floor(Math.random() * 40) * 100000);
       await ctx.db.patch(player._id, { money: (player.money ?? 0) + cash });
       return { prize: "Cash Stash", icon: "💵", message: `💵 Cash stash inside! $${cash.toLocaleString()} added!`, cash };
     }
-    // 🏆 Points (9%)
-    if (roll < 0.89) {
+    // 🏆 Points (5%)
+    if (roll < 0.47) {
       const pts = 200 + Math.floor(Math.random() * 800);
       await ctx.db.patch(player._id, { points: (player.points ?? 0) + pts });
       return { prize: "Point Cache", icon: "🏆", message: `🏆 Point cache! ${pts} points added to your score!`, cash: 0 };
     }
-    // 💎 Rare Jewel (sellable, 11%)
-    const jewels = ["💎 Flawless Diamond", "🥇 Solid Gold Brick", "💍 Ruby Signet Ring", "🏺 Ancient Artifact", "👑 Egg Emperor Crown"];
-    const jewel = jewels[Math.floor(Math.random() * jewels.length)];
-    const value = 1000000 + Math.floor(Math.random() * 16) * 250000;
-    await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_jewel_${Date.now()}`, name: jewel, type: "jewel", equipped: false, quantity: 1, rarity: "epic", price: value });
-    return { prize: "Rare Jewel", icon: "💎", message: `${jewel} found! Worth $${value.toLocaleString()} — sell it in My Items!`, cash: 0 };
+    // 🎁 EGG VAULT (53%) — one of 560 unique random items, sellable
+    const drop = rollEggPoolItem();
+    await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_item_${Date.now()}`, name: drop.name, type: drop.type, equipped: false, quantity: 1, rarity: drop.rarity, price: drop.price });
+    return { prize: drop.name, icon: drop.icon, message: `${drop.name} hatched from the egg! ${drop.rarity.toUpperCase()} — worth $${drop.price.toLocaleString()} — sell it in My Items!`, cash: 0 };
   },
 });
 
