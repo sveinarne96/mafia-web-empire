@@ -178,7 +178,10 @@ export function MyItemsPage() {
         <StatBox label="Level" value={`⭐ ${player.level ?? 1}`} color="text-primary" />
       </div>
       {(!inventory || inventory.length === 0) ? <div className="text-center py-10 text-muted-foreground text-sm">No items. Visit the Points Shop!</div> :
-        <div className="space-y-2">{inventory.map(entry => {
+        <div className="space-y-2">{[...inventory].sort((a, b) => {
+          const rank = (e: any) => e.type === "easter_egg" ? 0 : (e.type === "xp_boost" || e.type === "cash_boost") ? 1 : 2;
+          return rank(a) - rank(b);
+        }).map(entry => {
           const isEgg = entry.type === "easter_egg";
           const isBoost = entry.type === "xp_boost" || entry.type === "cash_boost";
           return (
