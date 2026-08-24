@@ -833,70 +833,170 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
 }
 
 // ===== CRIME OVERVIEW PAGE =====
-export function CrimesOverviewPage() {
+// ===== CRIMES UNIFIED PAGE =====
+export function CrimesOverviewPage({ initialCategory }: { initialCategory?: string }) {
   const player = useQuery(api.game.getPlayer);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState(initialCategory || "street");
+  const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const categoryCooldown = (player as any)?.crimeCooldowns?.[activeTab] ?? 0;
+  const cooldown = useCooldown(15, categoryCooldown);
+  const commitCrime = useMutation(api.game.commitCategoryCrime);
 
-  if (selectedCategory) {
-    return (
-      <div>
-        <button
-          onClick={() => setSelectedCategory(null)}
-          className="mb-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          ← Back to Crimes
-        </button>
-        <CrimeCategoryPage categoryId={selectedCategory} />
-      </div>
-    );
-  }
+  // Update tab when initialCategory changes
+  useEffect(() => {
+    if (initialCategory) setActiveTab(initialCategory);
+  }, [initialCategory]);
+
+  const category = crimeCategories.find(c => c.id === activeTab);
+  const allCrimes = crimeCategories.flatMap(c => c.crimes.map(cr => ({ ...cr, category: c.id, categoryName: c.name, categoryIcon: c.icon })));
+  const displayCrimes = searchQuery
+    ? allCrimes.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    : (category?.crimes || []).map(cr => ({ ...cr, category: activeTab, categoryName: category?.name || "Crimes", categoryIcon: category?.icon || "🔥" }));
+
+  // Sort by XP descending (highest XP first)
+  const sortedCrimes = [...displayCrimes].sort((a, b) => b.xp - a.xp);
+
+  const executeCrime = async (crime: any) => {
+    if ((player?.level ?? 0) < crime.levelRequired) return;
+    if ((player?.money ?? 0) < 100) return;
+    if (cooldown.onCooldown) return;
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await commitCrime({
+        crimeId: crime.id,
+        reward: crime.reward,
+        risk: crime.risk,
+        xp: crime.xp,
+      });
+      setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
+      cooldown.startCooldown();
+    } catch (e) {
+      setResult({ success: false, money: 0, xp: 0 });
+    }
+    setLoading(false);
+  };
+
+  const tabColors: Record<string, string> = {
+    street: "from-green-600 to-green-800",
+    robbery: "from-red-600 to-red-800",
+    fraud: "from-yellow-600 to-yellow-800",
+    burglary: "from-orange-600 to-orange-800",
+    drugs: "from-purple-600 to-purple-800",
+    organized: "from-blue-600 to-blue-800",
+    underground: "from-gray-600 to-gray-800",
+  };
 
   return (
-    <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3">
-        <AlertTriangle className="size-7 text-red-400" />
-        <div>
-          <h2 className="text-2xl font-bold">Crimes</h2>
-          <p className="text-sm text-muted-foreground">Choose a category to commit crimes. Higher risk = higher reward.</p>
+    <div className="animate-fade-in space-y-4">
+      {/* RESULT AT TOP */}
+      <AnimatePresence>
+        {result && (
+          <EpicActionResult success={result.success} money={result.money} xp={result.xp} onClose={() => setResult(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* COOLDOWN TIMER */}
+      <CooldownBar cooldown={cooldown} />
+
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">{category?.icon || "🔥"}</span>
+          <div>
+            <h2 className="text-2xl font-bold">Crimes</h2>
+            <p className="text-xs text-muted-foreground">{searchQuery ? `Searching all crimes...` : `${category?.name || "All"} — ${category?.description || ""}`}</p>
+          </div>
         </div>
+        <div className="text-sm text-muted-foreground">Total: {allCrimes.length} crimes</div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {crimeCategories.map((category) => {
-          const avgRisk = Math.round(category.crimes.reduce((sum, c) => sum + c.risk, 0) / category.crimes.length);
-          const maxReward = Math.max(...category.crimes.map(c => c.reward));
+      {/* SEARCH */}
+      <div className="relative">
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="🔍 Search crimes across all categories..."
+          className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition"
+        />
+        {searchQuery && (
+          <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground">✕ Clear</button>
+        )}
+      </div>
 
-          return (
-            <motion.button
-              key={category.id}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`text-left p-5 rounded-xl border-2 transition-all ${getCrimeTypeBg(category.id)} hover:shadow-lg hover:shadow-primary/5`}
+      {/* CATEGORY TABS */}
+      {!searchQuery && (
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+          {crimeCategories.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveTab(cat.id)}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                activeTab === cat.id
+                  ? `bg-gradient-to-r ${tabColors[cat.id] || "from-gray-600 to-gray-800"} text-white shadow-lg`
+                  : "bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10"
+              }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">{category.icon}</span>
-                  <div>
-                    <div className="font-bold text-sm">{category.name}</div>
-                    <div className="text-[10px] text-muted-foreground">{category.crimes.length} crimes</div>
+              <span>{cat.icon}</span>
+              <span>{cat.name}</span>
+              <span className="text-[10px] opacity-70">({cat.crimes.length})</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* CRIMES LIST */}
+      <div className="space-y-2">
+        {sortedCrimes.length === 0 && (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            {searchQuery ? "No crimes match your search." : "No crimes available."}
+          </div>
+        )}
+        {sortedCrimes.map((crime: any) => {
+          const hasLevel = (player?.level ?? 0) >= crime.levelRequired;
+          const isLocked = !hasLevel;
+          return (
+            <motion.div
+              key={crime.id + (crime.category || "")}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={!isLocked ? { scale: 1.01, borderColor: "rgba(228,130,51,0.3)" } : undefined}
+              className={`mafia-card rounded-xl p-4 transition-all ${isLocked ? "opacity-40" : "hover:border-primary/30 cursor-pointer"} ${loading || cooldown.onCooldown ? "pointer-events-none opacity-60" : ""}`}
+              onClick={() => !isLocked && !loading && !cooldown.onCooldown && executeCrime(crime)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    {searchQuery && <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground">{crime.categoryIcon} {crime.categoryName}</span>}
+                    <span className="font-bold text-sm">{crime.name}</span>
+                    {isLocked && <span className="text-[10px] bg-red-950/50 text-red-400 px-2 py-0.5 rounded-full font-bold">🔒 Lv.{crime.levelRequired}</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">{crime.description}</p>
+                  <div className="flex items-center gap-4 mt-2">
+                    <span className="text-[10px] font-bold text-red-400">⚠️ Risk: {crime.risk}%</span>
+                    <span className="text-[10px] font-bold text-green-400">💰 ${crime.reward.toLocaleString()}</span>
+                    <span className="text-[10px] font-bold text-blue-400">⭐ +{crime.xp} XP</span>
                   </div>
                 </div>
-                <ChevronRight className="size-5 text-muted-foreground" />
+                {!isLocked && (
+                  <div className="ml-4">
+                    {loading ? (
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} className="size-5 border-2 border-primary border-t-transparent rounded-full" />
+                    ) : (
+                      <ChevronRight className="size-5 text-muted-foreground" />
+                    )}
+                  </div>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground mb-3">{category.description}</p>
-              <div className="flex gap-4 text-[10px]">
-                <span className={getCrimeTypeColor(category.id)}>Avg Risk: {avgRisk}%</span>
-                <span className="text-green-400">Max Reward: ${maxReward.toLocaleString()}</span>
-              </div>
-            </motion.button>
+            </motion.div>
           );
         })}
       </div>
     </div>
   );
 }
-
 // ===== LEGENDARY CRIMES =====
 export function LegendaryCrimePage() {
   const dailyCrimes = useMemo(() => getDailyLegendaryCrimes(), []);

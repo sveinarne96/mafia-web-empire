@@ -2131,7 +2131,7 @@ const renderPage = () => {
       case "updates": return <UpdatesPage />;
 
       // Crime
-      case "crimes": return <CrimesOverviewPage />;
+      case "crimes": return <CrimesOverviewPage initialCategory="street" />;
       case "steal_from_house": return <StealFromHousePage />;
       case "gta_car_theft": return <GtaCarTheftPage />;
       case "crime_empire": return <CrimeEmpirePage />;
@@ -2360,13 +2360,13 @@ const renderPage = () => {
       case "weekly_missions": return <WeeklyMissionsPage />;
       case "monthly_missions": return <MonthlyMissionsPage />;
       // Crime subcategories
-      case "robbery": return <SafePage><CrimeCategoryPage categoryId="robbery" /></SafePage>;
-      case "fraud": return <SafePage><CrimeCategoryPage categoryId="fraud" /></SafePage>;
-      case "burglary": return <SafePage><CrimeCategoryPage categoryId="burglary" /></SafePage>;
-      case "drugs": return <SafePage><CrimeCategoryPage categoryId="drugs" /></SafePage>;
-      case "organized": return <SafePage><CrimeCategoryPage categoryId="organized" /></SafePage>;
-      case "fraud": return <CrimesOverviewPage />;
-      case "transport": return <CrimesOverviewPage />;
+      case "robbery": return <CrimesOverviewPage initialCategory="robbery" />;
+      case "fraud": return <CrimesOverviewPage initialCategory="fraud" />;
+      case "burglary": return <CrimesOverviewPage initialCategory="burglary" />;
+      case "drugs": return <CrimesOverviewPage initialCategory="drugs" />;
+      case "organized": return <CrimesOverviewPage initialCategory="organized" />;
+      // case "fraud" handled above
+      case "transport": return <CrimesOverviewPage initialCategory="street" />;
       default: return <HeadquartersPage />;
     }
   };
