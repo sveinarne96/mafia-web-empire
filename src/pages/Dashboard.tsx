@@ -2131,14 +2131,14 @@ const renderPage = () => {
       case "updates": return <UpdatesPage />;
 
       // Crime
-      case "crimes": return <CrimesOverviewPage initialCategory="street" />;
+      case "crimes": return <CrimeCategoryPage categoryId="street" />;
       case "steal_from_house": return <StealFromHousePage />;
       case "gta_car_theft": return <GtaCarTheftPage />;
       case "crime_empire": return <CrimeEmpirePage />;
       case "heist_planning": return <HeistPlanningPage />;
       case "organized_crime": return <OrganizedCrimePage />;
       case "kill": return <SafePage><MurderPage /></SafePage>;
-      case "underground": return <UndergroundPage />;
+      case "underground": return <CrimeCategoryPage categoryId="underground" />;
       case "crime_spree": return <CrimeSpreePage />;
 
       // Combat
@@ -2360,13 +2360,13 @@ const renderPage = () => {
       case "weekly_missions": return <WeeklyMissionsPage />;
       case "monthly_missions": return <MonthlyMissionsPage />;
       // Crime subcategories
-      case "robbery": return <CrimesOverviewPage initialCategory="robbery" />;
-      case "fraud": return <CrimesOverviewPage initialCategory="fraud" />;
-      case "burglary": return <CrimesOverviewPage initialCategory="burglary" />;
-      case "drugs": return <CrimesOverviewPage initialCategory="drugs" />;
-      case "organized": return <CrimesOverviewPage initialCategory="organized" />;
+      case "robbery": return <CrimeCategoryPage categoryId="robbery" />;
+      case "fraud": return <CrimeCategoryPage categoryId="fraud" />;
+      case "burglary": return <CrimeCategoryPage categoryId="burglary" />;
+      case "drugs": return <CrimeCategoryPage categoryId="drugs" />;
+      case "organized": return <CrimeCategoryPage categoryId="organized" />;
       // case "fraud" handled above
-      case "transport": return <CrimesOverviewPage initialCategory="street" />;
+      case "transport": return <CrimeCategoryPage categoryId="street" />;
       default: return <HeadquartersPage />;
     }
   };
