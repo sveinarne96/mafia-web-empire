@@ -24,11 +24,19 @@ export const getInventory = query({
 
 // ===== EASTER EGG SYSTEM =====
 // Grant an Easter Egg drop (only called by client when the Easter Egg Hunt event is active)
+// Eggs STACK up to 100 in a single inventory slot
 export const grantEasterEgg = mutation({
   args: {},
   handler: async (ctx) => {
     const player = await getPlayer(ctx);
     if (!player) throw new Error("Not authenticated");
+    const MAX_STACK = 100;
+    const items = await ctx.db.query("inventory").withIndex("by_user", (q) => q.eq("userId", player._id)).collect();
+    const stack = items.find((i: any) => i.type === "easter_egg" && (i.quantity ?? 1) < MAX_STACK);
+    if (stack) {
+      await ctx.db.patch(stack._id, { quantity: (stack.quantity ?? 1) + 1 });
+      return { success: true, stacked: true, quantity: (stack.quantity ?? 1) + 1 };
+    }
     await ctx.db.insert("inventory", {
       userId: player._id,
       itemId: `easter_egg_${Date.now()}`,
@@ -39,7 +47,7 @@ export const grantEasterEgg = mutation({
       rarity: "legendary",
       price: 25000000,
     });
-    return { success: true };
+    return { success: true, stacked: false, quantity: 1 };
   },
 });
 
@@ -52,7 +60,13 @@ export const openEasterEgg = mutation({
     const item = await ctx.db.get(args.itemId);
     if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
     if ((item as any).type !== "easter_egg") throw new Error("Not an Easter Egg");
-    await ctx.db.delete(args.itemId);
+    // Consume ONE egg from the stack (up to 100 per stack)
+    const qty = (item as any).quantity ?? 1;
+    if (qty <= 1) {
+      await ctx.db.delete(args.itemId);
+    } else {
+      await ctx.db.patch(args.itemId, { quantity: qty - 1 });
+    }
 
     const roll = Math.random();
     const twoHours = Date.now() + 2 * 60 * 60 * 1000;
@@ -196,7 +210,7 @@ export const sellItem = mutation({
     if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
     // Get real value from the item's price field or use name-based lookup
     let sellPrice = (item as any).price ?? 0;
-    if ((item as any).type === "easter_egg") sellPrice = 25000000;
+    if ((item as any).type === "easter_egg") sellPrice = 25000000 * ((item as any).quantity ?? 1);
     if (sellPrice <= 0) {
       // Fallback: use rarity-based value but much higher
       const rarity = (item as any).rarity ?? "common";
@@ -220,7 +234,7 @@ export const sellAllItems = mutation({
     for (const item of items) {
       if ((item as any).equipped) continue;
       let price = (item as any).price ?? 0;
-      if ((item as any).type === "easter_egg") price = 25000000;
+      if ((item as any).type === "easter_egg") price = 25000000 * ((item as any).quantity ?? 1);
       if (price <= 0) {
         const rarity = (item as any).rarity ?? "common";
         const rarityMult: Record<string, number> = { common: 500, uncommon: 2000, rare: 8000, epic: 25000, legendary: 100000 };
