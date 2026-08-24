@@ -285,7 +285,64 @@ function AdminTool({ title, icon, description, onClose }: { title: string; icon:
         )}
       </div>);
     }
-    if (["Event Manager","Season Control","Purge Controller","Crime Event Creator","Tournament Manager","Daily Challenge Editor","Weekly Challenge Editor","Season Pass Editor","Weather Control","Lotto Control"].includes(title)) {
+    if (title === "Event Manager") {
+      const allEvents = [
+        { id: "evt_newyear", name: "New Year's Heist", icon: "🎆", desc: "Fireworks + heists!" },
+        { id: "evt_valentine", name: "Valentine's Crime", icon: "❤️", desc: "Crime of passion!" },
+        { id: "evt_patricks", name: "St. Patrick's Gold", icon: "☘️", desc: "Gold rush bonus!" },
+        { id: "evt_easter", name: "Easter Egg Hunt", icon: "🥚", desc: "Find hidden prizes!" },
+        { id: "evt_summer", name: "Summer Crime Wave", icon: "☀️", desc: "All crimes boosted!" },
+        { id: "evt_halloween", name: "Halloween Horror", icon: "🎃", desc: "3x spooky payouts!" },
+        { id: "evt_christmas", name: "Christmas Heist", icon: "🎄", desc: "Legendary loot!" },
+        { id: "evt_cyber", name: "Cyber Monday", icon: "💻", desc: "Hacking +5x!" },
+        { id: "evt_blackfriday", name: "Black Friday Heist", icon: "🛒", desc: "Steal the deals!" },
+        { id: "evt_tax", name: "Tax Season Scam", icon: "📋", desc: "Tax fraud bonanza!" },
+        { id: "evt_spring", name: "Spring Break Crime", icon: "🌸", desc: "Party + crime!" },
+        { id: "evt_winter", name: "Winter Wonderland", icon: "❄️", desc: "Cold cash bonus!" },
+        { id: "evt_purge", name: "Purge Night", icon: "💀", desc: "24h lawlessness!" },
+        { id: "evt_bloodmoon", name: "Blood Moon", icon: "🌑", desc: "Combat boost!" },
+        { id: "evt_robbersmoon", name: "Robber's Moon", icon: "🌙", desc: "Crime +20% success!" },
+        { id: "evt_fullmoon", name: "Full Moon", icon: "🌕", desc: "ALL boosts active!" },
+        { id: "evt_grandheist", name: "Grand Heist", icon: "🏦", desc: "10x bank heist!" },
+        { id: "evt_tournament", name: "Tournament", icon: "🏆", desc: "PvP tournament!" },
+        { id: "evt_familywar", name: "Family War Week", icon: "⚔️", desc: "5x reputation!" },
+        { id: "evt_territory", name: "Territory Takeover", icon: "📍", desc: "+300% income!" },
+        { id: "evt_underground", name: "Underground Champ", icon: "💣", desc: "Fighting tournament!" },
+        { id: "evt_empire", name: "Crime Empire Week", icon: "👑", desc: "5x empire reward!" },
+        { id: "evt_double_xp", name: "Double XP Weekend", icon: "⭐", desc: "2x XP on all!" },
+        { id: "evt_triple_xp", name: "Triple XP Weekend", icon: "🌟", desc: "3x XP on all!" },
+        { id: "evt_50x_xp", name: "50x XP Event", icon: "💫", desc: "50x XP insane!" },
+        { id: "evt_double_cash", name: "Double Cash Weekend", icon: "💰", desc: "2x cash on all!" },
+        { id: "evt_triple_cash", name: "Triple Cash Event", icon: "💎", desc: "3x cash on all!" },
+        { id: "evt_cash_rain", name: "Cash Rain", icon: "🌧️", desc: "Money falls from sky!" },
+        { id: "evt_heatwave", name: "Heatwave", icon: "🔥", desc: "Crime XP boost!" },
+        { id: "evt_thunderstorm", name: "Thunderstorm", icon: "⛈️", desc: "Smuggling +50%!" },
+        { id: "evt_crime_frenzy", name: "Crime Frenzy", icon: "🌀", desc: "All crimes +100% XP!" },
+        { id: "evt_diamond_rush", name: "Diamond Rush", icon: "💎", desc: "Rare items everywhere!" },
+        { id: "evt_black_market_sale", name: "Black Market Sale", icon: "🖤", desc: "50% off black market!" },
+        { id: "evt_lucky_hour", name: "Lucky Hour", icon: "🍀", desc: "Gambling +50% luck!" },
+        { id: "evt_jackpot_hour", name: "Jackpot Hour", icon: "🎰", desc: "Slots jackpot +10x!" },
+        { id: "evt_gambling_marathon", name: "Gambling Marathon", icon: "🎲", desc: "Non-stop gambling!" },
+        { id: "evt_prestige_rush", name: "Prestige Rush", icon: "✨", desc: "2x prestige points!" },
+        { id: "evt_kill_free_zone", name: "Kill Free Zone", icon: "☠️", desc: "No wanted for kills!" },
+        { id: "evt_golden_hour", name: "Golden Hour", icon: "🌅", desc: "All rewards golden!" },
+        { id: "evt_weekend_boost", name: "Weekend Boost", icon: "🎮", desc: "+1-10 points per action!" },
+      ];
+      return (<div className="space-y-3">
+        <div className="text-xs text-muted-foreground mb-2">Click to activate/deactivate events</div>
+        <div className="grid grid-cols-1 gap-1.5 max-h-96 overflow-y-auto">
+          {allEvents.map(evt => (
+            <div key={evt.id} className="flex items-center gap-2 mafia-card rounded-lg p-2">
+              <span className="text-lg">{evt.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold truncate">{evt.name}</div>
+                <div className="text-[10px] text-muted-foreground truncate">{evt.desc}</div>
+              </div>
+              <button className="px-2 py-1 bg-green-600 text-white rounded text-[10px] font-bold hover:bg-green-700 shrink-0">Activate</button>
+            </div>
+          ))}
+        </div>
+      </div>);
       return (<div className="space-y-3">
         <div><label className="text-xs text-muted-foreground">Action</label>
         <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
