@@ -2492,7 +2492,7 @@ const renderPage = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
         {showLeft && (
-          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-40" : "w-56"} bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block transition-all`}>
+          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-48" : "w-64"} bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block transition-all`}>
             <div className="p-3 space-y-1">
               {leftMenuSections.map(section => (
                 <div key={section.title}>
@@ -2554,7 +2554,7 @@ const renderPage = () => {
 
         {/* Right Menu */}
         {showRight && (
-          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-36" : "w-56"} bg-[oklch(0.07_0.015_35)] border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block transition-all`}>
+          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-44" : "w-64"} bg-[oklch(0.07_0.015_35)] border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block transition-all`}>
             <div className="p-3 space-y-3">
               {/* Status Panel */}
               {player && (
@@ -2575,16 +2575,29 @@ const renderPage = () => {
                         style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }} />
                     </div>
                   </div>
-                  {/* XP Bar */}
+                  {/* RANK BAR */}
                   <div className="px-2">
-                    <div className="flex justify-between text-[10px] mb-0.5">
-                      <span className="text-yellow-400 font-bold">⭐ XP</span>
-                      <span className="text-muted-foreground">{xpPercent.toFixed(0)}%</span>
+                    <div className="flex justify-between text-[10px] mb-1">
+                      <span className="text-yellow-400 font-bold">⭐ {getRank(player.level ?? 1)} Lv.{player.level ?? 1}</span>
+                      <span className="text-muted-foreground">{player.experience ?? 0}/{xpNeeded} XP</span>
                     </div>
-                    <div className="h-2.5 bg-[oklch(0.14_0.012_35)] rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-yellow-500 to-orange-400 rounded-full transition-all"
-                        style={{ width: `${xpPercent}%` }} />
+                    <style>{`
+                      @keyframes rankbar-shimmer { 0% { background-position: -200% 50%; } 100% { background-position: 200% 50%; } }
+                      @keyframes rankbar-glow { 0%,100% { box-shadow: 0 0 4px rgba(250,204,21,0.3); } 50% { box-shadow: 0 0 14px rgba(250,204,21,0.7); } }
+                    `}</style>
+                    <div className="relative w-full h-4 bg-[oklch(0.14_0.012_35)] rounded-full overflow-hidden border border-yellow-500/20">
+                      <div className="h-full rounded-full transition-all duration-700"
+                        style={{
+                          width: `${Math.max(xpPercent, (player.experience ?? 0) > 0 ? 3 : 0)}%`,
+                          background: "linear-gradient(90deg, #b45309, #f59e0b, #fbbf24, #f59e0b, #b45309)",
+                          backgroundSize: "200% 100%",
+                          animation: "rankbar-shimmer 2.5s linear infinite, rankbar-glow 2s ease-in-out infinite",
+                        }} />
+                      <div className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white/90 drop-shadow">
+                        {xpPercent >= 100 ? "LEVEL UP!" : `${xpPercent.toFixed(0)}%`}
+                      </div>
                     </div>
+                    <div className="text-[9px] text-muted-foreground mt-0.5 text-center">Next rank: {getRank((player.level ?? 1) + 1)}</div>
                   </div>
                   {/* Stats Grid */}
                   <div className="px-2 grid grid-cols-2 gap-1.5">
