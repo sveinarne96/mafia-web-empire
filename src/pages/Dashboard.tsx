@@ -2449,7 +2449,7 @@ const renderPage = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
         {showLeft && (
-          <aside className="w-56 bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block">
+          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-40" : "w-56"} bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block transition-all`}>
             <div className="p-3 space-y-1">
               {leftMenuSections.map(section => (
                 <div key={section.title}>
@@ -2511,7 +2511,7 @@ const renderPage = () => {
 
         {/* Right Menu */}
         {showRight && (
-          <aside className="w-56 bg-[oklch(0.07_0.015_35)] border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block">
+          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-36" : "w-56"} bg-[oklch(0.07_0.015_35)] border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block transition-all`}>
             <div className="p-3 space-y-3">
               {/* Status Panel */}
               {player && (
