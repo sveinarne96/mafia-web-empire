@@ -58,14 +58,14 @@ function pickRarity(i: number): string {
   return "common";
 }
 
-/** Roll one random item out of the 560-item vault. */
+/** Roll one random item out of the 512-item vault — ALL items sell at EPIC value ($20M–$75M). */
 export function rollEggPoolItem(): { name: string; type: string; icon: string; rarity: string; price: number } {
   const gi = Math.floor(Math.random() * GROUPS.length);
   const group = GROUPS[gi];
   const ni = Math.floor(Math.random() * group.names.length);
   const baseName = group.names[ni];
-  const rarity = pickRarity(gi * 61 + ni);
-  const [min, max] = PRICE_RANGE[rarity];
+  const rarity = "epic";
+  const [min, max] = PRICE_RANGE.epic;
   const price = min + Math.floor(Math.random() * ((max - min) / 50_000)) * 50_000;
   const prefix: Record<string, string> = {
     common: "", uncommon: "✨ ", rare: "💠 ", epic: "🌟 ", legendary: "🌟🌟 ",
