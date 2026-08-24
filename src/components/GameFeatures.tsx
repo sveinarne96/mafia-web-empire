@@ -869,9 +869,9 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
     setLoading(true); setResult(null);
     try {
       const res = await commitCrime({ crimeId: crime.id, reward: crime.reward, risk: crime.risk, xp: crime.xp });
-      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
+      await maybeDropEasterEgg(grantEgg, res.success);
+      await maybeDropEventGift(grantGift, res.success);
       setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
-      if (eggMsg) setTimeout(() => alert(eggMsg), 400);
       setLastByCategory(prev => ({ ...prev, [crime.categoryId]: Date.now() }));
     } catch (e) { setResult({ success: false, money: 0, xp: 0 }); }
     setLoading(false);

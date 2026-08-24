@@ -40,11 +40,9 @@ export function StealFromHousePage() {
     setResult(null);
     try {
       const res = await stealFromHouse({ difficulty: selectedDifficulty, houseType: selectedDifficulty });
-      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
-      const giftMsg = await maybeDropEventGift(grantGift, res.success);
+      await maybeDropEasterEgg(grantEgg, res.success);
+      await maybeDropEventGift(grantGift, res.success);
       setResult(res);
-      const dropMsgs = [eggMsg, giftMsg].filter(Boolean).join("\n");
-      if (dropMsgs) setTimeout(() => alert(dropMsgs), 400);
       setCooldown(10);
     } catch (e: unknown) {
       setResult({ error: e instanceof Error ? e.message : "Error" });
@@ -174,11 +172,9 @@ export function GtaCarTheftPage() {
     setResult(null);
     try {
       const res = await gtaCarTheft();
-      const eggMsg2 = await maybeDropEasterEgg(grantEgg2, res.success);
-      const giftMsg2 = await maybeDropEventGift(grantGift2, res.success);
+      await maybeDropEasterEgg(grantEgg2, res.success);
+      await maybeDropEventGift(grantGift2, res.success);
       setResult(res);
-      const dropMsgs2 = [eggMsg2, giftMsg2].filter(Boolean).join("\n");
-      if (dropMsgs2) setTimeout(() => alert(dropMsgs2), 400);
       setCooldown(10);
     } catch (e: unknown) {
       setResult({ error: e instanceof Error ? e.message : "Error" });

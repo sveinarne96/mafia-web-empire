@@ -871,10 +871,8 @@ export function SmugglingRoutesPage() {
     setSmuggling(true); setResult(null);
     try {
       const res = await commitCrime({ crimeId: `smuggle_${route.id}`, reward: route.profit, risk: route.risk, xp: Math.floor(route.profit / 200) });
-      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
-      const giftMsg = await maybeDropEventGift(grantGift, res.success);
-      const dropMsgs = [eggMsg, giftMsg].filter(Boolean).join("\n");
-      if (dropMsgs) setTimeout(() => alert(dropMsgs), 400);
+      await maybeDropEasterEgg(grantEgg, res.success);
+      await maybeDropEventGift(grantGift, res.success);
       setResult({ success: res.success, money: res.moneyEarned });
     } catch { setResult({ success: false, money: 0 }); }
     setSmuggling(false);
