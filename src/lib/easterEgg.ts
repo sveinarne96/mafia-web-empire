@@ -12,7 +12,7 @@ export function isEasterEventActive(): boolean {
 
 /**
  * Call right after a successful crime.
- * Only drops when the Easter Egg Hunt event is active — 8% chance.
+ * Only drops when the Easter Egg Hunt event is active — 100% guaranteed drop.
  * Returns a message to show the player, or null.
  */
 export async function maybeDropEasterEgg(
@@ -20,7 +20,6 @@ export async function maybeDropEasterEgg(
   success: boolean,
 ): Promise<string | null> {
   if (!success || !isEasterEventActive()) return null;
-  if (Math.random() > 0.08) return null;
   try {
     await grantEgg({});
     return "🥚 EASTER EGG FOUND! Open it in My Items for a legendary prize!";
