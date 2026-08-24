@@ -397,7 +397,7 @@ function HeadquartersPage() {
       </div>
       <div className="mafia-card rounded-xl p-4">
         <div className="text-xs text-muted-foreground mb-1">XP Progress</div>
-        <div className="w-full h-4 bg-black/40 rounded-full overflow-hidden">
+        <div className="w-full h-4 bg-[oklch(0.14_0.012_35)] rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-yellow-500 to-orange-400 rounded-full transition-all"
             style={{ width: `${xpPercent}%` }} />
         </div>
@@ -431,7 +431,7 @@ function BankPage() {
         <div className="mafia-card rounded-xl p-4 text-center"><div className="text-xs text-muted-foreground">Bank</div><div className="text-xl font-bold text-blue-400">${(player.bank ?? 0).toLocaleString()}</div></div>
       </div>
       <div className="mafia-card rounded-xl p-4 space-y-3">
-        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm" />
+        <input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Amount..." className="w-full bg-[oklch(0.10_0.012_35)] border border-border rounded-lg px-3 py-2 text-sm" />
         <div className="flex gap-2">
           <button onClick={() => handle("deposit")} className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-bold hover:bg-green-700">Deposit</button>
           <button onClick={() => handle("withdraw")} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700">Withdraw</button>
@@ -2374,7 +2374,7 @@ const renderPage = () => {
   const inPrison = player?.inPrison;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[oklch(0.08_0.015_35)]">
       {/* Level Up Modal */}
       <AnimatePresence>
         {player?.levelUpPending && !dismissedLevelUp && (
@@ -2407,7 +2407,7 @@ const renderPage = () => {
       )}
 
       {/* Top Quick Access Bar */}
-      <div className="bg-gradient-to-r from-black/60 via-black/40 to-black/60 border-b border-border/50 px-4 py-2.5 flex items-center gap-2 overflow-x-auto shrink-0">
+      <div className="bg-[oklch(0.08_0.018_38)] border-b border-border/50 px-4 py-2.5 flex items-center gap-2 overflow-x-auto shrink-0">
         <style>{`
           @keyframes topbar-glow { 0%,100% { box-shadow: 0 0 6px var(--c); } 50% { box-shadow: 0 0 16px var(--c); } }
           @keyframes topbar-slide { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
@@ -2449,7 +2449,7 @@ const renderPage = () => {
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
         {showLeft && (
-          <aside className="w-56 bg-black/30 border-r border-border/50 overflow-y-auto shrink-0 hidden md:block">
+          <aside className="w-56 bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block">
             <div className="p-3 space-y-1">
               {leftMenuSections.map(section => (
                 <div key={section.title}>
@@ -2511,7 +2511,7 @@ const renderPage = () => {
 
         {/* Right Menu */}
         {showRight && (
-          <aside className="w-56 bg-black/30 border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block">
+          <aside className="w-56 bg-[oklch(0.07_0.015_35)] border-l border-border/50 overflow-y-auto shrink-0 hidden lg:block">
             <div className="p-3 space-y-3">
               {/* Status Panel */}
               {player && (
@@ -2523,7 +2523,7 @@ const renderPage = () => {
                       <span className="text-red-400 font-bold">❤️ Life</span>
                       <span className="text-muted-foreground">{player.life}/{player.maxLife}</span>
                     </div>
-                    <div className="h-2.5 bg-black/40 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-[oklch(0.14_0.012_35)] rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-red-500 to-pink-400 rounded-full transition-all"
                         style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 100)) * 100}%` }} />
                     </div>
@@ -2534,7 +2534,7 @@ const renderPage = () => {
                       <span className="text-yellow-400 font-bold">⭐ <RankBadge level={player.level ?? 1} /> Lv.{player.level}</span>
                       <span className="text-muted-foreground">{xpPercent.toFixed(0)}%</span>
                     </div>
-                    <div className="h-2.5 bg-black/40 rounded-full overflow-hidden">
+                    <div className="h-2.5 bg-[oklch(0.14_0.012_35)] rounded-full overflow-hidden">
                       <div className="h-full bg-gradient-to-r from-yellow-500 to-orange-400 rounded-full transition-all"
                         style={{ width: `${xpPercent}%` }} />
                     </div>
@@ -2619,7 +2619,7 @@ const renderPage = () => {
       </div>
 
       {/* Bottom Bar */}
-      <div className="bg-black/40 border-t border-border/50 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground shrink-0">
+      <div className="bg-[oklch(0.06_0.015_35)] border-t border-border/50 px-4 py-2 flex items-center justify-between text-xs text-muted-foreground shrink-0">
         <div className="flex items-center gap-4">
           <span>{player?.nickname || "Unknown"}</span>
           <span><RankBadge level={player?.level ?? 1} /> Lv.{player?.level ?? 1}</span>
@@ -2689,7 +2689,7 @@ function RegisterPlayer({ onComplete }: { onComplete: () => void }) {
       <div className="space-y-2">
         <label className="text-xs font-bold text-muted-foreground">Nickname</label>
         <input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Your street name..."
-          className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm" />
+          className="w-full bg-[oklch(0.10_0.012_35)] border border-border rounded-lg px-3 py-2 text-sm" />
       </div>
 
       <div className="space-y-2">

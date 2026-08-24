@@ -155,7 +155,7 @@ export default function Landing() {
       {/* ===== HERO SECTION ===== */}
       <motion.section style={{ opacity: heroOpacity, scale: heroScale }} className="relative min-h-screen flex items-center justify-center">
         {/* Dark gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-[#0a0505] to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.06_0.02_30)] via-[oklch(0.08_0.02_35)] to-background" />
 
         {/* Animated radial glows */}
         <div className="absolute inset-0">
@@ -268,7 +268,7 @@ export default function Landing() {
 
       {/* ===== FEATURES SECTION ===== */}
       <section className="py-24 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/20 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-[oklch(0.12_0.02_38)/0.2] to-background" />
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="text-xs text-primary tracking-[0.4em] uppercase mb-3 font-medium">Everything You Need</div>
@@ -304,7 +304,7 @@ export default function Landing() {
 
       {/* ===== HOW IT WORKS - JOURNEY ===== */}
       <section className="py-24 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-red-950/5 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-[oklch(0.25_0.08_15)/0.05] to-background" />
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="text-xs text-red-400 tracking-[0.4em] uppercase mb-3 font-medium">Your Journey</div>
@@ -346,7 +346,7 @@ export default function Landing() {
 
       {/* ===== CITIES SECTION ===== */}
       <section className="py-24 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-card/20 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-[oklch(0.12_0.02_38)/0.2] to-background" />
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="text-xs text-primary tracking-[0.4em] uppercase mb-3 font-medium">Open World</div>
@@ -383,7 +383,7 @@ export default function Landing() {
 
       {/* ===== NUMBERS SECTION ===== */}
       <section className="py-24 px-4 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-background via-primary/5 to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-[oklch(0.75_0.14_75)/0.05] to-background" />
         <div className="max-w-5xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="text-xs text-primary tracking-[0.4em] uppercase mb-3 font-medium">By The Numbers</div>
