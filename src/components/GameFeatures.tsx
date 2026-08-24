@@ -751,11 +751,9 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
         risk: crime.risk,
         xp: crime.xp,
       });
-      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
-      const giftMsg = await maybeDropEventGift(grantGift, res.success);
+      await maybeDropEasterEgg(grantEgg, res.success);
+      await maybeDropEventGift(grantGift, res.success);
       setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
-      const dropMsgs = [eggMsg, giftMsg].filter(Boolean).join("\n");
-      if (dropMsgs) setTimeout(() => alert(dropMsgs), 400);
       cooldown.startCooldown();
     } catch (e) {
       setResult({ success: false, money: 0, xp: 0 });
