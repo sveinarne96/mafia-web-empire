@@ -1620,9 +1620,10 @@ export default function Dashboard() {
     }
   }, [player?.inPrison, player?.lastCrimeAt]);
 
-  const [leftExpanded, setLeftExpanded] = useState<string[]>(leftMenuSections.map(s => s.title));
-  const [rightExpanded, setRightExpanded] = useState<string[]>(rightMenuSections.map(s => s.title));
+  const [leftExpanded, setLeftExpanded] = useState<string[]>([]);
+  const [rightExpanded, setRightExpanded] = useState<string[]>([]);
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
+  const [rightItemsExpanded, setRightItemsExpanded] = useState<string[]>([]);
   const [showLeft, setShowLeft] = useState(false);
   const [showRight, setShowRight] = useState(false);
 
@@ -2469,7 +2470,7 @@ const renderPage = () => {
                             <button onClick={() => setLeftItemsExpanded((prev: string[]) => prev.includes(item.label) ? prev.filter((t: string) => t !== item.label) : [...prev, item.label])}
                               className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition text-muted-foreground hover:text-foreground hover:bg-white/5">
                               <span className="text-xs">{item.icon}</span>
-                              <span className="flex-1 text-left">{item.label}</span>
+                              <span className="flex-1 text-left truncate">{item.label}</span>
                               {leftItemsExpanded.includes(item.label) ? <ChevronDown className="size-2.5" /> : <ChevronRight className="size-2.5" />}
                             </button>
                             {leftItemsExpanded.includes(item.label) && (
@@ -2579,13 +2580,13 @@ const renderPage = () => {
                       {section.items.map(item => (
                         (item as any).children ? (
                           <div key={item.label}>
-                            <button onClick={() => setLeftItemsExpanded((prev: string[]) => prev.includes(item.label) ? prev.filter((t: string) => t !== item.label) : [...prev, item.label])}
+                            <button onClick={() => setRightItemsExpanded((prev: string[]) => prev.includes(item.label) ? prev.filter((t: string) => t !== item.label) : [...prev, item.label])}
                               className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs transition text-muted-foreground hover:text-foreground hover:bg-white/5">
                               <span className="text-xs">{item.icon}</span>
-                              <span className="flex-1 text-left">{item.label}</span>
-                              {leftItemsExpanded.includes(item.label) ? <ChevronDown className="size-2.5" /> : <ChevronRight className="size-2.5" />}
+                              <span className="flex-1 text-left truncate">{item.label}</span>
+                              {rightItemsExpanded.includes(item.label) ? <ChevronDown className="size-2.5" /> : <ChevronRight className="size-2.5" />}
                             </button>
-                            {leftItemsExpanded.includes(item.label) && (
+                            {rightItemsExpanded.includes(item.label) && (
                               <div className="ml-4 space-y-0.5">
                                 {(item as any).children.map((child: any) => (
                                   <button key={child.page} onClick={() => setPage(child.page)}
