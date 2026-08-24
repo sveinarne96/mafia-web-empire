@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface GameEvent {
   id: string;
@@ -76,10 +76,14 @@ const CATEGORIES = [
 ];
 
 export function EventsManager({ onClose }: { onClose: () => void }) {
-  const [activeEvents, setActiveEvents] = useState<string[]>([]);
+  const [activeEvents, setActiveEvents] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem("activeEvents") || "[]"); } catch { return []; }
+  });
   const [filter, setFilter] = useState("all");
 
   const filtered = filter === "all" ? ALL_EVENTS : ALL_EVENTS.filter(e => e.category === filter);
+
+  useEffect(() => { localStorage.setItem("activeEvents", JSON.stringify(activeEvents)); }, [activeEvents]);
 
   const toggleEvent = (id: string) => {
     setActiveEvents(prev => prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]);
