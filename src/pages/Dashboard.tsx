@@ -998,20 +998,94 @@ function OffshorePage() {
 }
 function ReferralPage() {
   const player = useQuery(api.game.getPlayer);
-  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const data = useQuery(api.referralSystem.getMyReferral);
+  const top = useQuery(api.referralSystem.getTopReferrers);
+  const ensureCode = useMutation(api.referralSystem.ensureMyReferralCode);
+  const applyCode = useMutation(api.referralSystem.applyReferralCode);
+  const claimCommission = useMutation(api.referralSystem.claimReferralCommission);
+  const [msg, setMsg] = useState("");
+  const [codeInput, setCodeInput] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (player && data && !data.code) ensureCode({}).catch(() => {});
+  }, [player, data]);
+
+  if (!player || !data) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading referral network...</div>;
+
+  const now = Date.now();
+  const commissionReady = now - data.lastCommissionAt >= 24 * 3600_000;
+  const nextClaimIn = Math.max(0, 24 * 3600_000 - (now - data.lastCommissionAt));
+  const fmtH = (ms: number) => `${Math.floor(ms / 3600_000)}h ${Math.floor((ms % 3600_000) / 60_000)}m`;
+
   return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><span className="text-3xl">🔗</span><h2 className="text-2xl font-bold">Referral System</h2></div>
-      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
-        <div className="text-5xl">🔗</div>
-        <div className="text-sm text-muted-foreground">Invite friends and earn rewards! You get 10% of their first $100K earned.</div>
-        <div className="mafia-card rounded-lg p-3 max-w-sm mx-auto">
-          <div className="text-xs text-muted-foreground mb-1">Your Referral Code</div>
-          <div className="text-lg font-bold text-primary font-mono">{(player.username ?? "PLAYER").toUpperCase()}-{player.level ?? 1}</div>
+    <div className="animate-fade-in space-y-5">
+      <div className="flex items-center gap-3"><span className="text-3xl">🔗</span><div><h2 className="text-2xl font-bold gold-shimmer-text">Referral Empire</h2><p className="text-[10px] text-muted-foreground">Recruit soldiers · Climb the milestone ladder · Claim daily tribute</p></div></div>
+      {msg && <div className="mafia-card rounded-lg p-3 text-sm text-primary animate-fade-in border border-primary/30">{msg}</div>}
+
+      {/* Your code */}
+      <div className="mafia-card rounded-xl p-5 border border-primary/30 glow-gold text-center space-y-3">
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">Your Personal Code</div>
+        <button onClick={() => { navigator.clipboard?.writeText(data.code ?? "").then(() => setMsg("📋 Code copied to clipboard!")); }} className="text-2xl font-black font-mono text-primary hover:text-yellow-300 transition-colors tracking-widest animate-pulse-gold">{data.code ?? "..."}</button>
+        <div className="text-[10px] text-muted-foreground">Click to copy · Share with friends — they get $500K + 250 pts + 2h XP boost instantly!</div>
+      </div>
+
+      {/* Apply a friend's code */}
+      {!data.referredBy ? (
+        <div className="mafia-card rounded-xl p-4 flex gap-2 items-center">
+          <input value={codeInput} onChange={(e) => setCodeInput(e.target.value.toUpperCase())} placeholder="Enter a friend's code (SHADOW-XXXXXX)"
+            className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-primary" />
+          <button onClick={async () => { setBusy(true); setMsg(""); try { const r: any = await applyCode({ code: codeInput }); setMsg(r.message); setCodeInput(""); } catch (e: unknown) { setMsg(`❌ ${e instanceof Error ? e.message : "Error"}`); } setBusy(false); }} disabled={busy || !codeInput}
+            className="px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs font-bold rounded-lg hover:from-green-500 disabled:opacity-50 transition-all shrink-0">Apply Code (+$500K)</button>
         </div>
-        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
-          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Referrals</div><div className="text-lg font-bold text-primary">0</div></div>
-          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Earned</div><div className="text-lg font-bold text-green-400">$0</div></div>
+      ) : <div className="mafia-card rounded-lg p-3 text-xs text-green-400 border border-green-800/30">✅ You were recruited — welcome bonus claimed!</div>}
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mafia-card rounded-lg p-3 text-center"><div className="text-2xl font-bold text-primary">{data.count}</div><div className="text-[10px] text-muted-foreground">👥 Recruits</div></div>
+        <div className="mafia-card rounded-lg p-3 text-center"><div className="text-2xl font-bold text-green-400 animate-money-text">${data.totalEarned.toLocaleString()}</div><div className="text-[10px] text-muted-foreground">💵 Total Earned</div></div>
+        <div className="mafia-card rounded-lg p-3 text-center"><div className="text-2xl font-bold text-yellow-400">${(data.count * 100000).toLocaleString()}</div><div className="text-[10px] text-muted-foreground">🎁 Daily Tribute</div></div>
+        <div className="mafia-card rounded-lg p-3 text-center"><button onClick={async () => { setBusy(true); setMsg(""); try { const r: any = await claimCommission({}); setMsg(`💰 Tribute collected: $${r.earned.toLocaleString()} from ${r.recruits} recruits!`); } catch (e: unknown) { setMsg(`❌ ${e instanceof Error ? e.message : "Error"}`); } setBusy(false); }} disabled={busy || !commissionReady || data.count === 0}
+          className={`w-full px-2 py-2 text-xs font-bold rounded-lg transition-all ${commissionReady && data.count > 0 ? "bg-gradient-to-r from-yellow-600 to-amber-500 text-white hover:from-yellow-500 animate-pulse-gold" : "bg-secondary text-muted-foreground"}`}>{commissionReady ? "💰 Claim Tribute" : `⏳ ${fmtH(nextClaimIn)}`}</button><div className="text-[10px] text-muted-foreground mt-1">$100K per recruit / day</div></div>
+      </div>
+
+      {/* Milestone ladder */}
+      <div className="mafia-card rounded-xl p-4 space-y-2">
+        <div className="text-sm font-bold text-primary">🏆 Recruitment Milestone Ladder</div>
+        <div className="space-y-1.5">{data.allMilestones.map((m: any) => {
+          const done = data.count >= m.refs;
+          const claimed = data.milestonesClaimed.includes(m.refs);
+          return (
+            <div key={m.refs} className={`flex items-center justify-between rounded-lg px-3 py-2 border text-xs ${claimed ? "border-green-700/40 bg-green-950/20" : done ? "border-primary/50 bg-primary/5 animate-pulse-gold" : "border-border/50 opacity-60"}`}>
+              <div className="flex items-center gap-2"><span>{claimed ? "✅" : done ? "🎉" : "🔒"}</span><span className="font-semibold">{m.refs} recruit{m.refs > 1 ? "s" : ""} — {m.prize}</span></div>
+              <div className="text-muted-foreground hidden sm:block">{m.desc}</div>
+            </div>
+          );
+        })}</div>
+        {data.nextMilestone && <div className="text-[10px] text-muted-foreground pt-1">Next reward at {data.nextMilestone.refs} recruits — {data.nextMilestone.refs - data.count} to go!</div>}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Your recruits */}
+        <div className="mafia-card rounded-xl p-4 space-y-2">
+          <div className="text-sm font-bold text-primary">👥 Your Recruits ({data.count})</div>
+          {data.recruits.length === 0 ? <div className="text-xs text-muted-foreground py-4 text-center">No recruits yet. Share your code!</div> :
+            <div className="space-y-1 max-h-56 overflow-y-auto scrollbar-thin">{data.recruits.map((r: any, i: number) => (
+              <div key={i} className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-1.5 text-xs">
+                <span className="font-semibold">👤 {r.name}</span><span className="text-muted-foreground">Lv.{r.level}</span>
+              </div>
+            ))}</div>}
+        </div>
+        {/* Leaderboard */}
+        <div className="mafia-card rounded-xl p-4 space-y-2">
+          <div className="text-sm font-bold text-primary">🥇 Top Recruiters Server-Wide</div>
+          {(!top || top.length === 0) ? <div className="text-xs text-muted-foreground py-4 text-center">Be the first recruiter!</div> :
+            <div className="space-y-1 max-h-56 overflow-y-auto scrollbar-thin">{top.map((u: any) => (
+              <div key={u.rank} className={`flex items-center justify-between rounded-lg px-3 py-1.5 text-xs ${u.rank <= 3 ? "bg-yellow-500/10 border border-yellow-700/30" : "bg-secondary/40"}`}>
+                <span className="font-semibold">{u.rank === 1 ? "🥇" : u.rank === 2 ? "🥈" : u.rank === 3 ? "🥉" : `#${u.rank}`} {u.name}</span>
+                <span className="text-primary font-bold">{u.count} 👥</span>
+              </div>
+            ))}</div>}
         </div>
       </div>
     </div>

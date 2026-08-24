@@ -118,12 +118,19 @@ const schema = defineSchema({
     deathTimerAt: v.optional(v.number()),
     lastStreetCrimeAt: v.optional(v.number()),
     prisonGang: v.optional(v.string()),
+    referralCode: v.optional(v.string()),
+    referredBy: v.optional(v.id("users")),
+    referralEarnings: v.optional(v.number()),
+    referralCommission: v.optional(v.number()),
+    lastReferralCommissionAt: v.optional(v.number()),
+    referralMilestones: v.optional(v.any()),
   })
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])
     .index("by_nickname", ["nickname"])
     .index("email", ["email"])
-    .index("by_username", ["username"]),
+    .index("by_username", ["username"])
+    .index("by_referral_code", ["referralCode"]),
 
   // ===== Convex Auth tables (required by @convex-dev/auth) =====
   authSessions: defineTable({
@@ -772,6 +779,12 @@ const schema = defineSchema({
     timestamp: v.number(),
     round: v.number(),
   }).index("by_season", ["seasonId"]).index("by_time", ["timestamp"]),
+  referrals: defineTable({
+    referrerId: v.id("users"),
+    referredId: v.id("users"),
+    code: v.string(),
+    createdAt: v.number(),
+  }).index("by_referrer", ["referrerId"]).index("by_referred", ["referredId"]),
 }, {
   schemaValidation: false,
 });
