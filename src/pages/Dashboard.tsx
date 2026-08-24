@@ -1627,11 +1627,20 @@ export default function Dashboard() {
   const [showLeft, setShowLeft] = useState(true);
   const [showRight, setShowRight] = useState(true);
   const [activeEvents, setActiveEvents] = useState<string[]>(() => {
-    try { return JSON.parse(localStorage.getItem("activeEvents") || "[]"); } catch { return []; }
+    try { return JSON.parse(localStorage.getItem("activeEventIds") || "[]"); } catch { return []; }
   });
 
   const xpNeeded = (player?.level ?? 1) * 100;
-  useEffect(() => { localStorage.setItem("activeEvents", JSON.stringify(activeEvents)); }, [activeEvents]);
+  // Listen for event changes from admin panel
+  useEffect(() => {
+    const refresh = () => {
+      try { setActiveEvents(JSON.parse(localStorage.getItem("activeEventIds") || "[]")); } catch {}
+    };
+    window.addEventListener("eventsChanged", refresh);
+    window.addEventListener("storage", refresh);
+    const interval = setInterval(refresh, 5000);
+    return () => { window.removeEventListener("eventsChanged", refresh); window.removeEventListener("storage", refresh); clearInterval(interval); };
+  }, []);
   const xpPercent = Math.min(100, ((player?.experience ?? 0) / xpNeeded) * 100);
 
   // Registration screen

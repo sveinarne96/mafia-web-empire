@@ -83,12 +83,9 @@ export function EventsManager({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     localStorage.setItem("activeEvents", JSON.stringify(activeEvents));
-  }, [activeEvents]);
-
-  // Also sync to simple string array for the dashboard banner
-  useEffect(() => {
     const ids = activeEvents.filter(e => Date.now() < e.endTime).map(e => e.eventId);
     localStorage.setItem("activeEventIds", JSON.stringify(ids));
+    window.dispatchEvent(new Event("eventsChanged"));
   }, [activeEvents]);
 
   // Clean expired events every 10s
