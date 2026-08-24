@@ -2707,6 +2707,13 @@ const renderPage = () => {
                       <div className="text-[11px] font-bold text-orange-400">{player.kills ?? 0}</div>
                     </div>
                   </div>
+                  {/* Points under Kills */}
+                  <div className="px-2">
+                    <div className="mafia-card rounded-lg p-2 text-center border border-yellow-700/30">
+                      <div className="text-[10px] text-muted-foreground">🏆 Points</div>
+                      <div className="text-base font-bold text-yellow-400 animate-money-text">{(player.points ?? 0).toLocaleString()}</div>
+                    </div>
+                  </div>
                   {/* Quick Info */}
                   {(player.wantedLevel ?? 0) > 0 && (
                     <div className="px-2 mafia-card rounded-lg p-1.5 border-red-500/30">
