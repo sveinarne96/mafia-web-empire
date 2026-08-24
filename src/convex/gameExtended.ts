@@ -36,7 +36,7 @@ export const grantEasterEgg = mutation({
       equipped: false,
       quantity: 1,
       rarity: "legendary",
-      price: 250000,
+      price: 25000000,
     });
     return { success: true };
   },
@@ -56,8 +56,17 @@ export const openEasterEgg = mutation({
     const roll = Math.random();
     const twoHours = Date.now() + 2 * 60 * 60 * 1000;
 
+    // 🐲 MYTHIC: Dragon Egg (3%) — permanent massive stat boost
+    if (roll < 0.03) {
+      await ctx.db.patch(player._id, {
+        attack: (player.attack ?? 10) + 150,
+        defense: (player.defense ?? 10) + 150,
+        money: (player.money ?? 0) + 10000000,
+      });
+      return { prize: "DRAGON EGG!", icon: "🐲", message: "🐲 MYTHIC DRAGON EGG! +150 ATK, +150 DEF PERMANENTLY + $10,000,000! You are blessed by the Egg Gods!", cash: 10000000 };
+    }
     // 🏆 JACKPOT: Golden Egg (5%)
-    if (roll < 0.05) {
+    if (roll < 0.08) {
       const cash = 5000000;
       await ctx.db.patch(player._id, {
         money: (player.money ?? 0) + cash,
@@ -88,22 +97,22 @@ export const openEasterEgg = mutation({
       await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_armor_${Date.now()}`, name: `🛡️ Egg-Plated Vest (+${def} DEF)`, type: "armor", equipped: false, quantity: 1, defense: def, rarity: "legendary", price: def * 20000 });
       return { prize: "Legendary Armor", icon: "🛡️", message: `🛡️ Legendary armor found! Egg-Plated Vest (+${def} DEF) added to your items!`, cash: 0 };
     }
-    // 💵 Instant Cash (20%)
-    if (roll < 0.79) {
-      const cash = (100000 + Math.floor(Math.random() * 40) * 100000);
+    // 💵 Instant Cash (18%)
+    if (roll < 0.80) {
+      const cash = (1000000 + Math.floor(Math.random() * 40) * 100000);
       await ctx.db.patch(player._id, { money: (player.money ?? 0) + cash });
       return { prize: "Cash Stash", icon: "💵", message: `💵 Cash stash inside! $${cash.toLocaleString()} added!`, cash };
     }
-    // 🏆 Points (10%)
+    // 🏆 Points (9%)
     if (roll < 0.89) {
-      const pts = 100 + Math.floor(Math.random() * 400);
+      const pts = 200 + Math.floor(Math.random() * 800);
       await ctx.db.patch(player._id, { points: (player.points ?? 0) + pts });
       return { prize: "Point Cache", icon: "🏆", message: `🏆 Point cache! ${pts} points added to your score!`, cash: 0 };
     }
     // 💎 Rare Jewel (sellable, 11%)
-    const jewels = ["💎 Flawless Diamond", "🥇 Solid Gold Brick", "💍 Ruby Signet Ring", "🏺 Ancient Artifact"];
+    const jewels = ["💎 Flawless Diamond", "🥇 Solid Gold Brick", "💍 Ruby Signet Ring", "🏺 Ancient Artifact", "👑 Egg Emperor Crown"];
     const jewel = jewels[Math.floor(Math.random() * jewels.length)];
-    const value = 250000 + Math.floor(Math.random() * 10) * 250000;
+    const value = 1000000 + Math.floor(Math.random() * 16) * 250000;
     await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_jewel_${Date.now()}`, name: jewel, type: "jewel", equipped: false, quantity: 1, rarity: "epic", price: value });
     return { prize: "Rare Jewel", icon: "💎", message: `${jewel} found! Worth $${value.toLocaleString()} — sell it in My Items!`, cash: 0 };
   },
@@ -188,6 +197,7 @@ export const sellItem = mutation({
     if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
     // Get real value from the item's price field or use name-based lookup
     let sellPrice = (item as any).price ?? 0;
+    if ((item as any).type === "easter_egg") sellPrice = 25000000;
     if (sellPrice <= 0) {
       // Fallback: use rarity-based value but much higher
       const rarity = (item as any).rarity ?? "common";
@@ -211,6 +221,7 @@ export const sellAllItems = mutation({
     for (const item of items) {
       if ((item as any).equipped) continue;
       let price = (item as any).price ?? 0;
+      if ((item as any).type === "easter_egg") price = 25000000;
       if (price <= 0) {
         const rarity = (item as any).rarity ?? "common";
         const rarityMult: Record<string, number> = { common: 500, uncommon: 2000, rare: 8000, epic: 25000, legendary: 100000 };
