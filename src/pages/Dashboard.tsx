@@ -1685,16 +1685,26 @@ export default function Dashboard() {
 
   const acknowledgeLevelUp = useMutation(api.game.acknowledgeLevelUp);
 
-  // Prison auto-release check
+  // Prison auto-release check — runs every second, releases EXACTLY when sentence is served
   const releaseFromPrison = useMutation(api.game.releaseFromPrison);
   useEffect(() => {
-    if (player?.inPrison && player?.lastCrimeAt) {
-      const elapsed = Date.now() - player.lastCrimeAt;
-      if (elapsed >= 15000) {
-        releaseFromPrison({}).catch(() => {});
-      }
-    }
-  }, [player?.inPrison, player?.lastCrimeAt]);
+    if (!player?.inPrison || !player?.lastCrimeAt) return;
+    const check = () => {
+      const sentenceMs = (player as any).prisonTime ?? 15000;
+      if (Date.now() - player.lastCrimeAt! >= sentenceMs) releaseFromPrison({}).catch(() => {});
+    };
+    check();
+    const iv = setInterval(check, 1000);
+    return () => clearInterval(iv);
+  }, [player?.inPrison, player?.lastCrimeAt, (player as any)?.prisonTime]);
+
+  // Global heartbeat so every online player shows in the Online Players list
+  const heartbeat = useMutation(api.admin.heartbeat);
+  useEffect(() => {
+    heartbeat().catch(() => {});
+    const iv = setInterval(() => heartbeat().catch(() => {}), 30000);
+    return () => clearInterval(iv);
+  }, []);
 
   const [leftExpanded, setLeftExpanded] = useState<string[]>([]);
   const [rightExpanded, setRightExpanded] = useState<string[]>([]);

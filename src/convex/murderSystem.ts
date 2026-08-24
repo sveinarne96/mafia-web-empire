@@ -177,7 +177,7 @@ export const commitMurder = mutation({
         totalKills: (player.totalKills ?? 0) + 1,
         wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + wantedGain),
         money: (player.money ?? 0) + stolenCash,
-        reputation: Math.min(100, (player.reputation ?? 0) + Math.floor((target.level ?? 1) / 2)),
+        reputation: Math.min(100, (player.reputation ?? 0) + Math.floor((target.level ?? 1) / 2) * (Date.now() < ((player as any).repBoostUntil ?? 0) ? 3 : 1)),
         experience: levelUpNow ? 0 : newXP,
         levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
         lastCrimeAt: Date.now(),

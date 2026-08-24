@@ -155,15 +155,21 @@ export function MyItemsPage() {
   const now = Date.now();
   const xpBoostActive = ((player as any).xpBoostUntil ?? 0) > now;
   const cashBoostActive = ((player as any).cashBoostUntil ?? 0) > now;
+  const energyActive = ((player as any).energyDrinkUntil ?? 0) > now;
+  const pointsBoostActive = ((player as any).pointsBoostUntil ?? 0) > now;
+  const repBoostActive = ((player as any).repBoostUntil ?? 0) > now;
   const fmtLeft = (t: number) => { const d = t - Date.now(); const h = Math.floor(d / 3600000); const m = Math.floor((d % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; };
 
   return (
     <div className="animate-fade-in space-y-6">
       <div className="flex items-center justify-between"><div className="flex items-center gap-3"><Package className="size-7 text-primary" /><div><h2 className="text-2xl font-bold">My Items</h2><p className="text-[10px] text-muted-foreground">Sell items at 100% value · Open eggs · Activate boosts</p></div></div>{(inventory ?? []).length > 0 && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await sellAllItems({}); setMsg(`Sold ${r.count} items for $${r.totalEarned.toLocaleString()} (100% value!)`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-amber-500 text-white text-xs font-bold rounded-lg hover:from-yellow-500 hover:to-amber-400 disabled:opacity-50 transition-all">💰 Sell All</button>}</div>
-      {(xpBoostActive || cashBoostActive) && (
+      {(xpBoostActive || cashBoostActive || energyActive || pointsBoostActive || repBoostActive) && (
         <div className="flex gap-2 flex-wrap">
           {xpBoostActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 animate-pulse">⚡ 3x XP Boost — {fmtLeft((player as any).xpBoostUntil)}</span>}
           {cashBoostActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-500/15 border border-green-500/30 text-green-300 animate-pulse">💰 3x Cash Boost — {fmtLeft((player as any).cashBoostUntil)}</span>}
+          {energyActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-orange-500/15 border border-orange-500/30 text-orange-300 animate-pulse">🥤 Energy Rush (+25% XP) — {fmtLeft((player as any).energyDrinkUntil)}</span>}
+          {pointsBoostActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 animate-pulse">🎯 3x Points Boost — {fmtLeft((player as any).pointsBoostUntil)}</span>}
+          {repBoostActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-purple-500/15 border border-purple-500/30 text-purple-300 animate-pulse">🌟 3x Reputation Boost — {fmtLeft((player as any).repBoostUntil)}</span>}
         </div>
       )}
       <div className="grid grid-cols-3 gap-3 text-center text-xs">
