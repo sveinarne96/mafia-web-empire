@@ -494,9 +494,6 @@ export function AdminPanel() {
   if (activeTool === "events") {
     return <div className="animate-fade-in"><EventsManager onClose={() => setActiveTool(null)} /></div>;
   }
-  if (activeTool === "events") {
-    return <div className="animate-fade-in"><EventsManager onClose={() => setActiveTool(null)} /></div>;
-  }
   if (activeTool) {
     const feature = ALL_FEATURES.find(f => f.id === activeTool);
     if (feature) {
@@ -557,10 +554,6 @@ export function AdminPanel() {
         <button onClick={() => setActiveTool("broadcast")}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
           📣 Broadcast
-        </button>
-        <button onClick={() => setActiveTool("events")}
-          className="px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
-          🎪 Event Manager
         </button>
         <button onClick={() => setActiveTool("announcements")}
           className="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
