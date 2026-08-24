@@ -11,6 +11,8 @@ const schema = defineSchema({
     nickname: v.optional(v.string()),
     username: v.optional(v.string()),
     passwordHash: v.optional(v.string()),
+    xpBoostUntil: v.optional(v.number()),
+    cashBoostUntil: v.optional(v.number()),
     playerClass: v.optional(v.string()),
     registeredAt: v.optional(v.number()),
     money: v.number(),

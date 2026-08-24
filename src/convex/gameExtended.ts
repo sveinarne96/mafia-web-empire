@@ -21,6 +21,129 @@ export const getInventory = query({
   },
 });
 
+// ===== EASTER EGG SYSTEM =====
+// Grant an Easter Egg drop (only called by client when the Easter Egg Hunt event is active)
+export const grantEasterEgg = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getPlayer(ctx);
+    if (!player) throw new Error("Not authenticated");
+    await ctx.db.insert("inventory", {
+      userId: player._id,
+      itemId: `easter_egg_${Date.now()}`,
+      name: "🥚 Easter Egg",
+      type: "easter_egg",
+      equipped: false,
+      quantity: 1,
+      rarity: "legendary",
+      price: 250000,
+    });
+    return { success: true };
+  },
+});
+
+// Open an Easter Egg — rolls one of the best rewards in the game
+export const openEasterEgg = mutation({
+  args: { itemId: v.id("inventory") },
+  handler: async (ctx, args) => {
+    const player = await getPlayer(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const item = await ctx.db.get(args.itemId);
+    if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
+    if ((item as any).type !== "easter_egg") throw new Error("Not an Easter Egg");
+    await ctx.db.delete(args.itemId);
+
+    const roll = Math.random();
+    const twoHours = Date.now() + 2 * 60 * 60 * 1000;
+
+    // 🏆 JACKPOT: Golden Egg (5%)
+    if (roll < 0.05) {
+      const cash = 5000000;
+      await ctx.db.patch(player._id, {
+        money: (player.money ?? 0) + cash,
+        xpBoostUntil: Math.max(player.xpBoostUntil ?? 0, twoHours),
+        cashBoostUntil: Math.max(player.cashBoostUntil ?? 0, twoHours),
+      });
+      return { prize: "GOLDEN EGG!", icon: "🌟", message: `🌟 GOLDEN EGG! $${cash.toLocaleString()} + 3x XP & Cash Boost for 2 hours!`, cash };
+    }
+    // ⚡ Triple XP Boost 2h (15%)
+    if (roll < 0.20) {
+      await ctx.db.patch(player._id, { xpBoostUntil: Math.max(player.xpBoostUntil ?? 0, twoHours) });
+      return { prize: "Triple XP Boost", icon: "⚡", message: "⚡ Triple XP Boost activated for 2 HOURS! All crimes earn 3x XP!", cash: 0 };
+    }
+    // 💰 Triple Cash Boost 2h (15%)
+    if (roll < 0.35) {
+      await ctx.db.patch(player._id, { cashBoostUntil: Math.max(player.cashBoostUntil ?? 0, twoHours) });
+      return { prize: "Triple Cash Boost", icon: "💰", message: "💰 Triple Cash Boost activated for 2 HOURS! All crimes pay 3x cash!", cash: 0 };
+    }
+    // ⚔️ Legendary Weapon (12%)
+    if (roll < 0.47) {
+      const atk = 50 + Math.floor(Math.random() * 100);
+      await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_weapon_${Date.now()}`, name: `⚔️ Egg-Forged Blade (+${atk} ATK)`, type: "weapon", equipped: false, quantity: 1, attack: atk, rarity: "legendary", price: atk * 20000 });
+      return { prize: "Legendary Weapon", icon: "⚔️", message: `⚔️ Legendary weapon found! Egg-Forged Blade (+${atk} ATK) added to your items!`, cash: 0 };
+    }
+    // 🛡️ Legendary Armor (12%)
+    if (roll < 0.59) {
+      const def = 50 + Math.floor(Math.random() * 100);
+      await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_armor_${Date.now()}`, name: `🛡️ Egg-Plated Vest (+${def} DEF)`, type: "armor", equipped: false, quantity: 1, defense: def, rarity: "legendary", price: def * 20000 });
+      return { prize: "Legendary Armor", icon: "🛡️", message: `🛡️ Legendary armor found! Egg-Plated Vest (+${def} DEF) added to your items!`, cash: 0 };
+    }
+    // 💵 Instant Cash (20%)
+    if (roll < 0.79) {
+      const cash = (100000 + Math.floor(Math.random() * 40) * 100000);
+      await ctx.db.patch(player._id, { money: (player.money ?? 0) + cash });
+      return { prize: "Cash Stash", icon: "💵", message: `💵 Cash stash inside! $${cash.toLocaleString()} added!`, cash };
+    }
+    // 🏆 Points (10%)
+    if (roll < 0.89) {
+      const pts = 100 + Math.floor(Math.random() * 400);
+      await ctx.db.patch(player._id, { points: (player.points ?? 0) + pts });
+      return { prize: "Point Cache", icon: "🏆", message: `🏆 Point cache! ${pts} points added to your score!`, cash: 0 };
+    }
+    // 💎 Rare Jewel (sellable, 11%)
+    const jewels = ["💎 Flawless Diamond", "🥇 Solid Gold Brick", "💍 Ruby Signet Ring", "🏺 Ancient Artifact"];
+    const jewel = jewels[Math.floor(Math.random() * jewels.length)];
+    const value = 250000 + Math.floor(Math.random() * 10) * 250000;
+    await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_jewel_${Date.now()}`, name: jewel, type: "jewel", equipped: false, quantity: 1, rarity: "epic", price: value });
+    return { prize: "Rare Jewel", icon: "💎", message: `${jewel} found! Worth $${value.toLocaleString()} — sell it in My Items!`, cash: 0 };
+  },
+});
+
+// Activate a boost item from inventory (xp_boost / cash_boost)
+export const activateBoostItem = mutation({
+  args: { itemId: v.id("inventory") },
+  handler: async (ctx, args) => {
+    const player = await getPlayer(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const item = await ctx.db.get(args.itemId);
+    if (!item || (item as any).userId !== player._id) throw new Error("Not your item");
+    const type = (item as any).type;
+    if (type !== "xp_boost" && type !== "cash_boost") throw new Error("Not a boost item");
+    const durationMs = ((item as any).quantity ?? 2) * 60 * 60 * 1000; // quantity = hours
+    await ctx.db.delete(args.itemId);
+    if (type === "xp_boost") {
+      await ctx.db.patch(player._id, { xpBoostUntil: Math.max(player.xpBoostUntil ?? 0, Date.now() + durationMs) });
+      return { success: true, message: `⚡ XP Boost activated for ${(item as any).quantity ?? 2} hours!` };
+    }
+    await ctx.db.patch(player._id, { cashBoostUntil: Math.max(player.cashBoostUntil ?? 0, Date.now() + durationMs) });
+    return { success: true, message: `💰 Cash Boost activated for ${(item as any).quantity ?? 2} hours!` };
+  },
+});
+
+// Get active boosts
+export const getActiveBoosts = query({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getPlayer(ctx);
+    if (!player) return { xpBoost: 0, cashBoost: 0 };
+    const now = Date.now();
+    return {
+      xpBoost: (player.xpBoostUntil ?? 0) > now ? (player.xpBoostUntil as number) : 0,
+      cashBoost: (player.cashBoostUntil ?? 0) > now ? (player.cashBoostUntil as number) : 0,
+    };
+  },
+});
+
 // Equip item
 export const equipItem = mutation({
   args: { itemId: v.string() },

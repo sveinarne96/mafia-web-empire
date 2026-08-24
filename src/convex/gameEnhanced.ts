@@ -309,7 +309,7 @@ export const stealFromHouse = mutation({
         // XP scales with total value of items stolen + level multiplier
     const levelMult = 1 + ((player.level ?? 1) * 0.05); // +5% per level
     const valueXp = succeeded ? Math.max(25, Math.floor(moneyEarned / 500)) : 6; // $1 per 500 value, min 25
-    const xpEarned = Math.floor(valueXp * 11.0 * levelMult);
+    const xpEarned = Math.floor(valueXp * 11.0 * levelMult * (Date.now() < ((player as any).xpBoostUntil ?? 0) ? 3 : 1));
     const currentXP = player.experience ?? 0;
     const newXP = currentXP + xpEarned;
     const xpNeeded = (player.level ?? 1) * 100;

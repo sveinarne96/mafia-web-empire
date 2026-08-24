@@ -145,31 +145,55 @@ export function MyItemsPage() {
   const inventory = useQuery(api.gameExtended.getInventory);
   const equip = useMutation(api.gameExtended.equipItem);
   const sellAllItems = useMutation(api.gameExtended.sellAllItems);
+  const sellItem = useMutation(api.gameExtended.sellItem);
+  const openEgg = useMutation(api.gameExtended.openEasterEgg);
+  const activateBoost = useMutation(api.gameExtended.activateBoostItem);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   if (!player) return <LoadingPage />;
+
+  const now = Date.now();
+  const xpBoostActive = ((player as any).xpBoostUntil ?? 0) > now;
+  const cashBoostActive = ((player as any).cashBoostUntil ?? 0) > now;
+  const fmtLeft = (t: number) => { const d = t - Date.now(); const h = Math.floor(d / 3600000); const m = Math.floor((d % 3600000) / 60000); return h > 0 ? `${h}h ${m}m` : `${m}m`; };
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center justify-between"><div className="flex items-center gap-3"><Package className="size-7 text-primary" /><div><h2 className="text-2xl font-bold">My Items</h2><p className="text-[10px] text-muted-foreground">Sell items at 100% value</p></div></div>{(inventory ?? []).length > 0 && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await sellAllItems({}); setMsg(`Sold ${r.count} items for $${r.totalEarned.toLocaleString()} (100% value!)`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-amber-500 text-white text-xs font-bold rounded-lg hover:from-yellow-500 hover:to-amber-400 disabled:opacity-50 transition-all">💰 Sell All</button>}</div>
+      <div className="flex items-center justify-between"><div className="flex items-center gap-3"><Package className="size-7 text-primary" /><div><h2 className="text-2xl font-bold">My Items</h2><p className="text-[10px] text-muted-foreground">Sell items at 100% value · Open eggs · Activate boosts</p></div></div>{(inventory ?? []).length > 0 && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await sellAllItems({}); setMsg(`Sold ${r.count} items for $${r.totalEarned.toLocaleString()} (100% value!)`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-amber-500 text-white text-xs font-bold rounded-lg hover:from-yellow-500 hover:to-amber-400 disabled:opacity-50 transition-all">💰 Sell All</button>}</div>
+      {(xpBoostActive || cashBoostActive) && (
+        <div className="flex gap-2 flex-wrap">
+          {xpBoostActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-yellow-500/15 border border-yellow-500/30 text-yellow-300 animate-pulse">⚡ 3x XP Boost — {fmtLeft((player as any).xpBoostUntil)}</span>}
+          {cashBoostActive && <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-green-500/15 border border-green-500/30 text-green-300 animate-pulse">💰 3x Cash Boost — {fmtLeft((player as any).cashBoostUntil)}</span>}
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3 text-center text-xs">
         <StatBox label="ATK" value={`⚔️ ${player.attack ?? 10}`} color="text-red-400" />
         <StatBox label="DEF" value={`🛡️ ${player.defense ?? 10}`} color="text-blue-400" />
         <StatBox label="Level" value={`⭐ ${player.level ?? 1}`} color="text-primary" />
       </div>
       {(!inventory || inventory.length === 0) ? <div className="text-center py-10 text-muted-foreground text-sm">No items. Visit the Points Shop!</div> :
-        <div className="space-y-2">{inventory.map(entry => (
-          <div key={entry._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between border ${entry?.equipped ? "border-primary/50" : ""}`}>
+        <div className="space-y-2">{inventory.map(entry => {
+          const isEgg = entry.type === "easter_egg";
+          const isBoost = entry.type === "xp_boost" || entry.type === "cash_boost";
+          return (
+          <div key={entry._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between border ${entry?.equipped ? "border-primary/50" : isEgg ? "border-purple-500/40 animate-pulse" : ""}`}>
             <div><div className="font-semibold text-sm">{entry.name}</div>
-              <div className="text-[10px] text-muted-foreground">{entry.type} • {entry.rarity ?? "common"}{entry.attack ?? 0 > 0 ? ` • ⚔️+${entry.attack ?? 0}` : ""}{entry.defense ?? 0 > 0 ? ` • 🛡️+${entry.defense ?? 0}` : ""}</div></div>
-            <button onClick={async () => { setLoading(true); try { const r = await equip({ itemId: entry.itemId }); setMsg((r as any)?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
-              disabled={loading || (entry.type !== "weapon" && entry.type !== "armor")}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${entry?.equipped ? "bg-primary text-primary-foreground" : "bg-secondary border border-border"}`}>
-              {entry?.equipped ? "Equipped" : "Equip"}
-            </button>
+              <div className="text-[10px] text-muted-foreground">{isEgg ? "🎁 Contains a legendary prize!" : isBoost ? "⏱️ Click ACTIVATE to start the boost" : `${entry.type} • ${entry.rarity ?? "common"}`}{entry.attack ? ` • ⚔️+${entry.attack}` : ""}{entry.defense ? ` • 🛡️+${entry.defense}` : ""}{entry.price ? ` • 💰 $${entry.price.toLocaleString()}` : ""}</div></div>
+            <div className="flex gap-1.5 shrink-0">
+              {isEgg && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await openEgg({ itemId: entry._id }); setMsg(`${(r as any).message}`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white hover:from-purple-500 hover:to-fuchsia-400 transition-all animate-glow-pulse">🎁 Open</button>}
+              {isBoost && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await activateBoost({ itemId: entry._id }); setMsg((r as any).message); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-cyan-600 to-blue-500 text-white hover:from-cyan-500 hover:to-blue-400 transition-all">⚡ Activate</button>}
+              {!isEgg && !isBoost && <button onClick={async () => { setLoading(true); try { const r = await equip({ itemId: entry.itemId }); setMsg((r as any)?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
+                disabled={loading || (entry.type !== "weapon" && entry.type !== "armor")}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${entry?.equipped ? "bg-primary text-primary-foreground" : "bg-secondary border border-border"}`}>
+                {entry?.equipped ? "Equipped" : "Equip"}
+              </button>}
+              <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await sellItem({ itemId: entry._id }); setMsg(`Sold for $${r.money.toLocaleString()}!`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-yellow-600/80 text-white hover:bg-yellow-500 transition-all">Sell</button>
+            </div>
           </div>
-        ))}</div>
+          );
+        })}</div>
       }
-      {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}
+      {msg && <div className="text-sm text-primary animate-fade-in whitespace-pre-wrap">{msg.startsWith("🌟") || msg.includes("!") ? msg : `✓ ${msg}`}</div>}
     </div>
   );
 }

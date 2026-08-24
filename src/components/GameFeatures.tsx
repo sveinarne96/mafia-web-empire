@@ -14,6 +14,7 @@ import { Swords, FileText, Shield, Target, Timer, Scroll,
   AlertTriangle, ChevronRight, ChevronDown, ShoppingBag, Gem,
 } from "lucide-react";
 import { crimeCategories, getCrimeTypeColor, getCrimeTypeBg, type CrimeCategory, type Crime } from "@/data/crimes";
+import { maybeDropEasterEgg } from "@/lib/easterEgg";
 import { getDailyLegendaryCrimes, getTimeUntilReset, RARITY_CONFIG, type LegendaryCrime } from "@/data/legendaryCrimes";
 
 // ===== #20 PRISON TIME DISPLAY =====
@@ -730,6 +731,7 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const categoryCooldown = (player as any)?.crimeCooldowns?.[categoryId] ?? 0;
   const cooldown = useCooldown(15, categoryCooldown);
   const commitCrime = useMutation(api.game.commitCategoryCrime);
+  const grantEgg = useMutation(api.gameExtended.grantEasterEgg);
 
   const category = crimeCategories.find(c => c.id === categoryId);
 
@@ -748,7 +750,9 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
         risk: crime.risk,
         xp: crime.xp,
       });
+      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
       setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
+      if (eggMsg) setTimeout(() => alert(eggMsg), 400);
       cooldown.startCooldown();
     } catch (e) {
       setResult({ success: false, money: 0, xp: 0 });
@@ -839,6 +843,7 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const commitCrime = useMutation(api.game.commitCategoryCrime);
+  const grantEgg = useMutation(api.gameExtended.grantEasterEgg);
 
   const [lastByCategory, setLastByCategory] = useState<Record<string, number>>({});
   const now = Date.now();
@@ -862,7 +867,9 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
     setLoading(true); setResult(null);
     try {
       const res = await commitCrime({ crimeId: crime.id, reward: crime.reward, risk: crime.risk, xp: crime.xp });
+      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
       setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
+      if (eggMsg) setTimeout(() => alert(eggMsg), 400);
       setLastByCategory(prev => ({ ...prev, [crime.categoryId]: Date.now() }));
     } catch (e) { setResult({ success: false, money: 0, xp: 0 }); }
     setLoading(false);

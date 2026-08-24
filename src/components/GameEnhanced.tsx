@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Shield, Skull, Star, Zap, Clock, Trophy, Lock, Car, AlertTriangle, Users, Ban, Heart, Target, Coins, ChevronRight, Gift, ShieldCheck, Crosshair, Swords, Bomb, Eye, LockKeyhole, MapPin } from "lucide-react";
+import { maybeDropEasterEgg } from "../lib/easterEgg";
 
 function LoadingPage() {
   return <div className="flex items-center justify-center h-64"><div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -12,6 +13,7 @@ function LoadingPage() {
 export function StealFromHousePage() {
   const player = useQuery(api.game.getPlayer);
   const stealFromHouse = useMutation(api.gameEnhanced.stealFromHouse);
+  const grantEgg = useMutation(api.gameExtended.grantEasterEgg);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -37,7 +39,9 @@ export function StealFromHousePage() {
     setResult(null);
     try {
       const res = await stealFromHouse({ difficulty: selectedDifficulty, houseType: selectedDifficulty });
+      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
       setResult(res);
+      if (eggMsg) setTimeout(() => alert(eggMsg), 400);
       setCooldown(10);
     } catch (e: unknown) {
       setResult({ error: e instanceof Error ? e.message : "Error" });
@@ -131,6 +135,7 @@ export function StealFromHousePage() {
 export function GtaCarTheftPage() {
   const player = useQuery(api.game.getPlayer);
   const gtaCarTheft = useMutation(api.gameEnhanced.gtaCarTheft);
+  const grantEgg2 = useMutation(api.gameExtended.grantEasterEgg);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -165,7 +170,9 @@ export function GtaCarTheftPage() {
     setResult(null);
     try {
       const res = await gtaCarTheft();
+      const eggMsg = await maybeDropEasterEgg(grantEgg2, res.success);
       setResult(res);
+      if (eggMsg) setTimeout(() => alert(eggMsg), 400);
       setCooldown(10);
     } catch (e: unknown) {
       setResult({ error: e instanceof Error ? e.message : "Error" });

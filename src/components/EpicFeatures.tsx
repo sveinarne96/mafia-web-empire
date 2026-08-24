@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { maybeDropEasterEgg } from "@/lib/easterEgg";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -860,6 +861,7 @@ const smugglingRoutes: SmugglingRoute[] = [
 export function SmugglingRoutesPage() {
   const player = useQuery(api.game.getPlayer);
   const commitCrime = useMutation(api.game.commitCategoryCrime);
+  const grantEgg = useMutation(api.gameExtended.grantEasterEgg);
   const [activeRoute, setActiveRoute] = useState<string | null>(null);
   const [smuggling, setSmuggling] = useState(false);
   const [result, setResult] = useState<{ success: boolean; money: number } | null>(null);
@@ -868,6 +870,8 @@ export function SmugglingRoutesPage() {
     setSmuggling(true); setResult(null);
     try {
       const res = await commitCrime({ crimeId: `smuggle_${route.id}`, reward: route.profit, risk: route.risk, xp: Math.floor(route.profit / 200) });
+      const eggMsg = await maybeDropEasterEgg(grantEgg, res.success);
+      if (eggMsg) setTimeout(() => alert(eggMsg), 400);
       setResult({ success: res.success, money: res.moneyEarned });
     } catch { setResult({ success: false, money: 0 }); }
     setSmuggling(false);
