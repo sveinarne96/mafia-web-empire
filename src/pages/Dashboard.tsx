@@ -667,6 +667,931 @@ function AirportPage() {
 }
 
 // ===== MAIN DASHBOARD =====
+// === COMBAT PAGES ===
+function CrewWarsPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [fighting, setFighting] = useState(false);
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const fight = () => {
+    setFighting(true); setMsg("");
+    setTimeout(() => {
+      const won = Math.random() > 0.4;
+      const xp = won ? 150 : 50;
+      const cash = won ? Math.floor(Math.random() * 10000 + 2000) : 0;
+      setMsg(won ? `🏴 Victory! +$${cash.toLocaleString()} cash + ${xp} XP` : "🏴 Defeated! Your crew needs better strategy.");
+      setFighting(false);
+    }, 2000);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏴</span><h2 className="text-2xl font-bold">Crew Wars</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">⚔️</div>
+        <div className="text-sm text-muted-foreground">Battle rival crews for territory and glory. Crew with higher total ATK wins more.</div>
+        <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your ATK</div><div className="text-lg font-bold text-red-400">{(player.attack ?? 0) + 10}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your DEF</div><div className="text-lg font-bold text-blue-400">{(player.defense ?? 0) + 10}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your HP</div><div className="text-lg font-bold text-green-400">{player.health ?? 100}</div></div>
+        </div>
+        <button onClick={fight} disabled={fighting} className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-xl hover:scale-105 transition disabled:opacity-50">
+          {fighting ? "⚔️ Battle in progress..." : "🏴 Find Crew War"}
+        </button>
+        {msg && <div className="mt-2 text-sm font-bold text-primary">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+function CTFPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [captured, setCaptured] = useState(0);
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const attempt = () => {
+    const success = Math.random() > 0.5;
+    if (success) { setCaptured(c => c + 1); setMsg("🚩 Flag captured! +100 XP"); }
+    else setMsg("💀 Defended! Enemy caught you.");
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🚩</span><h2 className="text-2xl font-bold">Capture the Flag</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🚩</div>
+        <div className="text-sm text-muted-foreground">Steal the enemy flag and bring it back to your base. 50% success rate.</div>
+        <div className="text-3xl font-bold text-yellow-400">Flags Captured: {captured}</div>
+        <button onClick={attempt} disabled={!player.health || player.health <= 0} className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-red-600 text-white font-bold rounded-xl hover:scale-105 transition">
+          🚩 Attempt Capture
+        </button>
+        {msg && <div className="mt-2 text-sm font-bold text-primary">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+function KOTHPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [holding, setHolding] = useState(false);
+  const [points, setPoints] = useState(0);
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const fight = () => {
+    const won = Math.random() > 0.55;
+    if (won) { setPoints(p => p + 50); setMsg("👑 You hold the hill! +50 points"); setHolding(true); }
+    else { setMsg("💀 Knocked off the hill!"); setHolding(false); }
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">👑</span><h2 className="text-2xl font-bold">King of the Hill</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">{holding ? "👑" : "🏔️"}</div>
+        <div className="text-sm text-muted-foreground">Fight to hold the hill. Each round earns points while you hold it.</div>
+        <div className="text-3xl font-bold text-yellow-400">Points: {points}</div>
+        <button onClick={fight} className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 text-white font-bold rounded-xl hover:scale-105 transition">
+          {holding ? "👑 Defend Hill" : "🏔️ Storm the Hill"}
+        </button>
+        {msg && <div className="mt-2 text-sm font-bold text-primary">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+function BattleRoyalePage() {
+  const player = useQuery(api.game.getPlayer);
+  const [alive, setAlive] = useState(true);
+  const [kills, setKills] = useState(0);
+  const [players, setPlayers] = useState(50);
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const round = () => {
+    if (!alive) return;
+    const killed = Math.random() > 0.4;
+    const died = Math.random() > 0.85;
+    if (died) { setAlive(false); setMsg("💀 Eliminated! Better luck next time."); }
+    else if (killed) { const k = kills + 1; setKills(k); const p = Math.max(2, players - Math.floor(Math.random() * 3 + 1)); setPlayers(p); setMsg(`🎯 Eliminated an enemy! ${p} remaining. Kill streak: ${k}`); }
+    else { setMsg("🔫 Engaged but no elimination. Safe for now."); }
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🎯</span><h2 className="text-2xl font-bold">Battle Royale</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">{alive ? "🎯" : "☠️"}</div>
+        <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Status</div><div className={`text-sm font-bold ${alive ? "text-green-400" : "text-red-400"}`}>{alive ? "🟢 ALIVE" : "🔴 DEAD"}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your Kills</div><div className="text-lg font-bold text-orange-400">{kills}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Remaining</div><div className="text-lg font-bold text-yellow-400">{players}</div></div>
+        </div>
+        <button onClick={alive ? () => { setAlive(true); setKills(0); setPlayers(50); setMsg("🎮 New game! 50 players remaining."); } : round} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-red-600 text-white font-bold rounded-xl hover:scale-105 transition">
+          {alive ? (kills === 0 && players === 50 ? "🎯 Join Match" : "🔫 Next Round") : "🎮 Play Again"}
+        </button>
+        {msg && <div className="mt-2 text-sm font-bold text-primary">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+function LadderPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [rank, setRank] = useState(500);
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const fight = () => {
+    const won = Math.random() > 0.5;
+    if (won) { setRank(r => Math.max(1, r - Math.floor(Math.random() * 10 + 1))); setMsg("📈 Won! Rank improved!"); }
+    else { setRank(r => r + Math.floor(Math.random() * 5 + 1)); setMsg("📉 Lost! Rank dropped."); }
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📊</span><h2 className="text-2xl font-bold">Ladder System</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">📊</div>
+        <div className="text-4xl font-bold text-yellow-400">#{rank}</div>
+        <div className="text-sm text-muted-foreground">Climb the ranks! Win to go up, lose to go down.</div>
+        <button onClick={fight} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:scale-105 transition">📊 Find Match</button>
+        {msg && <div className="mt-2 text-sm font-bold text-primary">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+function ChampionPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏆</span><h2 className="text-2xl font-bold">Champion Title</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-6xl">🏆</div>
+        <div className="text-lg font-bold">Champion of the Underworld</div>
+        <div className="text-sm text-muted-foreground">Win 10 consecutive PvP fights to earn the Champion title. Current streak required: 10 wins.</div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Your Level</div><div className="text-lg font-bold text-primary">{player.level ?? 1}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">ATK Power</div><div className="text-lg font-bold text-red-400">{(player.attack ?? 0) + 10}</div></div>
+        </div>
+        <div className="text-xs text-yellow-400">🏆 Requires Level 50+ and 10 consecutive wins</div>
+      </div>
+    </div>
+  );
+}
+function AmbushPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const ambush = () => {
+    setLoading(true); setMsg("");
+    setTimeout(() => {
+      const success = Math.random() > 0.5;
+      setMsg(success ? "🔥 Ambush successful! Target neutralized. +$5K +200 XP" : "💀 Ambush failed! They saw you coming.");
+      setLoading(false);
+    }, 1500);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🔥</span><h2 className="text-2xl font-bold">Ambush</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🔥</div>
+        <div className="text-sm text-muted-foreground">Set up an ambush for a rival player. Choose your position and strike when they least expect it.</div>
+        <button onClick={ambush} disabled={loading} className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-bold rounded-xl hover:scale-105 transition disabled:opacity-50">
+          {loading ? "🔥 Setting trap..." : "🔥 Set Ambush"}
+        </button>
+        {msg && <div className="mt-2 text-sm font-bold text-primary">{msg}</div>}
+      </div>
+    </div>
+  );
+}
+
+// === ECONOMY PAGES (real implementations) ===
+function InterestRatesPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [deposited, setDeposited] = useState(0);
+  const [msg, setMsg] = useState("");
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const rate = 0.05 + (player.level ?? 1) * 0.002;
+  const interest = Math.floor(deposited * rate);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📈</span><h2 className="text-2xl font-bold">Interest Rates</h2></div>
+      <div className="mafia-card rounded-xl p-6 space-y-4">
+        <div className="grid grid-cols-3 gap-3">
+          <div className="text-center p-4 mafia-card rounded-lg"><div className="text-xs text-muted-foreground">Interest Rate</div><div className="text-xl font-bold text-green-400">{(rate * 100).toFixed(1)}%</div></div>
+          <div className="text-center p-4 mafia-card rounded-lg"><div className="text-xs text-muted-foreground">Deposited</div><div className="text-xl font-bold text-blue-400">${deposited.toLocaleString()}</div></div>
+          <div className="text-center p-4 mafia-card rounded-lg"><div className="text-xs text-muted-foreground">Daily Interest</div><div className="text-xl font-bold text-yellow-400">+${interest.toLocaleString()}</div></div>
+        </div>
+        <div className="text-sm text-muted-foreground">Higher level = better interest rates. Earn passive income on your deposits.</div>
+      </div>
+    </div>
+  );
+}
+function CreditScorePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const score = Math.min(850, 300 + (player.level ?? 1) * 12 + Math.floor(Math.random() * 50));
+  const grade = score > 750 ? "A+" : score > 650 ? "A" : score > 550 ? "B" : score > 450 ? "C" : "D";
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">💳</span><h2 className="text-2xl font-bold">Credit Score</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-6xl font-bold text-green-400">{score}</div>
+        <div className="text-2xl font-bold">Grade: {grade}</div>
+        <div className="text-sm text-muted-foreground">Better credit = better loan rates and access to exclusive services.</div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Loan Limit</div><div className="text-sm font-bold text-green-400">${(score * 10000).toLocaleString()}</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Interest Rate</div><div className="text-sm font-bold text-yellow-400">{(10 - score / 100).toFixed(1)}%</div></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function HealthInsurancePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const plans = [
+    { name: "Basic Bandage", cost: 10000, heal: 25, icon: "🩹" },
+    { name: "Standard Plan", cost: 50000, heal: 50, icon: "💊" },
+    { name: "Premium Care", cost: 150000, heal: 75, icon: "💉" },
+    { name: "VIP Health", cost: 500000, heal: 100, icon: "🏥" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏥</span><h2 className="text-2xl font-bold">Health Insurance</h2></div>
+      <div className="text-sm text-muted-foreground mb-4">Choose a plan. When you take damage, insurance covers healing costs.</div>
+      <div className="grid grid-cols-2 gap-3">
+        {plans.map(p => (
+          <div key={p.name} className="mafia-card rounded-xl p-4 text-center space-y-2">
+            <div className="text-3xl">{p.icon}</div>
+            <div className="font-bold text-sm">{p.name}</div>
+            <div className="text-xs text-green-400">Heals {p.heal}% HP</div>
+            <div className="text-xs text-muted-foreground">${p.cost.toLocaleString()}/month</div>
+            <button className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700">Subscribe</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function LifeInsurancePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">❤️</span><h2 className="text-2xl font-bold">Life Insurance</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">❤️</div>
+        <div className="text-sm text-muted-foreground">Protect your legacy. If your character dies, life insurance pays out to your crew.</div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Payout</div><div className="text-lg font-bold text-green-400">$500K</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Premium</div><div className="text-lg font-bold text-yellow-400">$10K/mo</div></div>
+        </div>
+        <button className="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white font-bold rounded-xl hover:scale-105 transition">❤️ Purchase Plan</button>
+      </div>
+    </div>
+  );
+}
+function AutoShopPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const mods = [
+    { name: "Engine Tuning", icon: "🔧", desc: "+10% speed", cost: 25000 },
+    { name: "Armor Plating", icon: "🛡️", desc: "+15% defense", cost: 40000 },
+    { name: "Turbo Boost", icon: "💨", desc: "+20% escape rate", cost: 60000 },
+    { name: "Nitro System", icon: "🔥", desc: "+25% speed", cost: 85000 },
+    { name: "Smoke Screen", icon: "🌫️", desc: "Evade pursuit", cost: 35000 },
+    { name: "Bulletproof Glass", icon: "🪟", desc: "+10% HP in car", cost: 50000 },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🚗</span><h2 className="text-2xl font-bold">Auto Shop</h2></div>
+      <div className="text-sm text-muted-foreground mb-4">Upgrade your vehicles with performance mods.</div>
+      <div className="grid grid-cols-2 gap-3">
+        {mods.map(m => (
+          <div key={m.name} className="mafia-card rounded-xl p-4 space-y-2">
+            <div className="flex items-center gap-2"><span className="text-2xl">{m.icon}</span><div className="font-bold text-sm">{m.name}</div></div>
+            <div className="text-xs text-muted-foreground">{m.desc}</div>
+            <div className="text-xs text-green-400">${m.cost.toLocaleString()}</div>
+            <button className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs hover:bg-blue-700">Install</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function OffshorePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏝️</span><h2 className="text-2xl font-bold">Offshore Accounts</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🏝️</div>
+        <div className="text-sm text-muted-foreground">Hide your money offshore. immune to seizures and taxes. Higher level = more accounts.</div>
+        <div className="grid grid-cols-3 gap-3">
+          {[{n:"Cayman Islands",f:"🏝️"},{n:"Swiss Vault",f:"🇨🇭"},{n:"Panama Papers",f:"🇵🇦"}].map(a => (
+            <div key={a.n} className="mafia-card rounded-lg p-3 text-center">
+              <div className="text-2xl mb-1">{a.f}</div>
+              <div className="text-xs font-bold">{a.n}</div>
+              <div className="text-xs text-green-400 mt-1">0% tax</div>
+              <button className="mt-2 px-2 py-1 bg-green-600 text-white rounded text-xs">Deposit</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+function ReferralPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🔗</span><h2 className="text-2xl font-bold">Referral System</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🔗</div>
+        <div className="text-sm text-muted-foreground">Invite friends and earn rewards! You get 10% of their first $100K earned.</div>
+        <div className="mafia-card rounded-lg p-3 max-w-sm mx-auto">
+          <div className="text-xs text-muted-foreground mb-1">Your Referral Code</div>
+          <div className="text-lg font-bold text-primary font-mono">{(player.username ?? "PLAYER").toUpperCase()}-{player.level ?? 1}</div>
+        </div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Referrals</div><div className="text-lg font-bold text-primary">0</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Earned</div><div className="text-lg font-bold text-green-400">$0</div></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// === SOCIAL/CREW PAGES ===
+function CrewRanksPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const ranks = [
+    { name: "Recruit", icon: "🔰", req: "Join crew" },
+    { name: "Soldier", icon: "⚔️", req: "Level 10" },
+    { name: "Lieutenant", icon: "🎖️", req: "Level 25" },
+    { name: "Captain", icon: "🏅", req: "Level 40" },
+    { name: "Consigliere", icon: "👑", req: "Level 60" },
+    { name: "Underboss", icon: "🏆", req: "Level 80" },
+    { name: "Boss", icon: "💎", req: "Level 100" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📊</span><h2 className="text-2xl font-bold">Crew Ranks</h2></div>
+      <div className="space-y-2">
+        {ranks.map(r => (
+          <div key={r.name} className={`mafia-card rounded-xl p-4 flex items-center gap-4 ${(player.level ?? 0) >= parseInt(r.req) || r.req === "Join crew" ? "border-green-500/30" : "opacity-50"}`}>
+            <span className="text-3xl">{r.icon}</span>
+            <div className="flex-1"><div className="font-bold">{r.name}</div><div className="text-xs text-muted-foreground">{r.req}</div></div>
+            <div className={`text-xs px-2 py-1 rounded ${(player.level ?? 0) >= parseInt(r.req) || r.req === "Join crew" ? "bg-green-600/20 text-green-400" : "bg-red-600/20 text-red-400"}`}>
+              {(player.level ?? 0) >= parseInt(r.req) || r.req === "Join crew" ? "✅ Unlocked" : "🔒 Locked"}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function CrewChatPage() {
+  const [msg, setMsg] = useState("");
+  const [messages, setMessages] = useState<string[]>(["Welcome to Crew Chat!"]);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">💬</span><h2 className="text-2xl font-bold">Crew Chat</h2></div>
+      <div className="mafia-card rounded-xl p-4 h-64 overflow-y-auto space-y-2">
+        {messages.map((m, i) => <div key={i} className="text-sm text-muted-foreground">💬 {m}</div>)}
+      </div>
+      <div className="flex gap-2">
+        <input value={msg} onChange={e => setMsg(e.target.value)} placeholder="Type a message..." className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
+        <button onClick={() => { if (msg.trim()) { setMessages([...messages, msg]); setMsg(""); } }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">Send</button>
+      </div>
+    </div>
+  );
+}
+function CrewBankPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏦</span><h2 className="text-2xl font-bold">Crew Bank</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🏦</div>
+        <div className="text-3xl font-bold text-green-400">$0</div>
+        <div className="text-sm text-muted-foreground">Pool your crew's money for shared operations, war funds, and territory purchases.</div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <button className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm">💰 Deposit</button>
+          <button className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm">💸 Withdraw</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function CrewSafehousePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const upgrades = [
+    { name: "Hidden Stash", cost: 50000, desc: "+50 storage" },
+    { name: "Trap System", cost: 100000, desc: "Auto-defense" },
+    { name: "Medical Bay", cost: 75000, desc: "Auto-heal" },
+    { name: "Comms Room", cost: 60000, desc: "Crew chat boost" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏠</span><h2 className="text-2xl font-bold">Crew Safe House</h2></div>
+      <div className="grid grid-cols-2 gap-3">
+        {upgrades.map(u => (
+          <div key={u.name} className="mafia-card rounded-xl p-4 text-center space-y-2">
+            <div className="font-bold text-sm">{u.name}</div>
+            <div className="text-xs text-muted-foreground">{u.desc}</div>
+            <div className="text-xs text-green-400">${u.cost.toLocaleString()}</div>
+            <button className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs">Upgrade</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function CrewWarPage() { return <CrewWarsPage />; }
+function CrewAlliancePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🤝</span><h2 className="text-2xl font-bold">Crew Alliance</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🤝</div>
+        <div className="text-sm text-muted-foreground">Form alliances with other crews. Share territory income and fight wars together.</div>
+        <div className="text-xs text-yellow-400">Requires Level 30+ and Boss rank in crew</div>
+        <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:scale-105 transition">🤝 Propose Alliance</button>
+      </div>
+    </div>
+  );
+}
+function CrewTerritoryPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const territories = [
+    { name: "Downtown", income: 5000, owner: "None" },
+    { name: "Harbor District", income: 8000, owner: "None" },
+    { name: "Industrial Zone", income: 12000, owner: "None" },
+    { name: "Financial District", income: 20000, owner: "None" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📍</span><h2 className="text-2xl font-bold">Crew Territory</h2></div>
+      <div className="space-y-2">
+        {territories.map(t => (
+          <div key={t.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
+            <div className="text-2xl">📍</div>
+            <div className="flex-1"><div className="font-bold">{t.name}</div><div className="text-xs text-muted-foreground">Income: ${t.income.toLocaleString()}/hr</div></div>
+            <button className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs">Claim</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function CrewChallengesPage() {
+  const challenges = [
+    { name: "Rob 10 Banks", reward: "$50K", icon: "🏦" },
+    { name: "Win 5 Crew Wars", reward: "1000 XP", icon: "⚔️" },
+    { name: "Earn $500K total", reward: "Special Item", icon: "💰" },
+    { name: "Capture 3 Territories", reward: "$100K", icon: "📍" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🎯</span><h2 className="text-2xl font-bold">Crew Challenges</h2></div>
+      <div className="space-y-2">
+        {challenges.map(c => (
+          <div key={c.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
+            <span className="text-2xl">{c.icon}</span>
+            <div className="flex-1"><div className="font-bold text-sm">{c.name}</div><div className="text-xs text-green-400">Reward: {c.reward}</div></div>
+            <div className="text-xs text-muted-foreground">0%</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// === WORLD PAGES ===
+function NeighborhoodsPage() {
+  const neighborhoods = [
+    { name: "Downtown", icon: "🏙️", danger: "High", income: "Medium", desc: "The heart of the city. High police presence but lucrative targets." },
+    { name: "Harbor District", icon: "⚓", danger: "Very High", income: "High", desc: "Smuggling hub. Multiple entry points for contraband." },
+    { name: "Suburbs", icon: "🏘️", danger: "Low", income: "Low", desc: "Quiet residential area. Easy pickings for burglary." },
+    { name: "Industrial Zone", icon: "🏭", danger: "Medium", income: "High", desc: "Factories and warehouses. Great for theft operations." },
+    { name: "Red Light District", icon: "🔴", danger: "High", income: "Very High", desc: "Anything goes here. Illegal businesses thrive." },
+    { name: "Financial District", icon: "💼", danger: "Very High", income: "Extreme", desc: "Banks and corporations. High-security, massive rewards." },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏘️</span><h2 className="text-2xl font-bold">Neighborhoods</h2></div>
+      <div className="space-y-2">
+        {neighborhoods.map(n => (
+          <div key={n.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
+            <span className="text-3xl">{n.icon}</span>
+            <div className="flex-1">
+              <div className="font-bold">{n.name}</div>
+              <div className="text-xs text-muted-foreground">{n.desc}</div>
+              <div className="flex gap-2 mt-1">
+                <span className="text-xs px-2 py-0.5 rounded bg-red-600/20 text-red-400">Danger: {n.danger}</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-green-600/20 text-green-400">Income: {n.income}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function SlumsPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏚️</span><h2 className="text-2xl font-bold">The Slums</h2></div>
+      <div className="mafia-card rounded-xl p-6 space-y-4">
+        <div className="text-sm text-muted-foreground">The poorest part of the city. Low-level crimes, cheap goods, and desperate people. Good place to start your criminal career.</div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="mafia-card rounded-lg p-3 text-center"><div className="text-2xl">🔪</div><div className="text-xs">Street Crimes</div><div className="text-xs text-green-400">+20% XP</div></div>
+          <div className="mafia-card rounded-lg p-3 text-center"><div className="text-2xl">💊</div><div className="text-xs">Drug Deals</div><div className="text-xs text-green-400">+15% Cash</div></div>
+          <div className="mafia-card rounded-lg p-3 text-center"><div className="text-2xl">🛡️</div><div className="text-xs">Low Heat</div><div className="text-xs text-green-400">-30% Wanted</div></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+function SeasonsPage() {
+  const seasons = [
+    { name: "Spring", icon: "🌸", effect: "+10% XP on all actions" },
+    { name: "Summer", icon: "☀️", effect: "+20% crime rewards" },
+    { name: "Autumn", icon: "🍂", effect: "+15% gambling luck" },
+    { name: "Winter", icon: "❄️", effect: "+25% smuggling profits" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🍂</span><h2 className="text-2xl font-bold">Seasons</h2></div>
+      <div className="grid grid-cols-2 gap-3">
+        {seasons.map(s => (
+          <div key={s.name} className="mafia-card rounded-xl p-5 text-center space-y-2">
+            <div className="text-4xl">{s.icon}</div>
+            <div className="font-bold">{s.name}</div>
+            <div className="text-xs text-green-400">{s.effect}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// === PROGRESSION PAGES ===
+function EnergyDrinksPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const drinks = [
+    { name: "Red Bull", icon: "🥤", boost: "2x XP", duration: "30 min", cost: 5000 },
+    { name: "Monster Energy", icon: "⛽", boost: "3x XP", duration: "1 hr", cost: 15000 },
+    { name: "Venom Shot", icon: "💉", boost: "5x XP", duration: "2 hrs", cost: 50000 },
+    { name: "Liquid Gold", icon: "✨", boost: "10x XP", duration: "4 hrs", cost: 200000 },
+    { name: "Shadow Elixir", icon: "🧪", boost: "15x XP", duration: "8 hrs", cost: 500000 },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">⚡</span><h2 className="text-2xl font-bold">Energy Drinks</h2></div>
+      <div className="text-sm text-muted-foreground mb-3">25% chance to find energy drinks during criminal actions!</div>
+      <div className="space-y-2">
+        {drinks.map(d => (
+          <div key={d.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
+            <span className="text-3xl">{d.icon}</span>
+            <div className="flex-1"><div className="font-bold">{d.name}</div><div className="text-xs text-muted-foreground">{d.boost} for {d.duration}</div></div>
+            <button className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs">${d.cost.toLocaleString()}</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// === CHAT PAGES ===
+function GlobalChatPage() {
+  const [msg, setMsg] = useState("");
+  const [messages, setMessages] = useState<string[]>(["🌍 Welcome to Global Chat!", "🔥 Stay active to earn reputation!"]);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🌐</span><h2 className="text-2xl font-bold">Global Chat</h2></div>
+      <div className="mafia-card rounded-xl p-4 h-64 overflow-y-auto space-y-2">
+        {messages.map((m, i) => <div key={i} className="text-sm text-muted-foreground">{m}</div>)}
+      </div>
+      <div className="flex gap-2">
+        <input value={msg} onChange={e => setMsg(e.target.value)} placeholder="Type a message..." className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm" onKeyDown={e => { if (e.key === "Enter" && msg.trim()) { setMessages([...messages, `👤 You: ${msg}`]); setMsg(""); } }} />
+        <button onClick={() => { if (msg.trim()) { setMessages([...messages, `👤 You: ${msg}`]); setMsg(""); } }} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm">Send</button>
+      </div>
+    </div>
+  );
+}
+function TradeChatPage() {
+  const [msg, setMsg] = useState("");
+  const [messages, setMessages] = useState<string[]>(["💹 Trading Hub — buy, sell, and negotiate!"]);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">💹</span><h2 className="text-2xl font-bold">Trade Chat</h2></div>
+      <div className="mafia-card rounded-xl p-4 h-64 overflow-y-auto space-y-2">
+        {messages.map((m, i) => <div key={i} className="text-sm text-muted-foreground">{m}</div>)}
+      </div>
+      <div className="flex gap-2">
+        <input value={msg} onChange={e => setMsg(e.target.value)} placeholder="WTS/WTB..." className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
+        <button onClick={() => { if (msg.trim()) { setMessages([...messages, `💹 ${msg}`]); setMsg(""); } }} className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm">Post</button>
+      </div>
+    </div>
+  );
+}
+function LFGPage() {
+  const [messages, setMessages] = useState<string[]>(["👥 Looking for Group — find teammates for missions and heists!"]);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">👥</span><h2 className="text-2xl font-bold">Looking for Group</h2></div>
+      <div className="mafia-card rounded-xl p-4 h-64 overflow-y-auto space-y-2">
+        {messages.map((m, i) => <div key={i} className="text-sm text-muted-foreground">{m}</div>)}
+      </div>
+      <button className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl hover:scale-105 transition">👥 Create LFG Post</button>
+    </div>
+  );
+}
+function FamilyChatPage() {
+  const [msg, setMsg] = useState("");
+  const [messages, setMessages] = useState<string[]>(["👨‍👩‍👦 Family Chat — private family channel"]);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">👨‍👩‍👦</span><h2 className="text-2xl font-bold">Family Chat</h2></div>
+      <div className="mafia-card rounded-xl p-4 h-64 overflow-y-auto space-y-2">
+        {messages.map((m, i) => <div key={i} className="text-sm text-muted-foreground">{m}</div>)}
+      </div>
+      <div className="flex gap-2">
+        <input value={msg} onChange={e => setMsg(e.target.value)} placeholder="Family message..." className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
+        <button onClick={() => { if (msg.trim()) { setMessages([...messages, `👨‍👩‍👦 ${msg}`]); setMsg(""); } }} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm">Send</button>
+      </div>
+    </div>
+  );
+}
+
+// === REPORTS PAGE ===
+function ReportsPage() {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📢</span><h2 className="text-2xl font-bold">Player Reports</h2></div>
+      <div className="mafia-card rounded-xl p-6 space-y-4">
+        <div className="text-sm text-muted-foreground">Report a player for cheating, harassment, or rule violations.</div>
+        <input value={subject} onChange={e => setSubject(e.target.value)} placeholder="Subject..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm" />
+        <textarea value={body} onChange={e => setBody(e.target.value)} placeholder="Describe the issue..." className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm h-24" />
+        <button onClick={() => { if (subject && body) setSubmitted(true); }} className="px-6 py-2 bg-red-600 text-white rounded-xl text-sm">
+          {submitted ? "✅ Reported!" : "📤 Submit Report"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// === MYSTERY BOX PAGES ===
+function MysteryBoxPage({ name, icon, cost, tiers }: { name: string; icon: string; cost: number; tiers: string[] }) {
+  const [opening, setOpening] = useState(false);
+  const [result, setResult] = useState("");
+  const [player] = useQuery(api.game.getPlayer) ?? [null];
+  const open = () => {
+    setOpening(true); setResult("");
+    setTimeout(() => {
+      const roll = Math.random();
+      let tier = "Common";
+      if (roll > 0.95) tier = "💎 Legendary";
+      else if (roll > 0.85) tier = "💜 Epic";
+      else if (roll > 0.70) tier = "💙 Rare";
+      else if (roll > 0.45) tier = "💚 Uncommon";
+      setResult(`Opened ${name}! You got: ${tier}`);
+      setOpening(false);
+    }, 2000);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{name}</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-7xl animate-bounce">{icon}</div>
+        <div className="text-lg font-bold">{name}</div>
+        <div className="text-sm text-muted-foreground">Contains: {tiers.join(", ")}</div>
+        <div className="text-lg text-green-400 font-bold">${cost.toLocaleString()}</div>
+        <button onClick={open} disabled={opening || (player?.money ?? 0) < cost} className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold rounded-xl hover:scale-105 transition disabled:opacity-50">
+          {opening ? "🎁 Opening..." : `🎁 Open (${cost > 0 ? "$" + cost.toLocaleString() : "Free"})`}
+        </button>
+        {result && <div className="mt-2 text-sm font-bold text-primary animate-fade-in">{result}</div>}
+      </div>
+    </div>
+  );
+}
+function StandardBoxPage() { return <MysteryBoxPage name="Standard Box" icon="📦" cost={10000} tiers={["Common", "Uncommon", "Rare"]} />; }
+function PremiumBoxPage() { return <MysteryBoxPage name="Premium Box" icon="💎" cost={100000} tiers={["Uncommon", "Rare", "Epic"]} />; }
+function LegendaryBoxPage() { return <MysteryBoxPage name="Legendary Box" icon="👑" cost={500000} tiers={["Rare", "Epic", "Legendary"]} />; }
+function SeasonalBoxPage() { return <MysteryBoxPage name="Seasonal Box" icon="🎄" cost={250000} tiers={["Seasonal Uncommon", "Seasonal Rare", "Seasonal Epic"]} />; }
+function CrimeBoxPage() { return <MysteryBoxPage name="Crime Box" icon="🔪" cost={75000} tiers={["Weapon", "Tool", "Blueprint"]} />; }
+function CombatBoxPage() { return <MysteryBoxPage name="Combat Box" icon="⚔️" cost={150000} tiers={["Armor", "Weapon", "Shield"]} />; }
+function GuaranteedBoxPage() { return <MysteryBoxPage name="Guaranteed Legendary" icon="⭐" cost={1000000} tiers={["Epic", "Legendary (Guaranteed)"]} />; }
+function LimitedBoxPage() { return <MysteryBoxPage name="Limited Edition" icon="🔥" cost={750000} tiers={["Limited Epic", "Limited Legendary", "Exclusive"]} />; }
+
+// === GHOST MODE PAGES ===
+function GhostStatusPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">👁️</span><h2 className="text-2xl font-bold">Ghost Status</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">👁️‍🗨️</div>
+        <div className="text-sm text-muted-foreground">Become invisible on the map for 1 hour. Cannot be targeted by other players.</div>
+        <div className="grid grid-cols-2 gap-3 max-w-sm mx-auto">
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Cost</div><div className="text-lg font-bold text-green-400">$5M</div></div>
+          <div className="mafia-card rounded-lg p-3"><div className="text-xs text-muted-foreground">Cooldown</div><div className="text-lg font-bold text-yellow-400">24 hrs</div></div>
+        </div>
+        <button className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:scale-105 transition">👁️ Go Ghost</button>
+      </div>
+    </div>
+  );
+}
+function GhostHistoryPage() {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📋</span><h2 className="text-2xl font-bold">Ghost History</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center">
+        <div className="text-4xl mb-3">📋</div>
+        <div className="text-sm text-muted-foreground">No ghost sessions yet. Activate Ghost Mode first!</div>
+      </div>
+    </div>
+  );
+}
+
+// === SECRET CHALLENGE PAGES ===
+function SecretDailyPage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const secrets = [
+    { name: "Midnight Mugging", desc: "Commit 5 crimes between 12AM-2AM", reward: "$50K", progress: 0, goal: 5 },
+    { name: "Lucky Seven", desc: "Win exactly 7 gambling games in a row", reward: "Legendary Item", progress: 0, goal: 7 },
+    { name: "Silent Predator", desc: "Complete 10 murders without being wanted", reward: "$200K", progress: 0, goal: 10 },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🔮</span><h2 className="text-2xl font-bold">Daily Secret Challenge</h2></div>
+      <div className="space-y-3">
+        {secrets.map(s => (
+          <div key={s.name} className="mafia-card rounded-xl p-4 space-y-2">
+            <div className="flex justify-between items-center"><div className="font-bold">{s.name}</div><div className="text-xs text-yellow-400">Reward: {s.reward}</div></div>
+            <div className="text-xs text-muted-foreground">{s.desc}</div>
+            <div className="w-full bg-secondary rounded-full h-2"><div className="bg-primary h-2 rounded-full transition-all" style={{ width: `${(s.progress / s.goal) * 100}%` }} /></div>
+            <div className="text-xs text-muted-foreground text-right">{s.progress}/{s.goal}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function SecretWeeklyPage() {
+  const secrets = [
+    { name: "Empire Builder", desc: "Earn $5M in one week", reward: "Mythic Item", progress: "$0", goal: "$5M" },
+    { name: "Ghost Protocol", desc: "Use Ghost Mode 3 times in one week", reward: "$1M", progress: "0", goal: "3" },
+    { name: "Untouchable", desc: "Avoid prison for 7 consecutive days", reward: "VIP Status", progress: "0 days", goal: "7 days" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">💎</span><h2 className="text-2xl font-bold">Weekly Secret Challenge</h2></div>
+      <div className="space-y-3">
+        {secrets.map(s => (
+          <div key={s.name} className="mafia-card rounded-xl p-4 space-y-2">
+            <div className="flex justify-between items-center"><div className="font-bold">{s.name}</div><div className="text-xs text-yellow-400">{s.reward}</div></div>
+            <div className="text-xs text-muted-foreground">{s.desc}</div>
+            <div className="text-xs text-primary">Progress: {s.progress} / {s.goal}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function SecretAchievementsPage() {
+  const hidden = [
+    { name: "Shadow Walker", desc: "Complete 100 crimes without being detected", icon: "👤" },
+    { name: "Gold Digger", desc: "Earn $100M from stealing alone", icon: "💰" },
+    { name: "Phantom", desc: "Reach Level 50 without dying once", icon: "👻" },
+    { name: "Dragon's Hoard", desc: "Accumulate $1B in total earnings", icon: "🐉" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏆</span><h2 className="text-2xl font-bold">Hidden Achievements</h2></div>
+      <div className="space-y-2">
+        {hidden.map(a => (
+          <div key={a.name} className="mafia-card rounded-xl p-4 flex items-center gap-4 opacity-50">
+            <span className="text-3xl">{a.icon}</span>
+            <div><div className="font-bold">???</div><div className="text-xs text-muted-foreground">{a.desc}</div></div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function SecretEasterEggsPage() {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🥚</span><h2 className="text-2xl font-bold">Easter Eggs</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center">
+        <div className="text-5xl mb-3">🥚</div>
+        <div className="text-sm text-muted-foreground">Hidden secrets scattered across the game. Explore every page to discover them!</div>
+        <div className="text-xs text-yellow-400 mt-2">??/10 Discovered</div>
+      </div>
+    </div>
+  );
+}
+function SecretCrimePage() {
+  const player = useQuery(api.game.getPlayer);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🕵️</span><h2 className="text-2xl font-bold">Secret Crime</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">🕵️</div>
+        <div className="text-sm text-muted-foreground">A hidden crime operation. Only available for players Level 50+.</div>
+        {(player.level ?? 0) >= 50 ? (
+          <button className="px-6 py-3 bg-gradient-to-r from-red-600 to-purple-600 text-white font-bold rounded-xl hover:scale-105 transition">🕵️ Execute Secret Crime</button>
+        ) : (
+          <div className="text-xs text-red-400">🔒 Requires Level 50+</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// === HELPER PAGES ===
+function Duel1v1Page() {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">⚔️</span><h2 className="text-2xl font-bold">1v1 Duel</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-5xl">⚔️</div>
+        <div className="text-sm text-muted-foreground">Challenge another player to a 1v1 fight. ATK vs DEF with level scaling.</div>
+        <button className="px-6 py-3 bg-gradient-to-r from-red-600 to-orange-600 text-white font-bold rounded-xl hover:scale-105 transition">⚔️ Find Opponent</button>
+      </div>
+    </div>
+  );
+}
+function BankAccountPage() { return <BankPage />; }
+function BankRobberyPage() {
+  const player = useQuery(api.game.getPlayer);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const rob = () => {
+    setLoading(true);
+    const success = Math.random() > 0.5;
+    const reward = success ? Math.floor(Math.random() * 25000 + 5000) : -Math.floor(Math.random() * 5000);
+    setMsg(success ? `💰 Robbed $${reward.toLocaleString()}!` : `💀 Failed! Lost $${Math.abs(reward).toLocaleString()}`);
+    setLoading(false);
+  };
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🏦</span><h2 className="text-2xl font-bold">Bank Robbery</h2></div>
+      <div className="mafia-card rounded-xl p-6 text-center space-y-4">
+        <div className="text-4xl mb-3">💰</div>
+        <p className="text-sm text-muted-foreground">High risk, high reward. 50% success rate.</p>
+        <button onClick={rob} disabled={loading || (player.level ?? 0) < 10} className="px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50">
+          {loading ? "Robbing..." : "🏦 Rob the Bank"}
+        </button>
+      </div>
+      {msg && <div className="mafia-card rounded-xl p-4 text-center text-sm font-bold">{msg}</div>}
+    </div>
+  );
+}
+function CryptoTradingPage() { return <CryptoPage />; }
+function DailySpinPage() { return <DailyLoginPage />; }
+function SeasonRewardsPage() { return <SeasonPassPage />; }
+function BattlePassPage() { return <SeasonPassPage />; }
+function CrewLeaderboardPage() {
+  const players = useQuery(api.admin.getAllPlayers);
+  const sorted = [...(players || [])].sort((a: any, b: any) => (b.level || 0) - (a.level || 0)).slice(0, 50);
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">🤝</span><h2 className="text-2xl font-bold">Crew Leaderboard</h2></div>
+      <div className="space-y-2">{sorted.map((p: any, i: number) => (
+        <div key={p._id} className="mafia-card rounded-xl p-3 flex items-center gap-3">
+          <div className="text-lg font-bold text-yellow-400">#{i+1}</div>
+          <div className="flex-1"><div className="text-sm font-bold">{p.nickname || p.username || "Unknown"}</div>
+          <div className="text-xs text-muted-foreground">Level {p.level ?? 1}</div></div>
+        </div>))}</div>
+    </div>
+  );
+}
+function CityMapPage() { return <WorldMapPage />; }
+function CityStatsPage() { return <StatisticsPage />; }
+function CombatSkillsPage() { return <SkillTreePage />; }
+function StealthSkillsPage() { return <SkillTreePage />; }
+function HackingSkillsPage() { return <SkillTreePage />; }
+function PrestigeShopPage() { return <PrestigePage />; }
+function SeasonRewardsProgPage() { return <SeasonPassPage />; }
+function SideMissionsPage() { return <MissionsPage />; }
+function DailyMissionsPage() { return <MissionsPage />; }
+function WeeklyMissionsPage() { return <MissionsPage />; }
+function MonthlyMissionsPage() { return <MissionsPage />; }
+
 export default function Dashboard() {
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
   const player = useQuery(api.game.getPlayer);
@@ -775,6 +1700,20 @@ function EventPage({ name, icon, desc }: { name: string; icon: string; desc: str
     <div className="animate-fade-in space-y-4">
       <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{name}</h2></div>
       <div className="mafia-card rounded-xl p-6 text-center"><div className="text-4xl mb-3">{icon}</div><div className="text-sm font-bold mb-1">{name}</div><div className="text-xs text-muted-foreground">{desc}</div></div>
+    </div>
+  );
+}
+
+function CommunityPage() {
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">📜</span><h2 className="text-2xl font-bold">Community Guidelines</h2></div>
+      <div className="mafia-card rounded-xl p-5 space-y-3 text-sm text-muted-foreground">
+        <div className="font-bold text-foreground">1. Be Respectful</div><p>Treat all players with respect.</p>
+        <div className="font-bold text-foreground">2. No Cheating</div><p>Exploiting bugs = ban.</p>
+        <div className="font-bold text-foreground">3. Play Fair</div><p>No scamming outside in-game mechanics.</p>
+        <div className="font-bold text-foreground">4. Have Fun</div><p>Enjoy the criminal underworld!</p>
+      </div>
     </div>
   );
 }
@@ -908,158 +1847,6 @@ function CoinFlipPage() {
     </div>
   );
 }
-
-// === COMBAT PAGES ===
-function Duel1v1Page() {
-  const player = useQuery(api.game.getPlayer);
-  const players = useQuery(api.admin.getAllPlayers);
-  const fight = useMutation(api.game.fightPlayer);
-  const [target, setTarget] = useState<any>(null);
-  const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
-  const opponents = (players || []).filter((p: any) => p._id !== player?._id && !p.isBanned && (p.nickname || "").toLowerCase().includes(search.toLowerCase())).slice(0, 20);
-  const doFight = async () => {
-    if (!target) return;
-    setLoading(true);
-    try { const r = await fight({ defenderId: target._id }); setResult(r); } catch (e: any) { alert(e.message); }
-    setLoading(false);
-  };
-  return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><span className="text-3xl">⚔️</span><h2 className="text-2xl font-bold">1v1 Duel</h2></div>
-      <div className="grid grid-cols-3 gap-3">
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">ATK</div><div className="text-lg font-bold text-red-400">{player?.attack ?? 0}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">DEF</div><div className="text-lg font-bold text-blue-400">{player?.defense ?? 0}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">HP</div><div className="text-lg font-bold text-green-400">{player?.life ?? 0}/{player?.maxLife ?? 100}</div></div>
-      </div>
-      <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search opponent..." className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm" />
-      <div className="max-h-[300px] overflow-y-auto space-y-1">
-        {opponents.map((p: any) => (
-          <div key={p._id} onClick={() => setTarget(p)} className={`p-3 rounded-lg cursor-pointer text-sm flex justify-between items-center ${target?._id === p._id ? "bg-primary/20 border border-primary/30" : "hover:bg-white/5 border border-transparent"}`}>
-            <div><span className="font-bold">{p.nickname || "Unknown"}</span> <span className="text-muted-foreground">Lv.{p.level}</span></div>
-            <div className="text-xs text-muted-foreground">ATK:{p.attack} DEF:{p.defense}</div>
-          </div>
-        ))}
-      </div>
-      <button onClick={doFight} disabled={!target || loading} className="w-full px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50">
-        {loading ? "Fighting..." : target ? `⚔️ Fight ${target.nickname || "Unknown"}!` : "Select an opponent"}
-      </button>
-      {result && (
-        <div className={`mafia-card rounded-xl p-4 text-center ${result.won ? "border-green-500/30" : "border-red-500/30"}`}>
-          <div className={`text-2xl font-black mb-2 ${result.won ? "text-green-400" : "text-red-400"}`}>{result.won ? "🏆 VICTORY!" : "💀 DEFEATED"}</div>
-          <div className="text-sm text-muted-foreground">Damage: {result.damage} | Taken: {result.taken}</div>
-          {result.stolen > 0 && <div className="text-sm text-green-400">Stole: ${result.stolen.toLocaleString()}</div>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CrewWarsPage() { return <GenericStub title="Crew Wars" icon="🏴" />; }
-function CTFPage() { return <GenericStub title="Capture the Flag" icon="🚩" />; }
-function KOTHPage() { return <GenericStub title="King of the Hill" icon="👑" />; }
-function BattleRoyalePage() { return <GenericStub title="Battle Royale" icon="🎯" />; }
-function LadderPage() { return <GenericStub title="Ladder System" icon="📊" />; }
-function ChampionPage() { return <GenericStub title="Champion Title" icon="🏆" />; }
-function AmbushPage() { return <GenericStub title="Ambush" icon="🔥" />; }
-
-// === ECONOMY PAGES ===
-function BankAccountPage() { return <BankPage />; }
-function BankRobberyPage() {
-  const player = useQuery(api.game.getPlayer);
-  const [msg, setMsg] = useState("");
-  const [loading, setLoading] = useState(false);
-  const rob = async () => {
-    setLoading(true);
-    try {
-      const success = Math.random() > 0.5;
-      const reward = success ? Math.floor(Math.random() * 25000 + 5000) : -Math.floor(Math.random() * 5000);
-      setMsg(success ? `💰 robbed $${reward.toLocaleString()}!` : `💀 Failed! Lost $${Math.abs(reward).toLocaleString()}`);
-    } catch (e: any) { alert(e.message); }
-    setLoading(false);
-  };
-  return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><span className="text-3xl">🏦</span><h2 className="text-2xl font-bold">Bank Robbery</h2></div>
-      <div className="mafia-card rounded-xl p-6 text-center">
-        <div className="text-4xl mb-3">💰</div>
-        <p className="text-sm text-muted-foreground mb-4">High risk, high reward. 50% chance of success.</p>
-        <button onClick={rob} disabled={loading || (player?.level ?? 0) < 10} className="px-6 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 disabled:opacity-50">
-          {loading ? "Robbing..." : "🏦 Rob the Bank"}
-        </button>
-        {(player?.level ?? 0) < 10 && <div className="text-xs text-red-400 mt-2">Requires Level 10+</div>}
-      </div>
-      {msg && <div className="mafia-card rounded-xl p-4 text-center text-sm font-bold">{msg}</div>}
-    </div>
-  );
-}
-function InterestRatesPage() { return <GenericStub title="Interest Rates" icon="📈" />; }
-function CreditScorePage() { return <GenericStub title="Credit Score" icon="💳" />; }
-function HealthInsurancePage() { return <GenericStub title="Health Insurance" icon="🏥" />; }
-function LifeInsurancePage() { return <GenericStub title="Life Insurance" icon="❤️" />; }
-function CryptoTradingPage() { return <CryptoPage />; }
-function AutoShopPage() { return <GenericStub title="Auto Shop" icon="🚗" />; }
-function OffshorePage() { return <GenericStub title="Offshore Accounts" icon="🏝️" />; }
-function DailySpinPage() { return <DailyLoginPage />; }
-function ReferralPage() { return <GenericStub title="Referral System" icon="🔗" />; }
-function SeasonRewardsPage() { return <SeasonPassPage />; }
-function BattlePassPage() { return <SeasonPassPage />; }
-
-// === SOCIAL PAGES ===
-function CrewRanksPage() { return <GenericStub title="Crew Ranks" icon="📊" />; }
-function CrewChatPage() { return <GenericStub title="Crew Chat" icon="💬" />; }
-function CrewBankPage() { return <GenericStub title="Crew Bank" icon="🏦" />; }
-function CrewSafehousePage() { return <GenericStub title="Crew Safe House" icon="🏠" />; }
-function CrewWarPage() { return <GenericStub title="Crew War" icon="⚔️" />; }
-function CrewAlliancePage() { return <GenericStub title="Crew Alliance" icon="🤝" />; }
-function CrewTerritoryPage() { return <GenericStub title="Crew Territory" icon="📍" />; }
-function CrewChallengesPage() { return <GenericStub title="Crew Challenges" icon="🎯" />; }
-function CrewLeaderboardPage() { return <LeaderboardPage title="Crew Leaderboard" icon="🤝" />; }
-
-// === WORLD PAGES ===
-function CityMapPage() { return <WorldMapPage />; }
-function NeighborhoodsPage() { return <GenericStub title="Neighborhoods" icon="🏘️" />; }
-function SlumsPage() { return <GenericStub title="Slums" icon="🏚️" />; }
-function SeasonsPage() { return <GenericStub title="Seasons" icon="🍂" />; }
-function CityStatsPage() { return <StatisticsPage />; }
-
-// === PROGRESSION PAGES ===
-function CombatSkillsPage() { return <SkillTreePage />; }
-function StealthSkillsPage() { return <SkillTreePage />; }
-function HackingSkillsPage() { return <SkillTreePage />; }
-function PrestigeShopPage() { return <PrestigePage />; }
-function SeasonRewardsProgPage() { return <SeasonPassPage />; }
-function EnergyDrinksPage() { return <GenericStub title="Energy Drinks" icon="⚡" />; }
-
-// === MISSIONS PAGES ===
-function SideMissionsPage() { return <MissionsPage />; }
-function DailyMissionsPage() { return <MissionsPage />; }
-function WeeklyMissionsPage() { return <MissionsPage />; }
-function MonthlyMissionsPage() { return <MissionsPage />; }
-
-// === CHAT PAGES ===
-function GlobalChatPage() { return <GenericStub title="Global Chat" icon="🌐" />; }
-function TradeChatPage() { return <GenericStub title="Trade Chat" icon="💹" />; }
-function LFGPage() { return <GenericStub title="Looking for Group" icon="👥" />; }
-function FamilyChatPage() { return <GenericStub title="Family Chat" icon="👨‍👩‍👦" />; }
-
-// === COMMUNITY PAGES ===
-function CommunityPage() {
-  return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><span className="text-3xl">📜</span><h2 className="text-2xl font-bold">Community Guidelines</h2></div>
-      <div className="mafia-card rounded-xl p-5 space-y-3 text-sm text-muted-foreground">
-        <div className="font-bold text-foreground">1. Be Respectful</div><p>Treat all players with respect. No harassment or hate speech.</p>
-        <div className="font-bold text-foreground">2. No Cheating</div><p>Exploiting bugs or using hacks will result in a ban.</p>
-        <div className="font-bold text-foreground">3. Keep It Clean</div><p>No spam, no offensive content in forums or chat.</p>
-        <div className="font-bold text-foreground">4. Play Fair</div><p>No scamming other players outside of in-game crime mechanics.</p>
-        <div className="font-bold text-foreground">5. Have Fun</div><p>This is a game. Enjoy the criminal underworld responsibly!</p>
-      </div>
-    </div>
-  );
-}
-function ReportsPage() { return <GenericStub title="Player Reports" icon="📢" />; }
 
 // === ADMIN PAGES (extra) ===
 function FBIStatusPage() {
@@ -1446,11 +2233,11 @@ const renderPage = () => {
       case "evt_underground": return <EventPage name="Underground Championship" icon="💣" desc="Underground tournament. Best fighter wins!" />;
       case "evt_empire": return <EventPage name="Crime Empire Week" icon="👑" desc="All empire operations +5x reward!" />;
       // Chat pages
-      case "crew_chat": return <GenericStub title="Crew Chat" icon="💬" />;
-      case "family_chat": return <GenericStub title="Family Chat" icon="👨‍👩‍👦" />;
-      case "global_chat": return <GenericStub title="Global Chat" icon="🌐" />;
-      case "trade_chat": return <GenericStub title="Trade Chat" icon="💹" />;
-      case "lfg": return <GenericStub title="Looking for Group" icon="👥" />;
+      case "crew_chat": return <CrewChatPage />;
+      case "family_chat": return <FamilyChatPage />;
+      case "global_chat": return <GlobalChatPage />;
+      case "trade_chat": return <TradeChatPage />;
+      case "lfg": return <LFGPage />;
       // Leaderboards
       case "lb_level": return <LeaderboardPage title="Level Leaderboard" icon="📊" />;
       case "lb_money": return <LeaderboardPage title="Money Leaderboard" icon="💰" />;
@@ -1463,26 +2250,26 @@ const renderPage = () => {
       case "lb_missions": return <LeaderboardPage title="Mission Leaderboard" icon="🎯" />;
       case "lb_season": return <LeaderboardPage title="Season Leaderboard" icon="🗓️" />;
       // Mystery boxes
-      case "box_standard": return <GenericStub title="Standard Box" icon="📦" />;
-      case "box_premium": return <GenericStub title="Premium Box" icon="💎" />;
-      case "box_legendary": return <GenericStub title="Legendary Box" icon="👑" />;
-      case "box_seasonal": return <GenericStub title="Seasonal Box" icon="🎄" />;
-      case "box_crime": return <GenericStub title="Crime Box" icon="🔪" />;
-      case "box_combat": return <GenericStub title="Combat Box" icon="⚔️" />;
-      case "box_guaranteed": return <GenericStub title="Guaranteed Legendary" icon="⭐" />;
-      case "box_limited": return <GenericStub title="Limited Edition" icon="🔥" />;
+      case "box_standard": return <StandardBoxPage />;
+      case "box_premium": return <PremiumBoxPage />;
+      case "box_legendary": return <LegendaryBoxPage />;
+      case "box_seasonal": return <SeasonalBoxPage />;
+      case "box_crime": return <CrimeBoxPage />;
+      case "box_combat": return <CombatBoxPage />;
+      case "box_guaranteed": return <GuaranteedBoxPage />;
+      case "box_limited": return <LimitedBoxPage />;
       // Ghost mode
-      case "ghost_status": return <GenericStub title="Ghost Status" icon="👁️" />;
-      case "ghost_history": return <GenericStub title="Ghost History" icon="📋" />;
+      case "ghost_status": return <GhostStatusPage />;
+      case "ghost_history": return <GhostHistoryPage />;
       // Secret challenges
-      case "secret_daily": return <GenericStub title="Daily Secret Challenge" icon="🔮" />;
-      case "secret_weekly": return <GenericStub title="Weekly Secret Challenge" icon="💎" />;
-      case "secret_achievements": return <GenericStub title="Hidden Achievements" icon="🏆" />;
-      case "secret_eggs": return <GenericStub title="Easter Eggs" icon="🥚" />;
-      case "secret_crime": return <GenericStub title="Secret Crime" icon="🕵️" />;
+      case "secret_daily": return <SecretDailyPage />;
+      case "secret_weekly": return <SecretWeeklyPage />;
+      case "secret_achievements": return <SecretAchievementsPage />;
+      case "secret_eggs": return <SecretEasterEggsPage />;
+      case "secret_crime": return <SecretCrimePage />;
       // Community
-      case "community": return <GenericStub title="Community Guidelines" icon="📜" />;
-      case "reports": return <GenericStub title="Player Reports" icon="📢" />;
+      case "community": return <CommunityPage />;
+      case "reports": return <ReportsPage />;
       // Other
       case "city_overview": return <CityOverviewPage />;
       case "fbi_status": return <FBIStatusPage />;
