@@ -1673,15 +1673,12 @@ export default function Dashboard() {
   const player = useQuery(api.game.getPlayer);
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
-  const [dismissedLevelUp, setDismissedLevelUp] = useState(false);
+  const [dismissedAtLevel, setDismissedAtLevel] = useState<number | null>(null);
   const setPage = useCallback((p: GamePage) => setActivePage(p), []);
 
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
 
-  // Auto-reset dismissedLevelUp when new level-up is pending
-  useEffect(() => {
-    if (player?.levelUpPending) setDismissedLevelUp(false);
-  }, [player?.levelUpPending]);
+
 
   const acknowledgeLevelUp = useMutation(api.game.acknowledgeLevelUp);
 
@@ -2477,7 +2474,7 @@ const renderPage = () => {
     <div className="min-h-screen flex flex-col bg-[oklch(0.08_0.015_35)]">
       {/* Level Up Modal */}
       <AnimatePresence>
-        {player?.levelUpPending && !dismissedLevelUp && (
+        {player?.levelUpPending && dismissedAtLevel !== (player.level ?? 0) + 1 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }} exit={{ scale: 0.5 }}
@@ -2488,9 +2485,9 @@ const renderPage = () => {
               <div className="text-xs text-yellow-200/60 mt-3 space-y-1">
                 <div>+10 ATK | +10 DEF | +75 HP | +1 Skill Point</div>
               </div>
-              <button onClick={async () => {
-                try { await acknowledgeLevelUp({}); } catch {}
-                setDismissedLevelUp(true);
+              <button onClick={() => {
+                setDismissedAtLevel((player.level ?? 0) + 1);
+                try { acknowledgeLevelUp({}); } catch {}
               }} className="mt-6 px-8 py-3 bg-yellow-500 text-black font-black rounded-xl hover:bg-yellow-400 transition">
                 CONTINUE
               </button>
