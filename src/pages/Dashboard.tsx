@@ -1623,8 +1623,8 @@ export default function Dashboard() {
   const [leftExpanded, setLeftExpanded] = useState<string[]>(leftMenuSections.map(s => s.title));
   const [rightExpanded, setRightExpanded] = useState<string[]>(rightMenuSections.map(s => s.title));
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
-  const [showLeft, setShowLeft] = useState(true);
-  const [showRight, setShowRight] = useState(true);
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(false);
 
   const xpNeeded = (player?.level ?? 1) * 100;
   const xpPercent = Math.min(100, ((player?.experience ?? 0) / xpNeeded) * 100);
