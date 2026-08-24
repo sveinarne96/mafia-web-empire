@@ -42,7 +42,9 @@ import {
 // Page components
 import { AdminPanel } from "@/components/AdminPanel";
 import { MyProfilePage } from "@/components/MyProfile";
-import { LiveEventBanner, EventsList } from "@/components/EventBanner";
+import { LiveEventBanner } from "@/components/EventBanner";
+import { EventsPage } from "@/components/EventsPage";
+import { ALL_GAME_EVENTS } from "@/data/events";
 import { OnlineList } from "@/components/OnlineList";
 import { BecomeAdminPage } from "@/components/BecomeAdmin";
 import { UpdatesPage } from "@/components/UpdatesPage";
@@ -2300,7 +2302,7 @@ const renderPage = () => {
       case "airport": return <AirportPage />;
       case "weather": return <WeatherPage />;
       case "news_ticker": return <NewsTickerPage />;
-      case "world_events": return <EventsList />;
+      case "world_events": return <EventsPage />;
       case "faq": return <FAQPage />;
       case "support": return <SupportPage />;
       case "admin_panel": return <AdminPanel />;
@@ -2430,52 +2432,10 @@ const renderPage = () => {
           `}</style>
           <div className="py-1.5 flex items-center gap-4 whitespace-nowrap" style={{animation: "event-scroll 30s linear infinite"}}>
             {[...activeEvents, ...activeEvents].map((evtId, i) => {
-              const evt: Record<string, { name: string; icon: string; color: string }> = {
-                "evt_newyear": { name: "New Year's Heist", icon: "🎆", color: "#f59e0b" },
-                "evt_valentine": { name: "Valentine's Crime", icon: "❤️", color: "#ec4899" },
-                "evt_patricks": { name: "St. Patrick's Gold", icon: "☘️", color: "#22c55e" },
-                "evt_easter": { name: "Easter Egg Hunt", icon: "🥚", color: "#a855f7" },
-                "evt_summer": { name: "Summer Crime Wave", icon: "☀️", color: "#f97316" },
-                "evt_halloween": { name: "Halloween Horror", icon: "🎃", color: "#f97316" },
-                "evt_christmas": { name: "Christmas Heist", icon: "🎄", color: "#22c55e" },
-                "evt_cyber": { name: "Cyber Monday", icon: "💻", color: "#3b82f6" },
-                "evt_blackfriday": { name: "Black Friday Heist", icon: "🛒", color: "#6b7280" },
-                "evt_tax": { name: "Tax Season Scam", icon: "📋", color: "#eab308" },
-                "evt_spring": { name: "Spring Break Crime", icon: "🌸", color: "#ec4899" },
-                "evt_winter": { name: "Winter Wonderland", icon: "❄️", color: "#06b6d4" },
-                "evt_purge": { name: "Purge Night", icon: "💀", color: "#ef4444" },
-                "evt_bloodmoon": { name: "Blood Moon", icon: "🌑", color: "#dc2626" },
-                "evt_robbersmoon": { name: "Robber's Moon", icon: "🌙", color: "#a3a3a3" },
-                "evt_fullmoon": { name: "Full Moon", icon: "🌕", color: "#fbbf24" },
-                "evt_grandheist": { name: "Grand Heist", icon: "🏦", color: "#22c55e" },
-                "evt_tournament": { name: "Tournament", icon: "🏆", color: "#f59e0b" },
-                "evt_familywar": { name: "Family War Week", icon: "⚔️", color: "#ef4444" },
-                "evt_territory": { name: "Territory Takeover", icon: "📍", color: "#3b82f6" },
-                "evt_underground": { name: "Underground Champ", icon: "💣", color: "#6b7280" },
-                "evt_empire": { name: "Crime Empire Week", icon: "👑", color: "#f59e0b" },
-                "evt_double_xp": { name: "Double XP Weekend", icon: "⭐", color: "#fbbf24" },
-                "evt_triple_xp": { name: "Triple XP Weekend", icon: "🌟", color: "#fbbf24" },
-                "evt_50x_xp": { name: "50x XP Event", icon: "💫", color: "#a855f7" },
-                "evt_double_cash": { name: "Double Cash Weekend", icon: "💰", color: "#22c55e" },
-                "evt_triple_cash": { name: "Triple Cash Event", icon: "💎", color: "#06b6d4" },
-                "evt_cash_rain": { name: "Cash Rain", icon: "🌧️", color: "#22c55e" },
-                "evt_heatwave": { name: "Heatwave", icon: "🔥", color: "#ef4444" },
-                "evt_thunderstorm": { name: "Thunderstorm", icon: "⛈️", color: "#6366f1" },
-                "evt_crime_frenzy": { name: "Crime Frenzy", icon: "🌀", color: "#ec4899" },
-                "evt_diamond_rush": { name: "Diamond Rush", icon: "💎", color: "#06b6d4" },
-                "evt_black_market_sale": { name: "Black Market Sale", icon: "🖤", color: "#6b7280" },
-                "evt_lucky_hour": { name: "Lucky Hour", icon: "🍀", color: "#22c55e" },
-                "evt_jackpot_hour": { name: "Jackpot Hour", icon: "🎰", color: "#f59e0b" },
-                "evt_gambling_marathon": { name: "Gambling Marathon", icon: "🎲", color: "#a855f7" },
-                "evt_prestige_rush": { name: "Prestige Rush", icon: "✨", color: "#fbbf24" },
-                "evt_kill_free_zone": { name: "Kill Free Zone", icon: "☠️", color: "#ef4444" },
-                "evt_golden_hour": { name: "Golden Hour", icon: "🌅", color: "#f59e0b" },
-                "evt_weekend_boost": { name: "Weekend Boost", icon: "🎮", color: "#22c55e" },
-                "evt_live_arctic": { name: "Arctic Cold Snap", icon: "🧊", color: "#06b6d4" },
-                "evt_live_grand_heist": { name: "Grand Heist Tournament", icon: "🏦", color: "#22c55e" },
-                "evt_live_street_race": { name: "Street Race Championship", icon: "🏎️", color: "#3b82f6" },
-              };
-              const e = evt[evtId] || { name: evtId, icon: "🎪", color: "#f59e0b" };
+              const evtData = ALL_GAME_EVENTS.find(ev => ev.id === evtId);
+              const e = evtData
+                ? { name: evtData.name, icon: evtData.icon, color: evtData.color }
+                : { name: evtId, icon: "\u{1F38A}", color: "#f59e0b" };
               return (
                 <span key={i} className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold shrink-0" style={{color: e.color, background: `${e.color}15`, border: `1px solid ${e.color}30`}}>
                   <span style={{animation: "event-pulse 1.5s ease-in-out infinite"}}>{e.icon}</span>
@@ -2512,6 +2472,7 @@ const renderPage = () => {
           { page: "kill", label: "Murder", color: "#dc2626", gradient: "from-red-700 to-red-900" },
           { page: "prison", label: "Prison", color: "#64748b", gradient: "from-slate-600 to-slate-800" },
           { page: "hospital", label: "Hospital", color: "#22c55e", gradient: "from-green-500 to-green-700" },
+          { page: "world_events", label: "Events", color: "#f59e0b", gradient: "from-amber-500 to-yellow-700" },
         ].map(btn => {
           const cdKey = `cd_${btn.page}`;
           const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;

@@ -1477,7 +1477,7 @@ export function WorldEventsPage() {
                       {event.type.toUpperCase()}
                     </span>
                     <span className="text-[10px] text-muted-foreground">⏱️ {event.duration}h remaining</span>
-                    {event.multiplier > 1 && (
+                    {(event.multiplier ?? 0) > 1 && (
                       <span className="text-[10px] text-yellow-400">🔥 {event.multiplier}x rewards</span>
                     )}
                   </div>
