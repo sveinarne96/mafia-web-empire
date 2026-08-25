@@ -2584,35 +2584,7 @@ const renderPage = () => {
             );
           })}
 
-          {/* Status badges - pushed to right */}
-          <div className="ml-auto flex items-center gap-1.5 shrink-0">
-            {(player?.wantedLevel ?? 0) > 0 && (
-              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-red-900/60 to-red-950/60 border border-red-500/30 text-red-400 flex items-center gap-1">
-                <span className="text-xs animate-pulse">🔴</span>
-                <span>WANTED {player.wantedLevel}</span>
-              </span>
-            )}
-            {(player as any)?.xpBoostUntil > Date.now() && (
-              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-cyan-900/50 to-cyan-950/50 border border-cyan-500/30 text-cyan-400 flex items-center gap-1">
-                <span className="text-xs">⚡</span> 3x XP
-              </span>
-            )}
-            {(player as any)?.cashBoostUntil > Date.now() && (
-              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-900/50 to-emerald-950/50 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
-                <span className="text-xs">💰</span> 3x Cash
-              </span>
-            )}
-            {(player as any)?.energyDrinkUntil > Date.now() && (
-              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-orange-900/50 to-orange-950/50 border border-orange-500/30 text-orange-400 flex items-center gap-1">
-                <span className="text-xs">🥤</span> Energy
-              </span>
-            )}
-            {(player as any)?.rankBoostUntil > Date.now() && (
-              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-yellow-900/50 to-yellow-950/50 border border-yellow-500/30 text-yellow-400 flex items-center gap-1">
-                <span className="text-xs">🚀</span> Rank
-              </span>
-            )}
-          </div>
+
         </div>
       </div>
 
@@ -2761,6 +2733,35 @@ const renderPage = () => {
                       <div className="text-base font-bold text-yellow-400 animate-money-text">{(player.points ?? 0).toLocaleString()}</div>
                     </div>
                   </div>
+                  {/* Active Boosts under Points */}
+                  <div className="px-2 space-y-1">
+                    {(player?.wantedLevel ?? 0) > 0 && (
+                      <div className="px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-red-900/60 to-red-950/60 border border-red-500/30 text-red-400 flex items-center gap-1">
+                        <span className="text-xs animate-pulse">🔴</span>
+                        <span>WANTED {player.wantedLevel}</span>
+                      </div>
+                    )}
+                    {(player as any)?.xpBoostUntil > Date.now() && (
+                      <div className="px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-cyan-900/50 to-cyan-950/50 border border-cyan-500/30 text-cyan-400 flex items-center gap-1">
+                        <span className="text-xs">⚡</span> 3x XP
+                      </div>
+                    )}
+                    {(player as any)?.cashBoostUntil > Date.now() && (
+                      <div className="px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-900/50 to-emerald-950/50 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
+                        <span className="text-xs">💰</span> 3x Cash
+                      </div>
+                    )}
+                    {(player as any)?.energyDrinkUntil > Date.now() && (
+                      <div className="px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-orange-900/50 to-orange-950/50 border border-orange-500/30 text-orange-400 flex items-center gap-1">
+                        <span className="text-xs">🥤</span> Energy
+                      </div>
+                    )}
+                    {(player as any)?.rankBoostUntil > Date.now() && (
+                      <div className="px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-yellow-900/50 to-yellow-950/50 border border-yellow-500/30 text-yellow-400 flex items-center gap-1">
+                        <span className="text-xs">🚀</span> Rank
+                      </div>
+                    )}
+                  </div>
 
                   {/* Active Rank Booster — Neon Animated Status */}
                   {((player as any).rankBoostUntil ?? 0) > Date.now() && (() => {
@@ -2790,11 +2791,6 @@ const renderPage = () => {
                   })()}
 
                   {/* Quick Info */}
-                  {(player.wantedLevel ?? 0) > 0 && (
-                    <div className="px-2 mafia-card rounded-lg p-1.5 border-red-500/30">
-                      <div className="text-[10px] text-red-400 font-bold text-center">🔴 Wanted: {player.wantedLevel}</div>
-                    </div>
-                  )}
                 </div>
               )}
 
