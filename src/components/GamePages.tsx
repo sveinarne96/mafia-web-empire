@@ -240,6 +240,7 @@ export function MyItemsPage() {
   const equip = useMutation(api.gameExtended.equipItem);
   const sellAllItems = useMutation(api.gameExtended.sellAllItems);
   const sellItem = useMutation(api.gameExtended.sellItem);
+  const useItem = useMutation(api.gameExtended.useVaultItem);
   const openEgg = useMutation(api.gameExtended.openEasterEgg);
   const activateBoost = useMutation(api.gameExtended.activateBoostItem);
   const [msg, setMsg] = useState("");
@@ -273,11 +274,12 @@ export function MyItemsPage() {
       </div>
       {(!inventory || inventory.length === 0) ? <div className="text-center py-10 text-muted-foreground text-sm">No items. Visit the Points Shop!</div> :
         <div className="space-y-2">{[...inventory].sort((a, b) => {
-          const rank = (e: any) => e.type === "easter_egg" ? 0 : (e.type === "xp_boost" || e.type === "cash_boost") ? 1 : 2;
+          const rank = (e: any) => e.type === "easter_egg" ? 0 : (e.type === "xp_boost" || e.type === "cash_boost") ? 1 : ["weapon","armor"].includes(e.type) ? 2 : 3;
           return rank(a) - rank(b);
         }).map(entry => {
           const isEgg = entry.type === "easter_egg";
           const isBoost = entry.type === "xp_boost" || entry.type === "cash_boost";
+              const isVaultUsable = ["relic","gadget","luxury","jewel","artifact","egg_special","contraband","collectible","curio"].includes(entry.type);
           return (
           <div key={entry._id} className={`mafia-card rounded-lg p-4 flex items-center justify-between border ${entry?.equipped ? "border-primary/50" : isEgg ? "border-purple-500/40 animate-pulse" : ""}`}>
             <div><div className="font-semibold text-sm">{entry.name}{isEgg && (entry.quantity ?? 1) > 1 ? ` ×${Math.min(entry.quantity ?? 1, 100)}` : ""}</div>
@@ -285,7 +287,8 @@ export function MyItemsPage() {
             <div className="flex gap-1.5 shrink-0">
               {isEgg && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await openEgg({ itemId: entry._id }); setMsg(`${(r as any).message}`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-purple-600 to-fuchsia-500 text-white hover:from-purple-500 hover:to-fuchsia-400 transition-all animate-glow-pulse">🎁 Open</button>}
               {isBoost && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await activateBoost({ itemId: entry._id }); setMsg((r as any).message); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-cyan-600 to-blue-500 text-white hover:from-cyan-500 hover:to-blue-400 transition-all">⚡ Activate</button>}
-              {!isEgg && !isBoost && <button onClick={async () => { setLoading(true); try { const r = await equip({ itemId: entry.itemId }); setMsg((r as any)?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
+              {isVaultUsable && <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await useItem({ itemId: entry._id }); setMsg((r as any).message); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-amber-600 to-orange-500 text-white hover:from-amber-500 hover:to-orange-400 transition-all">✨ Use</button>}
+              {!isEgg && !isBoost && !isVaultUsable && <button onClick={async () => { setLoading(true); try { const r = await equip({ itemId: entry.itemId }); setMsg((r as any)?.equipped ? "Equipped!" : "Unequipped!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }}
                 disabled={loading || (entry.type !== "weapon" && entry.type !== "armor")}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-lg ${entry?.equipped ? "bg-primary text-primary-foreground" : "bg-secondary border border-border"}`}>
                 {entry?.equipped ? "Equipped" : "Equip"}

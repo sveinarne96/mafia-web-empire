@@ -181,6 +181,102 @@ export const activateBoostItem = mutation({
   },
 });
 
+// ===== USE VAULT ITEM (egg vault specials) =====
+export const useVaultItem = mutation({
+  args: { itemId: v.id("inventory") },
+  handler: async (ctx, args) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+    const item = await ctx.db.get(args.itemId);
+    if (!item || (item as any).userId !== p._id) throw new Error("Not your item");
+
+    const type = (item as any).type;
+    const rarity = (item as any).rarity ?? "common";
+    const price = (item as any).price ?? 0;
+    const rarityMult = rarity === "legendary" ? 3 : rarity === "epic" ? 2 : rarity === "rare" ? 1.5 : 1;
+
+    await ctx.db.delete(args.itemId);
+    const msgs: string[] = [];
+
+    switch (type) {
+      case "relic": {
+        // Relics give permanent ATK + DEF boost
+        const atkBonus = Math.floor(5 + rarityMult * 10);
+        const defBonus = Math.floor(5 + rarityMult * 10);
+        await ctx.db.patch(p._id, { attack: (p.attack ?? 10) + atkBonus, defense: (p.defense ?? 10) + defBonus });
+        msgs.push(`PERMANENT: +${atkBonus} ATK, +${defBonus} DEF`);
+        break;
+      }
+      case "gadget": {
+        // Gadgets give 12h 3x XP boost
+        const dur = 12 * 3600000;
+        await ctx.db.patch(p._id, { xpBoostUntil: Math.max(p.xpBoostUntil ?? 0, Date.now() + dur) });
+        msgs.push(`3x XP BOOST for 12 HOURS`);
+        break;
+      }
+      case "luxury": {
+        // Luxury goods give instant massive cash
+        const cash = Math.floor(price * 0.5);
+        await ctx.db.patch(p._id, { money: (p.money ?? 0) + cash });
+        msgs.push(`INSTANT CASH: $${cash.toLocaleString()}`);
+        break;
+      }
+      case "jewel": {
+        // Jewels give permanent stat boost + cash
+        const statBonus = Math.floor(10 + rarityMult * 15);
+        const cash = Math.floor(price * 0.3);
+        await ctx.db.patch(p._id, {
+          attack: (p.attack ?? 10) + statBonus,
+          defense: (p.defense ?? 10) + statBonus,
+          money: (p.money ?? 0) + cash,
+        });
+        msgs.push(`PERMANENT: +${statBonus} ATK & DEF + $${cash.toLocaleString()} CASH`);
+        break;
+      }
+      case "artifact": {
+        // Artifacts give massive permanent stat boost
+        const bigBonus = Math.floor(20 + rarityMult * 25);
+        await ctx.db.patch(p._id, { attack: (p.attack ?? 10) + bigBonus, defense: (p.defense ?? 10) + bigBonus });
+        msgs.push(`PERMANENT: +${bigBonus} ATK & DEF — an ancient artifact empowers you!`);
+        break;
+      }
+      case "egg_special": {
+        // Egg specials give random massive bonus
+        const roll = Math.random();
+        if (roll < 0.3) {
+          const cash = Math.floor(10000000 + rarityMult * 20000000);
+          await ctx.db.patch(p._id, { money: (p.money ?? 0) + cash });
+          msgs.push(`GOLDEN YOLK! +$${cash.toLocaleString()} CASH`);
+        } else if (roll < 0.6) {
+          await ctx.db.patch(p._id, {
+            xpBoostUntil: Math.max(p.xpBoostUntil ?? 0, Date.now() + 24 * 3600000),
+            cashBoostUntil: Math.max(p.cashBoostUntil ?? 0, Date.now() + 24 * 3600000),
+          });
+          msgs.push(`EGG BLESSING! 3x XP & 3x CASH for 24 HOURS`);
+        } else {
+          const bigBonus = Math.floor(30 + rarityMult * 30);
+          await ctx.db.patch(p._id, {
+            attack: (p.attack ?? 10) + bigBonus,
+            defense: (p.defense ?? 10) + bigBonus,
+            money: (p.money ?? 0) + Math.floor(rarityMult * 5000000),
+          });
+          msgs.push(`DRAGON BLOOD! +${bigBonus} ATK & DEF + $${Math.floor(rarityMult * 5000000).toLocaleString()}`);
+        }
+        break;
+      }
+      default: {
+        // Contraband, collectible, curio — give sell-value bonus cash
+        const cash = Math.floor(price * 0.8);
+        await ctx.db.patch(p._id, { money: (p.money ?? 0) + cash });
+        msgs.push(`SOLD ON BLACK MARKET: $${cash.toLocaleString()}`);
+        break;
+      }
+    }
+
+    return { success: true, message: `✨ ${item.name} USED! ${msgs.join(" — ")}` };
+  },
+});
+
 // Get active boosts
 export const getActiveBoosts = query({
   args: {},
