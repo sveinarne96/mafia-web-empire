@@ -62,7 +62,7 @@ export function MyProfilePage() {
   const handlePictureUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 500000) { alert("Image must be under 500KB"); return; }
+
     const reader = new FileReader();
     reader.onloadend = () => setPreviewPic(reader.result as string);
     reader.readAsDataURL(file);
