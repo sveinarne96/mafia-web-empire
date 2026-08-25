@@ -316,7 +316,6 @@ export const stealFromHouse = mutation({
     const levelUpNow = newXP >= xpNeeded;
 
     await ctx.db.patch(player._id, {
-      money: Math.max(0, (player.money ?? 0) + moneyEarned),
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       experience: levelUpNow ? 0 : newXP,
@@ -656,6 +655,7 @@ export const gtaCarTheft = mutation({
       } else {
         idx = Math.floor(Math.random() * carNames.length);
       }
+      const neonValue = isUltraNeon ? Math.floor(carPrices[idx] * (2000 + Math.floor(Math.random() * 8000))) : isNeonCar ? Math.floor(carPrices[idx] * (100 + Math.floor(Math.random() * 400))) : carPrices[idx];
       vehicleId = await ctx.db.insert("vehicles", {
         userId: userId,
         name: carNames[idx],
@@ -664,9 +664,9 @@ export const gtaCarTheft = mutation({
         storage: carStorages[idx],
         armored: carData[idx].armored,
         stolen: true,
-        purchasePrice: carPrices[idx],
+        purchasePrice: neonValue,
       });
-      moneyEarned = isUltraNeon ? Math.floor(carPrices[idx] * (2000 + Math.floor(Math.random() * 8000))) : isNeonCar ? Math.floor(carPrices[idx] * (100 + Math.floor(Math.random() * 400))) : carPrices[idx];
+      moneyEarned = neonValue;
     } else {
       damageTaken = Math.floor(Math.random() * 20 + 5);
       arrested = Math.random() > 0.25;
@@ -679,7 +679,6 @@ export const gtaCarTheft = mutation({
     const xpEarned = Math.floor(valueXp * 11.0 * levelMult);
 
     await ctx.db.patch(userId, {
-      money: Math.max(0, (player.money ?? 0) + moneyEarned),
       life: newLife,
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       ...(await addXpAndCheckLevel(ctx, player, xpEarned)),
