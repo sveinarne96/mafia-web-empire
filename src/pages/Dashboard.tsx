@@ -2714,6 +2714,34 @@ const renderPage = () => {
                       <div className="text-base font-bold text-yellow-400 animate-money-text">{(player.points ?? 0).toLocaleString()}</div>
                     </div>
                   </div>
+
+                  {/* Active Rank Booster — Neon Animated Status */}
+                  {((player as any).rankBoostUntil ?? 0) > Date.now() && (() => {
+                    const remainingMs = (player as any).rankBoostUntil - Date.now();
+                    const remaining = Math.max(0, Math.floor(remainingMs / 60000));
+                    const hrs = Math.floor(remaining / 60);
+                    const mins = remaining % 60;
+                    return (
+                      <div className="px-2">
+                        <style>{`
+                          @keyframes neon-rank-pulse { 0%,100% { box-shadow: 0 0 8px rgba(0,255,136,0.4), 0 0 20px rgba(0,255,136,0.2), inset 0 0 8px rgba(0,255,136,0.1); border-color: rgba(0,255,136,0.5); } 50% { box-shadow: 0 0 16px rgba(0,255,136,0.8), 0 0 40px rgba(0,255,136,0.4), 0 0 60px rgba(0,255,136,0.1), inset 0 0 16px rgba(0,255,136,0.2); border-color: rgba(0,255,136,0.9); } }
+                          @keyframes neon-rank-text { 0%,100% { text-shadow: 0 0 6px rgba(0,255,136,0.6), 0 0 12px rgba(0,255,136,0.3); } 50% { text-shadow: 0 0 12px rgba(0,255,136,1), 0 0 24px rgba(0,255,136,0.6), 0 0 48px rgba(0,255,136,0.3); } }
+                          @keyframes neon-rank-bar { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+                          .neon-rank-active { animation: neon-rank-pulse 2s ease-in-out infinite; }
+                          .neon-rank-text { animation: neon-rank-text 1.5s ease-in-out infinite; }
+                          .neon-rank-bar { background: linear-gradient(90deg, #00ff88, #00ccff, #8b5cf6, #00ccff, #00ff88); background-size: 200% 100%; animation: neon-rank-bar 2s linear infinite; }
+                        `}</style>
+                        <div className="rounded-lg p-2.5 text-center border-2 neon-rank-active bg-gradient-to-br from-emerald-950/40 via-cyan-950/30 to-violet-950/40">
+                          <div className="neon-rank-text text-[11px] font-black text-emerald-400">🚀 RANK BOOST ACTIVE</div>
+                          <div className="h-1.5 rounded-full mt-1.5 overflow-hidden bg-black/40">
+                            <div className="h-full rounded-full neon-rank-bar" style={{ width: `${Math.max(5, (remaining / Math.max(1, hrs * 60 + mins)) * 100)}%` }} />
+                          </div>
+                          <div className="text-[10px] font-bold text-cyan-400 neon-rank-text mt-1">+50% XP • {hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`} left</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Quick Info */}
                   {(player.wantedLevel ?? 0) > 0 && (
                     <div className="px-2 mafia-card rounded-lg p-1.5 border-red-500/30">
