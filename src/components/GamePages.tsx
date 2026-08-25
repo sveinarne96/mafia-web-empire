@@ -21,19 +21,46 @@ function StatBox({ label, value, color }: { label: string; value: string; color?
 }
 
 // ===== POINTS / SHOP =====
+// Premium weapons & armor — 30 tiers from street to mythic
 const shopItems = [
+  // COMMON (50-150 pts)
   { name: "Brass Knuckles", type: "weapon", rarity: "common", cost: 50, attack: 3, defense: 0 },
   { name: "Switchblade", type: "weapon", rarity: "common", cost: 100, attack: 5, defense: 0 },
   { name: "Baseball Bat", type: "weapon", rarity: "common", cost: 75, attack: 4, defense: 0 },
   { name: "Kevlar Vest", type: "armor", rarity: "common", cost: 150, attack: 0, defense: 5 },
+  // UNCOMMON (200-500 pts)
   { name: "Combat Knife", type: "weapon", rarity: "uncommon", cost: 300, attack: 8, defense: 0 },
   { name: "Body Armor", type: "armor", rarity: "uncommon", cost: 400, attack: 0, defense: 8 },
+  { name: "Dual Pistols", type: "weapon", rarity: "uncommon", cost: 350, attack: 7, defense: 0 },
+  { name: "Tactical Helmet", type: "armor", rarity: "uncommon", cost: 250, attack: 0, defense: 7 },
+  // RARE (600-1200 pts)
   { name: "Assault Rifle", type: "weapon", rarity: "rare", cost: 800, attack: 12, defense: 0 },
   { name: "Tactical Vest", type: "armor", rarity: "rare", cost: 900, attack: 0, defense: 12 },
+  { name: "Shotgun", type: "weapon", rarity: "rare", cost: 700, attack: 14, defense: 0 },
+  { name: "Combat Shield", type: "armor", rarity: "rare", cost: 1100, attack: 0, defense: 14 },
+  // EPIC (1500-4000 pts)
   { name: "Sniper Rifle", type: "weapon", rarity: "epic", cost: 2000, attack: 18, defense: 0 },
   { name: "Heavy Armor", type: "armor", rarity: "epic", cost: 2500, attack: 0, defense: 18 },
+  { name: "SMG-50", type: "weapon", rarity: "epic", cost: 2200, attack: 20, defense: 0 },
+  { name: "Reactive Plating", type: "armor", rarity: "epic", cost: 3000, attack: 0, defense: 22 },
+  // LEGENDARY (4000-8000 pts)
   { name: "Rocket Launcher", type: "weapon", rarity: "legendary", cost: 5000, attack: 25, defense: 0 },
   { name: "Titanium Suit", type: "armor", rarity: "legendary", cost: 6000, attack: 0, defense: 25 },
+  { name: "Minigun", type: "weapon", rarity: "legendary", cost: 7000, attack: 30, defense: 0 },
+  { name: "Exo-Skeleton", type: "armor", rarity: "legendary", cost: 7500, attack: 10, defense: 30 },
+  // MYTHIC (10000-25000 pts)
+  { name: "Plasma Cannon", type: "weapon", rarity: "mythic", cost: 12000, attack: 40, defense: 0 },
+  { name: "Nano Armor", type: "armor", rarity: "mythic", cost: 15000, attack: 0, defense: 40 },
+  { name: "Railgun", type: "weapon", rarity: "mythic", cost: 18000, attack: 50, defense: 0 },
+  { name: "Aegis Shield", type: "armor", rarity: "mythic", cost: 20000, attack: 5, defense: 50 },
+  // COSMIC (25000-50000 pts)
+  { name: "Quantum Blade", type: "weapon", rarity: "cosmic", cost: 30000, attack: 65, defense: 0 },
+  { name: "Void Armor", type: "armor", rarity: "cosmic", cost: 35000, attack: 0, defense: 65 },
+  { name: "Death Star Lance", type: "weapon", rarity: "cosmic", cost: 40000, attack: 80, defense: 10 },
+  { name: "Oblivion Suit", type: "armor", rarity: "cosmic", cost: 45000, attack: 10, defense: 80 },
+  // DIVINE (50000+ pts)
+  { name: "Godslayer Greatblade", type: "weapon", rarity: "divine", cost: 60000, attack: 100, defense: 20 },
+  { name: "Immortal Mantle", type: "armor", rarity: "divine", cost: 70000, attack: 20, defense: 100 },
 ];
 
 const rarityColors: Record<string, string> = {
@@ -42,38 +69,36 @@ const rarityColors: Record<string, string> = {
   rare: "text-blue-400 border-blue-700",
   epic: "text-purple-400 border-purple-700",
   legendary: "text-yellow-400 border-yellow-700",
+  mythic: "text-orange-400 border-orange-600",
+  cosmic: "text-cyan-400 border-cyan-600",
+  divine: "text-pink-400 border-pink-500",
 };
 
 export function PointsShopPage() {
   const player = useQuery(api.game.getPlayer);
   const myBizs = useQuery(api.gameExtended.getMyBusinesses);
   const buyRankBoost = useMutation(api.gameExtended.buyRankBooster);
-  const sellCompany = useMutation(api.gameExtended.sellCompanyForPoints);
   const buyItemWP = useMutation(api.gameExtended.buyItemWithPoints);
+  const buyService = useMutation(api.gameExtended.buyPointsService);
   const [msg, setMsg] = useState("");
-  const [tab, setTab] = useState<"boosters" | "items" | "services">("boosters");
+  const [tab, setTab] = useState<"boosters" | "items" | "services" | "prestige">("boosters");
+  const [loading, setLoading] = useState(false);
   if (!player) return <LoadingPage />;
 
   const rankBoostActive = ((player as any).rankBoostUntil ?? 0) > Date.now();
   const rankBoostRemaining = Math.max(0, Math.floor((((player as any).rankBoostUntil ?? 0) - Date.now()) / 3600000));
 
-  const boosters = [
-    { id: "rank_small", name: "Small Rank Booster", icon: "🚀", cost: 90, desc: "+50% XP for 4 hours", tier: "small" as const },
-    { id: "rank_standard", name: "Standard Rank Booster", icon: "🚀", cost: 200, desc: "+50% XP for 10 hours", tier: "standard" as const },
-    { id: "rank_mega", name: "Mega Rank Booster", icon: "🚀", cost: 500, desc: "+50% XP for 24 hours", tier: "mega" as const },
-  ];
-
-  const services = [
-    { name: "Sell Company", icon: "🏷️", cost: 50, desc: "Sell any business at full purchase price (−50 pts fee)", action: "sell_company" },
-    { name: "Wanted Clearance", icon: "🧹", cost: 300, desc: "Fully clear wanted level to zero", action: "clear_wanted" },
-    { name: "XP Surprise Box", icon: "🎁", cost: 150, desc: "Random XP boost between 2-12 hours", action: "xp_box" },
-    { name: "Cash Surprise Box", icon: "🎁", cost: 150, desc: "Random cash between $5M-$50M", action: "cash_box" },
-    { name: "Stat Booster", icon: "💪", cost: 400, desc: "+20 ATK and +20 DEF permanently", action: "stat_boost" },
-  ];
-
+  const doService = async (id: string) => {
+    setLoading(true); setMsg("");
+    try { const r = await buyService({ serviceId: id }); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
   const doBuyBooster = async (tier: "small" | "standard" | "mega") => {
+    setLoading(true); setMsg("");
     try { const r = await buyRankBoost({ tier }); setMsg(r.message); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
   };
 
   return (
@@ -86,36 +111,68 @@ export function PointsShopPage() {
         </div>
       </div>
 
-      <div className="flex gap-1 bg-background/50 rounded-lg p-1">
-        {(["boosters", "items", "services"] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors capitalize ${tab === t ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground"}`}>
-            {t === "boosters" ? "🚀 Boosters" : t === "items" ? "⚔️ Items" : "🔧 Services"}
+      <div className="flex gap-1 bg-background/50 rounded-lg p-1 overflow-x-auto">
+        {["boosters", "items", "services", "prestige"].map(t => (
+          <button key={t} onClick={() => setTab(t as any)} className={`flex-1 px-3 py-2 text-[11px] font-semibold rounded-md transition-colors capitalize whitespace-nowrap ${tab === t ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground"}`}>
+            {t === "boosters" ? "🚀 Boosters" : t === "items" ? "⚔️ Items" : t === "services" ? "🔧 Services" : "👑 Prestige"}
           </button>
         ))}
       </div>
 
       {tab === "boosters" && (
-        <div className="space-y-3">
-          {boosters.map(b => (
-            <div key={b.id} className="mafia-card rounded-xl p-4 flex items-center justify-between hover:border-yellow-500/30 transition-all">
+        <div className="space-y-2">
+          {/* Rank Boosters */}
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1">🚀 Rank Boosters</div>
+          {[
+            { id: "rank_small", name: "Small Rank Booster", icon: "🚀", cost: 90, desc: "+50% XP for 4 hours", tier: "small" as const },
+            { id: "rank_standard", name: "Standard Rank Booster", icon: "🚀", cost: 200, desc: "+50% XP for 10 hours", tier: "standard" as const },
+            { id: "rank_mega", name: "Mega Rank Booster", icon: "🚀", cost: 500, desc: "+50% XP for 24 hours", tier: "mega" as const },
+          ].map(b => (
+            <div key={b.id} className="mafia-card rounded-xl p-3 flex items-center justify-between hover:border-yellow-500/30 transition-all">
               <div className="flex items-center gap-3">
-                <div className="text-2xl">{b.icon}</div>
+                <div className="text-xl">{b.icon}</div>
                 <div>
-                  <div className="font-bold text-sm">{b.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{b.desc}</div>
-                  {rankBoostActive && <div className="text-[9px] text-orange-400">⚠️ Already active!</div>}
+                  <div className="font-bold text-xs">{b.name}</div>
+                  <div className="text-[9px] text-muted-foreground">{b.desc}</div>
+                  {rankBoostActive && <div className="text-[8px] text-orange-400">⚠️ Active!</div>}
                 </div>
               </div>
               <button onClick={() => doBuyBooster(b.tier)} disabled={(player.points ?? 0) < b.cost || rankBoostActive}
-                className="px-4 py-2 bg-yellow-600 text-white text-xs font-bold rounded-lg hover:bg-yellow-700 disabled:opacity-40 transition-all">
+                className="px-3 py-1.5 bg-yellow-600 text-white text-[10px] font-bold rounded-lg hover:bg-yellow-700 disabled:opacity-40">
                 {b.cost} pts
               </button>
             </div>
           ))}
-          <div className="mafia-card rounded-xl p-4 bg-gradient-to-r from-yellow-950/20 to-amber-950/20 border border-yellow-500/20">
-            <div className="text-xs font-bold text-yellow-400 mb-1">ℹ️ How Rank Boosters Work</div>
-            <div className="text-[10px] text-muted-foreground">While active, all criminal actions grant +50% bonus XP. This stacks with XP boost from easter eggs. Only one rank booster can be active at a time.</div>
-          </div>
+
+          {/* Power Boosts */}
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1 mt-3">⚡ Power Boosts</div>
+          {[
+            { id: "xp_surge", name: "XP Surge", icon: "⚡", cost: 300, desc: "3x XP for 6 hours" },
+            { id: "cash_storm", name: "Cash Storm", icon: "💰", cost: 300, desc: "3x Cash for 6 hours" },
+            { id: "points_multiplier", name: "Points Multiplier", icon: "🎯", cost: 250, desc: "3x Points for 6 hours" },
+            { id: "energy_surge", name: "Energy Surge", icon: "🥤", cost: 200, desc: "+25% XP for 12 hours" },
+            { id: "god_mode", name: "God Mode", icon: "👑", cost: 1500, desc: "3x XP + 3x Cash + Energy for 24H", special: true },
+          ].map(b => (
+            <div key={b.id} className={`mafia-card rounded-xl p-3 flex items-center justify-between transition-all ${(b as any).special ? "border-amber-500/40 bg-gradient-to-r from-amber-950/20 to-yellow-950/10" : "hover:border-primary/30"}`}>
+              <div className="flex items-center gap-3">
+                <div className="text-xl">{b.icon}</div>
+                <div>
+                  <div className="font-bold text-xs">{b.name}</div>
+                  <div className="text-[9px] text-muted-foreground">{b.desc}</div>
+                </div>
+              </div>
+              <button onClick={() => doService(b.id)} disabled={(player.points ?? 0) < b.cost || loading}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg disabled:opacity-40 ${(b as any).special ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}>
+                {b.cost} pts
+              </button>
+            </div>
+          ))}
+
+          {rankBoostActive && (
+            <div className="mafia-card rounded-xl p-3 bg-gradient-to-r from-yellow-950/20 to-amber-950/20 border border-yellow-500/20">
+              <div className="text-[10px] text-yellow-400">🚀 Rank Boost Active: {rankBoostRemaining}h remaining</div>
+            </div>
+          )}
         </div>
       )}
 
@@ -137,36 +194,91 @@ export function PointsShopPage() {
       )}
 
       {tab === "services" && (
-        <div className="space-y-3">
-          {services.map((s, i) => (
-            <div key={i} className="mafia-card rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-all">
+        <div className="space-y-2">
+          {/* Survival */}
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1">❤️ Survival</div>
+          {[
+            { id: "life_refill", name: "Full Heal", icon: "❤️", cost: 100, desc: "Restore to 100 HP" },
+            { id: "revive", name: "Revive", icon: "💖", cost: 200, desc: "Come back from the dead" },
+            { id: "jailbreak", name: "Jailbreak Card", icon: "🔓", cost: 500, desc: "Instant release from prison" },
+            { id: "max_hp", name: "Max HP Upgrade", icon: "❤️‍🔥", cost: 2000, desc: "+50 MAX HP permanently" },
+          ].map(s => (
+            <div key={s.id} className="mafia-card rounded-xl p-3 flex items-center justify-between hover:border-primary/30 transition-all">
               <div className="flex items-center gap-3">
-                <div className="text-2xl">{s.icon}</div>
-                <div>
-                  <div className="font-bold text-sm">{s.name}</div>
-                  <div className="text-[10px] text-muted-foreground">{s.desc}</div>
-                </div>
+                <div className="text-xl">{s.icon}</div>
+                <div><div className="font-bold text-xs">{s.name}</div><div className="text-[9px] text-muted-foreground">{s.desc}</div></div>
               </div>
-              <div className="text-xs font-bold text-yellow-400">{s.cost} pts</div>
+              <button onClick={() => doService(s.id)} disabled={(player.points ?? 0) < s.cost || loading}
+                className="px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">
+                {s.cost} pts
+              </button>
             </div>
           ))}
-          {(myBizs ?? []).length > 0 && (
-            <div className="mafia-card rounded-xl p-3">
-              <div className="text-xs font-bold mb-2">🏷️ Sell Your Companies (50 pts fee)</div>
-              {(myBizs ?? []).map((b: any) => (
-                <div key={b._id} className="flex justify-between items-center bg-background/30 rounded p-2 mb-1">
-                  <div className="text-[10px]">{b.name}</div>
-                  <button onClick={async () => {
-                    try { const r = await sellCompany({ businessId: b._id }); setMsg(r.message); }
-                    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
-                  }} disabled={(player.points ?? 0) < 50}
-                    className="px-2 py-1 bg-red-600/20 text-red-400 text-[9px] font-bold rounded hover:bg-red-600/30">
-                    Sell ${(b.price ?? 0).toLocaleString()}
-                  </button>
-                </div>
-              ))}
+
+          {/* Stats */}
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1 mt-2">💪 Permanent Stats</div>
+          {[
+            { id: "stat_20", name: "+20 ATK & DEF", icon: "💪", cost: 400, desc: "+20 to both stats" },
+            { id: "stat_50", name: "+50 ATK & DEF", icon: "💪", cost: 1000, desc: "+50 to both stats" },
+            { id: "stat_100", name: "+100 ATK & DEF", icon: "🔥", cost: 2500, desc: "+100 to both stats" },
+            { id: "stat_250", name: "+250 ATK & DEF", icon: "⚡", cost: 6000, desc: "+250 to both stats — GODLIKE", special: true },
+          ].map(s => (
+            <div key={s.id} className={`mafia-card rounded-xl p-3 flex items-center justify-between transition-all ${(s as any).special ? "border-amber-500/40" : "hover:border-primary/30"}`}>
+              <div className="flex items-center gap-3">
+                <div className="text-xl">{s.icon}</div>
+                <div><div className="font-bold text-xs">{s.name}</div><div className="text-[9px] text-muted-foreground">{s.desc}</div></div>
+              </div>
+              <button onClick={() => doService(s.id)} disabled={(player.points ?? 0) < s.cost || loading}
+                className="px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">
+                {s.cost} pts
+              </button>
             </div>
-          )}
+          ))}
+
+          {/* Level & Cash */}
+          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1 mt-2">📈 Level & Cash</div>
+          {[
+            { id: "level_skip_5", name: "+5 Levels", icon: "📈", cost: 800, desc: "Instant +5 levels" },
+            { id: "level_skip_10", name: "+10 Levels", icon: "📈", cost: 1500, desc: "Instant +10 levels" },
+            { id: "cash_10m", name: "$10M Cash", icon: "💵", cost: 500, desc: "+$10,000,000 instantly" },
+            { id: "cash_50m", name: "$50M Cash", icon: "💵", cost: 1500, desc: "+$50,000,000 instantly" },
+            { id: "cash_100m", name: "$100M Cash", icon: "💵", cost: 3000, desc: "+$100,000,000 instantly" },
+          ].map(s => (
+            <div key={s.id} className="mafia-card rounded-xl p-3 flex items-center justify-between hover:border-primary/30 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="text-xl">{s.icon}</div>
+                <div><div className="font-bold text-xs">{s.name}</div><div className="text-[9px] text-muted-foreground">{s.desc}</div></div>
+              </div>
+              <button onClick={() => doService(s.id)} disabled={(player.points ?? 0) < s.cost || loading}
+                className="px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">
+                {s.cost} pts
+              </button>
+            </div>              ))}
+        </div>
+      )}
+
+      {tab === "prestige" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-5 border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-yellow-950/10 to-amber-950/20 text-center">
+            <div className="text-4xl mb-2">👑</div>
+            <div className="text-lg font-bold text-amber-400">Prestige System</div>
+            <div className="text-[10px] text-muted-foreground mt-1">Reset to Level 1 for a permanent +10% XP multiplier!</div>
+            <div className="text-xs text-amber-400 mt-2">Current Prestige: {(player as any).prestige ?? 0} • Multiplier: +{Math.round(((player as any).prestigeMultiplier ?? 1 - 1) * 100)}%</div>
+            <button onClick={() => doService("prestige")} disabled={(player.points ?? 0) < 5000 || (player.level ?? 1) < 10 || loading}
+              className="mt-3 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-xs rounded-lg hover:from-amber-400 hover:to-yellow-400 disabled:opacity-40 transition-all">
+              👑 PRESTIGE — 5,000 pts (Lv.10+ required)
+            </button>
+          </div>
+          <div className="mafia-card rounded-xl p-4 bg-gradient-to-r from-purple-950/20 to-pink-950/10 border border-purple-500/20">
+            <div className="text-xs font-bold text-purple-400 mb-2">✨ Prestige Rewards</div>
+            <div className="text-[10px] text-muted-foreground space-y-1">
+              <div>Prestige 1: +10% XP on all crimes</div>
+              <div>Prestige 2: +20% XP + Golden Title</div>
+              <div>Prestige 3: +30% XP + Diamond Title</div>
+              <div>Prestige 5: +50% XP + Mythic Title</div>
+              <div>Prestige 10: +100% XP + Shadow Emperor</div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -546,6 +546,114 @@ export const getPointsShop = query({
     };
   },
 });
+
+// ===== BUY POINTS SERVICE (ultimate shop services) =====
+export const buyPointsService = mutation({
+  args: { serviceId: v.string() },
+  handler: async (ctx, args) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+
+    const services: Record<string, { cost: number; action: (player: any) => Promise<string> }> = {
+      "xp_surge": { cost: 300, action: async (pl) => {
+        await ctx.db.patch(pl._id, { xpBoostUntil: Math.max(pl.xpBoostUntil ?? 0, Date.now() + 6 * 3600000) });
+        return "⚡ XP SURGE! 3x XP for 6 hours!";
+      }},
+      "cash_storm": { cost: 300, action: async (pl) => {
+        await ctx.db.patch(pl._id, { cashBoostUntil: Math.max(pl.cashBoostUntil ?? 0, Date.now() + 6 * 3600000) });
+        return "💰 CASH STORM! 3x Cash for 6 hours!";
+      }},
+      "points_multiplier": { cost: 250, action: async (pl) => {
+        await ctx.db.patch(pl._id, { pointsBoostUntil: Math.max((pl as any).pointsBoostUntil ?? 0, Date.now() + 6 * 3600000) } as any);
+        return "🎯 POINTS MULTIPLIER! 3x Points for 6 hours!";
+      }},
+      "energy_surge": { cost: 200, action: async (pl) => {
+        await ctx.db.patch(pl._id, { energyDrinkUntil: Math.max((pl as any).energyDrinkUntil ?? 0, Date.now() + 12 * 3600000) } as any);
+        return "🥤 ENERGY SURGE! +25% XP for 12 hours!";
+      }},
+      "god_mode": { cost: 1500, action: async (pl) => {
+        const dur = 24 * 3600000;
+        await ctx.db.patch(pl._id, {
+          xpBoostUntil: Math.max(pl.xpBoostUntil ?? 0, Date.now() + dur),
+          cashBoostUntil: Math.max(pl.cashBoostUntil ?? 0, Date.now() + dur),
+          energyDrinkUntil: Math.max((pl as any).energyDrinkUntil ?? 0, Date.now() + dur),
+        } as any);
+        return "👑 GOD MODE! 3x XP + 3x Cash + Energy for 24 HOURS!";
+      }},
+      "stat_20": { cost: 400, action: async (pl) => {
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + 20, defense: (pl.defense ?? 10) + 20 });
+        return "💪 +20 ATK & DEF PERMANENTLY!";
+      }},
+      "stat_50": { cost: 1000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + 50, defense: (pl.defense ?? 10) + 50 });
+        return "💪 +50 ATK & DEF PERMANENTLY!";
+      }},
+      "stat_100": { cost: 2500, action: async (pl) => {
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + 100, defense: (pl.defense ?? 10) + 100 });
+        return "💪 +100 ATK & DEF PERMANENTLY!";
+      }},
+      "stat_250": { cost: 6000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + 250, defense: (pl.defense ?? 10) + 250 });
+        return "💪 +250 ATK & DEF PERMANENTLY! GODLIKE!";
+      }},
+      "max_hp": { cost: 2000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { life: (pl.life ?? 100) + 50 });
+        return "❤️ +50 MAX HP PERMANENTLY!";
+      }},
+      "revive": { cost: 200, action: async (pl) => {
+        if (!pl.isDead) throw new Error("You're not dead!");
+        await ctx.db.patch(pl._id, { isDead: false, life: 50 });
+        return "💖 REVIVED! Back from the dead!";
+      }},
+      "jailbreak": { cost: 500, action: async (pl) => {
+        if (!pl.inPrison) throw new Error("You're not in prison!");
+        await ctx.db.patch(pl._id, { inPrison: false, prisonTime: 0 });
+        return "🔓 JAILBREAK! You're free!";
+      }},
+      "life_refill": { cost: 100, action: async (pl) => {
+        await ctx.db.patch(pl._id, { life: 100 });
+        return "❤️ FULL HEAL! Back to 100 HP!";
+      }},
+      "level_skip_5": { cost: 800, action: async (pl) => {
+        const nl = (pl.level ?? 1) + 5;
+        await ctx.db.patch(pl._id, { level: nl, experience: 0 });
+        return `📈 +5 LEVELS! Now Level ${nl}!`;
+      }},
+      "level_skip_10": { cost: 1500, action: async (pl) => {
+        const nl = (pl.level ?? 1) + 10;
+        await ctx.db.patch(pl._id, { level: nl, experience: 0 });
+        return `📈 +10 LEVELS! Now Level ${nl}!`;
+      }},
+      "cash_10m": { cost: 500, action: async (pl) => {
+        await ctx.db.patch(pl._id, { money: (pl.money ?? 0) + 10000000 });
+        return "💵 +$10,000,000 deposited!";
+      }},
+      "cash_50m": { cost: 1500, action: async (pl) => {
+        await ctx.db.patch(pl._id, { money: (pl.money ?? 0) + 50000000 });
+        return "💵 +$50,000,000 deposited!";
+      }},
+      "cash_100m": { cost: 3000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { money: (pl.money ?? 0) + 100000000 });
+        return "💵 +$100,000,000 deposited!";
+      }},
+      "prestige": { cost: 5000, action: async (pl) => {
+        if ((pl.level ?? 1) < 10) throw new Error("Must be level 10+ to prestige!");
+        const mult = ((pl as any).prestigeMultiplier ?? 1) + 0.1;
+        await ctx.db.patch(pl._id, { level: 1, experience: 0, prestigeMultiplier: mult, prestige: ((pl as any).prestige ?? 0) + 1 } as any);
+        return `👑 PRESTIGE! Reset to Lv.1 with +${Math.round((mult - 1) * 100)}% permanent multiplier!`;
+      }},
+    };
+
+    const svc = services[args.serviceId];
+    if (!svc) throw new Error("Invalid service!");
+    if ((p.points ?? 0) < svc.cost) throw new Error(`Need ${svc.cost} points!`);
+
+    await ctx.db.patch(p._id, { points: (p.points ?? 0) - svc.cost });
+    const message = await svc.action(p);
+    return { success: true, message };
+  },
+});
+
 export const getBusinessShop = query({ args: {}, handler: async () => {
   return [
     { name: "Shopping Mall", type: "mall", icon: "🏬", maxOwn: 15, price: 2000000, income: 5000000, description: "Premium shopping center. Earns $5M per mall." },
