@@ -206,7 +206,6 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: t("right.garage"), page: "garage", icon: "🚗" },
     { label: t("right.items"), page: "items", icon: "🎒" },
     { label: "Black Market", page: "black_market", icon: "🖤" },
-    { label: "Legendary Items", page: "legendary_items", icon: "✨" },
     { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
     { label: "Mystery Boxes", icon: "📦", children: [
       { label: "Standard Box", page: "box_standard", icon: "📦" },
@@ -234,7 +233,6 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: t("right.skillTree"), page: "skill_tree", icon: "🧠" },
     { label: "Combat Skills", page: "combat_skills", icon: "⚔️" },
     { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
-    { label: "Hacking Skills", page: "hacking_skills", icon: "💻" },
     { label: t("right.prestige"), page: "prestige", icon: "⭐" },
     { label: "Titles", page: "titles", icon: "👑" },
     { label: "Achievements", page: "achievements", icon: "🏅" },
@@ -252,7 +250,6 @@ const getLeftMenuSections = (t: (k: string) => string) => [
       { label: "Season Board", page: "lb_season", icon: "🗓️" },
     ]},
     { label: "Season Pass", page: "season_pass", icon: "🎫" },
-    { label: "Daily Login", page: "daily_login", icon: "🎁" },
     { label: "Daily Challenges", page: "daily_challenges", icon: "📋" },
     { label: "Energy Drinks", page: "energy_drinks", icon: "⚡" },
   ]},
