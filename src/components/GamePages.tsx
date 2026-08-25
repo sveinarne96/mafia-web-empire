@@ -1,3 +1,4 @@
+import { cooldownItems, defenseItems, weaponItems, specialItems, categories, tierColors, type PointsShopItem } from "@/data/pointsShop";
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -81,7 +82,7 @@ export function PointsShopPage() {
   const buyItemWP = useMutation(api.gameExtended.buyItemWithPoints);
   const buyService = useMutation(api.gameExtended.buyPointsService);
   const [msg, setMsg] = useState("");
-  const [tab, setTab] = useState<"boosters" | "items" | "services" | "prestige">("boosters");
+  const [tab, setTab] = useState<"boosters" | "cooldowns" | "defense" | "weapons" | "items" | "special" | "prestige">("boosters");
   const [loading, setLoading] = useState(false);
   if (!player) return <LoadingPage />;
 
@@ -112,9 +113,17 @@ export function PointsShopPage() {
       </div>
 
       <div className="flex gap-1 bg-background/50 rounded-lg p-1 overflow-x-auto">
-        {["boosters", "items", "services", "prestige"].map(t => (
-          <button key={t} onClick={() => setTab(t as any)} className={`flex-1 px-3 py-2 text-[11px] font-semibold rounded-md transition-colors capitalize whitespace-nowrap ${tab === t ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground"}`}>
-            {t === "boosters" ? "🚀 Boosters" : t === "items" ? "⚔️ Items" : t === "services" ? "🔧 Services" : "👑 Prestige"}
+        {[
+          { id: "boosters", label: "🚀 Boosters" },
+          { id: "cooldowns", label: "⏱️ Cooldowns" },
+          { id: "defense", label: "🛡️ Defense" },
+          { id: "weapons", label: "⚔️ Weapons" },
+          { id: "items", label: "🗡️ Gear" },
+          { id: "special", label: "✨ Special" },
+          { id: "prestige", label: "👑 Prestige" },
+        ].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id as any)} className={`flex-1 px-2 py-2 text-[10px] font-semibold rounded-md transition-colors whitespace-nowrap ${tab === t.id ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground"}`}>
+            {t.label}
           </button>
         ))}
       </div>
@@ -193,69 +202,34 @@ export function PointsShopPage() {
         </div>
       )}
 
-      {tab === "services" && (
-        <div className="space-y-2">
-          {/* Survival */}
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1">❤️ Survival</div>
-          {[
-            { id: "life_refill", name: "Full Heal", icon: "❤️", cost: 100, desc: "Restore to 100 HP" },
-            { id: "revive", name: "Revive", icon: "💖", cost: 200, desc: "Come back from the dead" },
-            { id: "jailbreak", name: "Jailbreak Card", icon: "🔓", cost: 500, desc: "Instant release from prison" },
-            { id: "max_hp", name: "Max HP Upgrade", icon: "❤️‍🔥", cost: 2000, desc: "+50 MAX HP permanently" },
-          ].map(s => (
-            <div key={s.id} className="mafia-card rounded-xl p-3 flex items-center justify-between hover:border-primary/30 transition-all">
+      {(tab === "cooldowns" || tab === "defense" || tab === "weapons" || tab === "special") && (() => {
+        const items = tab === "cooldowns" ? cooldownItems : tab === "defense" ? defenseItems : tab === "weapons" ? weaponItems : specialItems;
+        const catInfo = categories.find(c => c.id === tab);
+        return (
+          <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1">{catInfo?.name}</div>
+            <div className="text-[9px] text-muted-foreground">{items.length} items</div>
+          </div>
+          {items.map((item: PointsShopItem) => (
+            <div key={item.id} className={`mafia-card rounded-xl p-3 flex items-center justify-between transition-all ${item.tier === "mythic" || item.tier === "legendary" ? "border-amber-500/40 bg-gradient-to-r from-amber-950/10 to-transparent" : "hover:border-primary/30"}`}>
               <div className="flex items-center gap-3">
-                <div className="text-xl">{s.icon}</div>
-                <div><div className="font-bold text-xs">{s.name}</div><div className="text-[9px] text-muted-foreground">{s.desc}</div></div>
+                <div className="text-xl">{item.icon}</div>
+                <div>
+                  <div className="font-bold text-xs">{item.name}</div>
+                  <div className="text-[9px] text-muted-foreground">{item.desc}</div>
+                  {item.tier && item.tier !== "common" && <span className={`text-[8px] px-1.5 py-0.5 rounded-full border ${tierColors[item.tier] || "text-gray-400 border-gray-600"} mt-0.5 inline-block`}>{item.tier.toUpperCase()}</span>}
+                </div>
               </div>
-              <button onClick={() => doService(s.id)} disabled={(player.points ?? 0) < s.cost || loading}
-                className="px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">
-                {s.cost} pts
+              <button onClick={() => doService(item.id)} disabled={(player.points ?? 0) < item.cost || loading}
+                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg disabled:opacity-40 whitespace-nowrap ${item.tier === "mythic" ? "bg-gradient-to-r from-orange-500 to-red-500 text-white" : item.tier === "legendary" ? "bg-gradient-to-r from-yellow-500 to-amber-500 text-black" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}>
+                {item.cost.toLocaleString()} pts
               </button>
             </div>
           ))}
-
-          {/* Stats */}
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1 mt-2">💪 Permanent Stats</div>
-          {[
-            { id: "stat_20", name: "+20 ATK & DEF", icon: "💪", cost: 400, desc: "+20 to both stats" },
-            { id: "stat_50", name: "+50 ATK & DEF", icon: "💪", cost: 1000, desc: "+50 to both stats" },
-            { id: "stat_100", name: "+100 ATK & DEF", icon: "🔥", cost: 2500, desc: "+100 to both stats" },
-            { id: "stat_250", name: "+250 ATK & DEF", icon: "⚡", cost: 6000, desc: "+250 to both stats — GODLIKE", special: true },
-          ].map(s => (
-            <div key={s.id} className={`mafia-card rounded-xl p-3 flex items-center justify-between transition-all ${(s as any).special ? "border-amber-500/40" : "hover:border-primary/30"}`}>
-              <div className="flex items-center gap-3">
-                <div className="text-xl">{s.icon}</div>
-                <div><div className="font-bold text-xs">{s.name}</div><div className="text-[9px] text-muted-foreground">{s.desc}</div></div>
-              </div>
-              <button onClick={() => doService(s.id)} disabled={(player.points ?? 0) < s.cost || loading}
-                className="px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">
-                {s.cost} pts
-              </button>
-            </div>
-          ))}
-
-          {/* Level & Cash */}
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1 mt-2">📈 Level & Cash</div>
-          {[
-            { id: "level_skip_5", name: "+5 Levels", icon: "📈", cost: 800, desc: "Instant +5 levels" },
-            { id: "level_skip_10", name: "+10 Levels", icon: "📈", cost: 1500, desc: "Instant +10 levels" },
-            { id: "cash_10m", name: "$10M Cash", icon: "💵", cost: 500, desc: "+$10,000,000 instantly" },
-            { id: "cash_50m", name: "$50M Cash", icon: "💵", cost: 1500, desc: "+$50,000,000 instantly" },
-            { id: "cash_100m", name: "$100M Cash", icon: "💵", cost: 3000, desc: "+$100,000,000 instantly" },
-          ].map(s => (
-            <div key={s.id} className="mafia-card rounded-xl p-3 flex items-center justify-between hover:border-primary/30 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="text-xl">{s.icon}</div>
-                <div><div className="font-bold text-xs">{s.name}</div><div className="text-[9px] text-muted-foreground">{s.desc}</div></div>
-              </div>
-              <button onClick={() => doService(s.id)} disabled={(player.points ?? 0) < s.cost || loading}
-                className="px-3 py-1.5 bg-primary text-primary-foreground text-[10px] font-bold rounded-lg hover:bg-primary/90 disabled:opacity-40">
-                {s.cost} pts
-              </button>
-            </div>              ))}
         </div>
-      )}
+      );
+      })()}
 
       {tab === "prestige" && (
         <div className="space-y-3">
@@ -263,7 +237,7 @@ export function PointsShopPage() {
             <div className="text-4xl mb-2">👑</div>
             <div className="text-lg font-bold text-amber-400">Prestige System</div>
             <div className="text-[10px] text-muted-foreground mt-1">Reset to Level 1 for a permanent +10% XP multiplier!</div>
-            <div className="text-xs text-amber-400 mt-2">Current Prestige: {(player as any).prestige ?? 0} • Multiplier: +{Math.round(((player as any).prestigeMultiplier ?? 1 - 1) * 100)}%</div>
+            <div className="text-xs text-amber-400 mt-2">Current Prestige: {(player as any).prestige ?? 0} • Multiplier: +{Math.round(((player as any).prestigeMultiplier ?? 1) - 1 * 100)}%</div>
             <button onClick={() => doService("prestige")} disabled={(player.points ?? 0) < 5000 || (player.level ?? 1) < 10 || loading}
               className="mt-3 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-xs rounded-lg hover:from-amber-400 hover:to-yellow-400 disabled:opacity-40 transition-all">
               👑 PRESTIGE — 5,000 pts (Lv.10+ required)

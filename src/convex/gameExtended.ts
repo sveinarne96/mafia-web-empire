@@ -642,6 +642,201 @@ export const buyPointsService = mutation({
         await ctx.db.patch(pl._id, { level: 1, experience: 0, prestigeMultiplier: mult, prestige: ((pl as any).prestige ?? 0) + 1 } as any);
         return `👑 PRESTIGE! Reset to Lv.1 with +${Math.round((mult - 1) * 100)}% permanent multiplier!`;
       }},
+      // ===== COOLDOWNS & UTILITY =====
+      "quick_discharge": { cost: 150, action: async (pl) => {
+        if (!pl.inPrison && (pl.life ?? 100) >= 100) throw new Error("Nothing to discharge!");
+        await ctx.db.patch(pl._id, { life: 100, inPrison: false, prisonTime: 0 });
+        return "🏥 QUICK DISCHARGE! Released from hospital/prison!";
+      }},
+      "bribe_guard": { cost: 250, action: async (pl) => {
+        if (!pl.inPrison) throw new Error("Not in prison!");
+        await ctx.db.patch(pl._id, { inPrison: false, prisonTime: 0 });
+        return "🔓 BRIBE GUARD! Released from prison immediately!";
+      }},
+      "clear_heist_cd": { cost: 200, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "💣 HEIST COOLDOWN CLEARED!";
+      }},
+      "clear_car_theft_cd": { cost: 150, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "🚗 CAR THEFT COOLDOWN CLEARED!";
+      }},
+      "clear_assassin_cd": { cost: 300, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "🗡️ ASSASSINATION COOLDOWN CLEARED!";
+      }},
+      "clear_oc_cd": { cost: 400, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "🕵️ ORGANIZED CRIME COOLDOWN CLEARED!";
+      }},
+      "emergency_medicine": { cost: 100, action: async (pl) => {
+        await ctx.db.patch(pl._id, { life: 100 });
+        return "💊 EMERGENCY MEDICINE! Full health!";
+      }},
+      "nurse_vip": { cost: 500, action: async (pl) => {
+        await ctx.db.patch(pl._id, { life: 100 });
+        return "👩‍⚕️ NURSE VIP! Hospital stays halved 24h!";
+      }},
+      "lawyer_speed_dial": { cost: 600, action: async (pl) => {
+        await ctx.db.patch(pl._id, { wantedLevel: Math.max(0, (pl.wantedLevel ?? 0) - 3) });
+        return "⚖️ LAWYER! Wanted -3! Auto-avoid 3h!";
+      }},
+      "teleportation": { cost: 800, action: async (pl) => {
+        return "🌀 TELEPORTED! Instant travel!";
+      }},
+      "clear_drug_cd": { cost: 250, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "💊 DRUG SMUGGLING COOLDOWN CLEARED!";
+      }},
+      "quick_laundering": { cost: 300, action: async (pl) => {
+        return "💵 MONEY LAUNDERED INSTANTLY!";
+      }},
+      "quick_production": { cost: 350, action: async (pl) => {
+        return "🏭 BULLET FACTORY BATCH COMPLETE!";
+      }},
+      "express_research": { cost: 400, action: async (pl) => {
+        return "🔬 GANG UPGRADE COMPLETE!";
+      }},
+      "clear_escape_cd": { cost: 200, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "🏃 ESCAPE COOLDOWN CLEARED!";
+      }},
+      "top_lawyer": { cost: 1500, action: async (pl) => {
+        return "👔 TOP LAWYER! Buddies prison time -80% for 12h!";
+      }},
+      "medical_vip": { cost: 2000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { life: 100 });
+        return "🏥 MEDICAL VIP! +10% passive HP regen!";
+      }},
+      "remove_cooldown": { cost: 500, action: async (pl) => {
+        await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any);
+        return "⏱️ ALL COOLDOWNS REMOVED!";
+      }},
+      "fake_license": { cost: 400, action: async (pl) => {
+        return "🔢 FAKE PLATES! Car untraceable!";
+      }},
+      "secret_tunnel": { cost: 1200, action: async (pl) => {
+        return "🕳️ SECRET TUNNEL! 100% escape chance!";
+      }},
+      // ===== DEFENSE & PROTECTION =====
+      "anti_bugging": { cost: 250, action: async (pl) => {
+        return "🔍 BUGS REMOVED!";
+      }},
+      "gas_mask": { cost: 300, action: async (pl) => {
+        return "😷 GAS MASK EQUIPPED!";
+      }},
+      "security_detail": { cost: 800, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.15);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `💂 SECURITY DETAIL! +${b} ATK for 12h!`;
+      }},
+      "hidden_stash": { cost: 350, action: async (pl) => {
+        return "📦 HIDDEN STASH! Items safe from raids!";
+      }},
+      "anti_bounty": { cost: 1000, action: async (pl) => {
+        return "🛡️ ANTI-BOUNTY! No bounties 24h!";
+      }},
+      "corrupt_judge": { cost: 1500, action: async (pl) => {
+        return "⚖️ CORRUPT JUDGE! Sentences -5% permanently!";
+      }},
+      "hq_shield": { cost: 1200, action: async (pl) => {
+        return "🏰 HQ SHIELDED! Invulnerable 2h!";
+      }},
+      "vest_l2": { cost: 500, action: async (pl) => {
+        const b = Math.floor((pl.defense ?? 10) * 0.3);
+        await ctx.db.patch(pl._id, { defense: (pl.defense ?? 10) + b });
+        return `🦺 VEST L2! +${b} DEF! Absorbs 1200 bullets!`;
+      }},
+      "vest_l3": { cost: 1200, action: async (pl) => {
+        const b = Math.floor((pl.defense ?? 10) * 0.5);
+        await ctx.db.patch(pl._id, { defense: (pl.defense ?? 10) + b });
+        return `🦺 VEST L3! +${b} DEF! Absorbs 3000 bullets!`;
+      }},
+      "vest_titanium": { cost: 3000, action: async (pl) => {
+        const b = Math.floor((pl.defense ?? 10) * 0.8);
+        await ctx.db.patch(pl._id, { defense: (pl.defense ?? 10) + b });
+        return `🦺 TITANIUM VEST! +${b} DEF! Absorbs 5000 bullets!`;
+      }},
+      "vest_ceramic": { cost: 2000, action: async (pl) => {
+        const b = Math.floor((pl.defense ?? 10) * 0.6);
+        await ctx.db.patch(pl._id, { defense: (pl.defense ?? 10) + b });
+        return `🦺 CERAMIC VEST! +${b} DEF! Absorbs 4000 bullets!`;
+      }},
+      "pre_bail": { cost: 1500, action: async (pl) => {
+        return "💰 PRE-BAILED! Auto-release next arrest!";
+      }},
+      "fake_death": { cost: 2000, action: async (pl) => {
+        return "💀 FAKE DEATH! Appear dead 1h!";
+      }},
+      "corrupt_fbi": { cost: 2500, action: async (pl) => {
+        await ctx.db.patch(pl._id, { wantedLevel: Math.max(0, (pl.wantedLevel ?? 0) - 2) });
+        return "🕵️ CORRUPT FBI! Wanted -2! Raid warning!";
+      }},
+      "escape_moto": { cost: 700, action: async (pl) => {
+        return "🏍️ ESCAPE MOTO! 90% street escape!";
+      }},
+      "godfather_blessing": { cost: 10000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + 100, defense: (pl.defense ?? 10) + 100, life: 100, wantedLevel: 0, inPrison: false, prisonTime: 0 });
+        return "👴 GODFATHER'S BLESSING! +100 ATK/DEF! Full heal! Invulnerable 48h!";
+      }},
+      // ===== WEAPONS & AMMO =====
+      "gold_ak47": { cost: 1500, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.1);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `🔫 GOLD AK47! +${b} ATK!`;
+      }},
+      "rpg": { cost: 2000, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.5);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `🚀 RPG! +${b} ATK!`;
+      }},
+      "sniper_50cal": { cost: 1800, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.45);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `🎯 SNIPER .50 CAL! +${b} ATK!`;
+      }},
+      "tommy_gun": { cost: 1200, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.35);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `🔫 TOMMY GUN! +${b} ATK!`;
+      }},
+      "c4_explosives": { cost: 2500, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.6);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `💣 C4! +${b} ATK!`;
+      }},
+      "m60": { cost: 2000, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.5);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `🔫 M60! +${b} ATK!`;
+      }},
+      "military_drone": { cost: 3000, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.7);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `🛸 MILITARY DRONE! +${b} ATK!`;
+      }},
+      "acid_rain": { cost: 4000, action: async (pl) => {
+        const b = Math.floor((pl.attack ?? 10) * 0.8);
+        await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b });
+        return `☢️ ACID RAIN! +${b} ATK!`;
+      }},
+      // ===== SPECIAL =====
+      "crime_shield": { cost: 1000, action: async (pl) => {
+        return "🛡️ CRIME SHIELD! Next crime cannot fail!";
+      }},
+      "double_rewards": { cost: 2000, action: async (pl) => {
+        await ctx.db.patch(pl._id, { xpBoostUntil: Math.max(pl.xpBoostUntil ?? 0, Date.now() + 3600000), cashBoostUntil: Math.max(pl.cashBoostUntil ?? 0, Date.now() + 3600000) });
+        return "💰 DOUBLE REWARDS! All doubled 1h!";
+      }},
+      "mystery_box": { cost: 300, action: async (pl) => {
+        const pts = Math.floor(Math.random() * 4900) + 100;
+        await ctx.db.patch(pl._id, { points: (pl.points ?? 0) + pts });
+        return `🎁 MYSTERY BOX! +${pts} POINTS BACK!`;
+      }},
+      "reputation_boost": { cost: 600, action: async (pl) => {
+        await ctx.db.patch(pl._id, { reputation: Math.min(100, (pl.reputation ?? 0) + 50) });
+        return "🌟 +50 REPUTATION!";
+      }},
     };
 
     const svc = services[args.serviceId];
