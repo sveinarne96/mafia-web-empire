@@ -114,6 +114,7 @@ const schema = defineSchema({
     activeRole: v.optional(v.string()),
     activeTitle: v.optional(v.string()),
     activeLanguage: v.optional(v.string()),
+    activeBadge: v.optional(v.string()),
     crimeMomentum: v.optional(v.number()),
     crimeCooldowns: v.optional(v.any()),
     prisonJob: v.optional(v.string()),
