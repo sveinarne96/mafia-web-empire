@@ -304,7 +304,7 @@ export function MyProfilePage() {
           <div className="flex justify-between p-2 bg-background/30 rounded"><span className="text-muted-foreground">Total Deaths</span><span className="font-bold">{player.totalDeaths ?? 0}</span></div>
           <div className="flex justify-between p-2 bg-background/30 rounded"><span className="text-muted-foreground">Reputation</span><span className="font-bold">{player.reputation ?? 0}</span></div>
           <div className="flex justify-between p-2 bg-background/30 rounded"><span className="text-muted-foreground">Location</span><span className="font-bold">{player.location ?? "New York"}</span></div>
-          <div className="flex justify-between p-2 bg-background/30 rounded"><span className="text-muted-foreground">Wanted</span><span className="font-bold text-red-400">{'⭐'.repeat(Math.min(player.wantedLevel ?? 0, 5)) || '—'}</span></div>
+          <div className="flex justify-between p-2 bg-background/30 rounded"><span className="text-muted-foreground">Wanted</span><span className="font-bold text-red-400">{`${(player.wantedLevel ?? 0) > 0 ? `⭐ ×${player.wantedLevel} / 20` : '—'}`}</span></div>
         </div>
       </div>
 

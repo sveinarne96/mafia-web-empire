@@ -323,7 +323,7 @@ export const stealFromHouse = mutation({
       levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
       inPrison: arrested,
       prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
-      wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)),
+      wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)),
       lastCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 4),
     });
 
@@ -685,7 +685,7 @@ export const gtaCarTheft = mutation({
       ...(await addXpAndCheckLevel(ctx, player, xpEarned)),
       inPrison: arrested,
       prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
-      wantedLevel: arrested ? 0 : Math.min(10, (player.wantedLevel ?? 0) + (succeeded ? 2 : 0)),
+      wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 2 : 0)),
       lastCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 4),
     });
 
@@ -1043,10 +1043,10 @@ export const fbiRaid = mutation({
     if (player.isDead) throw new Error("You are dead!");
 
     const wanted = player.wantedLevel ?? 0;
-    if (wanted < 2) throw new Error("FBI only investigates wanted criminals (level 2+)");
+    if (wanted < 5) throw new Error("FBI only investigates wanted criminals (level 5+)");
 
     // FBI raid chance scales with wanted level
-    const raidChance = Math.min(0.95, 0.2 + (wanted * 0.15));
+    const raidChance = Math.min(0.95, 0.10 + (wanted * 0.05));
     const raided = Math.random() < raidChance;
 
     if (raided) {
@@ -1106,10 +1106,10 @@ export const militaryPoliceResponse = mutation({
     if (player.isDead) throw new Error("You are dead!");
 
     const wanted = player.wantedLevel ?? 0;
-    if (wanted < 4) throw new Error("Military responds to extreme threats only (wanted level 4+)");
+    if (wanted < 12) throw new Error("Military responds to extreme threats only (wanted level 12+)");
 
     // Military is deadly - 80% raid chance at level 5
-    const raidChance = Math.min(0.95, 0.3 + (wanted * 0.12));
+    const raidChance = Math.min(0.95, 0.20 + (wanted * 0.04));
     const raided = Math.random() < raidChance;
 
     if (raided) {
@@ -1184,7 +1184,7 @@ export const bribeLawEnforcement = mutation({
     // Bribe failed - money lost, wanted level increases
     await ctx.db.patch(userId, {
       money: (player.money ?? 0) - cost,
-      wantedLevel: Math.min(10, wanted + 1),
+      wantedLevel: Math.min(20, wanted + 1),
     });
     return {
       success: false,
@@ -1258,14 +1258,43 @@ export const getWantedStatus = query({
 
     const wanted = player.wantedLevel ?? 0;
     const threats = [];
-    if (wanted >= 2) threats.push({ agency: "🕵️ FBI", level: "Investigating", severity: "medium", message: "FBI is building a case against you. Raids possible." });
-    if (wanted >= 4) threats.push({ agency: "🎖️ Military Police", level: "Mobilized", severity: "high", message: "Military has been deployed. Lethal force authorized." });
-    if (wanted >= 5) threats.push({ agency: "⚡ SWAT Team", level: "Standing By", severity: "critical", message: "SWAT is preparing a siege. Leave the city NOW." });
 
-    const nextRaidIn = wanted > 0 ? Math.floor(300 - (wanted * 45)) : 0; // seconds until next potential raid
-    const bail = Math.floor(50000 + wanted * 100000);
-    const bribeCost = Math.floor(50000 + wanted * 30000);
-    const clearCost = wanted * 200000;
+    // Street Police — always active when wanted
+    if (wanted >= 1) threats.push({ agency: "🚔 Street Police", level: "Patrol", severity: "low", message: "Local cops are on the lookout. Stay cool.", icon: "🚔" });
+
+    // SWAT — tier 3+
+    if (wanted >= 3) threats.push({ agency: "⚡ SWAT Team", level: "Deployed", severity: "low", message: "SWAT units mobilized for raids.", icon: "⚡" });
+
+    // FBI — tier 5+
+    if (wanted >= 5) threats.push({ agency: "🕵️ FBI", level: "Investigating", severity: "medium", message: "FBI is building a federal case. Raids incoming.", icon: "🕵️" });
+
+    // FBI Manhunt — tier 8+
+    if (wanted >= 8) threats.push({ agency: "🕵️‍♂️ FBI Manhunt", level: "ACTIVE SEARCH", severity: "high", message: "FBI has your photo on every bulletin board. Agents are searching block by block.", icon: "🕵️‍♂️" });
+
+    // Military Police — tier 12+
+    if (wanted >= 12) threats.push({ agency: "🎖️ Military Police", level: "Mobilized", severity: "high", message: "The military has been deployed. Lethal force authorized.", icon: "🎖️" });
+
+    // Military Manhunt — tier 15+
+    if (wanted >= 15) threats.push({ agency: "⚔️ Military Manhunt", level: "ACTIVE SEARCH", severity: "critical", message: "Armored vehicles. Helicopters. You are public enemy #1.", icon: "⚔️" });
+
+    // National Guard — tier 18+
+    if (wanted >= 18) threats.push({ agency: "🇺🇸 National Guard", level: "LOCKDOWN", severity: "critical", message: "The city is under martial law. Curfew enforced. Snipers on rooftops.", icon: "🇺🇸" });
+
+    // Martial Law — tier 20
+    if (wanted >= 20) threats.push({ agency: "☢️ MARSHAL LAW", level: "TOTAL WAR", severity: "critical", message: "Every agency on Earth is after you. This is the endgame.", icon: "☢️" });
+
+    const nextRaidIn = wanted > 0 ? Math.floor(600 - (wanted * 30)) : 0;
+    const bail = Math.floor(500000 + wanted * 250000);
+    const bribeCost = Math.floor(500000 + wanted * 100000);
+    const clearCost = wanted * 500000;
+    const buyoutCost = Math.floor(2500000 + wanted * 7500000);
+
+    // Which agency runs your prison block (if in prison)
+    let prisonAgency = "🚔 Local Police";
+    if (wanted >= 16) prisonAgency = "☢️ Military Supermax";
+    else if (wanted >= 12) prisonAgency = "🎖️ Military Prison";
+    else if (wanted >= 8) prisonAgency = "🕵️ FBI Black Site";
+    else if (wanted >= 5) prisonAgency = "🕵️ FBI Holding";
 
     return {
       wantedLevel: wanted,
@@ -1273,9 +1302,58 @@ export const getWantedStatus = query({
       bail,
       bribeCost,
       clearCost,
-      nextRaidIn: Math.max(60, nextRaidIn),
+      buyoutCost,
+      prisonAgency,
+      nextRaidIn: Math.max(30, nextRaidIn),
       isSafe: wanted === 0,
-      riskLevel: wanted >= 5 ? "CRITICAL" : wanted >= 3 ? "HIGH" : wanted >= 1 ? "MODERATE" : "SAFE",
+      riskLevel: wanted >= 15 ? "EXTREME" : wanted >= 10 ? "CRITICAL" : wanted >= 5 ? "HIGH" : wanted >= 2 ? "MODERATE" : wanted >= 1 ? "LOW" : "SAFE",
+    };
+  },
+});
+
+// ===== BUY OUT OF PRISON (Corrupt Warden) =====
+export const buyOutOfPrison = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    const player = await ctx.db.get(userId);
+    if (!player) throw new Error("Player not found");
+    if (!player.inPrison) throw new Error("You're not in prison!");
+
+    const wanted = player.wantedLevel ?? 0;
+    const cost = Math.floor(2500000 + wanted * 7500000);
+
+    if ((player.money ?? 0) < cost) throw new Error(`Buy-out costs $${cost.toLocaleString()}. Not enough money.`);
+
+    // Higher wanted = harder to buy out (less reliable)
+    const successChance = Math.max(0.3, 0.95 - (wanted * 0.04));
+    const succeeded = Math.random() < successChance;
+
+    if (succeeded) {
+      await ctx.db.patch(userId, {
+        money: (player.money ?? 0) - cost,
+        inPrison: false,
+        prisonTime: 0,
+        wantedLevel: Math.max(0, wanted - 2),
+      });
+      return {
+        success: true,
+        cost,
+        message: `🔓 Corrupt warden accepted your payment of $${cost.toLocaleString()}! You're free. Wanted: ${wanted} → ${Math.max(0, wanted - 2)}`,
+      };
+    }
+
+    // Failed buyout — money lost, sentence extended, wanted increases
+    await ctx.db.patch(userId, {
+      money: (player.money ?? 0) - cost,
+      wantedLevel: Math.min(20, wanted + 2),
+      prisonTime: (player.prisonTime ?? 15000) * 2,
+    });
+    return {
+      success: false,
+      cost,
+      message: `❌ The warden took your money ($${cost.toLocaleString()}) and DOUBLE-CROSSED you! Your sentence doubled and wanted level increased. The FBI knows about your bribery attempt.`,
     };
   },
 });

@@ -20,7 +20,19 @@ import { getDailyLegendaryCrimes, getTimeUntilReset, RARITY_CONFIG, type Legenda
 // ===== #20 PRISON TIME DISPLAY =====
 export function PrisonTimeDisplay() {
   const status = useQuery(api.gameFeatures.getPrisonTimeDisplay);
+  const player = useQuery(api.game.getPlayer);
+  const wantedStatus = useQuery(api.gameEnhanced.getWantedStatus);
+  const buyOut = useMutation(api.gameEnhanced.buyOutOfPrison);
   const [countdown, setCountdown] = useState(status?.totalSeconds ?? 0);
+  const [buyMsg, setBuyMsg] = useState<string | null>(null);
+  const [buyLoading, setBuyLoading] = useState(false);
+
+  const doBuyOut = async () => {
+    setBuyLoading(true); setBuyMsg(null);
+    try { const r = await buyOut({}); setBuyMsg(r.message); }
+    catch (e: unknown) { setBuyMsg(e instanceof Error ? e.message : "Error"); }
+    setBuyLoading(false);
+  };
 
   useEffect(() => {
     if (!status || status.totalSeconds <= 0) return;
@@ -64,6 +76,43 @@ export function PrisonTimeDisplay() {
         {status.solitary && <div className="mafia-card rounded-xl p-3 text-center border border-red-500/30"><div className="text-lg">🔒</div><div className="text-[10px] font-bold text-red-400">SOLITARY</div><div className="text-[9px] text-red-400">Locked down</div></div>}
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-lg">🏠</div><div className="text-[10px] font-bold">Cell Level</div><div className="text-[9px] text-muted-foreground">Level {status.cellLevel}</div></div>
       </div>
+
+      {/* Law Enforcement in Prison */}
+      {(wantedStatus?.wantedLevel ?? 0) > 0 && (
+        <div className="rounded-xl border-2 border-red-500/30 bg-red-950/20 p-4 space-y-3">
+          <div className="text-sm font-bold text-red-400">🔒 Law Enforcement in Your Block</div>
+          <div className="bg-background/50 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">{(wantedStatus?.wantedLevel ?? 0) >= 12 ? "🎖️" : (wantedStatus?.wantedLevel ?? 0) >= 8 ? "🕵️‍♂️" : "🕵️"}</span>
+              <div>
+                <div className="text-xs font-bold">{wantedStatus?.prisonAgency ?? "🚔 Local Police"}</div>
+                <div className="text-[9px] text-muted-foreground">
+                  {(wantedStatus?.wantedLevel ?? 0) >= 12 ? "Military guards patrol the cell block. Armed response at all times." : 
+                   (wantedStatus?.wantedLevel ?? 0) >= 8 ? "FBI agents run a black site. Interrogations are constant." :
+                   "FBI is watching your block. Regular inspections."}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-background/50 rounded-lg p-2 text-center">
+              <div className="text-[9px] text-muted-foreground">Guard Level</div>
+              <div className="text-xs font-bold text-red-400">{(wantedStatus?.wantedLevel ?? 0) >= 16 ? "ARMED" : (wantedStatus?.wantedLevel ?? 0) >= 8 ? "HEAVY" : "STANDARD"}</div>
+            </div>
+            <div className="bg-background/50 rounded-lg p-2 text-center">
+              <div className="text-[9px] text-muted-foreground">Escape Difficulty</div>
+              <div className="text-xs font-bold text-red-400">{(wantedStatus?.wantedLevel ?? 0) >= 16 ? "IMPOSSIBLE" : (wantedStatus?.wantedLevel ?? 0) >= 8 ? "HARD" : "MEDIUM"}</div>
+            </div>
+          </div>
+          <button onClick={doBuyOut} disabled={buyLoading || (player?.money ?? 0) < (wantedStatus?.buyoutCost ?? 999999)}
+            className="w-full p-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-xs hover:from-purple-700 hover:to-pink-700 disabled:opacity-40 transition-all">
+            🔓 {buyLoading ? "Bribing the Warden..." : `Buy Out of Prison — $${(wantedStatus?.buyoutCost ?? 0).toLocaleString()}`}
+          </button>
+          {buyMsg && (
+            <div className={`rounded-lg p-3 text-xs font-bold ${buyMsg.includes("✅") || buyMsg.includes("🔓") ? "bg-green-950/30 text-green-400 border border-green-500/30" : "bg-red-950/30 text-red-400 border border-red-500/30"}`}>{buyMsg}</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

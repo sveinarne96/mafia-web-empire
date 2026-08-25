@@ -80,8 +80,8 @@ export const openEasterEgg = mutation({
       });
       return { prize: "DRAGON EGG!", icon: "🐲", message: "🐲 MYTHIC DRAGON EGG! +150 ATK, +150 DEF PERMANENTLY + $10,000,000! You are blessed by the Egg Gods!", cash: 10000000 };
     }
-    // 🏆 JACKPOT: Golden Egg (5%)
-    if (roll < 0.08) {
+    // 🏆 JACKPOT: Golden Egg (4%)
+    if (roll < 0.07) {
       const cash = 5000000;
       await ctx.db.patch(player._id, {
         money: (player.money ?? 0) + cash,
@@ -90,61 +90,70 @@ export const openEasterEgg = mutation({
       });
       return { prize: "GOLDEN EGG!", icon: "🌟", message: `🌟 GOLDEN EGG! $${cash.toLocaleString()} + 3x XP & Cash Boost for 2 hours!`, cash };
     }
-    // 🥤 ENERGY DRINK (8%) — random duration 1h–150h
-    if (roll < 0.16) {
+    // 🥤 ENERGY DRINK (7%) — random duration 1h–150h
+    if (roll < 0.14) {
       const hours = [1, 3, 6, 12, 24, 48, 90, 150][Math.floor(Math.random() * 8)];
       await ctx.db.patch(player._id, { energyDrinkUntil: Math.max((player as any).energyDrinkUntil ?? 0, Date.now() + hours * 3600_000) } as any);
-      return { prize: `Energy Drink ${hours}h`, icon: "🥤", message: `🥤 ENERGY RUSH! ${hours} hour energy drink activated — +25% XP on all crimes!`, cash: 0 };
+      return { prize: `Energy Drink ${hours}h`, icon: "🥤", message: `🥤 ENERGY RUSH! ${hours} hour energy drink — +25% XP on all crimes!`, cash: 0 };
     }
-    // ⚡ XP BOOST (8%) — random duration 1h–48h
-    if (roll < 0.24) {
+    // ⚡ XP BOOST (5%) — random duration 1h–48h
+    if (roll < 0.19) {
       const hours = [1, 3, 6, 12, 24, 48][Math.floor(Math.random() * 6)];
       await ctx.db.patch(player._id, { xpBoostUntil: Math.max(player.xpBoostUntil ?? 0, Date.now() + hours * 3600_000) });
       return { prize: `XP Boost ${hours}h`, icon: "⚡", message: `⚡ 3x XP BOOST for ${hours} HOURS! All crimes earn triple XP!`, cash: 0 };
     }
-    // 💰 CASH BOOST (8%) — random duration 1h–48h
-    if (roll < 0.32) {
+    // 💰 CASH BOOST (5%) — random duration 1h–48h
+    if (roll < 0.24) {
       const hours = [1, 3, 6, 12, 24, 48][Math.floor(Math.random() * 6)];
       await ctx.db.patch(player._id, { cashBoostUntil: Math.max(player.cashBoostUntil ?? 0, Date.now() + hours * 3600_000) });
       return { prize: `Cash Boost ${hours}h`, icon: "💰", message: `💰 3x CASH BOOST for ${hours} HOURS! All crimes pay triple!`, cash: 0 };
     }
-    // 🎯 POINTS BOOST (5%) — 3x points from crimes, random duration 1h–24h
-    if (roll < 0.37) {
+    // 🎯 POINTS BOOST (3%) — 3x points from crimes, random duration 1h–24h
+    if (roll < 0.27) {
       const hours = [1, 3, 6, 12, 24][Math.floor(Math.random() * 5)];
       await ctx.db.patch(player._id, { pointsBoostUntil: Math.max((player as any).pointsBoostUntil ?? 0, Date.now() + hours * 3600_000) } as any);
       return { prize: `Points Boost ${hours}h`, icon: "🎯", message: `🎯 3x POINTS BOOST for ${hours} HOURS! Every crime earns triple points!`, cash: 0 };
     }
-    // 🌟 REPUTATION BOOST (5%) — 3x reputation from kills, random duration 1h–24h
-    if (roll < 0.42) {
+    // 🌟 REPUTATION BOOST (3%) — 3x reputation from kills
+    if (roll < 0.30) {
       const hours = [1, 3, 6, 12, 24][Math.floor(Math.random() * 5)];
       await ctx.db.patch(player._id, { repBoostUntil: Math.max((player as any).repBoostUntil ?? 0, Date.now() + hours * 3600_000) } as any);
       return { prize: `Reputation Boost ${hours}h`, icon: "🌟", message: `🌟 3x REPUTATION BOOST for ${hours} HOURS! Kills earn triple reputation!`, cash: 0 };
     }
-    // ⚔️ Legendary Weapon (4%)
-    if (roll < 0.46) {
+    // 📈 LEVEL BOOST (5%) — instant level jumps (+5, +10, +15, +20)
+    if (roll < 0.35) {
+      const levels = [5, 10, 15, 20][Math.floor(Math.random() * 4)];
+      const currentLevel = player.level ?? 1;
+      const newLevel = currentLevel + levels;
+      await ctx.db.patch(player._id, { level: newLevel, experience: 0 });
+      return { prize: `Level Boost +${levels}`, icon: "📈", message: `📈 LEVEL BOOST! You jumped ${levels} levels instantly! Now Level ${newLevel}!`, cash: 0 };
+    }
+    // 💵 MEGA CASH BOOST (12%) — massive instant cash: $5M to $120M
+    if (roll < 0.47) {
+      const cashAmounts = [5000000, 10000000, 15000000, 20000000, 25000000, 30000000, 35000000, 40000000, 45000000, 50000000, 55000000, 60000000, 70000000, 80000000, 120000000];
+      const cash = cashAmounts[Math.floor(Math.random() * cashAmounts.length)];
+      await ctx.db.patch(player._id, { money: (player.money ?? 0) + cash });
+      return { prize: `Mega Cash $${(cash/1000000).toFixed(0)}M`, icon: "💵", message: `💵 MEGA CASH DROP! $${cash.toLocaleString()} added to your bank account!`, cash };
+    }
+    // ⚔️ Legendary Weapon (3%)
+    if (roll < 0.50) {
       const atk = 50 + Math.floor(Math.random() * 100);
       await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_weapon_${Date.now()}`, name: `⚔️ Egg-Forged Blade (+${atk} ATK)`, type: "weapon", equipped: false, quantity: 1, attack: atk, rarity: "legendary", price: atk * 20000 });
       return { prize: "Legendary Weapon", icon: "⚔️", message: `⚔️ Legendary weapon found! Egg-Forged Blade (+${atk} ATK) added to your items!`, cash: 0 };
     }
-    // 🛡️ Legendary Armor (4%)
-    if (roll < 0.50) {
+    // 🛡️ Legendary Armor (3%)
+    if (roll < 0.53) {
       const def = 50 + Math.floor(Math.random() * 100);
       await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_armor_${Date.now()}`, name: `🛡️ Egg-Plated Vest (+${def} DEF)`, type: "armor", equipped: false, quantity: 1, defense: def, rarity: "legendary", price: def * 20000 });
       return { prize: "Legendary Armor", icon: "🛡️", message: `🛡️ Legendary armor found! Egg-Plated Vest (+${def} DEF) added to your items!`, cash: 0 };
     }
-    // 💵 Instant Cash (10%)
-    if (roll < 0.60) {
-      const cash = (1000000 + Math.floor(Math.random() * 40) * 100000);
-      await ctx.db.patch(player._id, { money: (player.money ?? 0) + cash });
-      return { prize: "Cash Stash", icon: "💵", message: `💵 Cash stash inside! $${cash.toLocaleString()} added!`, cash };
-    }
-    // 🏆 Points (4%)
-    if (roll < 0.64) {
+    // 🏆 Points (3%)
+    if (roll < 0.56) {
       const pts = 200 + Math.floor(Math.random() * 800);
       await ctx.db.patch(player._id, { points: (player.points ?? 0) + pts });
       return { prize: "Point Cache", icon: "🏆", message: `🏆 Point cache! ${pts} points added to your score!`, cash: 0 };
     }
-    // 🎁 EGG VAULT (36%) — one of 512 unique random items, sellable
+    // 🎁 EGG VAULT (44%) — one of 512 unique random items, sellable
     const drop = rollEggPoolItem();
     await ctx.db.insert("inventory", { userId: player._id, itemId: `egg_item_${Date.now()}`, name: drop.name, type: drop.type, equipped: false, quantity: 1, rarity: drop.rarity, price: drop.price });
     return { prize: drop.name, icon: drop.icon, message: `${drop.name} hatched from the egg! ${drop.rarity.toUpperCase()} — worth $${drop.price.toLocaleString()} — sell it in My Items!`, cash: 0 };

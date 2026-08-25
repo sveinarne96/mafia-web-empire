@@ -964,6 +964,7 @@ export function WantedStatusPage() {
   const militaryResponse = useMutation(api.gameEnhanced.militaryPoliceResponse);
   const bribeLaw = useMutation(api.gameEnhanced.bribeLawEnforcement);
   const payBailMut = useMutation(api.gameEnhanced.payBail);
+  const buyOut = useMutation(api.gameEnhanced.buyOutOfPrison);
   const clearWanted = useMutation(api.gameEnhanced.clearWantedLevel);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
@@ -973,6 +974,13 @@ export function WantedStatusPage() {
   const doBribe = async (amount: number) => {
     setLoading(true); setMsg("");
     try { const r = await bribeLaw({ amount }); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+
+  const doBuyOut = async () => {
+    setLoading(true); setMsg("");
+    try { const r = await buyOut({}); setMsg(r.message); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
     setLoading(false);
   };
@@ -1003,11 +1011,11 @@ export function WantedStatusPage() {
         <div className="flex items-center justify-between mb-3">
           <div>
             <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Wanted Level</div>
-            <div className="text-3xl font-black">{'🔴'.repeat(Math.min(10, wantedStatus.wantedLevel))}{'⚫'.repeat(Math.max(0, 10 - wantedStatus.wantedLevel))}</div>
+            <div className="text-3xl font-black">{'🔴'.repeat(Math.min(20, wantedStatus.wantedLevel))}{'⚫'.repeat(Math.max(0, 20 - wantedStatus.wantedLevel))}</div>
           </div>
           <div className="text-right">
             <div className={`text-xl font-black ${riskColor}`}>{wantedStatus.riskLevel}</div>
-            <div className="text-[10px] text-muted-foreground">Level {wantedStatus.wantedLevel}/10</div>
+            <div className="text-[10px] text-muted-foreground">Level {wantedStatus.wantedLevel}/20</div>
           </div>
         </div>
 
@@ -1053,13 +1061,22 @@ export function WantedStatusPage() {
             <div className="text-[9px] text-muted-foreground mt-1">Fully reset wanted level</div>
           </button>
           {player.inPrison && (
-            <button onClick={doBail} disabled={loading}
-              className="p-4 mafia-card rounded-xl text-center hover:border-blue-500/30 transition-all disabled:opacity-40 col-span-2">
-              <div className="text-2xl mb-1">🏛️</div>
-              <div className="text-xs font-bold">Post Bail</div>
-              <div className="text-[10px] text-blue-400">${wantedStatus.bail.toLocaleString()}</div>
-              <div className="text-[9px] text-muted-foreground mt-1">Get out of prison early</div>
-            </button>
+            <>
+              <button onClick={doBail} disabled={loading}
+                className="p-4 mafia-card rounded-xl text-center hover:border-blue-500/30 transition-all disabled:opacity-40">
+                <div className="text-2xl mb-1">🏛️</div>
+                <div className="text-xs font-bold">Post Bail</div>
+                <div className="text-[10px] text-blue-400">${wantedStatus.bail.toLocaleString()}</div>
+                <div className="text-[9px] text-muted-foreground mt-1">Get out of prison early</div>
+              </button>
+              <button onClick={doBuyOut} disabled={loading || (player.money ?? 0) < (wantedStatus.buyoutCost ?? 0)}
+                className="p-4 mafia-card rounded-xl text-center hover:border-purple-500/30 transition-all disabled:opacity-40">
+                <div className="text-2xl mb-1">🔓</div>
+                <div className="text-xs font-bold">Buy Out of Prison</div>
+                <div className="text-[10px] text-purple-400">${(wantedStatus.buyoutCost ?? 0).toLocaleString()}</div>
+                <div className="text-[9px] text-muted-foreground mt-1">Corrupt the warden</div>
+              </button>
+            </>
           )}
         </div>
       )}
@@ -1070,11 +1087,11 @@ export function WantedStatusPage() {
         <div className="grid grid-cols-2 gap-3 text-[10px]">
           <div className="bg-background/50 rounded-lg p-2.5">
             <div className="text-muted-foreground">FBI Raid Chance</div>
-            <div className="text-orange-400 font-bold">{wantedStatus.wantedLevel >= 2 ? `${Math.min(95, 20 + wantedStatus.wantedLevel * 15)}%` : "N/A (need level 2+)"}</div>
+            <div className="text-orange-400 font-bold">{wantedStatus.wantedLevel >= 5 ? `${Math.min(95, 10 + wantedStatus.wantedLevel * 5)}%` : "N/A (need level 5+)"}</div>
           </div>
           <div className="bg-background/50 rounded-lg p-2.5">
             <div className="text-muted-foreground">Military Response</div>
-            <div className="text-red-400 font-bold">{wantedStatus.wantedLevel >= 4 ? `${Math.min(95, 30 + wantedStatus.wantedLevel * 12)}%` : "N/A (need level 4+)"}</div>
+            <div className="text-red-400 font-bold">{wantedStatus.wantedLevel >= 12 ? `${Math.min(95, 20 + wantedStatus.wantedLevel * 4)}%` : "N/A (need level 12+)"}</div>
           </div>
           <div className="bg-background/50 rounded-lg p-2.5">
             <div className="text-muted-foreground">Bail Cost</div>
