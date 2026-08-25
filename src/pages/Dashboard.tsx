@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/contexts/TranslationContext";
 // signOut available via auth provider
 import {
   Home, Building2, Wallet, Heart, Shield, MapPin, AlertTriangle, Skull, Gift,
@@ -143,29 +144,29 @@ function SafePage({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const leftMenuSections = [
+const getLeftMenuSections = (t: (k: string) => string) => [
   { title: "Overview", icon: Home, items: [
     { label: "Headquarters", page: "headquarters", icon: "🏠" },
-    { label: "Bank", page: "bank", icon: "🏦" },
+    { label: t("right.bank"), page: "bank", icon: "🏦" },
     { label: "Hospital", page: "hospital", icon: "🏥" },
-    { label: "Points Shop", page: "points", icon: "🏆" },
-    { label: "My Profile", page: "profile", icon: "👤" },
+    { label: t("right.pointsShop"), page: "points", icon: "🏆" },
+    { label: t("right.profile"), page: "profile", icon: "👤" },
     { label: "Game Updates", page: "updates", icon: "📜" },
   ]},
   { title: "Crimes", icon: Flame, items: [
-    { label: "Street Crimes", page: "crimes", icon: "🔪" },
-    { label: "Robberies & Heists", page: "robbery", icon: "💰" },
-    { label: "Fraud & Scams", page: "fraud", icon: "🎭" },
-    { label: "Burglary", page: "burglary", icon: "🏠" },
-    { label: "Drug Operations", page: "drugs", icon: "💊" },
-    { label: "Organized Crime", page: "organized", icon: "👥" },
-    { label: "Underground", page: "underground", icon: "💣" },
+    { label: t("cat.street"), page: "crimes", icon: "🔪" },
+    { label: t("cat.robbery"), page: "robbery", icon: "💰" },
+    { label: t("cat.fraud"), page: "fraud", icon: "🎭" },
+    { label: t("cat.burglary"), page: "burglary", icon: "🏠" },
+    { label: t("cat.drugs"), page: "drugs", icon: "💊" },
+    { label: t("cat.organized"), page: "organized", icon: "👥" },
+    { label: t("cat.underground"), page: "underground", icon: "💣" },
     { label: "Illegal Transport", page: "transport", icon: "🚛" },
     { label: "Steal From House", page: "steal_from_house", icon: "🏠" },
     { label: "GTA Car Theft", page: "gta_car_theft", icon: "🚗" },
     { label: "Crime Empire", page: "crime_empire", icon: "🗺️" },
     { label: "Heist Planning", page: "heist_planning", icon: "🎯" },
-    { label: "Murder", page: "kill", icon: "🗡️" },
+    { label: t("nav.murder"), page: "kill", icon: "🗡️" },
     { label: "Crime Spree", page: "crime_spree", icon: "🔥" },
   ]},
   { title: "Combat", icon: Swords, items: [
@@ -219,8 +220,8 @@ const leftMenuSections = [
     { label: "Crafting", page: "crafting", icon: "🔧" },
   ]},
   { title: "Assets", icon: Package, items: [
-    { label: "Garage", page: "garage", icon: "🚗" },
-    { label: "My Items", page: "items", icon: "🎒" },
+    { label: t("right.garage"), page: "garage", icon: "🚗" },
+    { label: t("right.items"), page: "items", icon: "🎒" },
     { label: "Black Market", page: "black_market", icon: "🖤" },
     { label: "Legendary Items", page: "legendary_items", icon: "✨" },
     { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
@@ -246,17 +247,17 @@ const leftMenuSections = [
     { label: "Crew Leaderboard", page: "crew_leaderboard", icon: "🏆" },
     { label: "Family System", page: "family", icon: "👨‍👩‍👦" },
   ]},
-  { title: "Progression", icon: TrendingUp, items: [
-    { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
+  { title: t("right.progression"), icon: TrendingUp, items: [
+    { label: t("right.skillTree"), page: "skill_tree", icon: "🧠" },
     { label: "Combat Skills", page: "combat_skills", icon: "⚔️" },
     { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
     { label: "Hacking Skills", page: "hacking_skills", icon: "💻" },
-    { label: "Prestige", page: "prestige", icon: "⭐" },
+    { label: t("right.prestige"), page: "prestige", icon: "⭐" },
     { label: "Prestige Shop", page: "prestige_shop", icon: "🛒" },
     { label: "Titles", page: "titles", icon: "👑" },
     { label: "Achievements", page: "achievements", icon: "🏅" },
     { label: "Legacy", page: "legacy", icon: "📜" },
-    { label: "Leaderboards", icon: "📊", children: [
+    { label: t("right.leaderboards"), icon: "📊", children: [
       { label: "Level Board", page: "lb_level", icon: "📊" },
       { label: "Money Board", page: "lb_money", icon: "💰" },
       { label: "Kill Board", page: "lb_kills", icon: "💀" },
@@ -294,8 +295,8 @@ const leftMenuSections = [
   ]},
 ];
 
-const rightMenuSections = [
-  { title: "Communication", icon: MessageSquare, items: [
+const getRightMenuSections = (t: (k: string) => string) => [
+  { title: t("right.communication"), icon: MessageSquare, items: [
     { label: "Direct Messages", page: "messages", icon: "📩" },
     { label: "Inbox", page: "inbox", icon: "📥" },
     { label: "Notifications", page: "notifications_page", icon: "🔔" },
@@ -314,7 +315,7 @@ const rightMenuSections = [
     { label: "Trade Chat", page: "trade_chat", icon: "💹" },
     { label: "Looking for Group", page: "lfg", icon: "👥" },
   ]},
-  { title: "World", icon: Globe, items: [
+  { title: t("right.quickInfo"), icon: Globe, items: [
     { label: "Airport", page: "airport", icon: "✈️" },
     { label: "Weather", page: "weather", icon: "🌤️" },
     { label: "News Ticker", page: "news_ticker", icon: "📰" },
@@ -355,8 +356,8 @@ const rightMenuSections = [
     { label: "Community Guidelines", page: "community", icon: "📜" },
     { label: "Player Reports", page: "reports", icon: "📢" },
   ]},
-  { title: "System", icon: Settings, items: [
-    { label: "Admin Panel", page: "admin_panel", icon: "⚙️" },
+  { title: t("right.system"), icon: Settings, items: [
+    { label: t("right.admin"), page: "admin_panel", icon: "⚙️" },
     { label: "Become Admin", page: "become_admin", icon: "🔑" },
     { label: "Online Players", page: "online_players", icon: "👥" },
   ]},
@@ -1675,6 +1676,7 @@ export default function Dashboard() {
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [dismissedAtLevel, setDismissedAtLevel] = useState<number | null>(null);
   const setPage = useCallback((p: GamePage) => setActivePage(p), []);
+  const { t } = useTranslation();
 
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
 
@@ -2554,20 +2556,20 @@ const renderPage = () => {
 
         <div className="flex items-center px-3 py-2 relative z-10 gap-1 overflow-x-auto">
           {[
-            { page: "crimes", label: "Street", icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
-            { page: "robbery", label: "Robbery", icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
-            { page: "fraud", label: "Fraud", icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
-            { page: "burglary", label: "Burglary", icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
-            { page: "steal_from_house", label: "Houses", icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
-            { page: "gta_car_theft", label: "GTA", icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
-            { page: "drugs", label: "Drugs", icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
-            { page: "organized", label: "Organized", icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
-            { page: "underground", label: "Underground", icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
-            { page: "kill", label: "Murder", icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
-            { page: "world_events", label: "Events", icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
-            { page: "storyline", label: "Story", icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
-            { page: "prison", label: "Prison", icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
-            { page: "hospital", label: "Hospital", icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
+            { page: "crimes", label: t("nav.street"), icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
+            { page: "robbery", label: t("nav.robbery"), icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
+            { page: "fraud", label: t("nav.fraud"), icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
+            { page: "burglary", label: t("nav.burglary"), icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
+            { page: "steal_from_house", label: t("nav.houses"), icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
+            { page: "gta_car_theft", label: t("nav.gta"), icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
+            { page: "drugs", label: t("nav.drugs"), icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
+            { page: "organized", label: t("nav.organized"), icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
+            { page: "underground", label: t("nav.underground"), icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
+            { page: "kill", label: t("nav.murder"), icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
+            { page: "world_events", label: t("nav.events"), icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
+            { page: "storyline", label: t("nav.story"), icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
+            { page: "prison", label: t("nav.prison"), icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
+            { page: "hospital", label: t("nav.hospital"), icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
           ].map(btn => {
             const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
             const cdLeft = cdEnd > Date.now() ? Math.ceil((cdEnd - Date.now()) / 1000) : 0;
@@ -2594,7 +2596,7 @@ const renderPage = () => {
         {showLeft && (
           <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-48" : "w-64"} bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block transition-all`}>
             <div className="p-3 space-y-1">
-              {leftMenuSections.map(section => (
+              {getLeftMenuSections(t).map(section => (
                 <div key={section.title}>
                   <button onClick={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(t => t !== section.title) : [...prev, section.title])}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-white/5 transition">
@@ -2795,7 +2797,7 @@ const renderPage = () => {
               )}
 
               {/* Right Menu Sections */}
-              {rightMenuSections.map(section => (
+              {getRightMenuSections(t).map(section => (
                 <div key={section.title}>
                   <button onClick={() => setRightExpanded(prev => prev.includes(section.title) ? prev.filter(t => t !== section.title) : [...prev, section.title])}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-white/5 transition">
