@@ -2549,96 +2549,74 @@ const renderPage = () => {
           .nav-btn.active::before { background: linear-gradient(180deg, rgba(212,153,69,0.12) 0%, rgba(212,153,69,0.03) 50%, transparent 100%); }
           .nav-btn.cd::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: nav-cd 1s linear infinite; width: var(--cd-pct, 100%); top: auto; transform: none; }
           .nav-section { display: flex; align-items: center; gap: 5px; }
-          .nav-sep { width: 1px; height: 32px; background: linear-gradient(180deg, transparent 0%, rgba(212,153,69,0.2) 50%, transparent 100%); margin: 0 8px; }
-          .nav-lbl { font-size: 6px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(212,153,69,0.3); font-weight: 800; padding-right: 4px; writing-mode: vertical-lr; text-orientation: mixed; transform: rotate(180deg); }
           .stat-pill { animation: nav-breathe 2s ease-in-out infinite; }
         `}</style>
 
-        <div className="flex items-center px-3 py-2.5 relative z-10 gap-0.5">
-          {/* ═══ CRIMES ═══ */}
-          <div className="nav-section">
-            {[
-              { page: "crimes", label: "Street", icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
-              { page: "robbery", label: "Robbery", icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
-              { page: "fraud", label: "Fraud", icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
-              { page: "burglary", label: "Burglary", icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
-              { page: "steal_from_house", label: "Houses", icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
-              { page: "gta_car_theft", label: "GTA", icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
-              { page: "drugs", label: "Drugs", icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
-              { page: "organized", label: "Organized", icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
-              { page: "underground", label: "Underground", icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
-            ].map(btn => {
-              const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
-              const cdLeft = cdEnd > Date.now() ? Math.ceil((cdEnd - Date.now()) / 1000) : 0;
-              return (
-                <button key={btn.page} onClick={() => setPage(btn.page)}
-                  className={`nav-btn px-3 py-2 rounded-xl text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""} ${cdLeft > 0 ? "cd opacity-60" : ""}`}
-                  style={{ background: btn.bg, "--gc": btn.gc + "30" } as any}>
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    <span className="text-sm">{btn.icon}</span>
-                    <span>{btn.label}</span>
-                  </span>
-                  {cdLeft > 0 && <span className="relative z-10 ml-1 text-[8px] opacity-70 font-mono">{cdLeft}s</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="nav-sep" />
-
-          {/* ═══ WORLD ═══ */}
-          <div className="nav-section">
-            {[
-              { page: "kill", label: "Murder", icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
-              { page: "world_events", label: "Events", icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
-              { page: "storyline", label: "Story", icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
-              { page: "prison", label: "Prison", icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
-              { page: "hospital", label: "Hospital", icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
-            ].map(btn => (
+        <div className="flex items-center px-3 py-2 relative z-10 gap-1 overflow-x-auto">
+          {[
+            { page: "crimes", label: "Street", icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
+            { page: "robbery", label: "Robbery", icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
+            { page: "fraud", label: "Fraud", icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
+            { page: "burglary", label: "Burglary", icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
+            { page: "steal_from_house", label: "Houses", icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
+            { page: "gta_car_theft", label: "GTA", icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
+            { page: "drugs", label: "Drugs", icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
+            { page: "organized", label: "Organized", icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
+            { page: "underground", label: "Underground", icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
+            { page: "kill", label: "Murder", icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
+            { page: "world_events", label: "Events", icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
+            { page: "storyline", label: "Story", icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
+            { page: "prison", label: "Prison", icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
+            { page: "hospital", label: "Hospital", icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
+          ].map(btn => {
+            const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
+            const cdLeft = cdEnd > Date.now() ? Math.ceil((cdEnd - Date.now()) / 1000) : 0;
+            return (
               <button key={btn.page} onClick={() => setPage(btn.page)}
-                className={`nav-btn px-3 py-2 rounded-xl text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""}`}
+                className={`nav-btn px-3 py-1.5 rounded-lg text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""} ${cdLeft > 0 ? "cd opacity-60" : ""}`}
                 style={{ background: btn.bg, "--gc": btn.gc + "30" } as any}>
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <span className="text-sm">{btn.icon}</span>
+                <span className="relative z-10 flex items-center gap-1">
+                  <span className="text-xs">{btn.icon}</span>
                   <span>{btn.label}</span>
                 </span>
+                {cdLeft > 0 && <span className="relative z-10 ml-1 text-[8px] opacity-70 font-mono">{cdLeft}s</span>}
               </button>
-            ))}
-          </div>
+            );
+          })}
 
-          <div className="nav-sep" />
-
-          {/* ═══ QUICK STATS ═══ */}
-          <div className="nav-section ml-auto gap-2">
+          {/* Status badges - pushed to right */}
+          <div className="ml-auto flex items-center gap-1.5 shrink-0">
             {(player?.wantedLevel ?? 0) > 0 && (
-              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-red-900/60 to-red-950/60 border border-red-500/30 text-red-400 flex items-center gap-1.5">
+              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-red-900/60 to-red-950/60 border border-red-500/30 text-red-400 flex items-center gap-1">
                 <span className="text-xs animate-pulse">🔴</span>
                 <span>WANTED {player.wantedLevel}</span>
               </span>
             )}
             {(player as any)?.xpBoostUntil > Date.now() && (
-              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-cyan-900/50 to-cyan-950/50 border border-cyan-500/30 text-cyan-400 flex items-center gap-1.5">
+              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-cyan-900/50 to-cyan-950/50 border border-cyan-500/30 text-cyan-400 flex items-center gap-1">
                 <span className="text-xs">⚡</span> 3x XP
               </span>
             )}
             {(player as any)?.cashBoostUntil > Date.now() && (
-              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-900/50 to-emerald-950/50 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-900/50 to-emerald-950/50 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
                 <span className="text-xs">💰</span> 3x Cash
               </span>
             )}
             {(player as any)?.energyDrinkUntil > Date.now() && (
-              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-orange-900/50 to-orange-950/50 border border-orange-500/30 text-orange-400 flex items-center gap-1.5">
+              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-orange-900/50 to-orange-950/50 border border-orange-500/30 text-orange-400 flex items-center gap-1">
                 <span className="text-xs">🥤</span> Energy
               </span>
             )}
             {(player as any)?.rankBoostUntil > Date.now() && (
-              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-yellow-900/50 to-yellow-950/50 border border-yellow-500/30 text-yellow-400 flex items-center gap-1.5">
+              <span className="stat-pill px-2 py-1 rounded-lg text-[10px] font-bold bg-gradient-to-r from-yellow-900/50 to-yellow-950/50 border border-yellow-500/30 text-yellow-400 flex items-center gap-1">
                 <span className="text-xs">🚀</span> Rank
               </span>
             )}
           </div>
         </div>
-      </div>{/* Main Layout */}
+      </div>
+
+      {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
         {showLeft && (
