@@ -2529,136 +2529,111 @@ const renderPage = () => {
         </div>
       )}
 
-      {/* ═══════════ PREMIUM MAFIA TOP BAR ═══════════ */}
-      <div className="relative border-b border-amber-900/30 shrink-0" style={{ background: "linear-gradient(180deg, oklch(0.06 0.015 35) 0%, oklch(0.04 0.012 35) 100%)" }}>
-        {/* Animated scanline overlay */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,153,69,0.15) 2px, rgba(212,153,69,0.15) 4px)" }} />
+      {/* ═══════════ MAFIA TOP NAVIGATION ═══════════ */}
+      <div className="relative border-b border-amber-900/20 shrink-0 overflow-hidden" style={{ background: "linear-gradient(180deg, rgba(12,6,3,0.98) 0%, rgba(8,4,2,0.98) 100%)" }}>
+        {/* Animated mesh background */}
+        <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, rgba(212,153,69,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(180,120,50,0.2) 0%, transparent 50%)" }} />
         
         <style>{`
-          @keyframes tb-glow { 0%,100% { box-shadow: 0 0 8px var(--c), inset 0 1px rgba(255,255,255,0.05); } 50% { box-shadow: 0 0 20px var(--c), 0 0 40px var(--c), inset 0 1px rgba(255,255,255,0.1); } }
-          @keyframes tb-slide { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
-          @keyframes tb-pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
-          @keyframes tb-shine { 0% { left: -100%; } 100% { left: 200%; } }
-          .tb-btn { --c: rgba(212,153,69,0.2); transition: all 0.25s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
-          .tb-btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); transition: none; }
-          .tb-btn:hover::after { animation: tb-shine 0.6s ease-out; }
-          .tb-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 20px var(--c), 0 0 1px rgba(255,255,255,0.2); }
-          .tb-btn:active { transform: translateY(0) scale(0.97); }
-          .tb-btn.active { animation: tb-glow 2s ease-in-out infinite; border-color: rgba(212,153,69,0.5) !important; }
-          .tb-btn.active::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,153,69,0.8), transparent); }
-          .tb-btn.cooldown::before { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: tb-slide 1s linear infinite; width: var(--cd-pct, 100%); }
-          .tb-section { display: flex; align-items: center; gap: 4px; padding: 0 4px; }
-          .tb-divider { width: 1px; height: 28px; background: linear-gradient(180deg, transparent, rgba(212,153,69,0.25), transparent); margin: 0 6px; flex-shrink: 0; }
-          .tb-label { font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(212,153,69,0.35); padding: 0 4px; white-space: nowrap; font-weight: 700; }
-          .boost-badge { animation: tb-pulse 1.5s ease-in-out infinite; }
+          @keyframes nav-glow { 0%,100% { box-shadow: 0 0 10px var(--gc), inset 0 1px rgba(255,255,255,0.03); } 50% { box-shadow: 0 0 25px var(--gc), 0 0 50px var(--gc), inset 0 1px rgba(255,255,255,0.08); } }
+          @keyframes nav-cd { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+          @keyframes nav-shine { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(300%) skewX(-15deg); } }
+          @keyframes nav-breathe { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+          .nav-btn { --gc: rgba(212,153,69,0.15); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); border: 1px solid rgba(255,255,255,0.06); }
+          .nav-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events: none; }
+          .nav-btn::after { content: ''; position: absolute; top: -50%; left: -100%; width: 40%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); transform: skewX(-15deg); transition: none; pointer-events: none; }
+          .nav-btn:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 25px var(--gc), 0 0 1px rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.12); }
+          .nav-btn:hover::after { animation: nav-shine 0.5s ease-out; }
+          .nav-btn:active { transform: translateY(-1px) scale(0.98); }
+          .nav-btn.active { animation: nav-glow 2.5s ease-in-out infinite; border-color: rgba(212,153,69,0.4) !important; }
+          .nav-btn.active::before { background: linear-gradient(180deg, rgba(212,153,69,0.12) 0%, rgba(212,153,69,0.03) 50%, transparent 100%); }
+          .nav-btn.cd::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: nav-cd 1s linear infinite; width: var(--cd-pct, 100%); top: auto; transform: none; }
+          .nav-section { display: flex; align-items: center; gap: 5px; }
+          .nav-sep { width: 1px; height: 32px; background: linear-gradient(180deg, transparent 0%, rgba(212,153,69,0.2) 50%, transparent 100%); margin: 0 8px; }
+          .nav-lbl { font-size: 6px; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(212,153,69,0.3); font-weight: 800; padding-right: 4px; writing-mode: vertical-lr; text-orientation: mixed; transform: rotate(180deg); }
+          .stat-pill { animation: nav-breathe 2s ease-in-out infinite; }
         `}</style>
 
-        <div className="flex items-center gap-1 px-3 py-2 relative z-10">
+        <div className="flex items-center px-3 py-2.5 relative z-10 gap-0.5">
           {/* ═══ CRIMES ═══ */}
-          <div className="tb-section">
-            <span className="tb-label">Crimes</span>
+          <div className="nav-section">
             {[
-              { page: "crimes", label: "Street", icon: "🔪", gradient: "from-emerald-700/80 to-emerald-900/80", border: "border-emerald-500/20", glow: "#22c55e" },
-              { page: "robbery", label: "Robbery", icon: "💰", gradient: "from-red-700/80 to-red-900/80", border: "border-red-500/20", glow: "#ef4444" },
-              { page: "fraud", label: "Fraud", icon: "🎭", gradient: "from-yellow-700/80 to-yellow-900/80", border: "border-yellow-500/20", glow: "#eab308" },
-              { page: "burglary", label: "Burglary", icon: "🏠", gradient: "from-orange-700/80 to-orange-900/80", border: "border-orange-500/20", glow: "#f97316" },
-              { page: "steal_from_house", label: "Houses", icon: "🔑", gradient: "from-amber-700/80 to-amber-900/80", border: "border-amber-500/20", glow: "#f59e0b" },
-              { page: "gta_car_theft", label: "GTA", icon: "🚗", gradient: "from-blue-700/80 to-blue-900/80", border: "border-blue-500/20", glow: "#3b82f6" },
-              { page: "drugs", label: "Drugs", icon: "💊", gradient: "from-purple-700/80 to-purple-900/80", border: "border-purple-500/20", glow: "#a855f7" },
-              { page: "organized", label: "Organized", icon: "🕵️", gradient: "from-cyan-700/80 to-cyan-900/80", border: "border-cyan-500/20", glow: "#06b6d4" },
-              { page: "underground", label: "Underground", icon: "🕳️", gradient: "from-gray-700/80 to-gray-900/80", border: "border-gray-500/20", glow: "#6b7280" },
+              { page: "crimes", label: "Street", icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
+              { page: "robbery", label: "Robbery", icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
+              { page: "fraud", label: "Fraud", icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
+              { page: "burglary", label: "Burglary", icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
+              { page: "steal_from_house", label: "Houses", icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
+              { page: "gta_car_theft", label: "GTA", icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
+              { page: "drugs", label: "Drugs", icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
+              { page: "organized", label: "Organized", icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
+              { page: "underground", label: "Underground", icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
             ].map(btn => {
               const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
-              const now = Date.now();
-              const cdLeft = cdEnd > now ? Math.ceil((cdEnd - now) / 1000) : 0;
-              const onCd = cdLeft > 0;
+              const cdLeft = cdEnd > Date.now() ? Math.ceil((cdEnd - Date.now()) / 1000) : 0;
               return (
                 <button key={btn.page} onClick={() => setPage(btn.page)}
-                  className={`tb-btn px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-b ${btn.gradient} border ${btn.border} text-white/90 whitespace-nowrap ${activePage === btn.page ? "active ring-1 ring-amber-400/40 scale-105" : ""} ${onCd ? "cooldown opacity-60" : ""}`}
-                  style={{ "--c": btn.glow + "40" } as any}>
-                  <span className="relative z-10 flex items-center gap-1">
-                    <span className="text-[11px]">{btn.icon}</span>
+                  className={`nav-btn px-3 py-2 rounded-xl text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""} ${cdLeft > 0 ? "cd opacity-60" : ""}`}
+                  style={{ background: btn.bg, "--gc": btn.gc + "30" } as any}>
+                  <span className="relative z-10 flex items-center gap-1.5">
+                    <span className="text-sm">{btn.icon}</span>
                     <span>{btn.label}</span>
                   </span>
-                  {onCd && <span className="relative z-10 ml-1 text-[8px] opacity-70">{cdLeft}s</span>}
+                  {cdLeft > 0 && <span className="relative z-10 ml-1 text-[8px] opacity-70 font-mono">{cdLeft}s</span>}
                 </button>
               );
             })}
           </div>
 
-          <div className="tb-divider" />
-
-          {/* ═══ ACTION ═══ */}
-          <div className="tb-section">
-            <span className="tb-label">Action</span>
-            {[
-              { page: "kill", label: "Murder", icon: "💀", gradient: "from-rose-800/90 to-rose-950/90", border: "border-rose-500/25", glow: "#f43f5e" },
-              { page: "prison", label: "Prison", icon: "⛓️", gradient: "from-slate-700/80 to-slate-900/80", border: "border-slate-500/20", glow: "#64748b" },
-              { page: "hospital", label: "Hospital", icon: "🏥", gradient: "from-teal-700/80 to-teal-900/80", border: "border-teal-500/20", glow: "#14b8a6" },
-            ].map(btn => (
-              <button key={btn.page} onClick={() => setPage(btn.page)}
-                className={`tb-btn px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-b ${btn.gradient} border ${btn.border} text-white/90 whitespace-nowrap ${activePage === btn.page ? "active ring-1 ring-amber-400/40 scale-105" : ""}`}
-                style={{ "--c": btn.glow + "40" } as any}>
-                <span className="flex items-center gap-1">
-                  <span className="text-[11px]">{btn.icon}</span>
-                  <span>{btn.label}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="tb-divider" />
+          <div className="nav-sep" />
 
           {/* ═══ WORLD ═══ */}
-          <div className="tb-section">
-            <span className="tb-label">World</span>
+          <div className="nav-section">
             {[
-              { page: "world_events", label: "Events", icon: "🎪", gradient: "from-amber-700/80 to-yellow-900/80", border: "border-amber-500/25", glow: "#f59e0b" },
-              { page: "storyline", label: "Storyline", icon: "📖", gradient: "from-indigo-700/80 to-indigo-900/80", border: "border-indigo-500/20", glow: "#6366f1" },
+              { page: "kill", label: "Murder", icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
+              { page: "world_events", label: "Events", icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
+              { page: "storyline", label: "Story", icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
+              { page: "prison", label: "Prison", icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
+              { page: "hospital", label: "Hospital", icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
             ].map(btn => (
               <button key={btn.page} onClick={() => setPage(btn.page)}
-                className={`tb-btn px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-b ${btn.gradient} border ${btn.border} text-white/90 whitespace-nowrap ${activePage === btn.page ? "active ring-1 ring-amber-400/40 scale-105" : ""}`}
-                style={{ "--c": btn.glow + "40" } as any}>
-                <span className="flex items-center gap-1">
-                  <span className="text-[11px]">{btn.icon}</span>
+                className={`nav-btn px-3 py-2 rounded-xl text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""}`}
+                style={{ background: btn.bg, "--gc": btn.gc + "30" } as any}>
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <span className="text-sm">{btn.icon}</span>
                   <span>{btn.label}</span>
                 </span>
               </button>
             ))}
           </div>
 
-          <div className="tb-divider" />
+          <div className="nav-sep" />
 
-          {/* ═══ ACTIVE STATUS ═══ */}
-          <div className="tb-section ml-auto gap-1.5">
+          {/* ═══ QUICK STATS ═══ */}
+          <div className="nav-section ml-auto gap-2">
             {(player?.wantedLevel ?? 0) > 0 && (
-              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-red-900/50 border border-red-500/40 text-red-400 flex items-center gap-1">
-                <span className="text-[10px]">🔴</span> WANTED {player.wantedLevel}
+              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-red-900/60 to-red-950/60 border border-red-500/30 text-red-400 flex items-center gap-1.5">
+                <span className="text-xs animate-pulse">🔴</span>
+                <span>WANTED {player.wantedLevel}</span>
               </span>
             )}
             {(player as any)?.xpBoostUntil > Date.now() && (
-              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-cyan-900/40 border border-cyan-500/30 text-cyan-400 flex items-center gap-1">
-                <span className="text-[10px]">⚡</span> 3x XP
+              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-cyan-900/50 to-cyan-950/50 border border-cyan-500/30 text-cyan-400 flex items-center gap-1.5">
+                <span className="text-xs">⚡</span> 3x XP
               </span>
             )}
             {(player as any)?.cashBoostUntil > Date.now() && (
-              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-green-900/40 border border-green-500/30 text-green-400 flex items-center gap-1">
-                <span className="text-[10px]">💰</span> 3x Cash
+              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-emerald-900/50 to-emerald-950/50 border border-emerald-500/30 text-emerald-400 flex items-center gap-1.5">
+                <span className="text-xs">💰</span> 3x Cash
               </span>
             )}
             {(player as any)?.energyDrinkUntil > Date.now() && (
-              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-orange-900/40 border border-orange-500/30 text-orange-400 flex items-center gap-1">
-                <span className="text-[10px]">🥤</span> Energy
+              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-orange-900/50 to-orange-950/50 border border-orange-500/30 text-orange-400 flex items-center gap-1.5">
+                <span className="text-xs">🥤</span> Energy
               </span>
             )}
             {(player as any)?.rankBoostUntil > Date.now() && (
-              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-yellow-900/40 border border-yellow-500/30 text-yellow-400 flex items-center gap-1">
-                <span className="text-[10px]">🚀</span> Rank
-              </span>
-            )}
-            {(player as any)?.pointsBoostUntil > Date.now() && (
-              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-purple-900/40 border border-purple-500/30 text-purple-400 flex items-center gap-1">
-                <span className="text-[10px]">🎯</span> Pts
+              <span className="stat-pill px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-yellow-900/50 to-yellow-950/50 border border-yellow-500/30 text-yellow-400 flex items-center gap-1.5">
+                <span className="text-xs">🚀</span> Rank
               </span>
             )}
           </div>
