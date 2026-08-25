@@ -2529,46 +2529,140 @@ const renderPage = () => {
         </div>
       )}
 
-      {/* Top Quick Access Bar */}
-      <div className="bg-[oklch(0.08_0.018_38)] border-b border-border/50 px-4 py-2.5 flex items-center gap-2 overflow-x-auto shrink-0">
+      {/* ═══════════ PREMIUM MAFIA TOP BAR ═══════════ */}
+      <div className="relative border-b border-amber-900/30 shrink-0" style={{ background: "linear-gradient(180deg, oklch(0.06 0.015 35) 0%, oklch(0.04 0.012 35) 100%)" }}>
+        {/* Animated scanline overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.02]" style={{ backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(212,153,69,0.15) 2px, rgba(212,153,69,0.15) 4px)" }} />
+        
         <style>{`
-          @keyframes topbar-glow { 0%,100% { box-shadow: 0 0 6px var(--c); } 50% { box-shadow: 0 0 16px var(--c); } }
-          @keyframes topbar-slide { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
-          .topbar-btn { --c: rgba(228,130,51,0.3); transition: all 0.3s; position: relative; overflow: hidden; }
-          .topbar-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px var(--c); }
-          .topbar-btn.active { animation: topbar-glow 2s ease-in-out infinite; }
-          .topbar-btn.cooldown::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: topbar-slide 1s linear infinite; width: var(--cd-pct, 100%); }
+          @keyframes tb-glow { 0%,100% { box-shadow: 0 0 8px var(--c), inset 0 1px rgba(255,255,255,0.05); } 50% { box-shadow: 0 0 20px var(--c), 0 0 40px var(--c), inset 0 1px rgba(255,255,255,0.1); } }
+          @keyframes tb-slide { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+          @keyframes tb-pulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
+          @keyframes tb-shine { 0% { left: -100%; } 100% { left: 200%; } }
+          .tb-btn { --c: rgba(212,153,69,0.2); transition: all 0.25s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; }
+          .tb-btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent); transition: none; }
+          .tb-btn:hover::after { animation: tb-shine 0.6s ease-out; }
+          .tb-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 6px 20px var(--c), 0 0 1px rgba(255,255,255,0.2); }
+          .tb-btn:active { transform: translateY(0) scale(0.97); }
+          .tb-btn.active { animation: tb-glow 2s ease-in-out infinite; border-color: rgba(212,153,69,0.5) !important; }
+          .tb-btn.active::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(212,153,69,0.8), transparent); }
+          .tb-btn.cooldown::before { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: tb-slide 1s linear infinite; width: var(--cd-pct, 100%); }
+          .tb-section { display: flex; align-items: center; gap: 4px; padding: 0 4px; }
+          .tb-divider { width: 1px; height: 28px; background: linear-gradient(180deg, transparent, rgba(212,153,69,0.25), transparent); margin: 0 6px; flex-shrink: 0; }
+          .tb-label { font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(212,153,69,0.35); padding: 0 4px; white-space: nowrap; font-weight: 700; }
+          .boost-badge { animation: tb-pulse 1.5s ease-in-out infinite; }
         `}</style>
-        {[
-          { page: "storyline", label: "Storyline", color: "#f59e0b", gradient: "from-amber-600 to-amber-800" },
-          { page: "crimes", label: "Street Crimes", color: "#22c55e", gradient: "from-green-600 to-green-800" },
-          { page: "robbery", label: "Robberies", color: "#ef4444", gradient: "from-red-600 to-red-800" },
-          { page: "fraud", label: "Fraud", color: "#eab308", gradient: "from-yellow-600 to-yellow-800" },
-          { page: "burglary", label: "Burglary", color: "#f97316", gradient: "from-orange-600 to-orange-800" },
-          { page: "steal_from_house", label: "Steal From House", color: "#fb923c", gradient: "from-orange-500 to-orange-700" },
-          { page: "gta_car_theft", label: "GTA Car Theft", color: "#3b82f6", gradient: "from-blue-600 to-blue-800" },
-          { page: "drugs", label: "Drugs", color: "#a855f7", gradient: "from-purple-600 to-purple-800" },
-          { page: "organized", label: "Organized", color: "#06b6d4", gradient: "from-cyan-600 to-cyan-800" },
-          { page: "underground", label: "Underground", color: "#6b7280", gradient: "from-gray-600 to-gray-800" },
-          { page: "kill", label: "Murder", color: "#dc2626", gradient: "from-red-700 to-red-900" },
-          { page: "prison", label: "Prison", color: "#64748b", gradient: "from-slate-600 to-slate-800" },
-          { page: "hospital", label: "Hospital", color: "#22c55e", gradient: "from-green-500 to-green-700" },
-          { page: "world_events", label: "Events", color: "#f59e0b", gradient: "from-amber-500 to-yellow-700" },
-        ].map(btn => {
-          const cdKey = `cd_${btn.page}`;
-          const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
-          const now = Date.now();
-          const cdLeft = cdEnd > now ? Math.ceil((cdEnd - now) / 1000) : 0;
-          const onCd = cdLeft > 0;
-          return (
-            <button key={btn.page} onClick={() => setPage(btn.page)}
-              className={`topbar-btn px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r ${btn.gradient} text-white border border-white/10 whitespace-nowrap transition-all ${activePage === btn.page ? "ring-2 ring-white/30 scale-105" : ""} ${onCd ? "cooldown opacity-70" : ""}`}
-              style={{ "--c": btn.color + "40" } as any}>
-              <span className="relative z-10">{btn.label}</span>
-              {onCd && <span className="relative z-10 ml-1.5 text-[9px] opacity-80">{cdLeft}s</span>}
-            </button>
-          );
-        })}
+
+        <div className="flex items-center gap-1 px-3 py-2 relative z-10">
+          {/* ═══ CRIMES ═══ */}
+          <div className="tb-section">
+            <span className="tb-label">Crimes</span>
+            {[
+              { page: "crimes", label: "Street", icon: "🔪", gradient: "from-emerald-700/80 to-emerald-900/80", border: "border-emerald-500/20", glow: "#22c55e" },
+              { page: "robbery", label: "Robbery", icon: "💰", gradient: "from-red-700/80 to-red-900/80", border: "border-red-500/20", glow: "#ef4444" },
+              { page: "fraud", label: "Fraud", icon: "🎭", gradient: "from-yellow-700/80 to-yellow-900/80", border: "border-yellow-500/20", glow: "#eab308" },
+              { page: "burglary", label: "Burglary", icon: "🏠", gradient: "from-orange-700/80 to-orange-900/80", border: "border-orange-500/20", glow: "#f97316" },
+              { page: "steal_from_house", label: "Houses", icon: "🔑", gradient: "from-amber-700/80 to-amber-900/80", border: "border-amber-500/20", glow: "#f59e0b" },
+              { page: "gta_car_theft", label: "GTA", icon: "🚗", gradient: "from-blue-700/80 to-blue-900/80", border: "border-blue-500/20", glow: "#3b82f6" },
+              { page: "drugs", label: "Drugs", icon: "💊", gradient: "from-purple-700/80 to-purple-900/80", border: "border-purple-500/20", glow: "#a855f7" },
+              { page: "organized", label: "Organized", icon: "🕵️", gradient: "from-cyan-700/80 to-cyan-900/80", border: "border-cyan-500/20", glow: "#06b6d4" },
+              { page: "underground", label: "Underground", icon: "🕳️", gradient: "from-gray-700/80 to-gray-900/80", border: "border-gray-500/20", glow: "#6b7280" },
+            ].map(btn => {
+              const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
+              const now = Date.now();
+              const cdLeft = cdEnd > now ? Math.ceil((cdEnd - now) / 1000) : 0;
+              const onCd = cdLeft > 0;
+              return (
+                <button key={btn.page} onClick={() => setPage(btn.page)}
+                  className={`tb-btn px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-b ${btn.gradient} border ${btn.border} text-white/90 whitespace-nowrap ${activePage === btn.page ? "active ring-1 ring-amber-400/40 scale-105" : ""} ${onCd ? "cooldown opacity-60" : ""}`}
+                  style={{ "--c": btn.glow + "40" } as any}>
+                  <span className="relative z-10 flex items-center gap-1">
+                    <span className="text-[11px]">{btn.icon}</span>
+                    <span>{btn.label}</span>
+                  </span>
+                  {onCd && <span className="relative z-10 ml-1 text-[8px] opacity-70">{cdLeft}s</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="tb-divider" />
+
+          {/* ═══ ACTION ═══ */}
+          <div className="tb-section">
+            <span className="tb-label">Action</span>
+            {[
+              { page: "kill", label: "Murder", icon: "💀", gradient: "from-rose-800/90 to-rose-950/90", border: "border-rose-500/25", glow: "#f43f5e" },
+              { page: "prison", label: "Prison", icon: "⛓️", gradient: "from-slate-700/80 to-slate-900/80", border: "border-slate-500/20", glow: "#64748b" },
+              { page: "hospital", label: "Hospital", icon: "🏥", gradient: "from-teal-700/80 to-teal-900/80", border: "border-teal-500/20", glow: "#14b8a6" },
+            ].map(btn => (
+              <button key={btn.page} onClick={() => setPage(btn.page)}
+                className={`tb-btn px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-b ${btn.gradient} border ${btn.border} text-white/90 whitespace-nowrap ${activePage === btn.page ? "active ring-1 ring-amber-400/40 scale-105" : ""}`}
+                style={{ "--c": btn.glow + "40" } as any}>
+                <span className="flex items-center gap-1">
+                  <span className="text-[11px]">{btn.icon}</span>
+                  <span>{btn.label}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="tb-divider" />
+
+          {/* ═══ WORLD ═══ */}
+          <div className="tb-section">
+            <span className="tb-label">World</span>
+            {[
+              { page: "world_events", label: "Events", icon: "🎪", gradient: "from-amber-700/80 to-yellow-900/80", border: "border-amber-500/25", glow: "#f59e0b" },
+              { page: "storyline", label: "Storyline", icon: "📖", gradient: "from-indigo-700/80 to-indigo-900/80", border: "border-indigo-500/20", glow: "#6366f1" },
+            ].map(btn => (
+              <button key={btn.page} onClick={() => setPage(btn.page)}
+                className={`tb-btn px-2.5 py-1.5 rounded-lg text-[10px] font-bold bg-gradient-to-b ${btn.gradient} border ${btn.border} text-white/90 whitespace-nowrap ${activePage === btn.page ? "active ring-1 ring-amber-400/40 scale-105" : ""}`}
+                style={{ "--c": btn.glow + "40" } as any}>
+                <span className="flex items-center gap-1">
+                  <span className="text-[11px]">{btn.icon}</span>
+                  <span>{btn.label}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="tb-divider" />
+
+          {/* ═══ ACTIVE STATUS ═══ */}
+          <div className="tb-section ml-auto gap-1.5">
+            {(player?.wantedLevel ?? 0) > 0 && (
+              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-red-900/50 border border-red-500/40 text-red-400 flex items-center gap-1">
+                <span className="text-[10px]">🔴</span> WANTED {player.wantedLevel}
+              </span>
+            )}
+            {(player as any)?.xpBoostUntil > Date.now() && (
+              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-cyan-900/40 border border-cyan-500/30 text-cyan-400 flex items-center gap-1">
+                <span className="text-[10px]">⚡</span> 3x XP
+              </span>
+            )}
+            {(player as any)?.cashBoostUntil > Date.now() && (
+              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-green-900/40 border border-green-500/30 text-green-400 flex items-center gap-1">
+                <span className="text-[10px]">💰</span> 3x Cash
+              </span>
+            )}
+            {(player as any)?.energyDrinkUntil > Date.now() && (
+              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-orange-900/40 border border-orange-500/30 text-orange-400 flex items-center gap-1">
+                <span className="text-[10px]">🥤</span> Energy
+              </span>
+            )}
+            {(player as any)?.rankBoostUntil > Date.now() && (
+              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-yellow-900/40 border border-yellow-500/30 text-yellow-400 flex items-center gap-1">
+                <span className="text-[10px]">🚀</span> Rank
+              </span>
+            )}
+            {(player as any)?.pointsBoostUntil > Date.now() && (
+              <span className="boost-badge px-2 py-1 rounded-md text-[9px] font-bold bg-purple-900/40 border border-purple-500/30 text-purple-400 flex items-center gap-1">
+                <span className="text-[10px]">🎯</span> Pts
+              </span>
+            )}
+          </div>
+        </div>
       </div>{/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
