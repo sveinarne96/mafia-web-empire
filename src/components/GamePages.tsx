@@ -1,4 +1,4 @@
-import { cooldownItems, defenseItems, weaponItems, specialItems, categories, tierColors, type PointsShopItem } from "@/data/pointsShop";
+import { categories, tierColors, getCategoryItems, type PointsShopItem } from "@/data/pointsShop";
 import { useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -82,7 +82,7 @@ export function PointsShopPage() {
   const buyItemWP = useMutation(api.gameExtended.buyItemWithPoints);
   const buyService = useMutation(api.gameExtended.buyPointsService);
   const [msg, setMsg] = useState("");
-  const [tab, setTab] = useState<"boosters" | "cooldowns" | "defense" | "weapons" | "items" | "special" | "prestige">("boosters");
+  const [tab, setTab] = useState<string>("boosters");
   const [loading, setLoading] = useState(false);
   if (!player) return <LoadingPage />;
 
@@ -113,17 +113,9 @@ export function PointsShopPage() {
       </div>
 
       <div className="flex gap-1 bg-background/50 rounded-lg p-1 overflow-x-auto">
-        {[
-          { id: "boosters", label: "🚀 Boosters" },
-          { id: "cooldowns", label: "⏱️ Cooldowns" },
-          { id: "defense", label: "🛡️ Defense" },
-          { id: "weapons", label: "⚔️ Weapons" },
-          { id: "items", label: "🗡️ Gear" },
-          { id: "special", label: "✨ Special" },
-          { id: "prestige", label: "👑 Prestige" },
-        ].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id as any)} className={`flex-1 px-2 py-2 text-[10px] font-semibold rounded-md transition-colors whitespace-nowrap ${tab === t.id ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground"}`}>
-            {t.label}
+        {[...categories, { id: "gear", name: "🗡️ Gear", icon: "🗡️", color: "text-indigo-400", count: 0 }, { id: "prestige", name: "👑 Prestige", icon: "👑", color: "text-amber-400", count: 0 }].map(t => (
+          <button key={t.id} onClick={() => setTab(t.id)} className={`px-2 py-1.5 text-[9px] font-semibold rounded-md transition-colors whitespace-nowrap ${tab === t.id ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground hover:text-foreground"}`}>
+            {t.name}
           </button>
         ))}
       </div>
@@ -202,8 +194,8 @@ export function PointsShopPage() {
         </div>
       )}
 
-      {(tab === "cooldowns" || tab === "defense" || tab === "weapons" || tab === "special") && (() => {
-        const items = tab === "cooldowns" ? cooldownItems : tab === "defense" ? defenseItems : tab === "weapons" ? weaponItems : specialItems;
+      {categories.some(cat => cat.id === tab) && (() => {
+        const items = getCategoryItems(tab);
         const catInfo = categories.find(c => c.id === tab);
         return (
           <div className="space-y-2">
