@@ -71,6 +71,7 @@ import {
   OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage,
   LegacyPage, ForumSearchPage, SupportPage,
 } from "@/components/GamePages";
+import { GamblingOverviewPage } from "@/components/GamblingPages";
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
   WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage,
@@ -2216,6 +2217,7 @@ const renderPage = () => {
       case "lotto": return <LottoPage />;
       case "russian_roulette": return <RussianRoulettePage />;
       case "gambling_den": return <GamblingDenPage />;
+      case "gambling_overview": return <GamblingOverviewPage />;
       case "dog_fight": return <DogFightPage />;
       case "street_racing": return <StreetRacingPage />;
 
