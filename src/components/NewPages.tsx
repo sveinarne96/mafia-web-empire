@@ -224,36 +224,125 @@ export function RealEstatePage() {
 
 export function BusinessesPage() {
   const player = useQuery(api.game.getPlayer);
-  if (!player) return <LoadingPage />;
+  const shop = useQuery(api.gameExtended.getBusinessShop);
+  const myBizs = useQuery(api.gameExtended.getMyBusinesses);
+  const buyBiz = useMutation(api.gameExtended.buyPremiumBusiness);
+  const sellBiz = useMutation(api.gameExtended.sellBusiness);
+  const collectIncome = useMutation(api.game.collectBusinessIncome);
+  const collectOil = useMutation(api.gameExtended.collectOilEarnings);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const businesses = [
-    { name: "Corner Store", type: "Retail", cost: 10000, income: 200, staff: 2 },
-    { name: "Pizza Shop", type: "Food", cost: 15000, income: 350, staff: 3 },
-    { name: "Auto Repair", type: "Service", cost: 25000, income: 600, staff: 4 },
-    { name: "Nightclub", type: "Entertainment", cost: 75000, income: 2000, staff: 8 },
-    { name: "Import/Export", type: "Trade", cost: 150000, income: 5000, staff: 12 },
-    { name: "Strip Club", type: "Entertainment", cost: 200000, income: 7000, staff: 15 },
-  ];
+  if (!player || !shop) return <LoadingPage />;
+
+  const ownedCount = (type: string) => (myBizs ?? []).filter((b: any) => b.type === type).length;
+  const totalIncome = (myBizs ?? []).reduce((sum: number, b: any) => sum + (b.income ?? 0), 0);
+
+  const doBuy = async (type: string) => {
+    setLoading(true); setMsg(null);
+    try { const r = await buyBiz({ type }); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+  const doSell = async (bizId: string) => {
+    setLoading(true); setMsg(null);
+    try { const r = await sellBiz({ businessId: bizId as any }); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+  const doCollect = async () => {
+    setLoading(true); setMsg(null);
+    try { const r = await collectIncome({}); setMsg(`💰 Collected $${r.income.toLocaleString()} from all businesses!`); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
+  const doCollectOil = async () => {
+    setLoading(true); setMsg(null);
+    try { const r = await collectOil({}); setMsg(r.message); }
+    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+    setLoading(false);
+  };
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold text-foreground flex items-center gap-2"><ShoppingBag className="size-5 text-purple-400" /> Businesses</h2>
-      <div className="bg-card border border-border rounded-lg p-4">
-        <p className="text-sm text-muted-foreground mb-4">Buy legitimate front businesses. Manage staff and inventory to maximize profits.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {businesses.map((b, i) => (
-            <div key={i} className="bg-muted/30 border border-border rounded p-3">
-              <div className="text-sm font-semibold text-foreground">{b.name}</div>
-              <div className="text-xs text-muted-foreground mb-2">{b.type} · {b.staff} staff</div>
-              <div className="flex justify-between text-xs mb-2">
-                <span className="text-yellow-400 font-bold">${b.cost.toLocaleString()}</span>
-                <span className="text-green-400">+${b.income.toLocaleString()}/day</span>
-              </div>
-              <button className="w-full py-1 bg-primary/10 hover:bg-primary/20 border border-primary/30 rounded text-xs text-primary font-semibold transition-colors">Buy Business</button>
-            </div>
-          ))}
-        </div>
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2"><ShoppingBag className="size-5 text-purple-400" /><h2 className="text-lg font-bold">Business Empire</h2></div>
+        <button onClick={doCollect} disabled={loading || (myBizs ?? []).length === 0}
+          className="px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 disabled:opacity-40">
+          💰 Collect All Income
+        </button>
       </div>
+
+      {/* My Businesses */}
+      <div className="mafia-card rounded-xl p-4">
+        <div className="flex justify-between items-center mb-3">
+          <div className="text-xs font-bold">My Empire — {(myBizs ?? []).length} businesses</div>
+          <div className="text-xs text-green-400 font-bold">+${totalIncome.toLocaleString()}/cycle</div>
+        </div>
+        {(myBizs ?? []).length > 0 ? (
+          <div className="space-y-2">
+            {(myBizs ?? []).map((b: any) => (
+              <div key={b._id} className="flex items-center justify-between bg-background/30 rounded-lg p-2.5">
+                <div>
+                  <div className="text-xs font-bold">{b.name}</div>
+                  <div className="text-[9px] text-green-400">+${(b.income ?? 0).toLocaleString()}/cycle</div>
+                </div>
+                <button onClick={() => doSell(b._id)} disabled={loading}
+                  className="px-2 py-1 bg-red-600/20 text-red-400 text-[9px] font-bold rounded hover:bg-red-600/30">
+                  Sell ${(b.price ?? 0).toLocaleString()}
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : <div className="text-xs text-muted-foreground text-center py-3">No businesses yet — buy one below!</div>}
+      </div>
+
+      {/* Business Shop */}
+      <div className="space-y-2">
+        {shop.map((b: any) => {
+          const owned = ownedCount(b.type);
+          const atMax = owned >= b.maxOwn;
+          const cantAfford = (player.money ?? 0) < b.price;
+          const isOil = b.type === "oil";
+          return (
+            <div key={b.type} className="mafia-card rounded-xl p-4 hover:border-primary/30 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="text-3xl">{b.icon}</div>
+                <div className="flex-1">
+                  <div className="flex justify-between">
+                    <div className="font-bold text-sm">{b.name}</div>
+                    <div className="text-xs text-green-400 font-bold">+${b.income.toLocaleString()}/cycle</div>
+                  </div>
+                  <div className="text-[9px] text-muted-foreground">{b.description}</div>
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-[9px]">
+                      <span className="text-yellow-400">${b.price.toLocaleString()}</span>
+                      <span className="text-muted-foreground ml-2">Owned: {owned}/{b.maxOwn}</span>
+                      {isOil && <span className="text-orange-400 ml-2">⚠️ 1hr withdrawal</span>}
+                    </div>
+                    <button onClick={() => doBuy(b.type)} disabled={loading || atMax || cantAfford}
+                      className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${atMax ? "bg-muted text-muted-foreground cursor-not-allowed" : cantAfford ? "bg-muted text-muted-foreground cursor-not-allowed" : "bg-purple-600 text-white hover:bg-purple-700"}`}>
+                      {atMax ? "MAX OWNED" : cantAfford ? "INSUFFICIENT FUNDS" : "BUY"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Oil Earnings */}
+      {(myBizs ?? []).some((b: any) => b.type === "oil") && (
+        <button onClick={doCollectOil} disabled={loading}
+          className="w-full p-3 bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-xs rounded-xl hover:from-amber-700 hover:to-orange-700 disabled:opacity-40">
+          🛢️ Collect Oil Earnings (once per hour)
+        </button>
+      )}
+
+      {msg && (
+        <div className={`rounded-xl p-3 text-xs font-bold ${msg.includes("✅") || msg.includes("💰") || msg.includes("Bought") ? "bg-green-950/30 text-green-400 border border-green-500/30" : "bg-red-950/30 text-red-400 border border-red-500/30"}`}>{msg}</div>
+      )}
     </div>
   );
 }

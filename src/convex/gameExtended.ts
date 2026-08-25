@@ -345,7 +345,120 @@ export const completeMission = mutation({ args: { missionId: v.optional(v.string
 export const getOrganizedCrimes = query({ args: {}, handler: async (ctx) => { return await ctx.db.query("organizedCrimes").collect(); } });
 export const joinOrganizedCrime = mutation({ args: { crimeId: v.id("organizedCrimes") }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const success = Math.random() < 0.6; const reward = success ? Math.floor(Math.random() * 100000) + 10000 : 0; if (success && p) await ctx.db.patch(p._id, { money: (p.money ?? 0) + reward }); return { success, reward }; } });
 export const getMyBusinesses = query({ args: {}, handler: async (ctx) => { const p = await getPlayer(ctx); if (!p) return []; return await ctx.db.query("businesses").withIndex("by_owner", (q) => q.eq("ownerId", p._id)).collect(); } });
-export const getBusinessShop = query({ args: {}, handler: async () => { return [{ name: "Corner Store", type: "shop", city: "New York", price: 50000, income: 500 }, { name: "Nightclub", type: "nightlife", city: "Miami", price: 200000, income: 2000 }, { name: "Casino", type: "gambling", city: "Las Vegas", price: 500000, income: 5000 }]; } });
+
+// ===== SELL BUSINESS =====
+export const sellBusiness = mutation({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, args) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+    const biz = await ctx.db.get(args.businessId);
+    if (!biz || biz.ownerId !== p._id) throw new Error("Not your business!");
+    const refund = biz.price ?? 0;
+    await ctx.db.patch(p._id, { money: (p.money ?? 0) + refund });
+    await ctx.db.delete(args.businessId);
+    return { success: true, refund, message: `💰 Sold ${biz.name} for $${refund.toLocaleString()}!` };
+  },
+});
+
+// ===== COLLECT OIL EARNINGS (once per hour) =====
+export const collectOilEarnings = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+    const lastOilCollect = (p as any).lastOilCollect ?? 0;
+    if (Date.now() - lastOilCollect < 3600000) {
+      const remaining = Math.ceil((3600000 - (Date.now() - lastOilCollect)) / 1000);
+      return { success: false, message: `Oil earnings locked! Wait ${Math.floor(remaining/60)}m ${remaining%60}s`, collected: 0 };
+    }
+    const oilBizs = await ctx.db.query("businesses").withIndex("by_owner", (q) => q.eq("ownerId", p._id)).collect();
+    const oilComps = oilBizs.filter(b => b.type === "oil");
+    const total = oilComps.reduce((sum, b) => sum + (b.income ?? 0), 0);
+    if (total === 0) return { success: false, message: "No oil companies owned!", collected: 0 };
+    await ctx.db.patch(p._id, { money: (p.money ?? 0) + total, lastOilCollect: Date.now() } as any);
+    return { success: true, collected: total, message: `🛢️ Oil earnings collected: $${total.toLocaleString()}! Next withdrawal in 1 hour.` };
+  },
+});
+
+// ===== BUSINESS SHOP BUY (with ownership limits) =====
+export const buyPremiumBusiness = mutation({
+  args: { type: v.string() },
+  handler: async (ctx, args) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+    const catalog = [
+      { type: "mall", name: "Shopping Mall", maxOwn: 15, price: 2000000, income: 5000000, icon: "🏬" },
+      { type: "casino", name: "Casino Resort", maxOwn: 12, price: 25000000, income: 55000000, icon: "🎰" },
+      { type: "hotel", name: "Luxury Hotel", maxOwn: 10, price: 250000000, income: 275000000, icon: "🏨" },
+      { type: "telecom", name: "Telecom Company", maxOwn: 8, price: 750000000, income: 900000000, icon: "📡" },
+      { type: "oil", name: "Oil Company", maxOwn: 5, price: 2500000000, income: 2800000000, icon: "🛢️" },
+    ];
+    const biz = catalog.find(b => b.type === args.type);
+    if (!biz) throw new Error("Invalid business type!");
+    const owned = await ctx.db.query("businesses").withIndex("by_owner", (q) => q.eq("ownerId", p._id)).collect();
+    const count = owned.filter(b => b.type === biz.type).length;
+    if (count >= biz.maxOwn) throw new Error(`Maximum ${biz.maxOwn} ${biz.name}s allowed!`);
+    if ((p.money ?? 0) < biz.price) throw new Error(`Need $${biz.price.toLocaleString()}!`);
+    await ctx.db.insert("businesses", { ownerId: p._id, name: biz.name, type: biz.type, city: "Global", price: biz.price, income: biz.income, level: 1 });
+    await ctx.db.patch(p._id, { money: (p.money ?? 0) - biz.price });
+    return { success: true, message: `${biz.icon} Bought ${biz.name} for $${biz.price.toLocaleString()}! Earning $${biz.income.toLocaleString()}/cycle.` };
+  },
+});
+
+// ===== POINTS SHOP =====
+export const buyRankBooster = mutation({
+  args: { tier: v.union(v.literal("small"), v.literal("standard"), v.literal("mega")) },
+  handler: async (ctx, args) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+    const tiers = { small: { cost: 90, hours: 4 }, standard: { cost: 200, hours: 10 }, mega: { cost: 500, hours: 24 } };
+    const t = tiers[args.tier];
+    if ((p.points ?? 0) < t.cost) throw new Error(`Need ${t.cost} points!`);
+    const activeBoost = (p as any).rankBoostUntil ?? 0;
+    if (Date.now() < activeBoost) throw new Error("You already have a rank booster active!");
+    await ctx.db.patch(p._id, { points: (p.points ?? 0) - t.cost, rankBoostUntil: Date.now() + t.hours * 3600000 } as any);
+    return { success: true, message: `🚀 Rank Booster (${args.tier}) activated for ${t.hours} hours! +50% XP on all crimes!` };
+  },
+});
+
+export const sellCompanyForPoints = mutation({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, args) => {
+    const p = await getPlayer(ctx);
+    if (!p) throw new Error("Not authenticated");
+    const biz = await ctx.db.get(args.businessId);
+    if (!biz || biz.ownerId !== p._id) throw new Error("Not your business!");
+    if ((p.points ?? 0) < 50) throw new Error("Need 50 points to sell company via Points Shop!");
+    await ctx.db.patch(p._id, { points: (p.points ?? 0) - 50, money: (p.money ?? 0) + (biz.price ?? 0) });
+    await ctx.db.delete(args.businessId);
+    return { success: true, message: `💰 Sold ${biz.name} for $${(biz.price ?? 0).toLocaleString()} (−50 points)!` };
+  },
+});
+
+export const getPointsShop = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const player = await ctx.db.query("users").withIndex("by_id", (q: any) => q.eq("_id", identity.subject as any)).first();
+    if (!player) return null;
+    return {
+      points: player.points ?? 0,
+      rankBoostActive: (player as any).rankBoostUntil ?? 0,
+      businesses: await ctx.db.query("businesses").withIndex("by_owner", (q: any) => q.eq("ownerId", player._id)).collect(),
+    };
+  },
+});
+export const getBusinessShop = query({ args: {}, handler: async () => {
+  return [
+    { name: "Shopping Mall", type: "mall", icon: "🏬", maxOwn: 15, price: 2000000, income: 5000000, description: "Premium shopping center. Earns $5M per mall." },
+    { name: "Casino Resort", type: "casino", icon: "🎰", maxOwn: 12, price: 25000000, income: 55000000, description: "High-roller casino. Earns $55M per resort." },
+    { name: "Luxury Hotel", type: "hotel", icon: "🏨", maxOwn: 10, price: 250000000, income: 275000000, description: "5-star luxury hotel chain. Earns $275M per hotel." },
+    { name: "Telecom Company", type: "telecom", icon: "📡", maxOwn: 8, price: 750000000, income: 900000000, description: "Nationwide telecom giant. Earns $900M per company." },
+    { name: "Oil Company", type: "oil", icon: "🛢️", maxOwn: 5, price: 2500000000, income: 2800000000, description: "Oil empire. Earns $2.8B per company. Withdraw once per hour or lose earnings." },
+  ];
+} });
 export const buyLottoTicket = mutation({ args: { type: v.string(), numbers: v.array(v.number()) }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const winning = Array.from({ length: 5 }, () => Math.floor(Math.random() * 30) + 1); const matches = args.numbers.filter(n => winning.includes(n)).length; const prize = matches >= 3 ? matches * 10000 : 0; if (prize > 0 && p) await ctx.db.patch(p._id, { money: (p.money ?? 0) + prize }); return { winning, matches, prize }; } });
 export const blackjackDeal = mutation({ args: { bet: v.number() }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); return { playerHand: ['A', 'K'], dealerHand: ['10', '7'], playerCards: ['A', 'K'], dealerCards: ['10', '7'], gameOver: false, result: '', winnings: 0 }; } });
 export const blackjackHit = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async () => { return { card: '5', bust: false, playerHand: ['A', 'K', '5'], result: '', winnings: 0 }; } });

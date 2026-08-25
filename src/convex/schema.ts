@@ -13,6 +13,8 @@ const schema = defineSchema({
     passwordHash: v.optional(v.string()),
     xpBoostUntil: v.optional(v.number()),
     cashBoostUntil: v.optional(v.number()),
+    rankBoostUntil: v.optional(v.number()),
+    lastOilCollect: v.optional(v.number()),
     playerClass: v.optional(v.string()),
     registeredAt: v.optional(v.number()),
     money: v.number(),

@@ -46,38 +46,132 @@ const rarityColors: Record<string, string> = {
 
 export function PointsShopPage() {
   const player = useQuery(api.game.getPlayer);
+  const myBizs = useQuery(api.gameExtended.getMyBusinesses);
+  const buyRankBoost = useMutation(api.gameExtended.buyRankBooster);
+  const sellCompany = useMutation(api.gameExtended.sellCompanyForPoints);
   const buyItemWP = useMutation(api.gameExtended.buyItemWithPoints);
   const [msg, setMsg] = useState("");
-  const [filter, setFilter] = useState<string>("all");
+  const [tab, setTab] = useState<"boosters" | "items" | "services">("boosters");
   if (!player) return <LoadingPage />;
-  const filtered = filter === "all" ? shopItems : shopItems.filter(i => i.type === filter);
-  const doBuy = async (item: typeof shopItems[0]) => {
-    try { await buyItemWP({ itemName: item.name, price: item.cost, itemId: item.name.replace(/\s+/g, '_').toLowerCase() }); setMsg(`Bought ${item.name}!`); }
+
+  const rankBoostActive = ((player as any).rankBoostUntil ?? 0) > Date.now();
+  const rankBoostRemaining = Math.max(0, Math.floor((((player as any).rankBoostUntil ?? 0) - Date.now()) / 3600000));
+
+  const boosters = [
+    { id: "rank_small", name: "Small Rank Booster", icon: "🚀", cost: 90, desc: "+50% XP for 4 hours", tier: "small" as const },
+    { id: "rank_standard", name: "Standard Rank Booster", icon: "🚀", cost: 200, desc: "+50% XP for 10 hours", tier: "standard" as const },
+    { id: "rank_mega", name: "Mega Rank Booster", icon: "🚀", cost: 500, desc: "+50% XP for 24 hours", tier: "mega" as const },
+  ];
+
+  const services = [
+    { name: "Sell Company", icon: "🏷️", cost: 50, desc: "Sell any business at full purchase price (−50 pts fee)", action: "sell_company" },
+    { name: "Wanted Clearance", icon: "🧹", cost: 300, desc: "Fully clear wanted level to zero", action: "clear_wanted" },
+    { name: "XP Surprise Box", icon: "🎁", cost: 150, desc: "Random XP boost between 2-12 hours", action: "xp_box" },
+    { name: "Cash Surprise Box", icon: "🎁", cost: 150, desc: "Random cash between $5M-$50M", action: "cash_box" },
+    { name: "Stat Booster", icon: "💪", cost: 400, desc: "+20 ATK and +20 DEF permanently", action: "stat_boost" },
+  ];
+
+  const doBuyBooster = async (tier: "small" | "standard" | "mega") => {
+    try { const r = await buyRankBoost({ tier }); setMsg(r.message); }
     catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
   };
+
   return (
-    <div className="animate-fade-in space-y-6">
+    <div className="animate-fade-in space-y-5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3"><Trophy className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">Points Shop</h2></div>
-        <div className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm font-bold text-yellow-400">⭐ {player.points ?? 0} Points</div>
+        <div className="text-right">
+          <div className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm font-bold text-yellow-400">⭐ {(player.points ?? 0).toLocaleString()} Points</div>
+          {rankBoostActive && <div className="text-[9px] text-green-400 mt-1">🚀 Rank Boost Active: {rankBoostRemaining}h left</div>}
+        </div>
       </div>
-      <div className="flex gap-2">
-        {["all", "weapon", "armor"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors capitalize ${filter === f ? "bg-primary text-primary-foreground" : "bg-background/40 text-muted-foreground border border-border/50"}`}>{f}</button>
+
+      <div className="flex gap-1 bg-background/50 rounded-lg p-1">
+        {(["boosters", "items", "services"] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)} className={`flex-1 px-3 py-2 text-xs font-semibold rounded-md transition-colors capitalize ${tab === t ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground"}`}>
+            {t === "boosters" ? "🚀 Boosters" : t === "items" ? "⚔️ Items" : "🔧 Services"}
+          </button>
         ))}
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {filtered.map((item, i) => (
-          <motion.button key={i} whileHover={{ scale: 1.02 }} onClick={() => doBuy(item)} disabled={(player.points ?? 0) < item.cost}
-            className={`mafia-card rounded-xl p-4 text-left border ${rarityColors[item.rarity]} disabled:opacity-40 hover:border-primary/50 transition-all`}>
-            <div className="text-xs uppercase font-bold mb-1">{item.rarity}</div>
-            <div className="font-bold text-sm mb-1">{item.name}</div>
-            <div className="text-[10px] text-muted-foreground mb-2">{item.type === "weapon" ? `⚔️ +${item.attack}` : `🛡️ +${item.defense}`}</div>
-            <div className="text-xs font-bold text-primary">{item.cost} Points</div>
-          </motion.button>
-        ))}
-      </div>
-      {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}
+
+      {tab === "boosters" && (
+        <div className="space-y-3">
+          {boosters.map(b => (
+            <div key={b.id} className="mafia-card rounded-xl p-4 flex items-center justify-between hover:border-yellow-500/30 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl">{b.icon}</div>
+                <div>
+                  <div className="font-bold text-sm">{b.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{b.desc}</div>
+                  {rankBoostActive && <div className="text-[9px] text-orange-400">⚠️ Already active!</div>}
+                </div>
+              </div>
+              <button onClick={() => doBuyBooster(b.tier)} disabled={(player.points ?? 0) < b.cost || rankBoostActive}
+                className="px-4 py-2 bg-yellow-600 text-white text-xs font-bold rounded-lg hover:bg-yellow-700 disabled:opacity-40 transition-all">
+                {b.cost} pts
+              </button>
+            </div>
+          ))}
+          <div className="mafia-card rounded-xl p-4 bg-gradient-to-r from-yellow-950/20 to-amber-950/20 border border-yellow-500/20">
+            <div className="text-xs font-bold text-yellow-400 mb-1">ℹ️ How Rank Boosters Work</div>
+            <div className="text-[10px] text-muted-foreground">While active, all criminal actions grant +50% bonus XP. This stacks with XP boost from easter eggs. Only one rank booster can be active at a time.</div>
+          </div>
+        </div>
+      )}
+
+      {tab === "items" && (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {shopItems.map((item, i) => (
+            <motion.button key={i} whileHover={{ scale: 1.02 }} onClick={async () => {
+              try { await buyItemWP({ itemName: item.name, price: item.cost, itemId: item.name.replace(/\s+/g, '_').toLowerCase() }); setMsg(`Bought ${item.name}!`); }
+              catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+            }} disabled={(player.points ?? 0) < item.cost}
+              className={`mafia-card rounded-xl p-4 text-left border ${rarityColors[item.rarity]} disabled:opacity-40 hover:border-primary/50 transition-all`}>
+              <div className="text-xs uppercase font-bold mb-1">{item.rarity}</div>
+              <div className="font-bold text-sm mb-1">{item.name}</div>
+              <div className="text-[10px] text-muted-foreground mb-2">{item.type === "weapon" ? `⚔️ +${item.attack} ATK` : `🛡️ +${item.defense} DEF`}</div>
+              <div className="text-xs font-bold text-primary">{item.cost} Points</div>
+            </motion.button>
+          ))}
+        </div>
+      )}
+
+      {tab === "services" && (
+        <div className="space-y-3">
+          {services.map((s, i) => (
+            <div key={i} className="mafia-card rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl">{s.icon}</div>
+                <div>
+                  <div className="font-bold text-sm">{s.name}</div>
+                  <div className="text-[10px] text-muted-foreground">{s.desc}</div>
+                </div>
+              </div>
+              <div className="text-xs font-bold text-yellow-400">{s.cost} pts</div>
+            </div>
+          ))}
+          {(myBizs ?? []).length > 0 && (
+            <div className="mafia-card rounded-xl p-3">
+              <div className="text-xs font-bold mb-2">🏷️ Sell Your Companies (50 pts fee)</div>
+              {(myBizs ?? []).map((b: any) => (
+                <div key={b._id} className="flex justify-between items-center bg-background/30 rounded p-2 mb-1">
+                  <div className="text-[10px]">{b.name}</div>
+                  <button onClick={async () => {
+                    try { const r = await sellCompany({ businessId: b._id }); setMsg(r.message); }
+                    catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+                  }} disabled={(player.points ?? 0) < 50}
+                    className="px-2 py-1 bg-red-600/20 text-red-400 text-[9px] font-bold rounded hover:bg-red-600/30">
+                    Sell ${(b.price ?? 0).toLocaleString()}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {msg && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        className={`rounded-xl p-3 text-xs font-bold ${msg.includes("Bought") || msg.includes("✅") ? "bg-green-950/30 text-green-400 border border-green-500/30" : "bg-red-950/30 text-red-400 border border-red-500/30"}`}>{msg}</motion.div>}
     </div>
   );
 }
@@ -461,7 +555,7 @@ export function CompanyPage() {
       {tab === "owned" && ((!businesses || businesses.length === 0) ? <div className="text-center py-10 text-muted-foreground text-sm">No businesses.</div> :
         <div className="space-y-2">{businesses.map(b => (
           <div key={b._id} className="mafia-card rounded-lg p-4 flex items-center justify-between">
-            <div><div className="font-bold text-sm">{b.name}</div><div className="text-[10px] text-muted-foreground">{b.type} • {b.city} • Lv.{b.level}</div></div>
+            <div><div className="font-bold text-sm">{b.name}</div><div className="text-[10px] text-muted-foreground">{b.type} • Lv.{b.level}</div></div>
             <div className="flex items-center gap-2"><span className="text-xs text-green-400 font-bold">+${b.income.toLocaleString()}/day</span>
               <button onClick={async () => { setLoading(true); try { await upgradeBiz({ businessId: b._id }); setMsg("Upgraded!"); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={loading} className="px-3 py-1.5 bg-primary/10 text-primary text-xs font-semibold rounded-lg disabled:opacity-40">Upgrade</button>
             </div>
@@ -470,9 +564,9 @@ export function CompanyPage() {
       )}
       {tab === "shop" && (
         <div className="grid grid-cols-2 gap-3">{shop?.map((b, i) => (
-          <button key={i} onClick={async () => { setLoading(true); try { await buyBiz({ name: b.name, type: b.type, city: b.city, price: b.price }); setMsg(`Bought ${b.name}!`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={(player.money ?? 0) < b.price || loading}
+          <button key={i} onClick={async () => { setLoading(true); try { await buyBiz({ name: b.name, type: b.type, city: "Global", price: b.price }); setMsg(`Bought ${b.name}!`); } catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); } setLoading(false); }} disabled={(player.money ?? 0) < b.price || loading}
             className="mafia-card rounded-xl p-4 text-left hover:border-primary/50 disabled:opacity-40">
-            <div className="font-bold text-sm mb-1">{b.name}</div><div className="text-[10px] text-muted-foreground mb-2">{b.type} • {b.city}</div>
+            <div className="font-bold text-sm mb-1">{b.name}</div><div className="text-[10px] text-muted-foreground mb-2">{b.type}</div>
             <div className="text-xs font-bold text-primary">${b.price.toLocaleString()}</div>
           </button>
         ))}</div>
