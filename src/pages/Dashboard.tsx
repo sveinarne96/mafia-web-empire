@@ -154,30 +154,13 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "Game Updates", page: "updates", icon: "📜" },
   ]},
   { title: "Crimes", icon: Flame, items: [
-    { label: t("cat.street"), page: "crimes", icon: "🔪" },
-    { label: t("cat.robbery"), page: "robbery", icon: "💰" },
-    { label: t("cat.fraud"), page: "fraud", icon: "🎭" },
-    { label: t("cat.burglary"), page: "burglary", icon: "🏠" },
-    { label: t("cat.drugs"), page: "drugs", icon: "💊" },
-    { label: t("cat.organized"), page: "organized", icon: "👥" },
-    { label: t("cat.underground"), page: "underground", icon: "💣" },
-    { label: "Illegal Transport", page: "transport", icon: "🚛" },
-    { label: "Steal From House", page: "steal_from_house", icon: "🏠" },
-    { label: "GTA Car Theft", page: "gta_car_theft", icon: "🚗" },
-    { label: "Crime Empire", page: "crime_empire", icon: "🗺️" },
-    { label: "Heist Planning", page: "heist_planning", icon: "🎯" },
-    { label: t("nav.murder"), page: "kill", icon: "🗡️" },
-    { label: "Crime Spree", page: "crime_spree", icon: "🔥" },
+    { label: "All Crimes", page: "crimes", icon: "\u{1f52a}" },
+    { label: "Murder", page: "kill", icon: "\u{1f5e1}" },
+    { label: "Steal From House", page: "steal_from_house", icon: "\u{1f3e0}" },
+    { label: "GTA Car Theft", page: "gta_car_theft", icon: "\u{1f697}" },
   ]},
   { title: "Combat", icon: Swords, items: [
-    { label: "1v1 Duel", page: "duel_1v1", icon: "⚔️" },
-    { label: "Crew Wars", page: "crew_wars", icon: "🏴" },
-    { label: "Capture the Flag", page: "ctf", icon: "🚩" },
-    { label: "King of the Hill", page: "koth", icon: "👑" },
-    { label: "Battle Royale", page: "battle_royale", icon: "🎯" },
-    { label: "Ladder System", page: "ladder", icon: "📊" },
-    { label: "Champion Title", page: "champion", icon: "🏆" },
-    { label: "Ambush", page: "ambush", icon: "🔥" },
+    { label: "Arena", page: "arena", icon: "\u2694\ufe0f" },
   ]},
   { title: "Gambling", icon: Crown, items: [
     { label: "Blackjack", page: "blackjack", icon: "🃏" },
@@ -253,7 +236,6 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
     { label: "Hacking Skills", page: "hacking_skills", icon: "💻" },
     { label: t("right.prestige"), page: "prestige", icon: "⭐" },
-    { label: "Prestige Shop", page: "prestige_shop", icon: "🛒" },
     { label: "Titles", page: "titles", icon: "👑" },
     { label: "Achievements", page: "achievements", icon: "🏅" },
     { label: "Legacy", page: "legacy", icon: "📜" },
@@ -2514,7 +2496,7 @@ const renderPage = () => {
             @keyframes event-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
           `}</style>
           <div className="py-1.5 flex items-center gap-4 whitespace-nowrap" style={{animation: "event-scroll 30s linear infinite"}}>
-            {[...activeEvents, ...activeEvents].map((evtId, i) => {
+            {[...(activeEvents ?? []), ...(activeEvents ?? [])].map((evtId, i) => {
               const evtData = ALL_GAME_EVENTS.find(ev => ev.id === evtId);
               const e = evtData
                 ? { name: evtData.name, icon: evtData.icon, color: evtData.color }
