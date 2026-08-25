@@ -145,7 +145,7 @@ export const executeHit = mutation({
       await ctx.db.patch(args.targetId, { life: 0, isDead: true });
       await ctx.db.patch(player._id, {
         totalKills: (player.totalKills ?? 0) + 1,
-        wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 3),
+        wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 3),
         money: (player.money ?? 0) + stolenCash,
         reputation: Math.min(100, (player.reputation ?? 0) + Math.floor((target.level ?? 1) / 2)),
         experience: levelUpNow ? 0 : newXP,

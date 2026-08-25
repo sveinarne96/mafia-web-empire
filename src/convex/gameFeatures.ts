@@ -546,7 +546,7 @@ export const counterfeitMoney = mutation({
     if (arrested) {
       await ctx.db.patch(player._id, {
         money: player.money - 500, inPrison: true, prisonTime: 7200000,
-        wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 3),
+        wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 3),
       });
       return { success: false, arrested: true };
     }
@@ -577,7 +577,7 @@ export const drugDeal = mutation({
     await ctx.db.patch(player._id, {
       money: player.money - totalCost,
       life: Math.max(0, player.life - 15),
-      wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 2),
+      wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 2),
     });
     return { success: false };
   },
@@ -601,7 +601,7 @@ export const commitArson = mutation({
     const arrested = Math.random() > 0.4;
     await ctx.db.patch(player._id, {
       life: Math.max(0, player.life - 20),
-      wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 4),
+      wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 4),
       inPrison: arrested, prisonTime: arrested ? 10800000 : player.prisonTime,
     });
     return { success: false, arrested };
@@ -628,7 +628,7 @@ export const commitIdentityTheft = mutation({
       return { success, stolen };
     }
     await ctx.db.patch(player._id, {
-      wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 3),
+      wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 3),
     });
     return { success: false };
   },
@@ -679,7 +679,7 @@ export const intimidateWitness = mutation({
       });
       return { success, reduction: 2 };
     }
-    await ctx.db.patch(player._id, { wantedLevel: Math.min(10, player.wantedLevel + 1) });
+    await ctx.db.patch(player._id, { wantedLevel: Math.min(20, player.wantedLevel + 1) });
     return { success: false, message: "Witness reported you!" };
   },
 });
@@ -697,7 +697,7 @@ export const evadeTaxes = mutation({
     await ctx.db.patch(player._id, {
       money: Math.max(0, player.money - fine),
       ...(await addXpAndCheckLevel(ctx, player, 10)),
-      wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 2),
+      wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 2),
     });
     return { success: false, fine };
   },
@@ -716,7 +716,7 @@ export const collectRacket = mutation({
       ...(await addXpAndCheckLevel(ctx, player, 10)),
       racketeeringIncome: (player.racketeeringIncome ?? 0) + income,
     });
-    if (risk) await ctx.db.patch(player._id, { wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 1) });
+    if (risk) await ctx.db.patch(player._id, { wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 1) });
     return { income, reported: risk };
   },
 });
@@ -775,7 +775,7 @@ export const hijackCargo = mutation({
     const arrested = Math.random() > 0.25;
     await ctx.db.patch(player._id, {
       life: Math.max(0, player.life - 15),
-      wantedLevel: Math.min(10, (player.wantedLevel ?? 0) + 2),
+      wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 2),
       inPrison: arrested, prisonTime: arrested ? 7200000 : player.prisonTime,
     });
     return { success: false, arrested };
