@@ -163,6 +163,9 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   { title: "Combat", icon: Swords, items: [
     { label: "Arena", page: "arena", icon: "\u2694\ufe0f" },
   ]},
+  { title: "Gambling", icon: Coins, items: [
+    { label: "🎰 Casino", page: "gambling_overview", icon: "🃏" },
+  ]},
   { title: "Missions", icon: Target, items: [
     { label: "Storyline Missions", page: "storyline", icon: "📖" },
     { label: "Side Missions", page: "side_missions", icon: "📋" },
