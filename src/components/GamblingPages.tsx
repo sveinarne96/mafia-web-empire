@@ -1636,10 +1636,10 @@ function ScratchCardGame() {
       ):(
         <div className="text-center py-12 text-slate-600 text-sm">Buy a scratch card to play!</div>
       )}
-      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+      {result&&(<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
         <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.won?"WINNER!":"No match"}</div>
         {result.amount>0&&<div className="text-sm font-bold text-green-300">+{"$"}{result.amount.toLocaleString()}</div>}
-      </div>}
+      </div>)}
       <div className="flex justify-center gap-2">
         {!card?<button onClick={buyCard} className="px-8 py-3 bg-gradient-to-b from-amber-500 to-amber-700 text-black rounded-xl text-sm font-black uppercase shadow-lg shadow-amber-900/30 hover:scale-105 transition-all">Buy Card {"$"}{bet}</button>
         :<><button onClick={revealAll} disabled={!!result} className="px-4 py-2 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold">Reveal All</button>
