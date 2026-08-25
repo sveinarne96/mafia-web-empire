@@ -778,7 +778,7 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const categoryCooldown = (player as any)?.crimeCooldowns?.[categoryId] ?? 0;
-  const cooldown = useCooldown(15, categoryCooldown);
+  const cooldown = useCooldown(90, categoryCooldown);
   const commitCrime = useMutation(api.game.commitCategoryCrime);
   const grantEgg = useMutation(api.gameExtended.grantEasterEgg);
   const grantGift = useMutation(api.eventGifts.grantEventGift);
@@ -790,7 +790,6 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   const executeCrime = async (crime: Crime) => {
     if ((player?.level ?? 0) < crime.levelRequired) return;
     if ((player?.money ?? 0) < 100) return;
-    if (cooldown.onCooldown) return;
     setLoading(true);
     setResult(null);
     try {
@@ -803,7 +802,6 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
       await maybeDropEasterEgg(grantEgg, res.success);
       await maybeDropEventGift(grantGift, res.success);
       setResult({ success: res.success, money: res.moneyEarned, xp: res.xpEarned });
-      cooldown.startCooldown();
     } catch (e) {
       setResult({ success: false, money: 0, xp: 0 });
     }
@@ -846,8 +844,8 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               whileHover={!isLocked ? { scale: 1.01, borderColor: "rgba(228,130,51,0.3)" } : undefined}
-              className={`mafia-card rounded-xl p-4 transition-all ${isLocked ? "opacity-40" : "hover:border-primary/30 cursor-pointer"} ${loading || cooldown.onCooldown ? "pointer-events-none opacity-60" : ""}`}
-              onClick={() => !isLocked && !loading && !cooldown.onCooldown && executeCrime(crime)}
+              className={`mafia-card rounded-xl p-4 transition-all ${isLocked ? "opacity-40" : "hover:border-primary/30 cursor-pointer"} ${loading ? "pointer-events-none opacity-60" : ""}`}
+              onClick={() => !isLocked && !loading && executeCrime(crime)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">

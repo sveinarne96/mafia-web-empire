@@ -117,6 +117,7 @@ const schema = defineSchema({
     activeBadge: v.optional(v.string()),
     crimeMomentum: v.optional(v.number()),
     crimeCooldowns: v.optional(v.any()),
+    crimeCompleted: v.optional(v.any()),
     prisonJob: v.optional(v.string()),
     deathTimerAt: v.optional(v.number()),
     lastStreetCrimeAt: v.optional(v.number()),
