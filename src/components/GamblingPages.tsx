@@ -1009,13 +1009,14 @@ function MafiaPage() {
 export function GamblingOverviewPage() {
   const [cat, setCat] = useState("casino");
   const cats: [string, string][] = [
-    ["casino","Casino"],["tables","Tables"],["slots","Slots"],["sports","Sports"],
-    ["numbers","Numbers"],["dice","Dice"],["street","Street"],["mafia","Mafia"]
+    ["casino","Casino"],["poker","Poker Lounge"],["tables","Tables"],["slots","Slots"],
+    ["sports","Sports"],["numbers","Lottery"],["dice","Dice"],["wheel","Wheel"],
+    ["street","Street"],["highrollers","VIP High Rollers"],["mafia","Mafia"]
   ];
   const pages: Record<string, React.ReactNode> = {
-    casino: <CasinoPage />, tables: <TablePage />, slots: <SlotsPage />,
-    sports: <SportsPage />, numbers: <NumbersPage />, dice: <DicePage />,
-    street: <StreetPage />, mafia: <MafiaPage />
+    casino: <CasinoPage />, poker: <PokerLoungePage />, tables: <TablePage />, slots: <SlotsPage />,
+    sports: <SportsPage />, numbers: <LotteryPage />, dice: <AdvancedDicePage />, wheel: <WheelPage />,
+    street: <StreetPage />, highrollers: <HighRollersPage />, mafia: <MafiaPage />
   };
   return (
     <div className="animate-fade-in space-y-4">
@@ -1039,6 +1040,678 @@ export function GamblingOverviewPage() {
           {pages[cat]}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+}
+/* ═══════════ VIDEO POKER (Jacks or Better) ═══════════ */
+function VideoPokerGame() {
+  const [bet, setBet] = useState(100);
+  const [hand, setHand] = useState<Card[]>([]);
+  const [held, setHeld] = useState<Set<number>>(new Set());
+  const [deck, setDeck] = useState<Card[]>([]);
+  const [phase, setPhase] = useState<"bet"|"hold"|"done">("bet");
+  const [result, setResult] = useState<{won:boolean;amount:number;handName:string}|null>(null);
+  const [stats, setStats] = useState({w:0,l:0});
+
+  const evalPoker = (cards:Card[]):{rank:number;name:string} => {
+    const vals = cards.map(c=>c.value).sort((a,b)=>b-a);
+    const suits = cards.map(c=>c.suit);
+    const isFlush = suits.every(s=>s===suits[0]);
+    const uniq = [...new Set(vals)];
+    const isStraight = (uniq.length>=5 && vals[0]-vals[4]<=4) || (vals[0]===14&&vals[1]===5&&vals[2]===4&&vals[3]===3&&vals[4]===2);
+    const counts:Record<number,number>={}; vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+    const freq = Object.values(counts).sort((a,b)=>b-a);
+    if (isFlush&&isStraight) return {rank:8,name:"Straight Flush"};
+    if (freq[0]===4) return {rank:7,name:"Four of a Kind"};
+    if (freq[0]===3&&freq[1]===2) return {rank:6,name:"Full House"};
+    if (isFlush) return {rank:5,name:"Flush"};
+    if (isStraight) return {rank:4,name:"Straight"};
+    if (freq[0]===3) return {rank:3,name:"Three of a Kind"};
+    if (freq[0]===2&&freq[1]===2) return {rank:2,name:"Two Pair"};
+    if (freq[0]===2) {
+      const pairs = Object.entries(counts).filter(([,c])=>c===2).map(([r])=>Number(r));
+      if (pairs.some(p=>p>=11)) return {rank:1,name:"Jacks or Better"};
+      return {rank:0,name:"Nothing"};
+    }
+    return {rank:0,name:"Nothing"};
+  };
+
+  const payouts: Record<number,number> = {8:250,7:100,6:40,5:25,4:15,3:9,2:5,1:2,0:0};
+
+  const deal = () => {
+    const d = makeDeck(); const h = Array.from({length:5},()=>d.pop()!);
+    setDeck(d); setHand(h); setHeld(new Set()); setPhase("hold"); setResult(null);
+  };
+
+  const draw = () => {
+    const d = [...deck]; const newHand = [...hand];
+    for (let i=0; i<5; i++) { if (!held.has(i)) newHand[i] = d.pop()!; }
+    setHand(newHand); setDeck(d);
+    const ev = evalPoker(newHand);
+    const win = payouts[ev.rank] || 0;
+    const amt = bet * win;
+    setResult({won:amt>0,amount:amt,handName:ev.name});
+    setStats(s=>({w:s.w+(amt>0?1:0),l:s.l+(amt>0?0:1)}));
+    setPhase("done");
+  };
+
+  const toggleHold = (i:number) => {
+    if (phase!=="hold") return;
+    const nh = new Set(held); if (nh.has(i)) nh.delete(i); else nh.add(i); setHeld(nh);
+  };
+
+  return (
+    <div className="space-y-5">
+      <div className="flex gap-4 text-[10px] font-mono">
+        <span className="text-green-600/70">W:{stats.w}</span>
+        <span className="text-red-600/70">L:{stats.l}</span>
+        <span className="text-amber-500/70">Bet:{"$"}{bet}</span>
+      </div>
+      <BI value={bet} onChange={setBet} presets={[50,100,500,1000,5000]} />
+      <div className="bg-gradient-to-b from-emerald-900/15 to-transparent rounded-2xl p-5 border border-emerald-900/20">
+        <div className="text-[10px] uppercase text-emerald-600/50 font-bold mb-3 text-center">Your Hand {phase==="hold"?"(Tap cards to hold)":""}</div>
+        <div className="flex gap-3 justify-center">
+          {hand.map((c,i)=>(
+            <button key={c.id} onClick={()=>toggleHold(i)}
+              className={"relative transition-all "+(held.has(i)?"-translate-y-2 scale-105":"")}>
+              <PC card={c} d={i*0.1} />
+              {phase==="hold"&&<div className={"absolute -bottom-2 left-1/2 -translate-x-1/2 text-[8px] font-bold px-1.5 py-0.5 rounded "+(held.has(i)?"bg-green-600 text-white":"bg-slate-700 text-slate-400")}>{held.has(i)?"HELD":"HOLD"}</div>}
+            </button>
+          ))}
+        </div>
+      </div>
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-gradient-to-b from-green-900/30 to-green-950/20 border-green-500/30":"bg-gradient-to-b from-red-900/30 to-red-950/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.handName}</div>
+        <div className={"text-sm font-bold mt-1 "+(result.won?"text-green-300":"text-red-300")}>{result.won?"+":"-"}{"$"}{result.amount.toLocaleString()}</div>
+      </div>}
+      <div className="flex justify-center gap-2">
+        {phase==="bet"&&<button onClick={deal} className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-black uppercase shadow-lg hover:scale-105 transition-all">Deal</button>}
+        {phase==="hold"&&<button onClick={draw} className="px-8 py-3 bg-gradient-to-b from-blue-600 to-blue-800 text-white rounded-xl text-sm font-black uppercase shadow-lg hover:scale-105 transition-all">Draw ({held.size} held)</button>}
+        {phase==="done"&&<button onClick={()=>{setHand([]);setPhase("bet");setResult(null);}} className="px-6 py-3 bg-gradient-to-b from-slate-600 to-slate-800 text-white rounded-xl text-sm font-bold hover:scale-105 transition-all">New Hand</button>}
+      </div>
+      <div className="text-[9px] text-slate-600 text-center space-y-0.5">
+        <p>Jacks or Better pays 2x &middot; Two Pair 5x &middot; Three of a Kind 9x</p>
+        <p>Straight 15x &middot; Flush 25x &middot; Full House 40x &middot; Quads 100x &middot; Str.Flush 250x</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════ PAI GOW POKER ═══════════ */
+function PaiGowGame() {
+  const [bet, setBet] = useState(1000);
+  const [playerCards, setPC] = useState<Card[]>([]);
+  const [dealerCards, setDC] = useState<Card[]>([]);
+  const [result, setResult] = useState<{won:boolean;amount:number;msg:string}|null>(null);
+
+  const handRank = (cards:Card[]):number => {
+    const vals = cards.map(c=>c.value).sort((a,b)=>b-a);
+    const suits = cards.map(c=>c.suit);
+    const isFlush = suits.every(s=>s===suits[0]);
+    const uniq = [...new Set(vals)];
+    const isStraight = uniq.length>=5&&vals[0]-vals[4]<=4;
+    const counts:Record<number,number>={}; vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+    const freq = Object.values(counts).sort((a,b)=>b-a);
+    if (isFlush&&isStraight) return 8;
+    if (freq[0]===4) return 7;
+    if (freq[0]===3&&freq[1]===2) return 6;
+    if (isFlush) return 5;
+    if (isStraight) return 4;
+    if (freq[0]===3) return 3;
+    if (freq[0]===2&&freq[1]===2) return 2;
+    if (freq[0]===2) return 1;
+    return 0;
+  };
+
+  const compareHands = (p:[Card[],Card[]], d:[Card[],Card[]]):number => {
+    const pHigh = handRank(p[0]); const pLow = handRank(p[1]);
+    const dHigh = handRank(d[0]); const dLow = handRank(d[1]);
+    let wins = 0;
+    if (pHigh>dHigh||(pHigh===dHigh&&p[0].reduce((s,c)=>s+c.value,0)>d[0].reduce((s,c)=>s+c.value,0))) wins++;
+    else wins--;
+    if (pLow>dLow||(pLow===dLow&&p[1].reduce((s,c)=>s+c.value,0)>d[1].reduce((s,c)=>s+c.value,0))) wins++;
+    else wins--;
+    return wins;
+  };
+
+  const deal = () => {
+    const d = makeDeck();
+    const all = Array.from({length:7},()=>d.pop()!);
+    const high = all.slice(0,5).sort((a,b)=>b.value-a.value);
+    const low = all.slice(5,7).sort((a,b)=>b.value-a.value);
+    const dHigh = Array.from({length:5},()=>d.pop()!).sort((a,b)=>b.value-a.value);
+    const dLow = Array.from({length:2},()=>d.pop()!).sort((a,b)=>b.value-a.value);
+    setPC([...high,...low]); setDC([...dHigh,...dLow]);
+    const w = compareHands([high,low],[dHigh,dLow]);
+    setResult({won:w>0,amount:w>0?bet:w===0?0:bet,msg:w>0?"You win both hands!":w===0?"Push - Split":`Dealer wins ${Math.abs(w)} hand${Math.abs(w)>1?"s":""}`});
+  };
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[500,1000,5000,25000]} />
+      {playerCards.length>0&&<div className="grid grid-cols-2 gap-3">
+        <div className="bg-gradient-to-b from-amber-900/15 to-transparent rounded-2xl p-4 border border-amber-900/20 text-center">
+          <div className="text-[10px] text-amber-500/60 font-bold mb-1">High Hand (5)</div>
+          <div className="flex gap-1 justify-center flex-wrap">{playerCards.slice(0,5).map((c,i)=><PC key={c.id} card={c} d={i*0.1} sm />)}</div>
+          <div className="text-[10px] text-amber-400/60 font-bold mt-1">Low Hand (2)</div>
+          <div className="flex gap-1 justify-center">{playerCards.slice(5).map((c,i)=><PC key={c.id} card={c} d={i*0.1+0.5} sm />)}</div>
+        </div>
+        <div className="bg-gradient-to-b from-red-900/15 to-transparent rounded-2xl p-4 border border-red-900/20 text-center">
+          <div className="text-[10px] text-red-500/60 font-bold mb-1">Dealer High (5)</div>
+          <div className="flex gap-1 justify-center flex-wrap">{dealerCards.slice(0,5).map((c,i)=><PC key={c.id} card={c} d={i*0.1+0.3} sm />)}</div>
+          <div className="text-[10px] text-red-400/60 font-bold mt-1">Dealer Low (2)</div>
+          <div className="flex gap-1 justify-center">{dealerCards.slice(5).map((c,i)=><PC key={c.id} card={c} d={i*0.1+0.8} sm />)}</div>
+        </div>
+      </div>}
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":result.amount===0?"bg-slate-800/20 border-slate-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":result.amount===0?"text-slate-400":"text-red-400")}>{result.msg}</div>
+        {result.amount>0&&<div className={"text-sm font-bold "+(result.won?"text-green-300":"text-red-300")}>{result.won?"+":"-"}{"$"}{result.amount.toLocaleString()}</div>}
+      </div>}
+      <div className="flex justify-center gap-3">
+        {!result?<button onClick={deal} className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-black uppercase shadow-lg hover:scale-105 transition-all">Deal</button>
+        :<button onClick={()=>{setPC([]);setDC([]);setResult(null);}} className="px-6 py-3 bg-gradient-to-b from-slate-600 to-slate-800 text-white rounded-xl text-sm font-bold hover:scale-105 transition-all">New Hand</button>}
+      </div>
+      <div className="text-center text-[9px] text-slate-600">Pai Gow Poker - Split 7 cards into High (5) and Low (2). Win both to win!</div>
+    </div>
+  );
+}
+
+/* ═══════════ CARIBBEAN STUD POKER ═══════════ */
+function CaribbeanStudGame() {
+  const [bet, setBet] = useState(500);
+  const [ante, setAnte] = useState(0);
+  const [playerHand, setPH] = useState<Card[]>([]);
+  const [dealerHand, setDH] = useState<Card[]>([]);
+  const [phase, setPhase] = useState<"bet"|"play"|"done">("bet");
+  const [result, setResult] = useState<{won:boolean;amount:number;handName:string}|null>(null);
+  const [raise, setRaise] = useState(0);
+
+  const evalRank = (cards:Card[]):{rank:number;name:string} => {
+    const vals = cards.map(c=>c.value).sort((a,b)=>b-a);
+    const suits = cards.map(c=>c.suit);
+    const isFlush = suits.every(s=>s===suits[0]);
+    const uniq = [...new Set(vals)];
+    const isStraight = uniq.length>=5&&vals[0]-vals[4]<=4;
+    const counts:Record<number,number>={}; vals.forEach(v=>counts[v]=(counts[v]||0)+1);
+    const freq = Object.values(counts).sort((a,b)=>b-a);
+    if (isFlush&&isStraight) return {rank:8,name:"Straight Flush"};
+    if (freq[0]===4) return {rank:7,name:"Four of a Kind"};
+    if (freq[0]===3&&freq[1]===2) return {rank:6,name:"Full House"};
+    if (isFlush) return {rank:5,name:"Flush"};
+    if (isStraight) return {rank:4,name:"Straight"};
+    if (freq[0]===3) return {rank:3,name:"Three of a Kind"};
+    if (freq[0]===2&&freq[1]===2) return {rank:2,name:"Two Pair"};
+    if (freq[0]===2) return {rank:1,name:"One Pair"};
+    return {rank:0,name:"High Card"};
+  };
+
+  const deal = () => {
+    const d = makeDeck();
+    const ph = Array.from({length:5},()=>d.pop()!);
+    const dh = Array.from({length:5},()=>d.pop()!);
+    setPH(ph); setDH(dh); setAnte(bet); setPhase("play"); setResult(null);
+  };
+
+  const doPlay = (doRaise:boolean) => {
+    const raiseAmt = doRaise ? bet * 2 : 0;
+    setRaise(raiseAmt);
+    const dRank = evalRank(dealerHand);
+    const pRank = evalRank(playerHand);
+    const dealerQualifies = dRank.rank >= 1;
+
+    if (!dealerQualifies) {
+      setResult({won:true,amount:ante+raiseAmt,handName:"Dealer doesn't qualify! Ante pays 1:1"});
+    } else if (pRank.rank > dRank.rank || (pRank.rank===dRank.rank && playerHand.reduce((s,c)=>s+c.value,0)>dealerHand.reduce((s,c)=>s+c.value,0))) {
+      setResult({won:true,amount:ante+raiseAmt*2,handName:pRank.name+" beats dealer!"});
+    } else {
+      setResult({won:false,amount:ante+raiseAmt,handName:dRank.name+" beats you"});
+    }
+    setPhase("done");
+  };
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[100,500,1000,5000]} />
+      {dealerHand.length>0&&<div className="bg-gradient-to-b from-red-900/15 to-transparent rounded-2xl p-4 border border-red-900/20 text-center">
+        <div className="text-[10px] text-red-500/60 font-bold mb-2">Dealer {phase==="play"?"(First card hidden)":""}</div>
+        <div className="flex gap-1.5 justify-center">{dealerHand.map((c,i)=><PC key={c.id} card={c} fd={phase==="play"&&i===0} d={i*0.15} sm />)}</div>
+      </div>}
+      {playerHand.length>0&&<div className="bg-gradient-to-b from-amber-900/15 to-transparent rounded-2xl p-4 border border-amber-900/20 text-center">
+        <div className="text-[10px] text-amber-500/60 font-bold mb-2">Your Hand ({evalRank(playerHand).name})</div>
+        <div className="flex gap-1.5 justify-center">{playerHand.map((c,i)=><PC key={c.id} card={c} d={i*0.15} sm />)}</div>
+      </div>}
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.handName}</div>
+        <div className={"text-sm font-bold "+(result.won?"text-green-300":"text-red-300")}>{result.won?"+":"-"}{"$"}{result.amount.toLocaleString()}</div>
+      </div>}
+      <div className="flex justify-center gap-3">
+        {phase==="bet"&&<button onClick={deal} className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-black uppercase shadow-lg hover:scale-105 transition-all">Ante {"$"}{bet}</button>}
+        {phase==="play"&&<>
+          <button onClick={()=>doPlay(true)} className="px-6 py-3 bg-gradient-to-b from-amber-500 to-amber-700 text-black rounded-xl text-sm font-bold shadow-lg hover:scale-105 transition-all">RAISE {"$"}{bet*2}</button>
+          <button onClick={()=>doPlay(false)} className="px-6 py-3 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-xl text-sm font-bold shadow-lg hover:scale-105 transition-all">FOLD</button>
+        </>}
+        {phase==="done"&&<button onClick={()=>{setPH([]);setDH([]);setResult(null);setPhase("bet");}} className="px-6 py-3 bg-gradient-to-b from-slate-600 to-slate-800 text-white rounded-xl text-sm font-bold hover:scale-105 transition-all">New Hand</button>}
+      </div>
+      <div className="text-center text-[9px] text-slate-600">Caribbean Stud - Dealer must qualify (pair+). Raise with strong hands for 2x payout.</div>
+    </div>
+  );
+}
+
+/* ═══════════ SIC BO ═══════════ */
+function SicBoGame() {
+  const [bet, setBet] = useState(500);
+  const [betType, setBetType] = useState("big");
+  const [dice, setDice] = useState<[number,number,number]>([0,0,0]);
+  const [rolling, setRolling] = useState(false);
+  const [result, setResult] = useState<{won:boolean;amount:number;total:number}|null>(null);
+  const [history, setHistory] = useState<number[]>([]);
+
+  const roll = () => {
+    setRolling(true); setResult(null);
+    setTimeout(()=>{
+      const d1=Math.floor(Math.random()*6)+1, d2=Math.floor(Math.random()*6)+1, d3=Math.floor(Math.random()*6)+1;
+      const total=d1+d2+d3; const isTri=d1===d2&&d2===d3;
+      setDice([d1,d2,d3]); setHistory(prev=>[total,...prev].slice(0,15));
+      let won=false, mult=0;
+      if (betType==="big"&&total>=11&&total<=17&&!isTri) {won=true;mult=2;}
+      else if (betType==="small"&&total>=4&&total<=10&&!isTri) {won=true;mult=2;}
+      else if (betType==="odd"&&total%2===1&&!isTri) {won=true;mult=2;}
+      else if (betType==="even"&&total%2===0&&!isTri) {won=true;mult=2;}
+      else if (betType==="triple"&&isTri) {won=true;mult=30;}
+      else if (betType==="any_triple"&&isTri) {won=true;mult=8;}
+      else if (betType==="specific"&&total===11) {won=true;mult=6;}
+      else if (betType==="range1"&&total>=4&&total<=10) {won=true;mult=2;}
+      else if (betType==="range2"&&total>=11&&total<=17) {won=true;mult=2;}
+      setResult({won,amount:won?bet*mult:bet,total}); setRolling(false);
+    },1200);
+  };
+
+  const bets=[{id:"big",l:"Big (11-17)",x:"2x",d:"No triples"},{id:"small",l:"Small (4-10)",x:"2x",d:"No triples"},{id:"odd",l:"Odd",x:"2x",d:"No triples"},{id:"even",l:"Even",x:"2x",d:"No triples"},{id:"triple",l:"Specific Triple",x:"30x",d:"All 3 match"},{id:"any_triple",l:"Any Triple",x:"8x",d:"Any 3 match"},{id:"specific",l:"Total = 11",x:"6x",d:"Exact total"},{id:"range1",l:"4-10 Low",x:"2x",d:"Low range"},{id:"range2",l:"11-17 High",x:"2x",d:"High range"}];
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[100,500,1000,5000]} />
+      <div className="bg-gradient-to-b from-emerald-900/15 to-transparent rounded-2xl p-5 border border-emerald-900/20 text-center">
+        <div className="flex justify-center gap-4 items-center">
+          {dice.map((d,i)=>d>0?<motion.div key={i} initial={{rotateX:90}} animate={{rotateX:0}} transition={{delay:i*0.1}}><Die value={d} /></motion.div>:<Die key={i} value={1} />)}
+        </div>
+        {dice[0]>0&&<div className="text-2xl font-black text-amber-400 mt-3">Total: {dice[0]+dice[1]+dice[2]}</div>}
+        {dice[0]===0&&<div className="text-emerald-700/30 text-sm py-4">Roll 3 dice</div>}
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {bets.map(b=>(
+          <button key={b.id} onClick={()=>!rolling&&setBetType(b.id)}
+            className={"px-2 py-2.5 rounded-lg text-[10px] font-bold transition-all border flex flex-col items-center gap-0.5 "+(betType===b.id?"border-amber-500/50 bg-amber-600/20 text-amber-300 shadow-lg":"border-slate-800/30 text-slate-500")}>
+            <span>{b.l}</span><span className="text-[8px] opacity-60">{b.x}</span><span className="text-[7px] opacity-40">{b.d}</span>
+          </button>
+        ))}
+      </div>
+      {history.length>0&&<div className="flex gap-1 flex-wrap">{history.slice(0,12).map((h,i)=>(<span key={i} className={"px-2 py-0.5 rounded text-[10px] font-bold "+(h===7?"bg-green-900/30 text-green-400":(h<=4||h>=17)?"bg-red-900/30 text-red-400":"bg-slate-800/40 text-slate-400")}>{h}</span>))}</div>}
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.won?"YOU WIN":"LOSE"}</div>
+        <div className={"text-sm font-bold "+(result.won?"text-green-300":"text-red-300")}>{result.won?"+":"-"}{"$"}{result.amount.toLocaleString()}</div>
+      </div>}
+      <div className="flex justify-center"><button onClick={roll} disabled={rolling} className="px-10 py-3.5 bg-gradient-to-b from-amber-500 to-amber-700 disabled:opacity-30 text-black rounded-xl text-sm font-black uppercase tracking-wider shadow-xl shadow-amber-900/30 hover:scale-105 transition-all">{rolling?"ROLLING...":"ROLL DICE"}</button></div>
+      <div className="text-center text-[9px] text-slate-600">Sic Bo - Three dice game. Big/Small, Odd/Even, Triples, and more.</div>
+    </div>
+  );
+}
+
+/* ═══════════ LIAR'S DICE ═══════════ */
+function LiarsDiceGame() {
+  const [bet, setBet] = useState(500);
+  const [playerDice, setPD] = useState<number[]>([]);
+  const [aiDice, setAD] = useState<number[]>([]);
+  const [totalDice, setTotalDice] = useState(10);
+  const [phase, setPhase] = useState<"bet"|"roll"|"bid"|"reveal"|"done">("bet");
+  const [bid, setBid] = useState<{qty:number;face:number}|null>(null);
+  const [aiBid, setAiBid] = useState<{qty:number;face:number}|null>(null);
+  const [result, setResult] = useState<{won:boolean;amount:number;msg:string}|null>(null);
+  const [allDice, setAllDice] = useState<number[]>([]);
+
+  const rollAll = () => {
+    const pd = Array.from({length:5},()=>Math.floor(Math.random()*6)+1);
+    const ad = Array.from({length:5},()=>Math.floor(Math.random()*6)+1);
+    setPD(pd); setAD(ad); setAllDice([...pd,...ad]); setPhase("bid"); setBid(null); setAiBid(null);
+  };
+
+  const makeBid = (qty:number, face:number) => {
+    setBid({qty,face});
+    // AI makes a smarter bid
+    const aiCount = aiDice.filter(d=>d===face||d===1).length;
+    const aiChance = aiCount/5;
+    let aq=qty, af=face;
+    if (Math.random()<0.4&&face<6) {af=face+1;}
+    else if (Math.random()<0.3) {aq=qty+1;}
+    else if (bid&&qty<=bid.qty&&face<=bid.face) {aq=bid.qty+1; af=bid.face;}
+    else {aq=qty+1;}
+    setAiBid({qty:aq,face:af}); setPhase("reveal");
+  };
+
+  const callLiar = () => {
+    if (!bid) return;
+    const actual = allDice.filter(d=>d===bid.face||d===1).length;
+    const won = actual < bid.qty;
+    setResult({won,amount:won?bet:bet,msg:won?`Liar! Only ${actual} ${bid.face}s on table.`:`Truth! ${actual} ${bid.face}s. You lose.`});
+    setPhase("done");
+  };
+
+  const nextRound = () => {
+    setPD(prev=>prev.slice(1)); setAD(prev=>prev.slice(1));
+    const newTotal = playerDice.length-1+aiDice.length-1;
+    if (newTotal<2) {setResult({won:true,amount:bet*3,msg:"Opponent eliminated! MASSIVE WIN!"});setPhase("done");return;}
+    setTotalDice(newTotal); rollAll();
+  };
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[250,500,1000,5000]} />
+      {phase!=="bet"&&<div className="grid grid-cols-2 gap-4">
+        <div className="bg-gradient-to-b from-amber-900/15 to-transparent rounded-2xl p-4 border border-amber-900/20 text-center">
+          <div className="text-[10px] text-amber-500/60 font-bold mb-2">Your Dice ({playerDice.length})</div>
+          <div className="flex gap-1.5 justify-center">{playerDice.map((d,i)=><Die key={i} value={d} size="sm" />)}</div>
+        </div>
+        <div className="bg-gradient-to-b from-red-900/15 to-transparent rounded-2xl p-4 border border-red-900/20 text-center">
+          <div className="text-[10px] text-red-500/60 font-bold mb-2">Opponent Dice ({aiDice.length})</div>
+          <div className="flex gap-1.5 justify-center">{aiDice.map((_,i)=><div key={i} className="w-10 h-14 rounded-xl bg-slate-800/60 border border-slate-600/30 flex items-center justify-center text-slate-600 text-xs">?</div>)}</div>
+        </div>
+      </div>}
+      {phase==="reveal"&&bid&&aiBid&&<div className="text-center space-y-2">
+        <div className="text-amber-400 text-sm font-bold">Your bid: {bid.qty}x {bid.face}s</div>
+        <div className="text-red-400 text-sm font-bold">AI calls: {aiBid.qty}x {aiBid.face}s (higher)</div>
+        <div className="text-[10px] text-slate-500">Actual count of {bid.face}s on table: {allDice.filter(d=>d===bid.face||d===1).length}</div>
+        <button onClick={nextRound} className="px-6 py-2 bg-amber-600/30 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold">Next Round</button>
+      </div>}
+      {phase==="bid"&&<div className="flex gap-2 justify-center flex-wrap">
+        {[1,2,3,4,5,6].map(f=>(
+          <div key={f} className="flex flex-col gap-1">
+            <span className="text-[10px] text-center text-slate-500 font-bold">{f}s</span>
+            {[1,2,3,4,5,6,7,8].map(q=>(
+              <button key={q} onClick={()=>makeBid(q,f)} className="px-2 py-1 bg-slate-800/40 border border-slate-700/30 text-[10px] text-slate-400 rounded hover:bg-amber-600/20 hover:text-amber-300 hover:border-amber-500/30 transition-all">{q}x</button>
+            ))}
+          </div>
+        ))}
+      </div>}
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.msg}</div>
+        <div className={"text-sm font-bold "+(result.won?"text-green-300":"text-red-300")}>{result.won?"+":"-"}{"$"}{result.amount.toLocaleString()}</div>
+      </div>}
+      <div className="flex justify-center gap-2">
+        {phase==="bet"&&<button onClick={()=>{setPhase("roll");rollAll();}} className="px-8 py-3 bg-gradient-to-b from-emerald-500 to-emerald-700 text-white rounded-xl text-sm font-black uppercase shadow-lg hover:scale-105 transition-all">Start</button>}
+        {phase==="bid"&&<button onClick={callLiar} className="px-6 py-2.5 bg-gradient-to-b from-red-600 to-red-800 text-white rounded-xl text-xs font-bold shadow-lg hover:scale-105 transition-all">LIAR!</button>}
+        {phase==="done"&&<button onClick={()=>{setPhase("bet");setResult(null);}} className="px-6 py-3 bg-gradient-to-b from-slate-600 to-slate-800 text-white rounded-xl text-sm font-bold hover:scale-105 transition-all">New Game</button>}
+      </div>
+      <div className="text-center text-[9px] text-slate-600">Liar's Dice - Bluff your opponent. Call "Liar!" when you think they're lying.</div>
+    </div>
+  );
+}
+
+/* ═══════════ WHEEL OF FORTUNE ═══════════ */
+function WheelOfFortuneGame() {
+  const [bet, setBet] = useState(500);
+  const [spinning, setSpinning] = useState(false);
+  const [result, setResult] = useState<{won:boolean;amount:number;segment:string}|null>(null);
+  const [angle, setAngle] = useState(0);
+
+  const segments = [
+    {label:"$100",mult:0.2,color:"#22c55e"},
+    {label:"$250",mult:0.5,color:"#3b82f6"},
+    {label:"$500",mult:1,color:"#8b5cf6"},
+    {label:"$1000",mult:2,color:"#f59e0b"},
+    {label:"$2500",mult:5,color:"#ef4444"},
+    {label:"$5000",mult:10,color:"#ec4899"},
+    {label:"JACKPOT",mult:50,color:"#eab308"},
+    {label:"BANKRUPT",mult:0,color:"#1f2937"},
+    {label:"$100",mult:0.2,color:"#22c55e"},
+    {label:"$500",mult:1,color:"#8b5cf6"},
+    {label:"$1500",mult:3,color:"#f97316"},
+    {label:"SPIN AGAIN",mult:0,color:"#6b7280"},
+  ];
+
+  const spin = () => {
+    setSpinning(true); setResult(null);
+    const targetIdx = Math.floor(Math.random()*segments.length);
+    const segAngle = 360/segments.length;
+    const finalAngle = 1440 + (360 - targetIdx*segAngle - segAngle/2);
+    setAngle(finalAngle);
+    setTimeout(()=>{
+      const seg = segments[targetIdx];
+      const won = seg.mult > 0;
+      setResult({won,amount:Math.floor(bet*seg.mult),segment:seg.label});
+      setSpinning(false);
+    },3500);
+  };
+
+  const segAngle = 360/segments.length;
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[100,500,1000,5000]} />
+      <div className="flex justify-center py-4">
+        <div className="relative w-48 h-48">
+          <motion.div animate={spinning?{rotate:-angle}:{}} transition={{duration:3.5,ease:[0.2,0.8,0.3,1]}}
+            className="w-full h-full rounded-full border-4 border-amber-600/50 shadow-2xl overflow-hidden relative"
+            style={{background:segments.map((s,i)=>`${s.color} ${i*segAngle}deg ${(i+1)*segAngle}deg`).join(",")}}>
+          </motion.div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-500 to-amber-700 border-2 border-amber-400 shadow-xl flex items-center justify-center">
+              {result?<motion.span initial={{scale:0}} animate={{scale:1}} className="text-[10px] font-black text-black text-center leading-tight">{result.segment}</motion.span>
+              :<span className="text-amber-900 text-lg font-black">$</span>}
+            </div>
+          </div>
+          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-5 border-r-5 border-b-10 border-l-transparent border-r-transparent border-b-amber-400" style={{borderLeftWidth:8,borderRightWidth:8,borderBottomWidth:14}} />
+        </div>
+      </div>
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.segment}</div>
+        <div className={"text-sm font-bold "+(result.won?"text-green-300":"text-red-300")}>{result.won?"+":result.segment==="BANKRUPT"?"-":"+"}{"$"}{(result.won?result.amount:bet).toLocaleString()}</div>
+      </div>}
+      <div className="flex justify-center"><button onClick={spin} disabled={spinning} className="px-10 py-3.5 bg-gradient-to-b from-amber-500 to-amber-700 disabled:opacity-30 text-black rounded-xl text-sm font-black uppercase tracking-wider shadow-xl shadow-amber-900/30 hover:scale-105 transition-all">{spinning?"SPINNING...":"SPIN"}</button></div>
+      <div className="text-center text-[9px] text-slate-600">Wheel of Fortune - Spin for cash prizes, jackpot, or bankruptcy!</div>
+    </div>
+  );
+}
+
+/* ═══════════ POWERBALL LOTTERY ═══════════ */
+function PowerballGame() {
+  const [bet, setBet] = useState(100);
+  const [whiteNums, setWN] = useState<number[]>([]);
+  const [powerball, setPB] = useState<number|null>(null);
+  const [drawn, setDrawn] = useState<{white:number[];red:number}|null>(null);
+  const [result, setResult] = useState<{won:boolean;amount:number;matches:number}|null>(null);
+
+  const toggleWhite = (n:number) => {
+    if (drawn) return;
+    if (whiteNums.includes(n)) setWN(whiteNums.filter(x=>x!==n));
+    else if (whiteNums.length<5) setWN([...whiteNums,n]);
+  };
+
+  const play = () => {
+    const white = Array.from({length:69},(_,i)=>i+1).sort(()=>Math.random()-0.5).slice(0,5).sort((a,b)=>a-b);
+    const red = Math.floor(Math.random()*26)+1;
+    setDrawn({white,red});
+    const wm = whiteNums.filter(n=>white.includes(n)).length;
+    const pm = powerball===red;
+    let prize = 0;
+    if (wm===5&&pm) prize = 1000000;
+    else if (wm===5) prize = 100000;
+    else if (wm===4&&pm) prize = 10000;
+    else if (wm===4) prize = 100;
+    else if (wm===3&&pm) prize = 100;
+    else if (wm===3) prize = 7;
+    else if (wm===2&&pm) prize = 7;
+    else if (wm===1&&pm) prize = 4;
+    else if (pm) prize = 4;
+    setResult({won:prize>0,amount:bet*prize,matches:wm});
+  };
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[2,5,10,20,100]} min={2} />
+      <div className="text-center text-[10px] text-slate-500 font-bold">Pick 5 white numbers (1-69) + 1 red Powerball (1-26)</div>
+      <div>
+        <div className="text-[10px] text-slate-500 font-bold mb-1">White Numbers ({whiteNums.length}/5)</div>
+        <div className="grid grid-cols-10 gap-1">{Array.from({length:69},(_,i)=>i+1).map(n=>{
+          const picked=whiteNums.includes(n); const drawn_n=drawn?.white.includes(n);
+          return <button key={n} onClick={()=>toggleWhite(n)} className={"w-full aspect-square rounded text-[9px] font-bold transition-all "+(drawn_n?"bg-green-600 text-white ring-1 ring-green-400":picked?"bg-amber-600/40 text-amber-300 border border-amber-500/40":"bg-slate-800/30 text-slate-500 hover:bg-slate-700/40 border border-slate-700/20")}>{n}</button>;
+        })}</div>
+      </div>
+      <div>
+        <div className="text-[10px] text-slate-500 font-bold mb-1">Powerball (1-26) {powerball?"["+powerball+"]":""}</div>
+        <div className="grid grid-cols-13 gap-1">{Array.from({length:26},(_,i)=>i+1).map(n=>{
+          const picked=powerball===n; const drawn_n=drawn?.red===n;
+          return <button key={n} onClick={()=>!drawn&&setPB(n)} className={"w-full aspect-square rounded text-[9px] font-bold transition-all "+(drawn_n?"bg-red-600 text-white ring-1 ring-red-400":picked?"bg-red-600/40 text-red-300 border border-red-500/40":"bg-slate-800/30 text-slate-500 hover:bg-slate-700/40 border border-slate-700/20")}>{n}</button>;
+        })}</div>
+      </div>
+      {drawn&&<div className="text-center text-[10px] text-slate-400">
+        Drawn: {drawn.white.join(", ")} + <span className="text-red-400 font-bold">{drawn.red}</span>
+      </div>}
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.matches} White + {drawn?.red===powerball?"Red":"No Red"} = {result.won?"WINNER!":"No match"}</div>
+        {result.amount>0&&<div className="text-sm font-bold text-green-300">+{"$"}{result.amount.toLocaleString()}</div>}
+      </div>}
+      <div className="flex justify-center gap-2">
+        <button onClick={play} disabled={whiteNums.length<5||!powerball||!!drawn} className="px-6 py-2.5 bg-gradient-to-b from-emerald-500 to-emerald-700 disabled:opacity-30 text-white rounded-xl text-sm font-bold shadow-lg">Play ({whiteNums.length===5&&powerball?"Ready":"Pick numbers"})</button>
+        {drawn&&<button onClick={()=>{setWN([]);setPB(null);setDrawn(null);setResult(null);}} className="px-4 py-2.5 bg-slate-700/50 text-slate-400 rounded-xl text-xs">Clear</button>}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════ SCRATCH CARDS ═══════════ */
+function ScratchCardGame() {
+  const [bet, setBet] = useState(10);
+  const [card, setCard] = useState<string[][]|null>(null);
+  const [revealed, setRevealed] = useState<Set<string>>(new Set());
+  const [result, setResult] = useState<{won:boolean;amount:number}|null>(null);
+  const symbols = ["\ud83d\udc8e","\ud83d\udc51","\ud83d\udcb0","\u2b50","\ud83c\udf1f","\ud83c\udf34","\ud83c\udf51","\ud83d\udd25"];
+
+  const buyCard = () => {
+    const g = Array.from({length:3},()=>Array.from({length:3},()=>symbols[Math.floor(Math.random()*symbols.length)]));
+    setCard(g); setRevealed(new Set()); setResult(null);
+  };
+
+  const reveal = (r:number,c:number) => {
+    if (!card||result) return;
+    const key = r+"-"+c;
+    const nr = new Set(revealed); nr.add(key); setRevealed(nr);
+    if (nr.size===9) {
+      // Check for wins
+      const flat = card.flat();
+      const counts:Record<string,number>={}; flat.forEach(s=>counts[s]=(counts[s]||0)+1);
+      const maxCount = Math.max(...Object.values(counts));
+      const mult = maxCount>=9?100:maxCount>=7?50:maxCount>=5?20:maxCount>=3?5:0;
+      const winAmt = bet*mult;
+      setResult({won:winAmt>0,amount:winAmt});
+    }
+  };
+
+  const revealAll = () => {
+    if (!card) return;
+    const nr = new Set<string>();
+    for(let r=0;r<3;r++) for(let c=0;c<3;c++) nr.add(r+"-"+c);
+    setRevealed(nr);
+    const flat = card.flat();
+    const counts:Record<string,number>={}; flat.forEach(s=>counts[s]=(counts[s]||0)+1);
+    const maxCount = Math.max(...Object.values(counts));
+    const mult = maxCount>=9?100:maxCount>=7?50:maxCount>=5?20:maxCount>=3?5:0;
+    setResult({won:bet*mult>0,amount:bet*mult});
+  };
+
+  return (
+    <div className="space-y-5">
+      <BI value={bet} onChange={setBet} presets={[5,10,25,50,100]} min={5} />
+      {card?(
+        <div className="bg-gradient-to-b from-amber-900/15 to-transparent rounded-2xl p-5 border border-amber-900/20">
+          <div className="grid grid-cols-3 gap-2 max-w-[280px] mx-auto">
+            {card.map((row,r)=>row.map((sym,c)=>{
+              const key=r+"-"+c; const isRevealed=revealed.has(key);
+              return <button key={key} onClick={()=>reveal(r,c)} className={"w-full aspect-square rounded-xl text-2xl flex items-center justify-center transition-all border-2 "+(isRevealed?"bg-gradient-to-br from-amber-900/20 to-amber-950/10 border-amber-600/30 scale-100":"bg-slate-800/60 border-slate-600/30 hover:border-amber-500/30 hover:scale-105 cursor-pointer")}>
+                {isRevealed?sym:"?"}
+              </button>;
+            }))}
+          </div>
+          <div className="text-center text-[9px] text-slate-500 mt-2">{revealed.size}/9 revealed &middot; Match 3+ same symbols to win</div>
+        </div>
+      ):(
+        <div className="text-center py-12 text-slate-600 text-sm">Buy a scratch card to play!</div>
+      )}
+      {result&&<div className={"rounded-xl p-4 text-center border "+(result.won?"bg-green-900/20 border-green-500/30":"bg-red-900/20 border-red-500/30")}>
+        <div className={"text-lg font-black "+(result.won?"text-green-400":"text-red-400")}>{result.won?"WINNER!":"No match"}</div>
+        {result.amount>0&&<div className="text-sm font-bold text-green-300">+{"$"}{result.amount.toLocaleString()}</div>}
+      </div>}
+      <div className="flex justify-center gap-2">
+        {!card?<button onClick={buyCard} className="px-8 py-3 bg-gradient-to-b from-amber-500 to-amber-700 text-black rounded-xl text-sm font-black uppercase shadow-lg shadow-amber-900/30 hover:scale-105 transition-all">Buy Card {"$"}{bet}</button>
+        :<><button onClick={revealAll} disabled={!!result} className="px-4 py-2 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold">Reveal All</button>
+        <button onClick={()=>{setCard(null);setResult(null);}} className="px-4 py-2 bg-slate-700/50 text-slate-400 rounded-xl text-xs">New Card</button></>}
+      </div>
+      <div className="text-center text-[9px] text-slate-600">Match 3+ same = 5x &middot; Match 5+ = 20x &middot; Match 7+ = 50x &middot; Full house = 100x</div>
+    </div>
+  );
+}
+/* ═══════════ NEW CATEGORY PAGES ═══════════ */
+function PokerLoungePage() {
+  const [g, setG] = useState("video");
+  const tabs: [string, string][] = [["video","Video Poker (Jacks+)"],["caribbean","Caribbean Stud"],["paigow","Pai Gow Poker"]];
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-black text-amber-400">Poker Lounge</h3>
+      <div className="flex gap-1.5 flex-wrap">{tabs.map(([k,l])=>(
+        <button key={k} onClick={()=>setG(k)} className={"px-3 py-1.5 rounded-lg text-xs font-bold transition-all "+(g===k?"bg-amber-600 text-white shadow-lg":"bg-slate-800/40 text-slate-500 border border-slate-700/30")}>{l}</button>
+      ))}</div>
+      <div className="mafia-card rounded-2xl p-6">{g==="video"?<VideoPokerGame/>:g==="caribbean"?<CaribbeanStudGame/>:<PaiGowGame/>}</div>
+    </div>
+  );
+}
+
+function HighRollersPage() {
+  const [g, setG] = useState("vip_bj");
+  const tabs: [string, string][] = [["vip_bj","VIP Blackjack ($10K min)"],["vip_bacc","High Stakes Baccarat"],["vip_poker","Private Poker"]];
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-black text-red-400">High Rollers VIP</h3>
+      <div className="flex gap-1.5 flex-wrap">{tabs.map(([k,l])=>(
+        <button key={k} onClick={()=>setG(k)} className={"px-3 py-1.5 rounded-lg text-xs font-bold transition-all "+(g===k?"bg-red-600 text-white shadow-lg":"bg-slate-800/40 text-slate-500 border border-slate-700/30")}>{l}</button>
+      ))}</div>
+      <div className="mafia-card rounded-2xl p-6 border-red-900/20">{g==="vip_bj"?<BlackjackGame/>:g==="vip_bacc"?<BaccaratGame/>:<PokerGame/>}</div>
+      <div className="text-center text-[9px] text-red-600/60">Minimum bet: $10,000. VIP tables only.</div>
+    </div>
+  );
+}
+
+function LotteryPage() {
+  const [g, setG] = useState("powerball");
+  const tabs: [string, string][] = [["powerball","Powerball"],["scratch","Scratch Cards"]];
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-black text-amber-400">Lottery & Scratch</h3>
+      <div className="flex gap-1.5 flex-wrap">{tabs.map(([k,l])=>(
+        <button key={k} onClick={()=>setG(k)} className={"px-3 py-1.5 rounded-lg text-xs font-bold transition-all "+(g===k?"bg-amber-600 text-white shadow-lg":"bg-slate-800/40 text-slate-500 border border-slate-700/30")}>{l}</button>
+      ))}</div>
+      <div className="mafia-card rounded-2xl p-6">{g==="powerball"?<PowerballGame/>:<ScratchCardGame/>}</div>
+    </div>
+  );
+}
+
+function AdvancedDicePage() {
+  const [g, setG] = useState("sicbo");
+  const tabs: [string, string][] = [["sicbo","Sic Bo (3 Dice)"],["liars","Liar's Dice"]];
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-black text-amber-400">Dice Games</h3>
+      <div className="flex gap-1.5 flex-wrap">{tabs.map(([k,l])=>(
+        <button key={k} onClick={()=>setG(k)} className={"px-3 py-1.5 rounded-lg text-xs font-bold transition-all "+(g===k?"bg-amber-600 text-white shadow-lg":"bg-slate-800/40 text-slate-500 border border-slate-700/30")}>{l}</button>
+      ))}</div>
+      <div className="mafia-card rounded-2xl p-6">{g==="sicbo"?<SicBoGame/>:<LiarsDiceGame/>}</div>
+    </div>
+  );
+}
+
+function WheelPage() {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-black text-amber-400">Wheel Games</h3>
+      <div className="mafia-card rounded-2xl p-6"><WheelOfFortuneGame/></div>
     </div>
   );
 }
