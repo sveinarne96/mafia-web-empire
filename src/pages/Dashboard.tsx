@@ -74,7 +74,7 @@ import {
 import { MissionsOverviewPage } from "@/components/MissionPages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
-import { EconomyPage, AssetsPage, SocialPage, ProgressionPage, SpecialPage, ForumsPage, ChatsPage, QuickInfoPage, SeasonalEventsPage, HelpPage } from "@/components/ConsolidatedPages";
+import { EconomyPage, AssetsPage, SocialPage, ProgressionPage, SpecialPage, ForumsPage, ChatsPage, QuickInfoPage, SeasonalEventsPage, HelpPage, ServerEventsPage } from "@/components/ConsolidatedPages";
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
   WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage,
@@ -208,16 +208,7 @@ const getRightMenuSections = (t: (k: string) => string) => [
     { label: "Events Hub", page: "seasonal", icon: "🎆" },
   ]},
   { title: "Server Events", icon: Zap, items: [
-    { label: "Purge Night", page: "evt_purge", icon: "💀" },
-    { label: "Blood Moon", page: "evt_bloodmoon", icon: "🌑" },
-    { label: "Robber's Moon", page: "evt_robbersmoon", icon: "🌙" },
-    { label: "Full Moon", page: "evt_fullmoon", icon: "🌕" },
-    { label: "Grand Heist", page: "evt_grandheist", icon: "🏦" },
-    { label: "Tournament Championship", page: "evt_tournament", icon: "🏆" },
-    { label: "Family War Week", page: "evt_familywar", icon: "⚔️" },
-    { label: "Territory Takeover", page: "evt_territory", icon: "📍" },
-    { label: "Underground Championship", page: "evt_underground", icon: "💣" },
-    { label: "Crime Empire Week", page: "evt_empire", icon: "👑" },
+    { label: "Events Hub", page: "server_events", icon: "⚡" },
   ]},
   { title: "Help", icon: HelpCircle, items: [
     { label: "Help Hub", page: "help", icon: "❓" },
@@ -2271,6 +2262,7 @@ const renderPage = () => {
       case "chats": return <ChatsPage />;
       case "quickinfo": return <QuickInfoPage />;
       case "seasonal": return <SeasonalEventsPage />;
+      case "server_events": return <ServerEventsPage />;
       case "help": return <HelpPage />;
       case "duel_1v1": return <Duel1v1Page />;
       case "crew_wars": return <CrewWarsPage />;

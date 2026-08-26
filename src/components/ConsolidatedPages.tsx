@@ -356,3 +356,40 @@ export function HelpPage() {
     </div>
   );
 }
+
+/* ═══════════ SERVER EVENTS PAGE ═══════════ */
+export function ServerEventsPage() {
+  const [tab, setTab] = useState("purge");
+  const tabs = [
+    { id: "purge", label: "Purge Night", icon: "💀" },
+    { id: "bloodmoon", label: "Blood Moon", icon: "🌑" },
+    { id: "robbers", label: "Robber's Moon", icon: "🌙" },
+    { id: "fullmoon", label: "Full Moon", icon: "🌕" },
+    { id: "grandheist", label: "Grand Heist", icon: "🏦" },
+    { id: "tournament", label: "Tournament", icon: "🏆" },
+    { id: "familywar", label: "Family War", icon: "⚔️" },
+    { id: "territory", label: "Territory", icon: "📍" },
+    { id: "underground", label: "Underground", icon: "💣" },
+    { id: "empire", label: "Crime Empire", icon: "👑" },
+  ];
+  return (
+    <div className="animate-fade-in space-y-4">
+      <div className="flex items-center gap-3"><span className="text-3xl">⚡</span><h2 className="text-2xl font-black text-amber-400">Server Events</h2></div>
+      <TabBar tabs={tabs} active={tab} onSelect={setTab} />
+      <AnimatePresence mode="wait">
+        <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="space-y-3">
+          {tab === "purge" && <FeatureStub icon="💀" title="Purge Night" desc="24 hours of lawlessness. No police. Maximum chaos! All crimes have boosted success rates." />}
+          {tab === "bloodmoon" && <FeatureStub icon="🌑" title="Blood Moon" desc="All combat damage doubled. Kills give 5x XP! The night is red." />}
+          {tab === "robbers" && <FeatureStub icon="🌙" title="Robber's Moon" desc="Full moon = all crimes have 20% better success! The perfect night to strike." />}
+          {tab === "fullmoon" && <FeatureStub icon="🌕" title="Full Moon" desc="ALL boosts active! Crime + Combat + Gambling! The rarest event." />}
+          {tab === "grandheist" && <FeatureStub icon="🏦" title="Grand Heist" desc="Special heist event. 10x rewards on bank heists! Assemble your crew." />}
+          {tab === "tournament" && <FeatureStub icon="🏆" title="Tournament Championship" desc="Server-wide PvP tournament. Winner takes $500K! Prove your worth." />}
+          {tab === "familywar" && <FeatureStub icon="⚔️" title="Family War Week" desc="Family wars give 5x reputation! Alliances will be tested." />}
+          {tab === "territory" && <FeatureStub icon="📍" title="Territory Takeover" desc="Fight for territory! +300% income from all controlled areas." />}
+          {tab === "underground" && <FeatureStub icon="💣" title="Underground Championship" desc="Underground tournament. Best fighter wins massive prizes!" />}
+          {tab === "empire" && <FeatureStub icon="👑" title="Crime Empire Week" desc="All empire operations +5x reward! Build your legacy." />}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+}
