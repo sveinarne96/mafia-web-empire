@@ -72,6 +72,7 @@ import {
   LegacyPage, ForumSearchPage, SupportPage,
 } from "@/components/GamePages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
+import { CombatOverviewPage } from "@/components/CombatPages";
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
   WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage,
@@ -2360,6 +2361,7 @@ const renderPage = () => {
       case "advanced_features": return <AdvancedFeaturesPage />;
 
             // Combat
+      case "arena": return <CombatOverviewPage />;
       case "duel_1v1": return <Duel1v1Page />;
       case "crew_wars": return <CrewWarsPage />;
       case "ctf": return <CTFPage />;
