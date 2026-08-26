@@ -2704,6 +2704,32 @@ const renderPage = () => {
                       <div className="text-base font-bold text-yellow-400 animate-money-text">{(player.points ?? 0).toLocaleString()}</div>
                     </div>
                   </div>
+                  {/* Energy Drink Status — Mixed Animated Colors */}
+                  {((player as any).energyDrinkUntil ?? 0) > Date.now() && (() => {
+                    const remainingMs = (player as any).energyDrinkUntil - Date.now();
+                    const remaining = Math.max(0, Math.floor(remainingMs / 60000));
+                    const hrs = Math.floor(remaining / 60);
+                    const mins = remaining % 60;
+                    return (
+                      <div className="px-2">
+                        <style>{`
+                          @keyframes energy-mix-pulse { 0% { box-shadow: 0 0 8px rgba(255,165,0,0.4), 0 0 20px rgba(255,100,0,0.2), inset 0 0 8px rgba(255,200,50,0.1); border-color: rgba(255,165,0,0.5); } 50% { box-shadow: 0 0 16px rgba(0,255,200,0.8), 0 0 40px rgba(255,50,100,0.4), 0 0 60px rgba(100,255,200,0.1), inset 0 0 16px rgba(200,255,0,0.2); border-color: rgba(0,255,200,0.9); } }
+                          @keyframes energy-mix-text { 0% { text-shadow: 0 0 6px rgba(255,200,50,0.6), 0 0 12px rgba(255,100,0,0.3); } 50% { text-shadow: 0 0 12px rgba(0,255,200,1), 0 0 24px rgba(255,50,100,0.6), 0 0 48px rgba(100,255,200,0.3); } }
+                          @keyframes energy-mix-bar { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+                          .energy-mix-active { animation: energy-mix-pulse 2s ease-in-out infinite; }
+                          .energy-mix-text { animation: energy-mix-text 1.5s ease-in-out infinite; }
+                          .energy-mix-bar { background: linear-gradient(90deg, #ff6400, #00ffc8, #ff3264, #64ff64, #ffaa32, #3264ff); background-size: 200% 100%; animation: energy-mix-bar 2s linear infinite; }
+                        `}</style>
+                        <div className="rounded-lg p-2.5 text-center border-2 energy-mix-active bg-gradient-to-br from-orange-950/40 via-emerald-950/30 to-pink-950/40">
+                          <div className="energy-mix-text text-[11px] font-black text-orange-400">🥤 ENERGY RUSH ACTIVE</div>
+                          <div className="h-1.5 rounded-full mt-1.5 overflow-hidden bg-black/40">
+                            <div className="h-full rounded-full energy-mix-bar" style={{ width: `${Math.max(5, remaining / Math.max(1, hrs * 60 + mins) * 100)}%` }} />
+                          </div>
+                          <div className="text-[10px] font-bold text-emerald-400 energy-mix-text mt-1">+25% XP • {hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`} left</div>
+                        </div>
+                      </div>
+                    );
+                  })()}
                   {/* Active Boosts under Points */}
                   <div className="px-2 space-y-1">
                     {(player?.wantedLevel ?? 0) > 0 && (
