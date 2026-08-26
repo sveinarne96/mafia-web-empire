@@ -22,6 +22,221 @@ const CATEGORIES = [
   { id: "elite", name: "Elite Challenges", icon: "👑", color: "red" },
 ];
 
+
+
+/* ═══════════ STORYLINE MISSIONS ═══════════ */
+// Auto-generating story arcs that never run out. Rewards scale low to high.
+
+const STORY_ARCS = [
+  {
+    id: "origins",
+    name: "Origins",
+    icon: "🌟",
+    color: "from-amber-500 to-yellow-600",
+    description: "From nothing to something. Your rise begins here.",
+    chapters: [
+      { name: "First Steps", desc: "Commit your first crime. The streets are watching.", xp: 50, cash: 200, icon: "👣" },
+      { name: "Street Cred", desc: "Mug 3 people. Earn respect on the block.", xp: 100, cash: 500, icon: " street" },
+      { name: "Small Time", desc: "Shoplift from 5 stores. Build your reputation.", xp: 150, cash: 800, icon: "🏪" },
+      { name: "Making Friends", desc: "Recruit your first crew member.", xp: 200, cash: 1000, icon: "🤝" },
+      { name: "First Job", desc: "Complete a bank robbery with your crew.", xp: 300, cash: 2000, icon: "🏦" },
+      { name: "Heat", desc: "Evade the police 3 times.", xp: 400, cash: 3000, icon: "🚔" },
+      { name: "Trust Issues", desc: "Betray a rival and take their territory.", xp: 500, cash: 5000, icon: "🗡️" },
+      { name: "The Setup", desc: "Establish a front business.", xp: 600, cash: 8000, icon: "💼" },
+      { name: "Cleaning House", desc: "Eliminate 10 rivals.", xp: 800, cash: 12000, icon: "💀" },
+      { name: "Made Man", desc: "You are now a made man. Respect is earned.", xp: 1000, cash: 20000, icon: "🏅" },
+    ],
+  },
+  {
+    id: "territory",
+    name: "Territory",
+    icon: "🗺️",
+    color: "from-blue-500 to-cyan-600",
+    description: "Claim the city block by block.",
+    chapters: [
+      { name: "Scout the Area", desc: "Explore the slums and find opportunity.", xp: 80, cash: 300, icon: "🔍" },
+      { name: "First Block", desc: "Take control of a street corner.", xp: 150, cash: 800, icon: "📍" },
+      { name: "Push Back", desc: "Defend your corner against rivals.", xp: 250, cash: 1500, icon: "🛡️" },
+      { name: "Expand", desc: "Capture 3 territories.", xp: 400, cash: 3000, icon: "🏴" },
+      { name: "Turf War", desc: "Win a crew war for a major district.", xp: 600, cash: 6000, icon: "⚔️" },
+      { name: "The Deal", desc: "Negotiate a truce with a rival crew.", xp: 500, cash: 4000, icon: "🤝" },
+      { name: "Break the Truce", desc: "Betray and take their territory.", xp: 800, cash: 10000, icon: "🗡️" },
+      { name: "Half the City", desc: "Control 50% of all territories.", xp: 1200, cash: 25000, icon: "🏙️" },
+      { name: "Full Control", desc: "Dominate every territory in the city.", xp: 2000, cash: 50000, icon: "👑" },
+      { name: "King of the City", desc: "You rule the streets. All bow to you.", xp: 3000, cash: 100000, icon: "🏆" },
+    ],
+  },
+  {
+    id: "rivalry",
+    name: "Rivalry",
+    icon: "⚔️",
+    color: "from-red-500 to-orange-600",
+    description: "A bitter enemy rises. Time to settle the score.",
+    chapters: [
+      { name: "The Rival Appears", desc: "A new player challenges your authority.", xp: 100, cash: 400, icon: "😠" },
+      { name: "First Blood", desc: "Strike the first blow in this war.", xp: 200, cash: 1000, icon: "🩸" },
+      { name: "Retaliation", desc: "They strike back. Prepare your defenses.", xp: 300, cash: 2000, icon: "🛡️" },
+      { name: "Spy Game", desc: "Plant a mole in their organization.", xp: 400, cash: 3500, icon: "🕵️" },
+      { name: "Sabotage", desc: "Destroy their drug lab.", xp: 600, cash: 6000, icon: "💣" },
+      { name: "Counter-Attack", desc: "They hit your businesses. Fight back.", xp: 800, cash: 10000, icon: "⚔️" },
+      { name: "The Betrayal", desc: "One of their lieutenants switches sides.", xp: 1000, cash: 15000, icon: "🎭" },
+      { name: "All-Out War", desc: "Full-scale war. No mercy.", xp: 1500, cash: 30000, icon: "🔥" },
+      { name: "The Boss", desc: "Challenge the rival boss to a final duel.", xp: 2000, cash: 50000, icon: "👑" },
+      { name: "Victory", desc: "You have won. The rivalry ends here.", xp: 3000, cash: 100000, icon: "🏆" },
+    ],
+  },
+  {
+    id: "betrayal",
+    name: "Betrayal",
+    icon: "🎭",
+    color: "from-purple-500 to-pink-600",
+    description: "Trust no one. Especially not your closest allies.",
+    chapters: [
+      { name: "Inner Circle", desc: "Gather your most trusted allies.", xp: 120, cash: 500, icon: "👥" },
+      { name: "Suspicion", desc: "Someone is leaking information.", xp: 200, cash: 1200, icon: "🔍" },
+      { name: "The Mole", desc: "Identify the traitor in your ranks.", xp: 350, cash: 2500, icon: "🕵️" },
+      { name: "Confrontation", desc: "Face the traitor with evidence.", xp: 500, cash: 4000, icon: "😠" },
+      { name: "Clean Sweep", desc: "Remove all compromised members.", xp: 700, cash: 8000, icon: "🧹" },
+      { name: "Rebuild", desc: "Rebuild your organization from scratch.", xp: 900, cash: 15000, icon: "🔨" },
+      { name: "Revenge", desc: "Hunt down the one who betrayed you.", xp: 1200, cash: 25000, icon: "🗡️" },
+      { name: "New Order", desc: "Establish a new hierarchy you can trust.", xp: 1600, cash: 40000, icon: "👑" },
+      { name: "Iron Fist", desc: "Rule with an iron fist. No more betrayals.", xp: 2200, cash: 60000, icon: "✊" },
+      { name: "Legacy", desc: "Your name will never be forgotten.", xp: 3500, cash: 120000, icon: "📜" },
+    ],
+  },
+  {
+    id: "fbi",
+    name: "The FBI",
+    icon: "🕵️",
+    color: "from-slate-500 to-blue-600",
+    description: "The feds are closing in. Stay one step ahead.",
+    chapters: [
+      { name: "Surveillance", desc: "The FBI has you under surveillance.", xp: 150, cash: 600, icon: "👁️" },
+      { name: "Cover Your Tracks", desc: "Destroy all evidence of your operations.", xp: 250, cash: 1500, icon: "🔥" },
+      { name: "The Informant", desc: "Someone is talking to the feds.", xp: 400, cash: 3000, icon: "🤫" },
+      { name: "Interrogation", desc: "An agent questions you. Stay cool.", xp: 500, cash: 4000, icon: "🗣️" },
+      { name: "The Raid", desc: "The FBI raids one of your operations.", xp: 700, cash: 8000, icon: "🚔" },
+      { name: "Fugitive", desc: "Go on the run. Evade capture.", xp: 1000, cash: 15000, icon: "🏃" },
+      { name: "Clean Slate", desc: "Get a new identity. Start fresh.", xp: 1400, cash: 30000, icon: "🎭" },
+      { name: "Counter-Intelligence", desc: "Plant false evidence to mislead the FBI.", xp: 1800, cash: 45000, icon: "🕵️" },
+      { name: "The Mole", desc: "Turn an FBI agent to your side.", xp: 2500, cash: 70000, icon: "🤝" },
+      { name: "Untouchable", desc: "The FBI can never prove anything.", xp: 4000, cash: 150000, icon: "🏆" },
+    ],
+  },
+  {
+    id: "prison",
+    name: "Prison",
+    icon: "⛓️",
+    color: "from-gray-500 to-gray-700",
+    description: "Behind bars. But the game never stops.",
+    chapters: [
+      { name: "Arrested", desc: "The cops finally caught you.", xp: 100, cash: 200, icon: "🚔" },
+      { name: "Processing", desc: "Fingerprinted. Photographed. Locked up.", xp: 150, cash: 300, icon: "📸" },
+      { name: "Cell Life", desc: "Adapt to prison life. Find your place.", xp: 200, cash: 500, icon: "🔒" },
+      { name: "The Yard", desc: "Establish dominance in the yard.", xp: 300, cash: 1000, icon: "🏋️" },
+      { name: "Contraband", desc: "Smuggle items into the prison.", xp: 400, cash: 2000, icon: "📦" },
+      { name: "The Guard", desc: "Bribe a guard for special treatment.", xp: 500, cash: 3000, icon: "💰" },
+      { name: "Prison Gang", desc: "Join or form a prison gang.", xp: 600, cash: 4000, icon: "👥" },
+      { name: "The Escape", desc: "Plan your escape from prison.", xp: 1000, cash: 10000, icon: "🏃" },
+      { name: "Free Man", desc: "You're out. But the FBI is watching.", xp: 1500, cash: 20000, icon: "🌅" },
+      { name: "Revenge", desc: "Pay back everyone who put you behind bars.", xp: 2500, cash: 50000, icon: "🗡️" },
+    ],
+  },
+  {
+    id: "empire",
+    name: "Empire",
+    icon: "👑",
+    color: "from-yellow-500 to-amber-600",
+    description: "Build a criminal empire that spans the globe.",
+    chapters: [
+      { name: "Small Business", desc: "Start with a single front business.", xp: 200, cash: 1000, icon: "🏪" },
+      { name: "Expansion", desc: "Open 3 more businesses.", xp: 400, cash: 3000, icon: "📈" },
+      { name: "The Bank", desc: "Establish your own bank for money laundering.", xp: 600, cash: 8000, icon: "🏦" },
+      { name: "International", desc: "Expand operations to another city.", xp: 1000, cash: 20000, icon: "✈️" },
+      { name: "The Cartel", desc: "Form a cartel with international partners.", xp: 1500, cash: 40000, icon: "🤝" },
+      { name: "Market Control", desc: "Control 50% of the drug market.", xp: 2000, cash: 80000, icon: "📊" },
+      { name: "The Corporation", desc: "Create a legitimate corporation as a front.", xp: 2500, cash: 120000, icon: "🏢" },
+      { name: "Global Network", desc: "Establish operations on 3 continents.", xp: 3500, cash: 200000, icon: "🌍" },
+      { name: "The Summit", desc: "Host a summit of the world's top crime bosses.", xp: 5000, cash: 500000, icon: "🏛️" },
+      { name: "Shadow Emperor", desc: "You rule the global underworld.", xp: 8000, cash: 1000000, icon: "👑" },
+    ],
+  },
+  {
+    id: "ghost",
+    name: "Ghost Protocol",
+    icon: "👻",
+    color: "from-indigo-500 to-purple-600",
+    description: "Become invisible. Erase all traces. Strike from the shadows.",
+    chapters: [
+      { name: "Digital Footprint", desc: "Erase your digital footprint.", xp: 250, cash: 1500, icon: "💻" },
+      { name: "New Identity", desc: "Create a completely new identity.", xp: 400, cash: 3000, icon: "🎭" },
+      { name: "Ghost Protocol", desc: "Activate ghost mode for 24 hours.", xp: 600, cash: 6000, icon: "👻" },
+      { name: "Infiltrate", desc: "Infiltrate a rival organization undetected.", xp: 1000, cash: 15000, icon: "🕵️" },
+      { name: "Data Heist", desc: "Steal classified data without being traced.", xp: 1500, cash: 30000, icon: "💾" },
+      { name: "Ghost Strike", desc: "Eliminate a target and vanish.", xp: 2000, cash: 50000, icon: "🗡️" },
+      { name: "Dead Drop", desc: "Set up a network of dead drops across the city.", xp: 2500, cash: 75000, icon: "📦" },
+      { name: "Shadow Network", desc: "Build an invisible network of operatives.", xp: 3500, cash: 120000, icon: "🕸️" },
+      { name: "The Phantom", desc: "You become a myth. A ghost story.", xp: 5000, cash: 200000, icon: "🌑" },
+      { name: "Legend", desc: "Your name is whispered in fear. You are the ghost.", xp: 8000, cash: 500000, icon: "🏆" },
+    ],
+  },
+];
+
+// Generate infinite storyline missions by cycling through arcs
+function generateStorylineMissions(completedStoryIds: Set<string>, playerLevel: number) {
+  const missions: Array<{
+    id: string;
+    arcId: string;
+    arcName: string;
+    arcIcon: string;
+    arcColor: string;
+    chapter: number;
+    totalChapters: number;
+    name: string;
+    description: string;
+    xpReward: number;
+    cashReward: number;
+    icon: string;
+    difficulty: string;
+    levelRequired: number;
+  }> = [];
+
+  // Calculate which cycle we're on (cycles repeat arcs with higher rewards)
+  const completedCount = completedStoryIds.size;
+  const cycle = Math.floor(completedCount / (STORY_ARCS.length * 10)) + 1;
+
+  STORY_ARCS.forEach(arc => {
+    arc.chapters.forEach((ch, idx) => {
+      // Generate a unique ID that includes the cycle
+      const missionId = `story_${arc.id}_${idx}_cycle${cycle}`;
+      // Scale rewards by cycle
+      const rewardMultiplier = cycle;
+      const xpReward = Math.floor(ch.xp * rewardMultiplier * (1 + playerLevel * 0.05));
+      const cashReward = Math.floor(ch.cash * rewardMultiplier * (1 + playerLevel * 0.08));
+      const levelRequired = Math.min(1 + idx * 2 + (cycle - 1) * 20, 200);
+
+      missions.push({
+        id: missionId,
+        arcId: arc.id,
+        arcName: arc.name,
+        arcIcon: arc.icon,
+        arcColor: arc.color,
+        chapter: idx + 1,
+        totalChapters: arc.chapters.length,
+        name: `[${arc.icon}] ${arc.name} ${idx + 1}: ${ch.name}`,
+        description: ch.desc,
+        xpReward,
+        cashReward,
+        icon: ch.icon,
+        difficulty: idx < 3 ? "easy" : idx < 6 ? "medium" : idx < 8 ? "hard" : "legendary",
+        levelRequired,
+      });
+    });
+  });
+
+  return missions;
+}
+
 const DIFFICULTIES = [
   { id: "easy", name: "Easy", color: "text-green-400", bg: "bg-green-900/30" },
   { id: "medium", name: "Medium", color: "text-yellow-400", bg: "bg-yellow-900/30" },
@@ -312,7 +527,8 @@ export function MissionsOverviewPage() {
   const completedIds = useMemo(() => {
     // Get from localStorage
     try {
-      return new Set(JSON.parse(localStorage.getItem("completedMissionIds") || "[]"));
+      const ids: string[] = JSON.parse(localStorage.getItem("completedMissionIds") || "[]");
+      return new Set(ids);
     } catch { return new Set<string>(); }
   }, [tab]);
 
@@ -356,8 +572,106 @@ export function MissionsOverviewPage() {
 
   const completedCount = completedIds.size;
 
+  // Storyline missions
+  const storyMissions = useMemo(() => {
+    return generateStorylineMissions(completedIds, (player as any)?.level ?? 1);
+  }, [completedIds, player]);
+
+  const activeStoryMissions = useMemo(() =>
+    storyMissions.filter(m => !completedIds.has(m.id)),
+    [storyMissions, completedIds]
+  );
+
+  const finishedStoryMissions = useMemo(() =>
+    storyMissions.filter(m => completedIds.has(m.id)),
+    [storyMissions, completedIds]
+  );
+
+  const [storyTab, setStoryTab] = useState<"active"|"finished">("active");
+  const displayStoryMissions = storyTab === "active" ? activeStoryMissions : finishedStoryMissions;
+
   return (
     <div className="animate-fade-in space-y-4">
+      {/* ═══════════ STORYLINE MISSIONS ═══════════ */}
+      <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">📖</span>
+            <div>
+              <h3 className="text-lg font-black text-amber-400">Storyline Missions</h3>
+              <p className="text-[10px] text-slate-500">{activeStoryMissions.length} active | {finishedStoryMissions.length} completed | Never-ending stories</p>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <button onClick={() => setStoryTab("active")} className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${storyTab==="active"?"bg-amber-600 text-black":"bg-slate-800 text-slate-400"}`}>Active</button>
+            <button onClick={() => setStoryTab("finished")} className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all ${storyTab==="finished"?"bg-green-600 text-black":"bg-slate-800 text-slate-400"}`}>Done</button>
+          </div>
+        </div>
+
+        {/* Story Arc Cards */}
+        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+          {displayStoryMissions.length === 0 ? (
+            <div className="text-center py-4 text-slate-500 text-xs">
+              {storyTab === "active" ? "All storyline missions completed! New cycle starting..." : "No completed storyline missions yet"}
+            </div>
+          ) : (
+            displayStoryMissions.map(m => (
+              <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${completedIds.has(m.id) ? "bg-green-900/10 border-green-500/20 opacity-60" : "bg-slate-800/30 border-slate-700/30 hover:border-amber-500/30"}`}>
+                <div className="text-xl shrink-0">{m.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${m.difficulty==="easy"?"bg-green-900/40 text-green-400":m.difficulty==="medium"?"bg-yellow-900/40 text-yellow-400":m.difficulty==="hard"?"bg-orange-900/40 text-orange-400":"bg-purple-900/40 text-purple-400"}`}>{m.difficulty}</span>
+                    <span className="text-[10px] text-slate-500">Ch.{m.chapter}/{m.totalChapters}</span>
+                  </div>
+                  <div className="text-sm font-bold text-slate-200 truncate">{m.name}</div>
+                  <div className="text-[10px] text-slate-400 truncate">{m.description}</div>
+                  <div className="flex gap-2 mt-1">
+                    <span className="text-[10px] text-green-400">+{m.xpReward.toLocaleString()} XP</span>
+                    <span className="text-[10px] text-amber-400">+${m.cashReward.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div className="shrink-0">
+                  {completedIds.has(m.id) ? (
+                    <span className="text-green-500 text-lg">✅</span>
+                  ) : (
+                    <button onClick={() => handleComplete({
+                      id: m.id,
+                      name: m.name,
+                      description: m.description,
+                      category: "story",
+                      difficulty: m.difficulty,
+                      xpReward: m.xpReward,
+                      cashReward: m.cashReward,
+                      levelRequired: m.levelRequired,
+                    })} className="px-3 py-1.5 bg-amber-600/20 border border-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold hover:bg-amber-600/30 transition-all whitespace-nowrap">
+                      DO
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Story Progress */}
+        <div className="mt-3 pt-3 border-t border-slate-800/50">
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {STORY_ARCS.map(arc => {
+              const arcCompleted = arc.chapters.filter((_, idx) => completedIds.has(`story_${arc.id}_${idx}_cycle${Math.floor(completedIds.size / 80) + 1}`)).length;
+              return (
+                <div key={arc.id} className="flex flex-col items-center gap-0.5 shrink-0 px-2">
+                  <span className="text-lg">{arc.icon}</span>
+                  <div className="w-10 h-1 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500 rounded-full transition-all" style={{width:`${(arcCompleted/arc.chapters.length)*100}%`}} />
+                  </div>
+                  <span className="text-[8px] text-slate-500">{arcCompleted}/{arc.chapters.length}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center gap-3 mb-2">
         <span className="text-4xl">📋</span>
