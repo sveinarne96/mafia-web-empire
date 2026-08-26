@@ -71,6 +71,7 @@ import {
   OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage,
   LegacyPage, ForumSearchPage, SupportPage,
 } from "@/components/GamePages";
+import { MissionsOverviewPage } from "@/components/MissionPages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
 import {
@@ -168,11 +169,7 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "🎰 Casino", page: "gambling_overview", icon: "🃏" },
   ]},
   { title: "Missions", icon: Target, items: [
-    { label: "Storyline Missions", page: "storyline", icon: "📖" },
-    { label: "Side Missions", page: "side_missions", icon: "📋" },
-    { label: "Daily Missions", page: "daily_missions", icon: "📅" },
-    { label: "Weekly Missions", page: "weekly_missions", icon: "📆" },
-    { label: "Monthly Missions", page: "monthly_missions", icon: "🗓️" },
+    { label: "Mission Board", page: "missions", icon: "📋" },
   ]},
   { title: "Economy", icon: Coins, items: [
     { label: "Bank Account", page: "bank_account", icon: "🏦" },
@@ -1630,10 +1627,10 @@ function StealthSkillsPage() { return <SkillTreePage />; }
 function HackingSkillsPage() { return <SkillTreePage />; }
 function PrestigeShopPage() { return <PrestigePage />; }
 function SeasonRewardsProgPage() { return <SeasonPassPage />; }
-function SideMissionsPage() { return <MissionsPage />; }
-function DailyMissionsPage() { return <MissionsPage />; }
-function WeeklyMissionsPage() { return <MissionsPage />; }
-function MonthlyMissionsPage() { return <MissionsPage />; }
+function SideMissionsPage() { return <MissionsOverviewPage />; }
+function DailyMissionsPage() { return <MissionsOverviewPage />; }
+function WeeklyMissionsPage() { return <MissionsOverviewPage />; }
+function MonthlyMissionsPage() { return <MissionsOverviewPage />; }
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
@@ -2268,7 +2265,7 @@ const renderPage = () => {
 
       // Special
       case "ghost_mode": return <GhostModePage />;
-      case "missions": return <MissionsPage />;
+      case "missions": return <MissionsOverviewPage />;
       case "wanted": return <WantedStatusPage />;
       case "colosseum": return <ColosseumPage />;
       case "last_man_standing": return <SafePage><div className="animate-fade-in p-6 text-center text-muted-foreground">Last Man Standing event — active before season wipe.</div></SafePage>;
