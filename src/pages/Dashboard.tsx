@@ -2041,6 +2041,22 @@ function MurderPage() {
 }
 
 
+
+function ErrorBoundary({children}: {children: React.ReactNode}) {
+  const [error, setError] = useState<string | null>(null);
+  if (error) return (
+    <div className="animate-fade-in p-6">
+      <div className="mafia-card rounded-xl p-6 text-center space-y-3">
+        <div className="text-3xl">⚠️</div>
+        <div className="text-sm font-bold text-red-400">Page Error</div>
+        <div className="text-xs text-muted-foreground max-h-20 overflow-y-auto">{error}</div>
+        <button onClick={() => setError(null)} className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold">Try Again</button>
+      </div>
+    </div>
+  );
+  try { return <>{children}</>; } catch(e: any) { setError(e?.message ?? String(e)); return null; }
+}
+
 const renderPage = () => {
     // Prison blocking for crime pages
     const prisonBlockedPages = ["crimes", "steal_from_house", "gta_car_theft", "kill", "hit_list",
@@ -2064,14 +2080,22 @@ const renderPage = () => {
       );
     }
 
-    // Dead player blocking
-    if (player?.isDead && !["hospital", "headquarters", "updates"].includes(activePage)) {
+    // Dead player blocking — only block crime/combat/gambling, allow hubs/info/progression
+    const deadBlockedPages = ["crimes", "steal_from_house", "gta_car_theft", "kill", "hit_list",
+      "fight_club", "contracts", "underground", "counterfeiting", "drug_trafficking", "arson",
+      "identity_theft", "arms_deal", "tax_evasion", "racketeering", "gambling_den",
+      "crime_empire", "heist_planning", "organized_crime", "crime_spree",
+      "roulette", "slots", "russian_roulette", "blackjack", "dog_fight", "street_racing", "lotto",
+      "smuggling", "colosseum", "last_man_standing", "robbery", "fraud", "burglary", "drugs", "arena",
+      "gambling_overview", "world_events", "storyline"];
+    if (player?.isDead && deadBlockedPages.includes(activePage)) {
       return (
         <div className="animate-fade-in space-y-6">
           <div className="rounded-2xl p-8 border-2 border-red-500/40 bg-red-950/20 text-center">
             <div className="text-6xl mb-4">💀</div>
             <div className="text-2xl font-black text-red-400">YOU ARE DEAD</div>
             <div className="text-sm text-muted-foreground mt-2">Visit the Hospital to revive.</div>
+            <button onClick={() => setPage("hospital")} className="mt-4 px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-bold transition-all">🏥 Go to Hospital</button>
           </div>
         </div>
       );
@@ -2523,7 +2547,7 @@ const renderPage = () => {
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            {(() => { try { return renderPage(); } catch(e) { console.error("Page render error:", e); return <div className="p-4 text-center"><div className="text-2xl mb-2">⚠️</div><div className="text-sm text-red-400">Page failed to load</div><div className="text-xs text-slate-500 mt-1">{String(e)}</div><button onClick={() => window.location.reload()} className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold">Reload</button></div>; } })()}
+            <ErrorBoundary>{renderPage()}</ErrorBoundary>
           </main>
         </div>
 
