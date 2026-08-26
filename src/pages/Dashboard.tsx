@@ -2042,7 +2042,7 @@ function MurderPage() {
 
 
 
-function ErrorBoundary({children}: {children: React.ReactNode}) {
+function ErrorBoundary({children}: {children: any}) {
   const [error, setError] = useState<string | null>(null);
   if (error) return (
     <div className="animate-fade-in p-6">
