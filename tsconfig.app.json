@@ -7,6 +7,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "incremental": true,
+    "isolatedModules": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,
