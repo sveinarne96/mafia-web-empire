@@ -74,7 +74,7 @@ import {
 import { MissionsOverviewPage } from "@/components/MissionPages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
-import { EconomyHub, AssetsHub, SocialHub, ProgressionHub, SpecialHub, ForumsHub, ChatsHub, QuickinfoHub, SeasonalHub, ServerEventsHub, HelpHub } from "@/components/HubPages";
+// HubPages inlined below - no external import needed
 
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
@@ -1527,6 +1527,51 @@ function DailyMissionsPage() { return <MissionsOverviewPage />; }
 function WeeklyMissionsPage() { return <MissionsOverviewPage />; }
 function MonthlyMissionsPage() { return <MissionsOverviewPage />; }
 
+
+// Inline Hub Page component - simple, no external deps
+function HubP({ title, icon, tabs }: { title: string; icon: string; tabs: { id: string; l: string; ic: string; d: string }[] }) {
+  const [tab, setTab] = useState(tabs[0]?.id || "");
+  const [msg, setMsg] = useState("");
+  const t = tabs.find(x => x.id === tab);
+  return (
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">{icon}</span>
+        <h2 className="text-2xl font-black text-amber-400">{title}</h2>
+      </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-thin">
+        {tabs.map(x => (
+          <button key={x.id} onClick={() => { setTab(x.id); setMsg(""); }}
+            className={"px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shrink-0 " + (tab === x.id ? "bg-amber-600/20 border-amber-500/40 text-amber-300" : "border-slate-800/40 text-slate-500 hover:border-slate-600/30 hover:text-slate-400")}>
+            <span className="mr-1">{x.ic}</span>{x.l}
+          </button>
+        ))}
+      </div>
+      {msg && <div className="px-4 py-2 rounded-lg bg-green-900/30 border border-green-500/30 text-green-400 text-xs font-bold animate-fade-in">✅ {msg}</div>}
+      {t && (
+        <div className="mafia-card rounded-xl p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">{t.ic}</span>
+            <div>
+              <div className="text-lg font-black text-slate-200">{t.l}</div>
+              <div className="text-xs text-slate-400">{t.d}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="mafia-card rounded-lg p-2 text-center"><div className="text-[10px] text-slate-400">Status</div><div className="text-xs font-bold text-green-400">Active</div></div>
+            <div className="mafia-card rounded-lg p-2 text-center"><div className="text-[10px] text-slate-400">Level</div><div className="text-xs font-bold text-amber-400">Lv.1</div></div>
+            <div className="mafia-card rounded-lg p-2 text-center"><div className="text-[10px] text-slate-400">Bonus</div><div className="text-xs font-bold text-purple-400">+10%</div></div>
+          </div>
+          <button onClick={() => setMsg(t.l + " feature activated!")} className="w-full px-4 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl text-sm font-black hover:from-amber-500 hover:to-amber-600 active:scale-95 transition-all shadow-lg">
+            🔥 Activate {t.l}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export default function Dashboard() {
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
   const player = useQuery(api.game.getPlayer);
@@ -2263,17 +2308,17 @@ const renderPage = () => {
 
             // Combat
       case "arena": return <CombatOverviewPage />;
-      case "help": return <HelpHub />;
-      case "server_events": return <ServerEventsHub />;
-      case "seasonal": return <SeasonalHub />;
-      case "quickinfo": return <QuickinfoHub />;
-      case "chats": return <ChatsHub />;
-      case "forums": return <ForumsHub />;
-      case "special": return <SpecialHub />;
-      case "progression": return <ProgressionHub />;
-      case "social": return <SocialHub />;
-      case "assets": return <AssetsHub />;
-      case "economy": return <EconomyHub />;
+      case "help": return <HubP title="Help Center" icon="❓" tabs={[{id:"faq",l:"FAQ",ic:"❓",d:"Browse frequently asked questions"},{id:"support",l:"Support",ic:"🆘",d:"Submit a support ticket"},{id:"guidelines",l:"Guidelines",ic:"📜",d:"Community rules and guidelines"},{id:"reports",l:"Reports",ic:"📢",d:"Player reports"}]} />;
+      case "server_events": return <HubP title="Server Events" icon="⚡" tabs={[{id:"purge",l:"Purge Night",ic:"💀",d:"24h lawlessness - no police!"},{id:"blood",l:"Blood Moon",ic:"🌑",d:"All combat damage doubled"},{id:"robbers",l:"Robber's Moon",ic:"🌙",d:"All crimes +20% success"},{id:"full",l:"Full Moon",ic:"🌕",d:"ALL boosts active"},{id:"grand",l:"Grand Heist",ic:"🏦",d:"10x bank heist rewards"},{id:"tourney",l:"Tournament",ic:"🏆",d:"Server-wide PvP"},{id:"family",l:"Family War",ic:"⚔️",d:"5x reputation from wars"},{id:"territory",l:"Territory",ic:"📍",d:"+300% income"},{id:"under",l:"Underground",ic:"💣",d:"Fighting tournament"},{id:"empire",l:"Crime Empire",ic:"👑",d:"All empire ops +5x"}]} />;
+      case "seasonal": return <HubP title="Seasonal Events" icon="🎆" tabs={[{id:"ny",l:"New Year",ic:"🎆",d:"New Year's Heist"},{id:"v",l:"Valentine",ic:"❤️",d:"Valentine's Crime"},{id:"sp",l:"St. Patrick",ic:"☘️",d:"St. Patrick's Gold"},{id:"e",l:"Easter",ic:"🥚",d:"Easter Egg Hunt"},{id:"su",l:"Summer",ic:"☀️",d:"Summer Crime Wave"},{id:"h",l:"Halloween",ic:"🎃",d:"Halloween Horror"},{id:"ch",l:"Christmas",ic:"🎄",d:"Christmas Heist"},{id:"cm",l:"Cyber Monday",ic:"💻",d:"Hacking skills +5x"},{id:"bf",l:"Black Friday",ic:"🛒",d:"Crime costs -50%"},{id:"ts",l:"Tax Season",ic:"📋",d:"Tax evasion +10x"},{id:"sb",l:"Spring Break",ic:"🌸",d:"College town crime wave"},{id:"ww",l:"Winter",ic:"❄️",d:"Blizzard = easy heists"}]} />;
+      case "quickinfo": return <HubP title="Quick Info" icon="🗺️" tabs={[{id:"airport",l:"Airport",ic:"✈️",d:"Travel between cities"},{id:"weather",l:"Weather",ic:"🌤️",d:"Affects crime success rates"},{id:"news",l:"News",ic:"📰",d:"Server announcements"},{id:"map",l:"City Map",ic:"🗺️",d:"Explore the city"},{id:"stats",l:"Statistics",ic:"📊",d:"Your game statistics"},{id:"world",l:"World Map",ic:"🌍",d:"See all territories"}]} />;
+      case "chats": return <HubP title="Chats" icon="💬" tabs={[{id:"crew",l:"Crew Chat",ic:"💬",d:"Private crew chat"},{id:"family",l:"Family Chat",ic:"👨‍👩‍👦",d:"Chat with your family"},{id:"global",l:"Global Chat",ic:"🌐",d:"Talk to everyone"},{id:"trade",l:"Trade Chat",ic:"💹",d:"Buy/sell/negotiate"},{id:"lfg",l:"Looking for Group",ic:"👥",d:"Find players for heists"}]} />;
+      case "forums": return <HubP title="Forums" icon="📢" tabs={[{id:"general",l:"General",ic:"📢",d:"Discuss anything game-related"},{id:"sales",l:"Sales",ic:"💰",d:"Buy/sell/trade with players"},{id:"offtopic",l:"Off-Topic",ic:"💭",d:"Chat outside the game"},{id:"shadows",l:"Shadows",ic:"🌑",d:"Secret discussions - VIP only"},{id:"search",l:"Search",ic:"🔍",d:"Find posts by keyword"}]} />;
+      case "special": return <HubP title="Special" icon="👻" tabs={[{id:"ghost",l:"Ghost Mode",ic:"👻",d:"Invisible for 1 hour - $5M"},{id:"secrets",l:"Secret Challenges",ic:"🔮",d:"Hidden objectives"},{id:"rep",l:"Reputation",ic:"🌍",d:"Build underworld rep"},{id:"wanted",l:"Wanted",ic:"🔴",d:"Check wanted status"},{id:"prison",l:"Prison",ic:"🔒",d:"Sentence and bail info"},{id:"arena",l:"Arena",ic:"🏟️",d:"Fight other players"},{id:"lms",l:"Last Man Standing",ic:"🏆",d:"Last alive wins!"}]} />;
+      case "progression": return <HubP title="Progression" icon="🧠" tabs={[{id:"skills",l:"Skill Tree",ic:"🧠",d:"Upgrade combat/stealth/hacking"},{id:"prestige",l:"Prestige",ic:"⭐",d:"Reset for permanent bonuses"},{id:"titles",l:"Titles",ic:"👑",d:"Unlock special titles"},{id:"achieve",l:"Achievements",ic:"🏅",d:"Complete challenges"},{id:"legacy",l:"Legacy",ic:"📜",d:"Season history"},{id:"lb",l:"Leaderboards",ic:"📊",d:"Top players"},{id:"pass",l:"Season Pass",ic:"🎫",d:"Free + premium tracks"}]} />;
+      case "social": return <HubP title="Social" icon="🤝" tabs={[{id:"crew",l:"Crew",ic:"🤝",d:"Create or join a crew"},{id:"ranks",l:"Crew Ranks",ic:"📊",d:"Leader/Officer/Member"},{id:"bank",l:"Crew Bank",ic:"🏦",d:"Shared crew funds"},{id:"war",l:"Crew War",ic:"⚔️",d:"Challenge rival crews"},{id:"territory",l:"Territory",ic:"📍",d:"Claim neighborhoods"},{id:"lb",l:"Leaderboard",ic:"🏆",d:"Top crew rankings"},{id:"family",l:"Family",ic:"👨‍👩‍👦",d:"Form a criminal dynasty"}]} />;
+      case "assets": return <HubP title="Assets" icon="📦" tabs={[{id:"garage",l:"Garage",ic:"🚗",d:"Manage stolen vehicles"},{id:"items",l:"My Items",ic:"🎒",d:"View inventory"},{id:"bm",l:"Black Market",ic:"🖤",d:"Buy illegal weapons/drugs"},{id:"guards",l:"Bodyguards",ic:"🛡️",d:"Personal protection"},{id:"boxes",l:"Mystery Boxes",ic:"📦",d:"Chance for legendary items"}]} />;
+      case "economy": return <HubP title="Economy" icon="💰" tabs={[{id:"bank",l:"Bank",ic:"🏦",d:"Deposit/withdraw/earn interest"},{id:"robbery",l:"Robbery",ic:"💰",d:"Rob stores and banks"},{id:"interest",l:"Interest",ic:"📈",d:"Earn daily interest"},{id:"credit",l:"Credit",ic:"💳",d:"Take loans/credit score"},{id:"ins",l:"Insurance",ic:"🏥",d:"Health/life/property"},{id:"crypto",l:"Crypto",ic:"⛏️",d:"Mine and trade crypto"},{id:"auto",l:"Auto Shop",ic:"🚗",d:"Repair/upgrade vehicles"},{id:"offshore",l:"Offshore",ic:"🏝️",d:"Hide money offshore"},{id:"spin",l:"Daily Spin",ic:"🎰",d:"Win prizes"},{id:"ref",l:"Referral",ic:"🔗",d:"Earn $100K per recruit"},{id:"craft",l:"Crafting",ic:"🔧",d:"Combine materials"}]} />
       
       
       

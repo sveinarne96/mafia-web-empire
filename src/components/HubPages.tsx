@@ -1,3 +1,4 @@
+console.log("[HubPages] Module loaded");
 import React from "react";
 import { useState } from "react";
 
