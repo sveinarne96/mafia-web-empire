@@ -623,37 +623,51 @@ function MissionCard({ mission, onComplete, isCompleted }: {
 }) {
   const diff = DIFFICULTIES.find(d => d.id === mission.difficulty) || DIFFICULTIES[0];
   const cat = CATEGORIES.find(c => c.id === mission.category) || CATEGORIES[0];
+  const diffColors: Record<string, string> = {
+    easy: "from-green-500/20 to-green-900/10 border-green-500/30",
+    medium: "from-yellow-500/20 to-yellow-900/10 border-yellow-500/30",
+    hard: "from-orange-500/20 to-orange-900/10 border-orange-500/30",
+    elite: "from-red-500/20 to-red-900/10 border-red-500/30",
+    legendary: "from-purple-500/20 to-purple-900/10 border-purple-500/30",
+  };
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      className={`mafia-card rounded-xl p-3 transition-all hover:border-amber-500/30 ${isCompleted ? "opacity-50" : ""}`}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: 1.02, y: -2 }}
+      className={`relative overflow-hidden rounded-xl border transition-all cursor-pointer ${isCompleted ? "opacity-40" : ""} bg-gradient-to-br ${diffColors[mission.difficulty] || diffColors.easy}`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="text-sm">{cat.icon}</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${diff.bg} ${diff.color}`}>{diff.name}</span>
+      {/* Top accent bar */}
+      <div className={`h-1 w-full ${mission.difficulty === "legendary" ? "bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500" : mission.difficulty === "elite" ? "bg-gradient-to-r from-red-500 to-orange-500" : mission.difficulty === "hard" ? "bg-gradient-to-r from-orange-500 to-yellow-500" : mission.difficulty === "medium" ? "bg-gradient-to-r from-yellow-500 to-amber-500" : "bg-gradient-to-r from-green-500 to-emerald-500"}`} />
+
+      <div className="p-2.5">
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1">
+            <span className="text-base">{cat.icon}</span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${diff.bg} ${diff.color}`}>{diff.name}</span>
           </div>
-          <div className="text-sm font-bold text-slate-200 truncate">{mission.name}</div>
-          <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-2">{mission.description}</div>
-          <div className="flex gap-2 mt-1.5">
-            <span className="text-[10px] text-green-400">+{mission.xpReward.toLocaleString()} XP</span>
-            <span className="text-[10px] text-amber-400">+${mission.cashReward.toLocaleString()}</span>
-            <span className="text-[10px] text-slate-500">Lv.{mission.levelRequired}+</span>
-          </div>
-        </div>
-        <div className="shrink-0">
           {isCompleted ? (
-            <span className="text-green-500 text-lg">✅</span>
+            <span className="text-green-400 text-sm">✅</span>
           ) : (
-            <button
-              onClick={() => onComplete(mission)}
-              className="px-3 py-1.5 bg-amber-600/20 border border-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold hover:bg-amber-600/30 transition-all whitespace-nowrap"
-            >
+            <button onClick={() => onComplete(mission)}
+              className="px-2.5 py-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg text-[10px] font-black hover:from-amber-500 hover:to-amber-600 transition-all shadow-lg shadow-amber-900/20 active:scale-95">
               DO
             </button>
           )}
+        </div>
+
+        {/* Mission name */}
+        <div className="text-xs font-black text-slate-100 leading-tight mb-0.5 line-clamp-1">{mission.name}</div>
+
+        {/* Description */}
+        <div className="text-[10px] text-slate-400 leading-tight line-clamp-2 mb-1.5">{mission.description}</div>
+
+        {/* Rewards */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-900/30 text-green-400">⚡ {mission.xpReward.toLocaleString()} XP</span>
+          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400">💰 ${mission.cashReward.toLocaleString()}</span>
+          <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-800/50 text-slate-500">Lv.{mission.levelRequired}+</span>
         </div>
       </div>
     </motion.div>
@@ -778,44 +792,37 @@ export function MissionsOverviewPage() {
         </div>
 
         {/* Story Arc Cards */}
-        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-1">
           {displayStoryMissions.length === 0 ? (
             <div className="text-center py-4 text-slate-500 text-xs">
               {storyTab === "active" ? "All storyline missions completed! New cycle starting..." : "No completed storyline missions yet"}
             </div>
           ) : (
             displayStoryMissions.map(m => (
-              <div key={m.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${completedIds.has(m.id) ? "bg-green-900/10 border-green-500/20 opacity-60" : "bg-slate-800/30 border-slate-700/30 hover:border-amber-500/30"}`}>
-                <div className="text-xl shrink-0">{m.icon}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${m.difficulty==="easy"?"bg-green-900/40 text-green-400":m.difficulty==="medium"?"bg-yellow-900/40 text-yellow-400":m.difficulty==="hard"?"bg-orange-900/40 text-orange-400":"bg-purple-900/40 text-purple-400"}`}>{m.difficulty}</span>
-                    <span className="text-[10px] text-slate-500">Ch.{m.chapter}/{m.totalChapters}</span>
+              <div key={m.id} className={`relative overflow-hidden rounded-xl border transition-all ${completedIds.has(m.id) ? "bg-green-900/10 border-green-500/20 opacity-50" : "bg-gradient-to-br from-amber-500/10 to-amber-900/5 border-amber-500/20 hover:border-amber-500/40"}`}>
+                <div className="h-1 w-full bg-gradient-to-r from-amber-500 to-yellow-500" />
+                <div className="p-2.5">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-base">{m.icon}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase tracking-wider ${m.difficulty==="easy"?"bg-green-900/40 text-green-400":m.difficulty==="medium"?"bg-yellow-900/40 text-yellow-400":m.difficulty==="hard"?"bg-orange-900/40 text-orange-400":"bg-purple-900/40 text-purple-400"}`}>{m.difficulty}</span>
+                      <span className="text-[9px] text-slate-500 font-bold">Ch.{m.chapter}/{m.totalChapters}</span>
+                    </div>
+                    {completedIds.has(m.id) ? (
+                      <span className="text-green-400 text-sm">✅</span>
+                    ) : (
+                      <button onClick={() => handleComplete({id: m.id, name: m.name, description: m.description, category: "story", difficulty: m.difficulty, xpReward: m.xpReward, cashReward: m.cashReward, levelRequired: m.levelRequired})}
+                        className="px-2.5 py-1 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-lg text-[10px] font-black hover:from-amber-500 hover:to-amber-600 transition-all shadow-lg shadow-amber-900/20 active:scale-95">
+                        DO
+                      </button>
+                    )}
                   </div>
-                  <div className="text-sm font-bold text-slate-200 truncate">{m.name}</div>
-                  <div className="text-[10px] text-slate-400 truncate">{m.description}</div>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-[10px] text-green-400">+{m.xpReward.toLocaleString()} XP</span>
-                    <span className="text-[10px] text-amber-400">+${m.cashReward.toLocaleString()}</span>
+                  <div className="text-xs font-black text-slate-100 leading-tight mb-0.5 line-clamp-1">{m.name}</div>
+                  <div className="text-[10px] text-slate-400 leading-tight line-clamp-1 mb-1">{m.description}</div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-green-900/30 text-green-400">⚡ {m.xpReward.toLocaleString()} XP</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400">💰 ${m.cashReward.toLocaleString()}</span>
                   </div>
-                </div>
-                <div className="shrink-0">
-                  {completedIds.has(m.id) ? (
-                    <span className="text-green-500 text-lg">✅</span>
-                  ) : (
-                    <button onClick={() => handleComplete({
-                      id: m.id,
-                      name: m.name,
-                      description: m.description,
-                      category: "story",
-                      difficulty: m.difficulty,
-                      xpReward: m.xpReward,
-                      cashReward: m.cashReward,
-                      levelRequired: m.levelRequired,
-                    })} className="px-3 py-1.5 bg-amber-600/20 border border-amber-500/30 text-amber-300 rounded-lg text-[10px] font-bold hover:bg-amber-600/30 transition-all whitespace-nowrap">
-                      DO
-                    </button>
-                  )}
                 </div>
               </div>
             ))
@@ -912,7 +919,7 @@ export function MissionsOverviewPage() {
       </div>
 
       {/* Mission List */}
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <AnimatePresence mode="wait">
           {pagedMissions.length > 0 ? (
             pagedMissions.map(m => (
