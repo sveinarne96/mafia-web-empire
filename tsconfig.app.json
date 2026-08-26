@@ -6,16 +6,13 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-
-    /* Bundler mode */
+    "incremental": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": false,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-
-    /* Linting */
     "strict": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
@@ -28,5 +25,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "vly-toolbar-readonly.tsx"]
+  "include": ["src"],
+  "exclude": ["vly-toolbar-readonly.tsx"]
 }

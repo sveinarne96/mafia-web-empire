@@ -2622,6 +2622,7 @@ function FortuneCookieGame() {
   );
 }
 /* ═══════════ INSTANT WIN ═══════════ */
+
 function InstantWinPage() {
   const [g, setG] = useState("crash");
   const tabs: [string, string][] = [["crash","Crash"],["mines","Mines"],["plinko","Plinko"],["limbo","Limbo"],["fortune","Fortune Cookie"]];
