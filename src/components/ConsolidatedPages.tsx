@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { } from "convex/react";
+
 
 /* ═══════════ CONSOLIDATED PAGES — All features in one page each ═══════════ */
 
@@ -33,7 +33,6 @@ function FeatureStub({ icon, title, desc }: { icon: string; title: string; desc:
 /* ═══════════ 1. ECONOMY PAGE ═══════════ */
 export function EconomyPage() {
   const [tab, setTab] = useState("bank");
-  const player = useQuery(api.game.getPlayer);
   const tabs = [
     { id: "bank", label: "Bank", icon: "🏦" },
     { id: "robbery", label: "Robbery", icon: "💰" },
@@ -55,7 +54,7 @@ export function EconomyPage() {
       <TabBar tabs={tabs} active={tab} onSelect={setTab} />
       <AnimatePresence mode="wait">
         <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="space-y-3">
-          {tab === "bank" && <FeatureStub icon="🏦" title="Bank Account" desc={`Your bank balance: $${((player as any)?.bank ?? 0).toLocaleString()}. Deposit, withdraw, and earn interest.`} />}
+          {tab === "bank" && <FeatureStub icon="🏦" title="Bank Account" desc="Deposit, withdraw, and earn interest on your bank balance." />}
           {tab === "robbery" && <FeatureStub icon="💰" title="Bank Robbery" desc="Plan and execute a bank heist. Higher risk, massive rewards." />}
           {tab === "interest" && <FeatureStub icon="📈" title="Interest Rates" desc="Earn passive income on your bank deposits. Higher balances earn more." />}
           {tab === "credit" && <FeatureStub icon="💳" title="Credit Score" desc="Your credit score affects loan rates and business opportunities." />}

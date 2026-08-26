@@ -2523,7 +2523,7 @@ const renderPage = () => {
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            {renderPage()}
+            {(() => { try { return renderPage(); } catch(e) { console.error("Page render error:", e); return <div className="p-4 text-center"><div className="text-2xl mb-2">⚠️</div><div className="text-sm text-red-400">Page failed to load</div><div className="text-xs text-slate-500 mt-1">{String(e)}</div><button onClick={() => window.location.reload()} className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold">Reload</button></div>; } })()}
           </main>
         </div>
 
