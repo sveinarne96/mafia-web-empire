@@ -76,6 +76,16 @@ import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
 // HubPages inlined below - no external import needed
 import { WorkingHub, getHubTabs } from "@/components/WorkingHubPages";
+import { WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
+import { PrisonLifePage, SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
+import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
+import { FactionWarfarePage, AdvancedCraftingPage } from "@/components/SystemFaction";
+import { PetSystemPage, DayNightPage } from "@/components/SystemPetDayNight";
+import { VehicleSystemPage, BusinessManagementPage } from "@/components/SystemVehicleBusiness";
+import { PrestigeLegacyPage, CoopGameplayPage } from "@/components/SystemPrestigeCoop";
+import { AdvancedCombatPage, ReputationInfluencePage } from "@/components/SystemCombatReputation";
+import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/SystemUnderworldEvents";
+import { CrimeScenePage } from "@/components/SystemCrimeScene";
 
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
@@ -188,6 +198,35 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   ]},
   { title: "Special", icon: Sparkles, items: [
     { label: "Special Hub", page: "special", icon: "👻" },
+  ]},
+  { title: "Underworld", icon: Skull, items: [
+    { label: "Witness System", page: "witness_system", icon: "🔍" },
+    { label: "Forensics Lab", page: "forensics_lab", icon: "🔬" },
+    { label: "Court System", page: "court_system", icon: "⚖️" },
+    { label: "Crime Scene", page: "crime_scene", icon: "🔎" },
+    { label: "Spy Network", page: "spy_network", icon: "🕵️" },
+    { label: "Informants", page: "informants", icon: "🐀" },
+  ]},
+  { title: "Empire", icon: Building2, items: [
+    { label: "Property Empire", page: "property_empire", icon: "🏗️" },
+    { label: "Vehicle System", page: "vehicle_system", icon: "🚗" },
+    { label: "Business Mgmt", page: "business_mgmt", icon: "🏢" },
+    { label: "Underworld Econ", page: "underworld_econ", icon: "🏴" },
+    { label: "Market", page: "market_system", icon: "📈" },
+  ]},
+  { title: "Power", icon: Swords, items: [
+    { label: "Faction Warfare", page: "faction_warfare", icon: "⚔️" },
+    { label: "Advanced Combat", page: "advanced_combat", icon: "🥊" },
+    { label: "Crafting", page: "advanced_crafting", icon: "🔨" },
+    { label: "Pet Companions", page: "pet_system", icon: "🐾" },
+  ]},
+  { title: "World", icon: Globe, items: [
+    { label: "Day/Night Cycle", page: "day_night", icon: "🌙" },
+    { label: "World Events", page: "world_events_dyn", icon: "🌍" },
+    { label: "Reputation", page: "reputation_influence", icon: "🌟" },
+    { label: "Co-op Raids", page: "coop_gameplay", icon: "🤝" },
+    { label: "Prestige/Legacy", page: "prestige_legacy", icon: "👑" },
+    { label: "Prison Life", page: "prison_life", icon: "⛓️" },
   ]},
 ];
 
@@ -2432,6 +2471,28 @@ const renderPage = () => {
       case "organized": return <CrimeCategoryPage categoryId="organized" />;
       // case "fraud" handled above
       case "transport": return <CrimeCategoryPage categoryId="street" />;
+      // NEW SYSTEM PAGES
+      case "witness_system": return <WitnessSystemPage />;
+      case "forensics_lab": return <ForensicsLabPage />;
+      case "court_system": return <CourtSystemPage />;
+      case "crime_scene": return <CrimeScenePage />;
+      case "spy_network": return <SpyNetworkPage />;
+      case "informants": return <InformantPage />;
+      case "property_empire": return <PropertyEmpirePage />;
+      case "vehicle_system": return <VehicleSystemPage />;
+      case "business_mgmt": return <BusinessManagementPage />;
+      case "underworld_econ": return <UnderworldEconomyPage />;
+      case "market_system": return <MarketSystemPage />;
+      case "faction_warfare": return <FactionWarfarePage />;
+      case "advanced_combat": return <AdvancedCombatPage />;
+      case "advanced_crafting": return <AdvancedCraftingPage />;
+      case "pet_system": return <PetSystemPage />;
+      case "day_night": return <DayNightPage />;
+      case "world_events_dyn": return <DynamicWorldEventsPage />;
+      case "reputation_influence": return <ReputationInfluencePage />;
+      case "coop_gameplay": return <CoopGameplayPage />;
+      case "prestige_legacy": return <PrestigeLegacyPage />;
+      case "prison_life": return <PrisonLifePage />;
       default: return <HeadquartersPage />;
     }
   };
