@@ -57,7 +57,7 @@ import {
   CrimesOverviewPage, CrimeCategoryPage, CrimeEmpirePage, HeistPlanningPage,
   WorldEventsPage, BlackMarketPage, CrimeFamePage, LegendaryCrimePage,
   RoulettePage, SlotsPage, RussianRoulettePage, DogFightPage, StreetRacingPage,
-  GiftingPage, HitListPage, CrimeCategoryPage as CCP,
+  GiftingPage, HitListPage,
 } from "@/components/GameFeatures";
 import {
   PrisonTimeDisplay, DeathMatchPage, SeasonRankingsPage, LegacyStatsPage,
@@ -2427,72 +2427,8 @@ const renderPage = () => {
         {/* Left Menu */}
         {showLeft && (
           <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-48" : "w-64"} bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block transition-all`}>
-            <div className="p-3 space-y-2">
-              {/* Player Stats Panel */}
-              {player && (() => {
-                const xpNeeded = (player.level ?? 1) * 100;
-                const xp = player.xp ?? 0;
-                const xpPct = Math.min(100, (xp / xpNeeded) * 100);
-                const lifePct = Math.min(100, ((player.life ?? 100) / (player.maxLife ?? 100)) * 100);
-                const energyPct = Math.min(100, ((player.energy ?? 100) / (player.maxEnergy ?? 100)) * 100);
-                const getRank = (lvl: number) => {
-                  if (lvl >= 200) return "Shadow Emperor";
-                  if (lvl >= 150) return "Godfather";
-                  if (lvl >= 100) return "Don";
-                  if (lvl >= 75) return "Underboss";
-                  if (lvl >= 50) return "Consigliere";
-                  if (lvl >= 35) return "Captain";
-                  if (lvl >= 20) return "Soldier";
-                  if (lvl >= 10) return "Enforcer";
-                  return "Street Rat";
-                };
-                const rank = getRank(player.level ?? 1);
-                const events = (player as any).activeEvents ?? [];
-                const has3xXp = events.some((e: any) => e?.type === "triple_xp" || e?.type === "50x_xp");
-                const has3xCash = events.some((e: any) => e?.type === "triple_cash" || e?.type === "cash_rain");
-                return (
-                  <div className="mb-2 p-2 rounded-xl border border-amber-900/30 bg-gradient-to-b from-amber-950/20 to-transparent space-y-2">
-                    {/* Username + Rank */}
-                    <div className="text-center">
-                      <div className="text-xs font-black text-amber-400 truncate">{player.nickname || player.username || "Unknown"}</div>
-                      <div className="text-[9px] text-slate-400">⭐ {rank} Lv.{player.level ?? 1}</div>
-                    </div>
-                    {/* Life Bar */}
-                    <div>
-                      <div className="flex justify-between text-[8px] text-slate-500 mb-0.5"><span>❤️ Life</span><span>{player.life ?? 100}/{player.maxLife ?? 100}</span></div>
-                      <div className="h-1.5 rounded-full bg-slate-800/50 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-red-500 to-pink-500 transition-all" style={{width: lifePct+"%"}} /></div>
-                    </div>
-                    {/* XP Bar */}
-                    <div>
-                      <div className="flex justify-between text-[8px] text-slate-500 mb-0.5"><span>📈 XP</span><span>{xp}/{xpNeeded} ({Math.floor(xpPct)}%)</span></div>
-                      <div className="h-1.5 rounded-full bg-slate-800/50 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-orange-400 transition-all" style={{width: xpPct+"%"}} /></div>
-                      <div className="text-[8px] text-slate-600 text-center mt-0.5">Next: {rank}</div>
-                    </div>
-                    {/* Energy Bar */}
-                    <div>
-                      <div className="flex justify-between text-[8px] text-slate-500 mb-0.5"><span>🥤 Energy</span><span>{player.energy ?? 100}/{player.maxEnergy ?? 100}</span></div>
-                      <div className="h-1.5 rounded-full bg-slate-800/50 overflow-hidden"><div className="h-full rounded-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all" style={{width: energyPct+"%"}} /></div>
-                    </div>
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-2 gap-1">
-                      <div className="text-center py-1 rounded-lg bg-slate-900/50 border border-slate-800/30"><div className="text-[8px] text-slate-500">💰 Cash</div><div className="text-[10px] font-black text-amber-400">${(player.money ?? 0).toLocaleString()}</div></div>
-                      <div className="text-center py-1 rounded-lg bg-slate-900/50 border border-slate-800/30"><div className="text-[8px] text-slate-500">🏆 Points</div><div className="text-[10px] font-black text-purple-400">{(player.points ?? 0).toLocaleString()}</div></div>
-                      <div className="text-center py-1 rounded-lg bg-slate-900/50 border border-slate-800/30"><div className="text-[8px] text-slate-500">⚔️ ATK</div><div className="text-[10px] font-black text-red-400">{player.attack ?? 0}</div></div>
-                      <div className="text-center py-1 rounded-lg bg-slate-900/50 border border-slate-800/30"><div className="text-[8px] text-slate-500">🛡️ DEF</div><div className="text-[10px] font-black text-blue-400">{player.defense ?? 0}</div></div>
-                      <div className="text-center py-1 rounded-lg bg-slate-900/50 border border-slate-800/30"><div className="text-[8px] text-slate-500">🌍 Rep</div><div className="text-[10px] font-black text-green-400">{player.reputation ?? 0}</div></div>
-                      <div className="text-center py-1 rounded-lg bg-slate-900/50 border border-slate-800/30"><div className="text-[8px] text-slate-500">💀 Kills</div><div className="text-[10px] font-black text-red-300">{player.kills ?? 0}</div></div>
-                    </div>
-                    {/* Active Status */}
-                    <div className="flex flex-wrap gap-1 justify-center">
-                      {(player.wantedLevel ?? 0) > 0 && <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-red-600/30 text-red-300 border border-red-600/30">🔴 WANTED {player.wantedLevel}</span>}
-                      {has3xXp && <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-yellow-600/30 text-yellow-300 border border-yellow-600/30">⚡ 3x XP</span>}
-                      {has3xCash && <span className="px-1.5 py-0.5 rounded text-[8px] font-black bg-green-600/30 text-green-300 border border-green-600/30">💰 3x Cash</span>}
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="h-px bg-gradient-to-r from-transparent via-amber-900/30 to-transparent my-1" />
-              {getLeftMenuSections(t).map(section => (
+            <div className="p-3 space-y-1">
+                            {getLeftMenuSections(t).map(section => (
                 <div key={section.title}>
                   <button onClick={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(t => t !== section.title) : [...prev, section.title])}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-white/5 transition">
