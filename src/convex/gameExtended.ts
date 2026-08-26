@@ -968,3 +968,25 @@ export const blackjackStand = mutation({ args: { hand: v.optional(v.array(v.stri
 export const searchForumPosts = query({ args: { query: v.string() }, handler: async (ctx, args) => { return await ctx.db.query("forumPosts").collect(); } });
 export const submitSupportTicket = mutation({ args: { subject: v.string(), body: v.string() }, handler: async (ctx, args) => { return { success: true }; } });
 export const claimDailyReward = mutation({ args: {}, handler: async (ctx) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const now = Date.now(); const lastClaim = (p as any).lastDailyClaim ?? 0; const TWELVE_HOURS = 43200000; if (lastClaim && (now - lastClaim) < TWELVE_HOURS) { const remaining = Math.ceil((TWELVE_HOURS - (now - lastClaim)) / 1000); const h = Math.floor(remaining / 3600); const m = Math.floor((remaining % 3600) / 60); const s = remaining % 60; return { success: false, message: `Locked! Wait ${h}h ${m}m ${s}s` }; } const streak = ((p as any).dailyStreak ?? 0) + 1; const rewards = [100000, 350000, 700000, 1400000, 2800000, 6000000, 12000000]; const dayIdx = ((streak - 1) % 7); const reward = rewards[dayIdx]; const isBonusDay = streak % 7 === 0; const xpBonus = isBonusDay ? 500 : 50; await ctx.db.patch(p._id, { money: (p.money ?? 0) + reward, dailyStreak: streak, lastDailyClaim: now, experience: ((p as any).experience ?? 0) + xpBonus }); return { success: true, reward, streak, day: dayIdx + 1, message: isBonusDay ? `🎁 DAY 7 BONUS! $${reward.toLocaleString()} + 500 XP! Streak resets!` : `🎁 Day ${dayIdx + 1}! $${reward.toLocaleString()} + ${xpBonus} XP! Come back in 12 hours!` }; } });
+
+export const buyEnergyDrink = mutation({ args: { drinkIndex: v.number() }, handler: async (ctx, args) => {
+  const p = await getPlayer(ctx);
+  if (!p) throw new Error("Not authenticated");
+  const drinks = [
+    { name: "Red Bull", cost: 5000, hours: 0.5 },
+    { name: "Monster Energy", cost: 15000, hours: 1 },
+    { name: "Venom Shot", cost: 50000, hours: 2 },
+    { name: "Liquid Gold", cost: 200000, hours: 4 },
+    { name: "Shadow Elixir", cost: 500000, hours: 8 },
+  ];
+  const drink = drinks[args.drinkIndex];
+  if (!drink) throw new Error("Invalid drink");
+  if ((p.money ?? 0) < drink.cost) throw new Error(`Not enough money! Need $${drink.cost.toLocaleString()}`);
+  const durationMs = drink.hours * 3600000;
+  const until = Date.now() + durationMs;
+  await ctx.db.patch(p._id, {
+    money: (p.money ?? 0) - drink.cost,
+    energyDrinkUntil: Math.max((p as any).energyDrinkUntil ?? 0, until),
+  } as any);
+  return { success: true, message: `🥤 ${drink.name} activated! +25% XP for ${drink.hours} hour${drink.hours !== 1 ? 's' : ''}!`, cost: drink.cost };
+} });

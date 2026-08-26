@@ -1178,27 +1178,56 @@ function SeasonsPage() {
 // === PROGRESSION PAGES ===
 function EnergyDrinksPage() {
   const player = useQuery(api.game.getPlayer);
+  const buyDrink = useMutation(api.gameExtended.buyEnergyDrink);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
   if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  const now = Date.now();
+  const energyActive = ((player as any).energyDrinkUntil ?? 0) > now;
+  const energyLeft = energyActive ? Math.ceil(((player as any).energyDrinkUntil - now) / 60000) : 0;
   const drinks = [
-    { name: "Red Bull", icon: "🥤", boost: "2x XP", duration: "30 min", cost: 5000 },
-    { name: "Monster Energy", icon: "⛽", boost: "3x XP", duration: "1 hr", cost: 15000 },
-    { name: "Venom Shot", icon: "💉", boost: "5x XP", duration: "2 hrs", cost: 50000 },
-    { name: "Liquid Gold", icon: "✨", boost: "10x XP", duration: "4 hrs", cost: 200000 },
-    { name: "Shadow Elixir", icon: "🧪", boost: "15x XP", duration: "8 hrs", cost: 500000 },
+    { name: "Red Bull", icon: "🥤", boost: "+25% XP", duration: "30 min", cost: 5000 },
+    { name: "Monster Energy", icon: "⛽", boost: "+25% XP", duration: "1 hr", cost: 15000 },
+    { name: "Venom Shot", icon: "💉", boost: "+25% XP", duration: "2 hrs", cost: 50000 },
+    { name: "Liquid Gold", icon: "✨", boost: "+25% XP", duration: "4 hrs", cost: 200000 },
+    { name: "Shadow Elixir", icon: "🧪", boost: "+25% XP", duration: "8 hrs", cost: 500000 },
   ];
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex items-center gap-3"><span className="text-3xl">⚡</span><h2 className="text-2xl font-bold">Energy Drinks</h2></div>
-      <div className="text-sm text-muted-foreground mb-3">25% chance to find energy drinks during criminal actions!</div>
+      {energyActive && (
+        <div className="px-4 py-3 rounded-xl bg-orange-950/30 border border-orange-500/30 text-center">
+          <div className="text-sm font-bold text-orange-400">🥤 Energy Rush Active!</div>
+          <div className="text-xs text-orange-300/70">+25% XP on all crimes · {energyLeft}m remaining</div>
+        </div>
+      )}
+      <div className="text-sm text-muted-foreground mb-3">+25% XP boost on all criminal actions! Stacks with existing boosts.</div>
       <div className="space-y-2">
-        {drinks.map(d => (
+        {drinks.map((d, i) => (
           <div key={d.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
             <span className="text-3xl">{d.icon}</span>
-            <div className="flex-1"><div className="font-bold">{d.name}</div><div className="text-xs text-muted-foreground">{d.boost} for {d.duration}</div></div>
-            <button className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs">${d.cost.toLocaleString()}</button>
+            <div className="flex-1">
+              <div className="font-bold">{d.name}</div>
+              <div className="text-xs text-muted-foreground">{d.boost} for {d.duration}</div>
+            </div>
+            <button
+              onClick={async () => {
+                setLoading(true); setMsg("");
+                try {
+                  const r = await buyDrink({ drinkIndex: i });
+                  setMsg(r.message);
+                } catch (e: unknown) {
+                  setMsg(e instanceof Error ? e.message : "Error");
+                }
+                setLoading(false);
+              }}
+              disabled={loading || (player.money ?? 0) < d.cost}
+              className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700 disabled:opacity-40 transition-all"
+            >${d.cost.toLocaleString()}</button>
           </div>
         ))}
       </div>
+      {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}
     </div>
   );
 }
