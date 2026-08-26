@@ -74,6 +74,7 @@ import {
 import { MissionsOverviewPage } from "@/components/MissionPages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
+import { EconomyPage, AssetsPage, SocialPage, ProgressionPage, SpecialPage, ForumsPage, ChatsPage, QuickInfoPage, SeasonalEventsPage, HelpPage } from "@/components/ConsolidatedPages";
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
   WantedBoardPage, SmugglingRoutesPage, CartelPage, ReputationPage,
@@ -172,89 +173,19 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "Mission Board", page: "missions", icon: "📋" },
   ]},
   { title: "Economy", icon: Coins, items: [
-    { label: "Bank Account", page: "bank_account", icon: "🏦" },
-    { label: "Bank Robbery", page: "bank_robbery", icon: "💰" },
-    { label: "Interest Rates", page: "interest_rates", icon: "📈" },
-    { label: "Credit Score", page: "credit_score", icon: "💳" },
-    { label: "Health Insurance", page: "health_insurance", icon: "🏥" },
-    { label: "Life Insurance", page: "life_insurance", icon: "❤️" },
-    { label: "Crypto Mining", page: "crypto", icon: "⛏️" },
-    { label: "Crypto Trading", page: "crypto_trading", icon: "📊" },
-    { label: "Auto Shop", page: "auto_shop", icon: "🚗" },
-    { label: "Offshore Accounts", page: "offshore", icon: "🏝️" },
-    { label: "Daily Spin", page: "daily_spin", icon: "🎰" },
-    { label: "Referral System", page: "referral", icon: "🔗" },
-    { label: "Crafting", page: "crafting", icon: "🔧" },
+    { label: "Economy Hub", page: "economy", icon: "💰" },
   ]},
   { title: "Assets", icon: Package, items: [
-    { label: t("right.garage"), page: "garage", icon: "🚗" },
-    { label: t("right.items"), page: "items", icon: "🎒" },
-    { label: "Black Market", page: "black_market", icon: "🖤" },
-    { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
-    { label: "Mystery Boxes", icon: "📦", children: [
-      { label: "Standard Box", page: "box_standard", icon: "📦" },
-      { label: "Premium Box", page: "box_premium", icon: "💎" },
-      { label: "Legendary Box", page: "box_legendary", icon: "👑" },
-      { label: "Seasonal Box", page: "box_seasonal", icon: "🎄" },
-      { label: "Crime Box", page: "box_crime", icon: "🔪" },
-      { label: "Combat Box", page: "box_combat", icon: "⚔️" },
-      { label: "Guaranteed Legendary", page: "box_guaranteed", icon: "⭐" },
-      { label: "Limited Edition", page: "box_limited", icon: "🔥" },
-    ]},
+    { label: "Assets Hub", page: "assets", icon: "📦" },
   ]},
   { title: "Social", icon: Users, items: [
-    { label: "Crew System", page: "crew", icon: "🤝" },
-    { label: "Crew Ranks", page: "crew_ranks", icon: "📊" },
-    { label: "Crew Bank", page: "crew_bank", icon: "🏦" },
-    { label: "Crew War", page: "crew_war", icon: "⚔️" },
-    { label: "Crew Alliance", page: "crew_alliance", icon: "🤝" },
-    { label: "Crew Territory", page: "crew_territory", icon: "📍" },
-    { label: "Crew Challenges", page: "crew_challenges", icon: "🎯" },
-    { label: "Crew Leaderboard", page: "crew_leaderboard", icon: "🏆" },
-    { label: "Family System", page: "family", icon: "👨‍👩‍👦" },
+    { label: "Social Hub", page: "social", icon: "🤝" },
   ]},
   { title: t("right.progression"), icon: TrendingUp, items: [
-    { label: t("right.skillTree"), page: "skill_tree", icon: "🧠" },
-    { label: "Combat Skills", page: "combat_skills", icon: "⚔️" },
-    { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
-    { label: t("right.prestige"), page: "prestige", icon: "⭐" },
-    { label: "Titles", page: "titles", icon: "👑" },
-    { label: "Achievements", page: "achievements", icon: "🏅" },
-    { label: "Legacy", page: "legacy", icon: "📜" },
-    { label: t("right.leaderboards"), icon: "📊", children: [
-      { label: "Level Board", page: "lb_level", icon: "📊" },
-      { label: "Money Board", page: "lb_money", icon: "💰" },
-      { label: "Kill Board", page: "lb_kills", icon: "💀" },
-      { label: "Crime Board", page: "lb_crimes", icon: "🔥" },
-      { label: "Crew Board", page: "lb_crew", icon: "🤝" },
-      { label: "Family Board", page: "lb_family", icon: "👨‍👩‍👦" },
-      { label: "Territory Board", page: "lb_territory", icon: "📍" },
-      { label: "Gambling Board", page: "lb_gambling", icon: "🎲" },
-      { label: "Mission Board", page: "lb_missions", icon: "🎯" },
-      { label: "Season Board", page: "lb_season", icon: "🗓️" },
-    ]},
-    { label: "Season Pass", page: "season_pass", icon: "🎫" },
-    { label: "Daily Challenges", page: "daily_challenges", icon: "📋" },
-    { label: "Energy Drinks", page: "energy_drinks", icon: "⚡" },
+    { label: "Progression Hub", page: "progression", icon: "🧠" },
   ]},
   { title: "Special", icon: Sparkles, items: [
-    { label: "Ghost Mode", icon: "👻", children: [
-      { label: "Activate Ghost", page: "ghost_mode", icon: "👻" },
-      { label: "Ghost Status", page: "ghost_status", icon: "👁️" },
-      { label: "Ghost History", page: "ghost_history", icon: "📋" },
-    ]},
-    { label: "Secret Challenges", icon: "🔮", children: [
-      { label: "Daily Secret", page: "secret_daily", icon: "🔮" },
-      { label: "Weekly Secret", page: "secret_weekly", icon: "💎" },
-      { label: "Hidden Achievements", page: "secret_achievements", icon: "🏆" },
-      { label: "Easter Eggs", page: "secret_eggs", icon: "🥚" },
-      { label: "Secret Crime", page: "secret_crime", icon: "🕵️" },
-    ]},
-    { label: "Reputation", page: "reputation", icon: "🌍" },
-    { label: "Wanted Status", page: "wanted", icon: "🔴" },
-    { label: "Prison", page: "prison", icon: "🔒" },
-    { label: "Colosseum", page: "colosseum", icon: "🏟️" },
-    { label: "Last Man Standing", page: "last_man_standing", icon: "🏆" },
+    { label: "Special Hub", page: "special", icon: "👻" },
   ]},
 ];
 
@@ -265,41 +196,16 @@ const getRightMenuSections = (t: (k: string) => string) => [
     { label: "Notifications", page: "notifications_page", icon: "🔔" },
   ]},
   { title: "Forums", icon: MessageSquare, items: [
-    { label: "General Forum", page: "forum_general", icon: "📢" },
-    { label: "Sales Forum", page: "forum_sales", icon: "💰" },
-    { label: "Off-Topic", page: "forum_offtopic", icon: "💭" },
-    { label: "Shadows Forum", page: "forum_shadows", icon: "🌑" },
-    { label: "Search Posts", page: "forum_search", icon: "🔍" },
+    { label: "Forums Hub", page: "forums", icon: "📢" },
   ]},
   { title: "Chat", icon: MessageSquare, items: [
-    { label: "Crew Chat", page: "crew_chat", icon: "💬" },
-    { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
-    { label: "Global Chat", page: "global_chat", icon: "🌐" },
-    { label: "Trade Chat", page: "trade_chat", icon: "💹" },
-    { label: "Looking for Group", page: "lfg", icon: "👥" },
+    { label: "Chats Hub", page: "chats", icon: "💬" },
   ]},
   { title: t("right.quickInfo"), icon: Globe, items: [
-    { label: "Airport", page: "airport", icon: "✈️" },
-    { label: "Weather", page: "weather", icon: "🌤️" },
-    { label: "News Ticker", page: "news_ticker", icon: "📰" },
-    { label: "City Map", page: "city_map", icon: "🗺️" },
-    { label: "City Overview", page: "city_overview", icon: "🏙️" },
-    { label: "Statistics", page: "statistics", icon: "📊" },
-    { label: "World Map", page: "world_map", icon: "🗺️" },
+    { label: "Quick Info Hub", page: "quickinfo", icon: "🗺️" },
   ]},
   { title: "Seasonal Events", icon: Flame, items: [
-    { label: "New Year's Heist", page: "evt_newyear", icon: "🎆" },
-    { label: "Valentine's Crime", page: "evt_valentine", icon: "❤️" },
-    { label: "St. Patrick's Gold", page: "evt_patricks", icon: "☘️" },
-    { label: "Easter Egg Hunt", page: "evt_easter", icon: "🥚" },
-    { label: "Summer Crime Wave", page: "evt_summer", icon: "☀️" },
-    { label: "Halloween Horror", page: "evt_halloween", icon: "🎃" },
-    { label: "Christmas Heist", page: "evt_christmas", icon: "🎄" },
-    { label: "Cyber Monday", page: "evt_cyber", icon: "💻" },
-    { label: "Black Friday Heist", page: "evt_blackfriday", icon: "🛒" },
-    { label: "Tax Season Scam", page: "evt_tax", icon: "📋" },
-    { label: "Spring Break Crime", page: "evt_spring", icon: "🌸" },
-    { label: "Winter Wonderland", page: "evt_winter", icon: "❄️" },
+    { label: "Events Hub", page: "seasonal", icon: "🎆" },
   ]},
   { title: "Server Events", icon: Zap, items: [
     { label: "Purge Night", page: "evt_purge", icon: "💀" },
@@ -314,10 +220,7 @@ const getRightMenuSections = (t: (k: string) => string) => [
     { label: "Crime Empire Week", page: "evt_empire", icon: "👑" },
   ]},
   { title: "Help", icon: HelpCircle, items: [
-    { label: "FAQ", page: "faq", icon: "❓" },
-    { label: "Support", page: "support", icon: "🆘" },
-    { label: "Community Guidelines", page: "community", icon: "📜" },
-    { label: "Player Reports", page: "reports", icon: "📢" },
+    { label: "Help Hub", page: "help", icon: "❓" },
   ]},
   { title: t("right.system"), icon: Settings, items: [
     { label: t("right.admin"), page: "admin_panel", icon: "⚙️" },
@@ -1668,8 +1571,8 @@ export default function Dashboard() {
     return () => clearInterval(iv);
   }, []);
 
-  const [leftExpanded, setLeftExpanded] = useState<string[]>([]);
-  const [rightExpanded, setRightExpanded] = useState<string[]>([]);
+  const [leftExpanded, setLeftExpanded] = useState<string[]>(["Overview","Crimes","Combat","Gambling","Missions","Economy","Assets","Social","Progression","Special"]);
+  const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Seasonal Events","Server Events","Help","System"]);
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
   const [rightItemsExpanded, setRightItemsExpanded] = useState<string[]>([]);
   const [showLeft, setShowLeft] = useState(true);
@@ -2359,6 +2262,16 @@ const renderPage = () => {
 
             // Combat
       case "arena": return <CombatOverviewPage />;
+      case "economy": return <EconomyPage />;
+      case "assets": return <AssetsPage />;
+      case "social": return <SocialPage />;
+      case "progression": return <ProgressionPage />;
+      case "special": return <SpecialPage />;
+      case "forums": return <ForumsPage />;
+      case "chats": return <ChatsPage />;
+      case "quickinfo": return <QuickInfoPage />;
+      case "seasonal": return <SeasonalEventsPage />;
+      case "help": return <HelpPage />;
       case "duel_1v1": return <Duel1v1Page />;
       case "crew_wars": return <CrewWarsPage />;
       case "ctf": return <CTFPage />;
@@ -2496,65 +2409,6 @@ const renderPage = () => {
         </div>
       )}
 
-      {/* ═══════════ MAFIA TOP NAVIGATION ═══════════ */}
-      <div className="relative border-b border-amber-900/20 shrink-0 overflow-hidden" style={{ background: "linear-gradient(180deg, rgba(12,6,3,0.98) 0%, rgba(8,4,2,0.98) 100%)" }}>
-        {/* Animated mesh background */}
-        <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, rgba(212,153,69,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(180,120,50,0.2) 0%, transparent 50%)" }} />
-        
-        <style>{`
-          @keyframes nav-glow { 0%,100% { box-shadow: 0 0 10px var(--gc), inset 0 1px rgba(255,255,255,0.03); } 50% { box-shadow: 0 0 25px var(--gc), 0 0 50px var(--gc), inset 0 1px rgba(255,255,255,0.08); } }
-          @keyframes nav-cd { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
-          @keyframes nav-shine { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(300%) skewX(-15deg); } }
-          @keyframes nav-breathe { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
-          .nav-btn { --gc: rgba(212,153,69,0.15); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); border: 1px solid rgba(255,255,255,0.06); }
-          .nav-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events: none; }
-          .nav-btn::after { content: ''; position: absolute; top: -50%; left: -100%; width: 40%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); transform: skewX(-15deg); transition: none; pointer-events: none; }
-          .nav-btn:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 25px var(--gc), 0 0 1px rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.12); }
-          .nav-btn:hover::after { animation: nav-shine 0.5s ease-out; }
-          .nav-btn:active { transform: translateY(-1px) scale(0.98); }
-          .nav-btn.active { animation: nav-glow 2.5s ease-in-out infinite; border-color: rgba(212,153,69,0.4) !important; }
-          .nav-btn.active::before { background: linear-gradient(180deg, rgba(212,153,69,0.12) 0%, rgba(212,153,69,0.03) 50%, transparent 100%); }
-          .nav-btn.cd::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: nav-cd 1s linear infinite; width: var(--cd-pct, 100%); top: auto; transform: none; }
-          .nav-section { display: flex; align-items: center; gap: 5px; }
-          .stat-pill { animation: nav-breathe 2s ease-in-out infinite; }
-        `}</style>
-
-        <div className="flex items-center px-3 py-2 relative z-10 gap-1 overflow-x-auto">
-          {[
-            { page: "crimes", label: t("nav.street"), icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
-            { page: "robbery", label: t("nav.robbery"), icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
-            { page: "fraud", label: t("nav.fraud"), icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
-            { page: "burglary", label: t("nav.burglary"), icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
-            { page: "steal_from_house", label: t("nav.houses"), icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
-            { page: "gta_car_theft", label: t("nav.gta"), icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
-            { page: "drugs", label: t("nav.drugs"), icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
-            { page: "organized", label: t("nav.organized"), icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
-            { page: "underground", label: t("nav.underground"), icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
-            { page: "kill", label: t("nav.murder"), icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
-            { page: "world_events", label: t("nav.events"), icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
-            { page: "storyline", label: t("nav.story"), icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
-            { page: "prison", label: t("nav.prison"), icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
-            { page: "hospital", label: t("nav.hospital"), icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
-          ].map(btn => {
-            const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
-            const cdLeft = cdEnd > Date.now() ? Math.ceil((cdEnd - Date.now()) / 1000) : 0;
-            return (
-              <button key={btn.page} onClick={() => setPage(btn.page)}
-                className={`nav-btn px-3 py-1.5 rounded-lg text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""} ${cdLeft > 0 ? "cd opacity-60" : ""}`}
-                style={{ background: btn.bg, "--gc": btn.gc + "30" } as any}>
-                <span className="relative z-10 flex items-center gap-1">
-                  <span className="text-xs">{btn.icon}</span>
-                  <span>{btn.label}</span>
-                </span>
-                {cdLeft > 0 && <span className="relative z-10 ml-1 text-[8px] opacity-70 font-mono">{cdLeft}s</span>}
-              </button>
-            );
-          })}
-
-
-        </div>
-      </div>
-
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
@@ -2614,10 +2468,72 @@ const renderPage = () => {
           </aside>
         )}
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {renderPage()}
-        </main>
+        {/* Middle Column */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* ═══════════ MAFIA TOP NAVIGATION ═══════════ */}
+      <div className="relative border-b border-amber-900/20 shrink-0 overflow-hidden" style={{ background: "linear-gradient(180deg, rgba(12,6,3,0.98) 0%, rgba(8,4,2,0.98) 100%)" }}>
+        {/* Animated mesh background */}
+        <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: "radial-gradient(circle at 20% 50%, rgba(212,153,69,0.3) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(180,120,50,0.2) 0%, transparent 50%)" }} />
+        
+        <style>{`
+          @keyframes nav-glow { 0%,100% { box-shadow: 0 0 10px var(--gc), inset 0 1px rgba(255,255,255,0.03); } 50% { box-shadow: 0 0 25px var(--gc), 0 0 50px var(--gc), inset 0 1px rgba(255,255,255,0.08); } }
+          @keyframes nav-cd { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+          @keyframes nav-shine { 0% { transform: translateX(-100%) skewX(-15deg); } 100% { transform: translateX(300%) skewX(-15deg); } }
+          @keyframes nav-breathe { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+          .nav-btn { --gc: rgba(212,153,69,0.15); position: relative; overflow: hidden; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); border: 1px solid rgba(255,255,255,0.06); }
+          .nav-btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 50%); pointer-events: none; }
+          .nav-btn::after { content: ''; position: absolute; top: -50%; left: -100%; width: 40%; height: 200%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent); transform: skewX(-15deg); transition: none; pointer-events: none; }
+          .nav-btn:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 25px var(--gc), 0 0 1px rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.12); }
+          .nav-btn:hover::after { animation: nav-shine 0.5s ease-out; }
+          .nav-btn:active { transform: translateY(-1px) scale(0.98); }
+          .nav-btn.active { animation: nav-glow 2.5s ease-in-out infinite; border-color: rgba(212,153,69,0.4) !important; }
+          .nav-btn.active::before { background: linear-gradient(180deg, rgba(212,153,69,0.12) 0%, rgba(212,153,69,0.03) 50%, transparent 100%); }
+          .nav-btn.cd::after { content: ''; position: absolute; bottom: 0; left: 0; height: 2px; background: linear-gradient(90deg, #ef4444, #f97316, #ef4444); background-size: 200% 100%; animation: nav-cd 1s linear infinite; width: var(--cd-pct, 100%); top: auto; transform: none; }
+          .nav-section { display: flex; align-items: center; gap: 5px; }
+          .stat-pill { animation: nav-breathe 2s ease-in-out infinite; }
+        `}</style>
+
+        <div className="flex items-center px-3 py-2 relative z-10 gap-1 overflow-x-auto">
+          {[
+            { page: "crimes", label: t("nav.street"), icon: "🔪", gc: "#22c55e", bg: "linear-gradient(135deg, rgba(22,101,52,0.7) 0%, rgba(6,78,59,0.8) 100%)" },
+            { page: "robbery", label: t("nav.robbery"), icon: "💰", gc: "#ef4444", bg: "linear-gradient(135deg, rgba(153,27,27,0.7) 0%, rgba(127,29,29,0.8) 100%)" },
+            { page: "fraud", label: t("nav.fraud"), icon: "🎭", gc: "#eab308", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(133,77,14,0.8) 100%)" },
+            { page: "burglary", label: t("nav.burglary"), icon: "🏠", gc: "#f97316", bg: "linear-gradient(135deg, rgba(154,52,18,0.7) 0%, rgba(124,45,18,0.8) 100%)" },
+            { page: "steal_from_house", label: t("nav.houses"), icon: "🔑", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.6) 0%, rgba(120,80,10,0.7) 100%)" },
+            { page: "gta_car_theft", label: t("nav.gta"), icon: "🚗", gc: "#3b82f6", bg: "linear-gradient(135deg, rgba(30,64,175,0.7) 0%, rgba(29,78,216,0.8) 100%)" },
+            { page: "drugs", label: t("nav.drugs"), icon: "💊", gc: "#a855f7", bg: "linear-gradient(135deg, rgba(107,33,168,0.7) 0%, rgba(88,28,135,0.8) 100%)" },
+            { page: "organized", label: t("nav.organized"), icon: "🕵️", gc: "#06b6d4", bg: "linear-gradient(135deg, rgba(21,94,117,0.7) 0%, rgba(15,118,110,0.8) 100%)" },
+            { page: "underground", label: t("nav.underground"), icon: "🕳️", gc: "#78716c", bg: "linear-gradient(135deg, rgba(68,64,60,0.7) 0%, rgba(41,37,36,0.8) 100%)" },
+            { page: "kill", label: t("nav.murder"), icon: "💀", gc: "#f43f5e", bg: "linear-gradient(135deg, rgba(136,19,55,0.8) 0%, rgba(159,18,57,0.9) 100%)" },
+            { page: "world_events", label: t("nav.events"), icon: "🎪", gc: "#f59e0b", bg: "linear-gradient(135deg, rgba(161,98,7,0.7) 0%, rgba(180,83,9,0.8) 100%)" },
+            { page: "storyline", label: t("nav.story"), icon: "📖", gc: "#818cf8", bg: "linear-gradient(135deg, rgba(49,46,129,0.7) 0%, rgba(55,48,163,0.8) 100%)" },
+            { page: "prison", label: t("nav.prison"), icon: "⛓️", gc: "#94a3b8", bg: "linear-gradient(135deg, rgba(51,65,85,0.7) 0%, rgba(30,41,59,0.8) 100%)" },
+            { page: "hospital", label: t("nav.hospital"), icon: "🏥", gc: "#2dd4bf", bg: "linear-gradient(135deg, rgba(13,148,136,0.6) 0%, rgba(19,78,74,0.7) 100%)" },
+          ].map(btn => {
+            const cdEnd = (player as any)?.crimeCooldowns?.[btn.page] ?? 0;
+            const cdLeft = cdEnd > Date.now() ? Math.ceil((cdEnd - Date.now()) / 1000) : 0;
+            return (
+              <button key={btn.page} onClick={() => setPage(btn.page)}
+                className={`nav-btn px-3 py-1.5 rounded-lg text-[11px] font-bold text-white/90 whitespace-nowrap ${activePage === btn.page ? "active" : ""} ${cdLeft > 0 ? "cd opacity-60" : ""}`}
+                style={{ background: btn.bg, "--gc": btn.gc + "30" } as any}>
+                <span className="relative z-10 flex items-center gap-1">
+                  <span className="text-xs">{btn.icon}</span>
+                  <span>{btn.label}</span>
+                </span>
+                {cdLeft > 0 && <span className="relative z-10 ml-1 text-[8px] opacity-70 font-mono">{cdLeft}s</span>}
+              </button>
+            );
+          })}
+
+
+        </div>
+      </div>
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-6">
+            {renderPage()}
+          </main>
+        </div>
 
         {/* Right Menu */}
         {showRight && (
