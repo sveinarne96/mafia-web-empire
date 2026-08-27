@@ -60,7 +60,7 @@ export function VehicleSystemPage() {
                 <div key={j} className="text-center">
                   <div className="text-[9px] text-slate-400">{s.label}</div>
                   <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden mt-0.5">
-                    <div className={`h-full bg-${s.color}-500 rounded-full`} style={{ width: `${(s.value / s.max) * 100}%` }} />
+                    <div className={`h-full bg-cyan-500 rounded-full`} style={{ width: `${(s.value / s.max) * 100}%` }} />
                   </div>
                   <div className="text-[9px] text-slate-400">{s.value}/{s.max}</div>
                 </div>

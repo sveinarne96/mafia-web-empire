@@ -80,7 +80,7 @@ export function FactionWarfarePage() {
               <span>📍 {f.territory} territories</span>
             </div>
             <div className="text-[10px] text-green-400">✨ {f.perks}</div>
-            <button className={`w-full px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${f.rank !== "None" ? "bg-slate-700/50 text-slate-400 cursor-default" : `bg-${f.color}-600/20 border border-${f.color}-500/30 text-${f.color}-300 hover:bg-${f.color}-600/30`}`}>
+            <button className={`w-full px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${f.rank !== "None" ? "bg-slate-700/50 text-slate-400 cursor-default" : "bg-amber-600/20 border border-amber-500/30 text-amber-300 hover:bg-amber-600/30"}`}>
               {f.rank !== "None" ? "✅ Joined" : "Join Faction"}
             </button>
           </div>

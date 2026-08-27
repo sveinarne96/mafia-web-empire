@@ -77,12 +77,13 @@ import { CombatOverviewPage } from "@/components/CombatPages";
 // HubPages inlined below - no external import needed
 import { WorkingHub, getHubTabs } from "@/components/WorkingHubPages";
 import { WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
-import { PrisonLifePage, SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
+import { SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
 import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
 import { FactionWarfarePage, AdvancedCraftingPage } from "@/components/SystemFaction";
 import { PetSystemPage, DayNightPage } from "@/components/SystemPetDayNight";
 import { VehicleSystemPage, BusinessManagementPage } from "@/components/SystemVehicleBusiness";
-import { PrestigeLegacyPage, CoopGameplayPage } from "@/components/SystemPrestigeCoop";
+import { CoopGameplayPage } from "@/components/SystemPrestigeCoop";
+
 import { AdvancedCombatPage, ReputationInfluencePage } from "@/components/SystemCombatReputation";
 import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/SystemUnderworldEvents";
 import { CrimeScenePage } from "@/components/SystemCrimeScene";
@@ -225,8 +226,7 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "World Events", page: "world_events_dyn", icon: "🌍" },
     { label: "Reputation", page: "reputation_influence", icon: "🌟" },
     { label: "Co-op Raids", page: "coop_gameplay", icon: "🤝" },
-    { label: "Prestige/Legacy", page: "prestige_legacy", icon: "👑" },
-    { label: "Prison Life", page: "prison_life", icon: "⛓️" },
+
   ]},
 ];
 
@@ -2491,8 +2491,6 @@ const renderPage = () => {
       case "world_events_dyn": return <DynamicWorldEventsPage />;
       case "reputation_influence": return <ReputationInfluencePage />;
       case "coop_gameplay": return <CoopGameplayPage />;
-      case "prestige_legacy": return <PrestigeLegacyPage />;
-      case "prison_life": return <PrisonLifePage />;
       default: return <HeadquartersPage />;
     }
   };
