@@ -2189,8 +2189,7 @@ const renderPage = () => {
       );
     }
 
-    const pageContent = (() => {
-      switch (activePage) {
+    switch (activePage) {
       // Overview
       case "headquarters": return <HeadquartersPage />;
       case "bank": return <BankPage />;
@@ -2487,17 +2486,6 @@ const renderPage = () => {
       case "coop_gameplay": return <CoopGameplayPage />;
       default: return <HeadquartersPage />;
     }
-    })();
-
-    return (
-      <div className="animate-fade-in space-y-4">
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-900/40 to-orange-900/40 border border-amber-500/30">
-          <span className="text-xl">📍</span>
-          <span className="text-sm font-black text-amber-300">You are on: {activePage}</span>
-        </div>
-        {pageContent}
-      </div>
-    );
   };
 
   const inPrison = player?.inPrison;
