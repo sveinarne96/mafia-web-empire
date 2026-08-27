@@ -766,27 +766,24 @@ export function MissionsOverviewPage() {
   };
 
   const handleClaimAll = async () => {
-    const uncompleted = activeMissions.filter(m => !completedIds.has(m.id));
-    if (uncompleted.length === 0) { setMsg("No active missions to claim!"); setTimeout(() => setMsg(""), 3000); return; }
+    // Only claim missions that are already finished (in completedIds) but may need reward sync
+    const toClaim = finishedMissions.filter(m => completedIds.has(m.id));
+    if (toClaim.length === 0) { setMsg("No finished missions to claim!"); setTimeout(() => setMsg(""), 3000); return; }
     setLoading(true);
     let claimed = 0;
     let totalCash = 0;
     let totalXp = 0;
     try {
-      const ids = JSON.parse(localStorage.getItem("completedMissionIds") || "[]");
-      for (const m of uncompleted) {
+      for (const m of toClaim) {
         try {
           await completeMission({ missionId: m.id, reward: m.cashReward, xpReward: m.xpReward });
-          ids.push(m.id);
           claimed++;
           totalCash += m.cashReward;
           totalXp += m.xpReward;
         } catch { /* skip failed */ }
       }
-      localStorage.setItem("completedMissionIds", JSON.stringify(ids));
-      setMsg(`🎉 Claimed ${claimed} missions! +$${totalCash.toLocaleString()} +${totalXp.toLocaleString()} XP`);
+      setMsg(`🎉 Claimed ${claimed} finished missions! +$${totalCash.toLocaleString()} +${totalXp.toLocaleString()} XP`);
       setTimeout(() => setMsg(""), 4000);
-      setTab(tab);
     } catch (e: any) {
       setMsg(`❌ Error: ${e?.message || "Failed"}`);
       setTimeout(() => setMsg(""), 3000);
@@ -938,11 +935,11 @@ export function MissionsOverviewPage() {
         </button>
       </div>
 
-      {/* Claim All Button */}
-      {tab === "active" && activeMissions.length > 0 && (
+      {/* Claim All Finished Button */}
+      {tab === "finished" && finishedMissions.length > 0 && (
         <button onClick={handleClaimAll} disabled={loading}
           className="w-full py-3 rounded-xl text-sm font-black bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-500 hover:to-emerald-500 active:scale-[0.98] transition-all shadow-lg shadow-green-900/30 disabled:opacity-50">
-          {loading ? "⏳ Claiming..." : `🎉 CLAIM ALL (${activeMissions.length.toLocaleString()} missions)`}
+          {loading ? "⏳ Claiming..." : `🎉 CLAIM ALL (${finishedMissions.length.toLocaleString()} finished)`}
         </button>
       )}
 
