@@ -1665,7 +1665,7 @@ export default function Dashboard() {
     return () => clearInterval(iv);
   }, []);
 
-  const [leftExpanded, setLeftExpanded] = useState<string[]>(["Overview","Crimes","Combat","Gambling","Missions","Economy","Assets","Social","Progression","Special"]);
+  const [leftExpanded, setLeftExpanded] = useState<string[]>(["Overview","Crimes","Combat","Gambling","Missions","Economy","Assets","Social","Progression","Special","Underworld","Empire","Power","World","Companies"]);
   const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Seasonal Events","Server Events","Help","System"]);
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
   const [rightItemsExpanded, setRightItemsExpanded] = useState<string[]>([]);
@@ -2671,7 +2671,7 @@ const renderPage = () => {
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            {renderPage()}
+            <SafePage>{renderPage()}</SafePage>
           </main>
         </div>
 
