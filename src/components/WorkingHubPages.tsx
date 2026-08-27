@@ -225,6 +225,99 @@ export function getHubTabs(hub: string): TabDef[] {
       { id: "guidelines", l: "Guidelines", ic: "📜", d: "Community rules and guidelines.", pg: "community" },
       { id: "reports", l: "Reports", ic: "📢", d: "Report rule-breaking players.", pg: "reports" },
     ];
+    case "underworld": return [
+      { id: "witness", l: "Witness System", ic: "🔍", d: "Manage evidence, bribe & eliminate witnesses before the FBI connects the dots.", pg: "witness_system", items: [
+        { icon: "👆", label: "Fingerprints", desc: "Decays in 72h — bribe or eliminate", page: "witness_system" },
+        { icon: "🧬", label: "DNA Sample", desc: "Critical threat — destroy lab or plant fake", page: "witness_system" },
+        { icon: "📹", label: "Security Footage", desc: "Hack or steal DVR before they review", page: "witness_system" },
+        { icon: "🗣️", label: "Witness Testimony", desc: "Bribe, intimidate, or discredit", page: "witness_system" },
+      ]},
+      { id: "forensics", l: "Forensics Lab", ic: "🔬", d: "Advanced forensic analysis to solve (or cover up) crimes.", pg: "forensics_lab", items: [
+        { icon: "🧬", label: "DNA Analysis", desc: "$15K — Identifies killer from blood", page: "forensics_lab" },
+        { icon: "🔫", label: "Ballistics Report", desc: "$10K — Matches bullet to weapon", page: "forensics_lab" },
+        { icon: "💻", label: "Digital Forensics", desc: "$20K — Recover deleted files", page: "forensics_lab" },
+      ]},
+      { id: "court", l: "Court System", ic: "⚖️", d: "Navigate the justice system — or buy your way out.", pg: "court_system", items: [
+        { icon: "💰", label: "Post Bail", desc: "Pay bail to avoid pretrial detention", page: "court_system" },
+        { icon: "👨‍⚖️", label: "Hire Lawyer", desc: "Better chances at acquittal", page: "court_system" },
+        { icon: "⚖️", label: "Go To Trial", desc: "Risk it all in court", page: "court_system" },
+      ]},
+      { id: "crime_scene", l: "Crime Scene", ic: "🔎", d: "Collect evidence, crack cold cases, and frame rivals.", pg: "crime_scene" },
+      { id: "spy", l: "Spy Network", ic: "🕵️", d: "Wiretaps, surveillance, plant evidence, run double agents.", pg: "spy_network", items: [
+        { icon: "📞", label: "Wiretap", desc: "$10K — Listen for 24h", page: "spy_network" },
+        { icon: "🛩️", label: "Surveillance Drone", desc: "$25K — Track movements 48h", page: "spy_network" },
+        { icon: "🕵️", label: "Double Agent", desc: "$50K — Turn an enemy informant", page: "spy_network" },
+      ]},
+      { id: "informants", l: "Informants", ic: "🐀", d: "Buy intel from snitches, corrupt officials, stay ahead.", pg: "informants", items: [
+        { icon: "🐦", label: "Inside Man", desc: "$5K — Police patrol routes", page: "informants" },
+        { icon: "📞", label: "Corrupt Official", desc: "$8K — 911 call intercepts", page: "informants" },
+        { icon: "🕵️", label: "Federal Agent", desc: "$50K — FBI investigation status", page: "informants" },
+      ]},
+    ];
+    case "empire": return [
+      { id: "property", l: "Property Empire", ic: "🏗️", d: "Buy, manage, and upgrade properties across the city.", pg: "property_empire", items: [
+        { icon: "🏠", label: "Buy Property", desc: "Apartments, warehouses, mansions", page: "property_empire" },
+        { icon: "⚠️", label: "Illegal Operations", desc: "Drug labs, chop shops, counterfeiting", page: "property_empire" },
+        { icon: "🏡", label: "My Properties", desc: "Manage owned properties", page: "property_empire" },
+      ]},
+      { id: "vehicle", l: "Vehicle System", ic: "🚗", d: "Buy, modify, and upgrade your vehicle fleet.", pg: "vehicle_system", items: [
+        { icon: "🏎️", label: "Dealership", desc: "Civic to Helicopter — every tier", page: "vehicle_system" },
+        { icon: "🔧", label: "Modifications", desc: "Turbo, armor, nitrous, GPS jammer", page: "vehicle_system" },
+        { icon: "⛽", label: "Refuel", desc: "Keep your rides running", page: "vehicle_system" },
+      ]},
+      { id: "business", l: "Business Mgmt", ic: "🏢", d: "Build your legitimate (and illegitimate) empire.", pg: "business_mgmt", items: [
+        { icon: "🍕", label: "Buy Business", desc: "Pizza shops to casinos", page: "business_mgmt" },
+        { icon: "👥", label: "Hire Staff", desc: "Employees increase income", page: "business_mgmt" },
+        { icon: "⬆️", label: "Upgrade", desc: "Level up businesses for more income", page: "business_mgmt" },
+      ]},
+      { id: "underworld", l: "Underworld Econ", ic: "🏴", d: "Money laundering, loan sharking, bounty board.", pg: "underworld_econ" },
+      { id: "market", l: "Market", ic: "📈", d: "Real-time commodity trading — buy low, sell high.", pg: "market_system", items: [
+        { icon: "❄️", label: "Buy Low", desc: "Stock up when prices drop", page: "market_system" },
+        { icon: "💰", label: "Sell High", desc: "Cash out when demand spikes", page: "market_system" },
+        { icon: "📊", label: "Price Trends", desc: "Track commodity price changes", page: "market_system" },
+      ]},
+    ];
+    case "power": return [
+      { id: "faction", l: "Faction Warfare", ic: "⚔️", d: "Choose a faction, fight for territory, dominate the city.", pg: "faction_warfare", items: [
+        { icon: "🇮🇹", label: "La Cosa Nostra", desc: "15% crime bonus, Heist crew", page: "faction_warfare" },
+        { icon: "🇯🇵", label: "Yakuza", desc: "10% gambling bonus, Tattoo shop", page: "faction_warfare" },
+        { icon: "🇷🇺", label: "Russian Bratva", desc: "20% smuggling bonus", page: "faction_warfare" },
+        { icon: "🇲🇽", label: "The Cartel", desc: "25% drug bonus, Farm network", page: "faction_warfare" },
+      ]},
+      { id: "combat", l: "Advanced Combat", ic: "🥊", d: "Fighting styles, weapons, combo system, status effects.", pg: "advanced_combat", items: [
+        { icon: "🥋", label: "Fighting Styles", desc: "Boxing, MMA, Muay Thai, Krav Maga", page: "advanced_combat" },
+        { icon: "🔫", label: "Weapons Mastery", desc: "Melee and ranged proficiency", page: "advanced_combat" },
+        { icon: "💥", label: "Combo System", desc: "Chain attacks for massive damage", page: "advanced_combat" },
+      ]},
+      { id: "crafting", l: "Crafting", ic: "🔨", d: "Craft weapons, tools, and gear from raw materials.", pg: "advanced_crafting", items: [
+        { icon: "🦺", label: "Bulletproof Vest", desc: "Rare — +25 DEF", page: "advanced_crafting" },
+        { icon: "🔫", label: "Silenced Pistol", desc: "Epic — +30 ATK, Stealth bonus", page: "advanced_crafting" },
+        { icon: "📡", label: "EMP Device", desc: "Legendary — Disable all security", page: "advanced_crafting" },
+      ]},
+      { id: "pets", l: "Pet Companions", ic: "🐾", d: "Collect, level up, and equip powerful animal companions.", pg: "pet_system", items: [
+        { icon: "🐺", label: "Shadow Wolf", desc: "Legendary — +20 ATK, +15% Stealth", page: "pet_system" },
+        { icon: "🐈‍⬛", label: "Attack Cat", desc: "Epic — +15 ATK, Night Prowler", page: "pet_system" },
+        { icon: "🛒", label: "Pet Shop", desc: "Buy new companions", page: "pet_system" },
+      ]},
+    ];
+    case "world": return [
+      { id: "daynight", l: "Day/Night Cycle", ic: "🌙", d: "Time and weather affect crime opportunities.", pg: "day_night", items: [
+        { icon: "🌙", label: "Night Crimes", desc: "+20-40% crime bonuses after 8PM", page: "day_night" },
+        { icon: "☀️", label: "Day Crimes", desc: "Street robberies, identity theft", page: "day_night" },
+        { icon: "🌧️", label: "Weather Effects", desc: "Rain = less police, Snow = harder getaway", page: "day_night" },
+      ]},
+      { id: "events", l: "World Events", ic: "🌍", d: "Blackouts, protests, police strikes — changing the world.", pg: "world_events_dyn", items: [
+        { icon: "⚡", label: "Blackouts", desc: "No cameras, easier crimes", page: "world_events_dyn" },
+        { icon: "📢", label: "Protests", desc: "Chaos in the streets", page: "world_events_dyn" },
+        { icon: "🚔", label: "Police Strike", desc: "Free reign for 24 hours", page: "world_events_dyn" },
+      ]},
+      { id: "reputation", l: "Reputation", ic: "🌟", d: "Build Street Cred, Notoriety, and Infamy.", pg: "reputation_influence" },
+      { id: "coop", l: "Co-op Raids", ic: "🤝", d: "Team up for heists — find partners and split the loot.", pg: "coop_gameplay", items: [
+        { icon: "🏦", label: "Bank Heist", desc: "3-player heist, $500K+ split", page: "coop_gameplay" },
+        { icon: "💎", label: "Diamond Job", desc: "Steal gems with a partner", page: "coop_gameplay" },
+        { icon: "👥", label: "Looking for Group", desc: "Find players for co-op missions", page: "coop_gameplay" },
+      ]},
+    ];
     default: return [];
   }
 }

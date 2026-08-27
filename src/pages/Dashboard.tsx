@@ -201,32 +201,16 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "Special Hub", page: "special", icon: "👻" },
   ]},
   { title: "Underworld", icon: Skull, items: [
-    { label: "Witness System", page: "witness_system", icon: "🔍" },
-    { label: "Forensics Lab", page: "forensics_lab", icon: "🔬" },
-    { label: "Court System", page: "court_system", icon: "⚖️" },
-    { label: "Crime Scene", page: "crime_scene", icon: "🔎" },
-    { label: "Spy Network", page: "spy_network", icon: "🕵️" },
-    { label: "Informants", page: "informants", icon: "🐀" },
+    { label: "Underworld Hub", page: "underworld_hub", icon: "🔍" },
   ]},
   { title: "Empire", icon: Building2, items: [
-    { label: "Property Empire", page: "property_empire", icon: "🏗️" },
-    { label: "Vehicle System", page: "vehicle_system", icon: "🚗" },
-    { label: "Business Mgmt", page: "business_mgmt", icon: "🏢" },
-    { label: "Underworld Econ", page: "underworld_econ", icon: "🏴" },
-    { label: "Market", page: "market_system", icon: "📈" },
+    { label: "Empire Hub", page: "empire_hub", icon: "🏗️" },
   ]},
   { title: "Power", icon: Swords, items: [
-    { label: "Faction Warfare", page: "faction_warfare", icon: "⚔️" },
-    { label: "Advanced Combat", page: "advanced_combat", icon: "🥊" },
-    { label: "Crafting", page: "advanced_crafting", icon: "🔨" },
-    { label: "Pet Companions", page: "pet_system", icon: "🐾" },
+    { label: "Power Hub", page: "power_hub", icon: "⚔️" },
   ]},
   { title: "World", icon: Globe, items: [
-    { label: "Day/Night Cycle", page: "day_night", icon: "🌙" },
-    { label: "World Events", page: "world_events_dyn", icon: "🌍" },
-    { label: "Reputation", page: "reputation_influence", icon: "🌟" },
-    { label: "Co-op Raids", page: "coop_gameplay", icon: "🤝" },
-
+    { label: "World Hub", page: "world_hub", icon: "🌍" },
   ]},
 ];
 
@@ -2388,6 +2372,10 @@ const renderPage = () => {
       case "social": return <WorkingHub title="Social" icon="🤝" tabs={getHubTabs("social")} navigate={setPage} />;
       case "assets": return <WorkingHub title="Assets" icon="📦" tabs={getHubTabs("assets")} navigate={setPage} />;
       case "economy": return <WorkingHub title="Economy" icon="💰" tabs={getHubTabs("economy")} navigate={setPage} />;
+      case "underworld_hub": return <WorkingHub title="Underworld" icon="🔍" tabs={getHubTabs("underworld")} navigate={setPage} />;
+      case "empire_hub": return <WorkingHub title="Empire" icon="🏗️" tabs={getHubTabs("empire")} navigate={setPage} />;
+      case "power_hub": return <WorkingHub title="Power" icon="⚔️" tabs={getHubTabs("power")} navigate={setPage} />;
+      case "world_hub": return <WorkingHub title="World" icon="🌍" tabs={getHubTabs("world")} navigate={setPage} />;
       
       
       
