@@ -576,10 +576,12 @@ const MISSION_TEMPLATES: { name: string; desc: string; cat: string; diff: string
   { name: "Shadow Emperor", desc: "Reach the highest rank in the game.", cat: "elite", diff: "legendary", xp: [250,500], cash: [1000000,5000000] },
 ];
 
-function generateMission(seed: number) {
+function generateMission(seed: number, cycle: number = 0) {
+  const offset = cycle * 255000;
+  const effectiveSeed = seed + offset;
   const tmplIdx = seed % MISSION_TEMPLATES.length;
   const tmpl = MISSION_TEMPLATES[tmplIdx];
-  const variation = Math.floor(seed / MISSION_TEMPLATES.length) + 1;
+  const variation = Math.floor(effectiveSeed / MISSION_TEMPLATES.length) + 1;
   const xpMin = tmpl.xp[0] * Math.ceil(variation / 50);
   const xpMax = tmpl.xp[1] * Math.ceil(variation / 50);
   const cashMin = tmpl.cash[0] * Math.ceil(variation / 30);
@@ -604,7 +606,7 @@ function generateMission(seed: number) {
     tmpl.name + " (Transcendent)",
   ];
   return {
-    id: `mission_${seed}`,
+    id: cycle > 0 ? `mission_c${cycle}_${seed}` : `mission_${seed}`,
     name: names[variation % names.length],
     description: tmpl.desc,
     category: tmpl.cat,
@@ -690,10 +692,14 @@ export function MissionsOverviewPage() {
   const PAGE_SIZE = 20;
   const TOTAL_MISSIONS = 255000;
 
-  // Generate all 5000 missions client-side for display
+  const [cycle, setCycle] = useState(() => {
+    try { return parseInt(localStorage.getItem("missionCycle") || "0", 10); } catch { return 0; }
+  });
+
+  // Generate missions client-side for display — uses cycle for unlimited regeneration
   const allMissions = useMemo(() => {
-    return Array.from({ length: TOTAL_MISSIONS }, (_, i) => generateMission(i));
-  }, []);
+    return Array.from({ length: TOTAL_MISSIONS }, (_, i) => generateMission(i, cycle));
+  }, [cycle]);
 
   // Filter missions
   const filteredMissions = useMemo(() => {
@@ -707,13 +713,19 @@ export function MissionsOverviewPage() {
     return missions;
   }, [allMissions, catFilter, diffFilter, search]);
 
+  const totalCompletedAllTime = useMemo(() => {
+    try {
+      const ids: string[] = JSON.parse(localStorage.getItem("completedMissionIds") || "[]");
+      return ids.length;
+    } catch { return 0; }
+  }, [tab, cycle]);
+
   const completedIds = useMemo(() => {
-    // Get from localStorage
     try {
       const ids: string[] = JSON.parse(localStorage.getItem("completedMissionIds") || "[]");
       return new Set(ids);
     } catch { return new Set<string>(); }
-  }, [tab]);
+  }, [tab, cycle]);
 
   const activeMissions = useMemo(() =>
     filteredMissions.filter(m => !completedIds.has(m.id)),
@@ -781,6 +793,15 @@ export function MissionsOverviewPage() {
     }
     setLoading(false);
   };
+
+  // Auto-advance cycle when all missions completed
+  if (completedIds.size >= TOTAL_MISSIONS) {
+    const newCycle = cycle + 1;
+    localStorage.setItem("missionCycle", String(newCycle));
+    // Clear completed IDs for new cycle
+    localStorage.removeItem("completedMissionIds");
+    setCycle(newCycle);
+  }
 
   const completedCount = completedIds.size;
 
@@ -882,7 +903,7 @@ export function MissionsOverviewPage() {
         <span className="text-4xl">📋</span>
         <div>
           <h2 className="text-xl font-black text-amber-400 tracking-tight">Mission Board</h2>
-          <p className="text-[10px] text-slate-500">{TOTAL_MISSIONS.toLocaleString()} missions | {completedCount.toLocaleString()} completed</p>
+          <p className="text-[10px] text-slate-500">Unlimited missions | Cycle {cycle + 1} | {totalCompletedAllTime.toLocaleString()} total completed</p>
         </div>
       </div>
 
@@ -890,7 +911,7 @@ export function MissionsOverviewPage() {
       <div className="mafia-card p-3 rounded-xl">
         <div className="flex justify-between text-[10px] text-slate-400 mb-1">
           <span>Overall Progress</span>
-          <span>{completedCount}/{TOTAL_MISSIONS.toLocaleString()} ({((completedCount/TOTAL_MISSIONS)*100).toFixed(1)}%)</span>
+          <span>{completedCount.toLocaleString()} / ∞ ({cycle > 0 ? `Cycle ${cycle + 1}` : "First Cycle"})</span>
         </div>
         <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-amber-500 to-green-500 rounded-full transition-all" style={{width:`${(completedCount/TOTAL_MISSIONS)*100}%`}} />
