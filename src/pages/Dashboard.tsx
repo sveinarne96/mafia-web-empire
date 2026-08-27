@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -144,22 +144,38 @@ function RankBadge({ level, size = "sm" }: { level: number; size?: "sm" | "lg" }
 
 type GamePage = string;
 
-function SafePage({ children }: { children: React.ReactNode }) {
-  const [error, setError] = useState<string | null>(null);
-  if (error) {
-    return (
-      <div className="animate-fade-in space-y-4">
-        <div className="mafia-card rounded-xl p-6 text-center space-y-3">
-          <div className="text-3xl">⚠️</div>
-          <div className="text-sm font-bold text-red-400">Page Error</div>
-          <div className="text-xs text-muted-foreground">{error}</div>
-          <button onClick={() => { setError(null); window.location.reload(); }}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs">Reload</button>
-        </div>
-      </div>
-    );
+class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback?: React.ReactNode }, { hasError: boolean; error: string }>
+{
+  constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: "" };
   }
-  return <>{children}</>;
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message || String(error) };
+  }
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("[ErrorBoundary]", error, info.componentStack);
+  }
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <div className="animate-fade-in space-y-4">
+          <div className="mafia-card rounded-xl p-6 text-center space-y-3">
+            <div className="text-3xl">⚠️</div>
+            <div className="text-sm font-bold text-red-400">Page Error</div>
+            <div className="text-xs text-muted-foreground max-h-40 overflow-auto">{this.state.error}</div>
+            <button onClick={() => { this.setState({ hasError: false, error: "" }); window.location.reload(); }}
+              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs">Reload</button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function SafePage({ children }: { children: React.ReactNode }) {
+  return <ErrorBoundary>{children}</ErrorBoundary>;
 }
 
 const getLeftMenuSections = (t: (k: string) => string) => [
@@ -2671,7 +2687,9 @@ const renderPage = () => {
 
           {/* Main Content */}
           <main className="flex-1 overflow-y-auto p-4 md:p-6">
-            {renderPage()}
+            <ErrorBoundary key={activePage}>
+              {renderPage()}
+            </ErrorBoundary>
           </main>
         </div>
 
