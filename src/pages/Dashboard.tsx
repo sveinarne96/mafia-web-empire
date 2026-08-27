@@ -87,6 +87,7 @@ import { CoopGameplayPage } from "@/components/SystemPrestigeCoop";
 import { AdvancedCombatPage, ReputationInfluencePage } from "@/components/SystemCombatReputation";
 import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/SystemUnderworldEvents";
 import { CrimeScenePage } from "@/components/SystemCrimeScene";
+import { CompaniesHubPage } from "@/components/SystemCompanies";
 
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
@@ -199,6 +200,9 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   ]},
   { title: "Special", icon: Sparkles, items: [
     { label: "Special Hub", page: "special", icon: "👻" },
+  ]},
+  { title: "Companies", icon: Building2, items: [
+    { label: "Company Empire", page: "companies_hub", icon: "🏢" },
   ]},
   { title: "Underworld", icon: Skull, items: [
     { label: "Underworld Hub", page: "underworld_hub", icon: "🔍" },
@@ -2376,6 +2380,7 @@ const renderPage = () => {
       case "empire_hub": return <WorkingHub title="Empire" icon="🏗️" tabs={getHubTabs("empire")} navigate={setPage} />;
       case "power_hub": return <WorkingHub title="Power" icon="⚔️" tabs={getHubTabs("power")} navigate={setPage} />;
       case "world_hub": return <WorkingHub title="World" icon="🌍" tabs={getHubTabs("world")} navigate={setPage} />;
+      case "companies_hub": return <CompaniesHubPage />;
       
       
       
