@@ -141,7 +141,7 @@ const laundromats = [
   { name: "Laundromat Chain", icon: "🔗", cost: 2000000, income: 150000, desc: "10 locations — major laundry network" },
 ];
 
-function EmpireBuildingPage() {
+function EmpireBuildingPage({ player }: { player: any }) {
   const [tab, setTab] = useState("shell");
   const [msg, setMsg] = useState("");
   const tabs = [
@@ -204,7 +204,7 @@ function EmpireBuildingPage() {
    🤝 RELATIONSHIPS & LOYALTY
    ═══════════════════════════════════════════ */
 
-function RelationshipsPage() {
+function RelationshipsPage({ player }: { player: any }) {
   const [tab, setTab] = useState("trust");
   const [msg, setMsg] = useState("");
   const tabs = [
@@ -437,7 +437,7 @@ function RelationshipsPage() {
    💀 SURVIVAL & REALISM
    ═══════════════════════════════════════════ */
 
-function SurvivalRealismPage() {
+function SurvivalRealismPage({ player }: { player: any }) {
   const [tab, setTab] = useState("hospital");
   const [tick, setTick] = useState(0);
   const [msg, setMsg] = useState("");
@@ -459,8 +459,8 @@ function SurvivalRealismPage() {
     const s = Math.floor(ms / 1000); const m = Math.floor(s / 60); const h = Math.floor(m / 60); const d = Math.floor(h / 24);
     if (d > 0) return `${d}d ${h % 24}h ${m % 60}m`; if (h > 0) return `${h}h ${m % 60}m`; return `${m}m ${s % 60}s`;
   };
-  const getCash = () => { try { return JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0; } catch { return 0; } };
-  const spendCash = (amount: number) => { try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - amount; localStorage.setItem("playerData", JSON.stringify(d)); } catch {} };
+  const getCash = () => player?.money ?? 0;
+  const spendCash = (amount: number) => { try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (player?.money ?? 0) - amount; localStorage.setItem("playerData", JSON.stringify(d)); } catch {} };
 
   const tabs = [
     { id: "hospital", icon: "🏥", label: "Hospital" },
@@ -557,7 +557,7 @@ function SurvivalRealismPage() {
               </div>
               <div className="text-[10px] text-red-400 mb-1">⚠️ Risk: {s.risk} — Complication: {s.complication}</div>
               <button onClick={() => {
-                if (getCash() < s.cost) { showMsg(`Need $${s.cost.toLocaleString()}`, "red"); return; }
+                if ((player?.money ?? 0) < s.cost) { showMsg("Not enough cash!", "red"); return; }
                 spendCash(s.cost);
                 const roll = Math.random() * 100;
                 const riskNum = parseFloat(s.risk);
@@ -732,7 +732,7 @@ function SurvivalRealismPage() {
               </div>
               <div className="text-[10px] text-red-400 mb-2">⚠️ {f.risk} chance of investigation</div>
               <button onClick={() => {
-                if (getCash() < f.cost) { showMsg(`Need $${f.cost.toLocaleString()}`, "red"); return; }
+                if ((player?.money ?? 0) < f.cost) { showMsg("Not enough cash!", "red"); return; }
                 spendCash(f.cost);
                 const roll = Math.random() * 100;
                 if (roll < parseFloat(f.risk)) {
@@ -771,7 +771,7 @@ function SurvivalRealismPage() {
                 </div>
               </div>
               <button onClick={() => {
-                if (getCash() < r.cost) { showMsg(`Need $${r.cost.toLocaleString()}`, "red"); return; }
+                if ((player?.money ?? 0) < r.cost) { showMsg("Not enough cash!", "red"); return; }
                 spendCash(r.cost);
                 let newAddictions = { ...addictions };
                 if (r.clean === "FULL RESET") {
@@ -857,7 +857,7 @@ function SurvivalRealismPage() {
                 </div>
               </div>
               <button onClick={() => {
-                if (getCash() < d.cost) { showMsg(`Need $${d.cost.toLocaleString()}`, "red"); return; }
+                if ((player?.money ?? 0) < d.cost) { showMsg("Not enough cash!", "red"); return; }
                 spendCash(d.cost);
                 const roll = Math.random() * 100;
                 if (roll < 5) {
@@ -900,7 +900,7 @@ function SurvivalRealismPage() {
                 </div>
               </div>
               <button onClick={() => {
-                if (getCash() < e.cost) { showMsg(`Need $${e.cost.toLocaleString()}`, "red"); return; }
+                if ((player?.money ?? 0) < e.cost) { showMsg("Not enough cash!", "red"); return; }
                 spendCash(e.cost);
                 setEvidenceUntil(Date.now() + 5 * 24 * 60 * 60 * 1000);
                 save("empireEvidence", Date.now() + 5 * 24 * 60 * 60 * 1000);
@@ -955,7 +955,7 @@ function SurvivalRealismPage() {
   );
 }
 
-function SecurityDefensePage() {
+function SecurityDefensePage({ player }: { player: any }) {
   const [tab, setTab] = useState("guards");
   const [tick, setTick] = useState(0);
   const playerLevel = (() => { try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); return d.level ?? 1; } catch { return 1; } })();
@@ -993,10 +993,10 @@ function SecurityDefensePage() {
 
   const isActive = (key: string) => (activeServices[key] ?? 0) > Date.now();
   const activateService = (key: string, durationMs: number, cost: number) => {
-    const cash = (() => { try { return JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0; } catch { return 0; } })();
+    const cash = player?.money ?? 0;
     if (cash < cost) { showMsg(`Not enough cash! Need $${cost.toLocaleString()}`, "red"); return false; }
     // Deduct cash
-    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = cash - cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (player?.money ?? 0) - cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
     const newEnd = Math.max(activeServices[key] ?? 0, Date.now()) + durationMs;
     const updated = { ...activeServices, [key]: newEnd };
     setActiveServices(updated);
@@ -1133,7 +1133,7 @@ function SecurityDefensePage() {
             { name: "Mansion Safe Room", cost: 5000000, desc: "Hidden room — panic button, escape tunnel" },
           ].map((s, i) => {
             const needed = i + 1;
-            const canAfford = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= s.cost; } catch { return false; } })();
+            const canAfford = (player?.money ?? 0) >= s.cost;
             const isUpgrade = safehouseLevel < needed;
             const isMax = safehouseLevel >= needed;
             return (
@@ -1202,7 +1202,7 @@ function SecurityDefensePage() {
                 {!owned && (
                   <button onClick={() => {
                     if (escapeLevel !== needed - 1) { showMsg(`Must upgrade sequentially! Current: Lv.${escapeLevel}`, "red"); return; }
-                    const canAfford2 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= e.cost; } catch { return false; } })();
+                    const canAfford2 = (player?.money ?? 0) >= e.cost;
                     if (!canAfford2) { showMsg(`Need $${e.cost.toLocaleString()}`, "red"); return; }
                     try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - e.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
                     setEscapeLevel(needed);
@@ -1248,7 +1248,7 @@ function SecurityDefensePage() {
                 </div>
               </div>
               <button onClick={() => {
-                const canAfford3 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= a.cost; } catch { return false; } })();
+                const canAfford3 = (player?.money ?? 0) >= a.cost;
                 if (!canAfford3) { showMsg(`Need $${a.cost.toLocaleString()}`, "red"); return; }
                 try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - a.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
                 setArmorDurability(a.durability);
@@ -1297,7 +1297,7 @@ function SecurityDefensePage() {
                 {!owned && (
                   <button onClick={() => {
                     if (hasPermit !== p.id - 1 && p.id > 1) { showMsg(`Must get permits in order! Current: ${["None","Basic","Advanced","Class III"][hasPermit]}`, "red"); return; }
-                    const canAfford4 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= p.cost; } catch { return false; } })();
+                    const canAfford4 = (player?.money ?? 0) >= p.cost;
                     if (!canAfford4) { showMsg(`Need $${p.cost.toLocaleString()}`, "red"); return; }
                     try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - p.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
                     setHasPermit(p.id);
@@ -1341,7 +1341,7 @@ function SecurityDefensePage() {
                   </div>
                 </div>
                 <button onClick={() => {
-                  const canAfford5 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= a.cost; } catch { return false; } })();
+                  const canAfford5 = (player?.money ?? 0) >= a.cost;
                   if (!canAfford5) { showMsg(`Need $${a.cost.toLocaleString()}`, "red"); return; }
                   try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - a.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
                   setAlibiUntil(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -1494,7 +1494,7 @@ function SecurityDefensePage() {
                   if (!canUse) { showMsg(`Need Counter-Surveillance Level ${c.level}!`, "red"); return; }
                   if (counterLevel < c.level) {
                     // Buy upgrade
-                    const canAfford6 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= c.cost; } catch { return false; } })();
+                    const canAfford6 = (player?.money ?? 0) >= c.cost;
                     if (!canAfford6) { showMsg(`Need $${c.cost.toLocaleString()}`, "red"); return; }
                     try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - c.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
                     setCounterLevel(c.level);

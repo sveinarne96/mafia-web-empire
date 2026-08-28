@@ -2512,10 +2512,10 @@ const renderPage = () => {
       case "world_events_dyn": return <DynamicWorldEventsPage />;
       case "reputation_influence": return <ReputationInfluencePage />;
       case "coop_gameplay": return <CoopGameplayPage />;
-      case "empire_building": return <EmpireBuildingPage />;
-      case "relationships": return <RelationshipsPage />;
-      case "survival": return <SurvivalRealismPage />;
-      case "security": return <SecurityDefensePage />;
+      case "empire_building": return <EmpireBuildingPage player={player} />;
+      case "relationships": return <RelationshipsPage player={player} />;
+      case "survival": return <SurvivalRealismPage player={player} />;
+      case "security": return <SecurityDefensePage player={player} />;
       default: return <HeadquartersPage />;
     }
   };
