@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "@/contexts/TranslationContext";
 // signOut available via auth provider
 import {
-  Home, Building2, Wallet, Calendar, Heart, Shield, MapPin, AlertTriangle, Skull, Gift,
+  Home, Building2, Wallet, Heart, Shield, MapPin, AlertTriangle, Skull, Gift,
   Bell, MessageSquare, Inbox, Users, Search, HelpCircle, Settings, Crown,
   Trophy, Flame, Crosshair, EyeOff, Receipt, Banknote, Coins, Truck,
   Bomb, Dog, Car, Flag, Handshake, Brain, GraduationCap, Ruler, Vote,
@@ -342,7 +342,7 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   { title: "Security", icon: Shield, items: [
     { label: "Security & Defense", page: "security", icon: "🛡️" },
   ]},
-  { title: "Live Events", icon: Calendar, items: [
+  { title: "Live Events", icon: Clock, items: [
     { label: "Event Calendar", page: "event_calendar", icon: "📅" },
   ]},
 ];
