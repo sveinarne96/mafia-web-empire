@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "@/contexts/TranslationContext";
 // signOut available via auth provider
 import {
-  Home, Building2, Wallet, Heart, Shield, MapPin, AlertTriangle, Skull, Gift,
+  Home, Building2, Wallet, Calendar, Heart, Shield, MapPin, AlertTriangle, Skull, Gift,
   Bell, MessageSquare, Inbox, Users, Search, HelpCircle, Settings, Crown,
   Trophy, Flame, Crosshair, EyeOff, Receipt, Banknote, Coins, Truck,
   Bomb, Dog, Car, Flag, Handshake, Brain, GraduationCap, Ruler, Vote,
@@ -89,6 +89,7 @@ import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/Syst
 import { CrimeScenePage } from "@/components/SystemCrimeScene";
 import { CompaniesHubPage } from "@/components/SystemCompanies";
 import { EmpireBuildingPage, RelationshipsPage, SurvivalRealismPage, SecurityDefensePage } from "@/components/SystemEmpire";
+import LiveEventCalendar from "@/components/LiveEventCalendar";
 
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
@@ -340,6 +341,9 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   ]},
   { title: "Security", icon: Shield, items: [
     { label: "Security & Defense", page: "security", icon: "🛡️" },
+  ]},
+  { title: "Live Events", icon: Calendar, items: [
+    { label: "Event Calendar", page: "event_calendar", icon: "📅" },
   ]},
 ];
 
@@ -2812,6 +2816,7 @@ const renderPage = () => {
       case "relationships": return <RelationshipsPage player={player} />;
       case "survival": return <SurvivalRealismPage player={player} />;
       case "security": return <SecurityDefensePage player={player} />;
+      case "event_calendar": return <LiveEventCalendar />;
       default: return <HeadquartersPage />;
     }
   };
