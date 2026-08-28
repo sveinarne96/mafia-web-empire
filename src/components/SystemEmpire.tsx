@@ -1,12 +1,6 @@
 import React, { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 
 /* ═══════════ SHARED HELPERS ═══════════ */
-function Loading() {
-  return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
-}
-
 function SectionTitle({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
   return (
     <div className="flex items-center gap-3 mb-4">
@@ -148,7 +142,6 @@ const laundromats = [
 ];
 
 function EmpireBuildingPage() {
-  const player = useQuery(api.game.getPlayer);
   const [tab, setTab] = useState("shell");
   const [msg, setMsg] = useState("");
   const tabs = [
@@ -163,8 +156,6 @@ function EmpireBuildingPage() {
     { id: "vending", icon: "🥤", label: "Vending Routes" },
     { id: "laundry", icon: "🫧", label: "Laundromats" },
   ];
-
-  if (!player) return <Loading />;
 
   const renderItem = (item: any, owned?: boolean) => (
     <div key={item.name} className={`mafia-card rounded-xl p-4 border transition-all ${owned ? "border-green-500/30" : "border-amber-500/10 hover:border-amber-500/20"}`}>
@@ -214,7 +205,6 @@ function EmpireBuildingPage() {
    ═══════════════════════════════════════════ */
 
 function RelationshipsPage() {
-  const player = useQuery(api.game.getPlayer);
   const [tab, setTab] = useState("trust");
   const [msg, setMsg] = useState("");
   const tabs = [
@@ -227,8 +217,6 @@ function RelationshipsPage() {
     { id: "informant", icon: "🐀", label: "Informant Loyalty" },
     { id: "reputation", icon: "🌟", label: "Public Rep" },
   ];
-
-  if (!player) return <Loading />;
 
   const npcs = [
     { name: "Sal the Cook", trust: 85, mood: "Loyal", icon: "👨‍🍳" },
@@ -450,7 +438,6 @@ function RelationshipsPage() {
    ═══════════════════════════════════════════ */
 
 function SurvivalRealismPage() {
-  const player = useQuery(api.game.getPlayer);
   const [tab, setTab] = useState("hospital");
   const [msg, setMsg] = useState("");
   const tabs = [
@@ -466,8 +453,6 @@ function SurvivalRealismPage() {
     { id: "costs", icon: "💰", label: "Hospital Costs" },
   ];
 
-  if (!player) return <Loading />;
-
   return (
     <div className="animate-fade-in space-y-4">
       <SectionTitle icon="💀" title="Survival & Realism" sub="Stay alive, manage addictions, and cover your tracks" />
@@ -478,9 +463,9 @@ function SurvivalRealismPage() {
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4 text-center">
             <div className="text-sm text-slate-400">Current Health</div>
-            <div className="text-3xl font-black text-red-400">{player.life} / {player.maxLife}</div>
+            <div className="text-3xl font-black text-red-400">120 / 120</div>
             <div className="w-full h-2 bg-slate-800 rounded-full mt-2">
-              <div className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full" style={{ width: `${((player.life ?? 0) / (player.maxLife ?? 1)) * 100}%` }} />
+              <div className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full" style={{ width: '100%' }} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -743,7 +728,6 @@ function SurvivalRealismPage() {
    ═══════════════════════════════════════════ */
 
 function SecurityDefensePage() {
-  const player = useQuery(api.game.getPlayer);
   const [tab, setTab] = useState("guards");
   const [msg, setMsg] = useState("");
   const tabs = [
@@ -758,8 +742,6 @@ function SecurityDefensePage() {
     { id: "lockpick", icon: "🔑", label: "Lockpick" },
     { id: "counter", icon: "🕵️", label: "Counter-Surveillance" },
   ];
-
-  if (!player) return <Loading />;
 
   return (
     <div className="animate-fade-in space-y-4">
