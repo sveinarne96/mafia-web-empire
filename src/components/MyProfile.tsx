@@ -64,7 +64,24 @@ export function MyProfilePage() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onloadend = () => setPreviewPic(reader.result as string);
+    reader.onloadend = () => {
+      // Compress image to fit Convex size limits
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxSize = 200;
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d")?.drawImage(img, 0, 0, w, h);
+        setPreviewPic(canvas.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = reader.result as string;
+    };
     reader.readAsDataURL(file);
   }, []);
 
@@ -81,8 +98,9 @@ export function MyProfilePage() {
       });
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Profile save failed:", err);
+      alert("Save failed: " + (err?.message || "Unknown error"));
     }
     setSaving(false);
   }, [bio, selectedLang, selectedBadge, selectedRole, selectedTitle, previewPic, updateProfile]);

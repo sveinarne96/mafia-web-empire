@@ -8,7 +8,7 @@ import {
   Send, X, MessageSquare,
 } from "lucide-react";
 
-export function OnlineList() {
+export function OnlineList({ onViewProfile }: { onViewProfile?: (playerId: string, nickname: string) => void } = {}) {
   const onlinePlayers = useQuery(api.admin.getOnlinePlayers);
   const onlineCount = useQuery(api.admin.getOnlineCount);
   const heartbeat = useMutation(api.admin.heartbeat);
@@ -278,6 +278,12 @@ export function OnlineList() {
                           <Clock className="size-2.5" />
                           Last seen: {formatTimeAgo(p.lastActive)}
                         </div>
+                        {onViewProfile && (
+                          <button onClick={(e) => { e.stopPropagation(); onViewProfile(p._id, p.nickname); }}
+                            className="w-full mt-2 px-3 py-2 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-lg text-xs font-bold text-primary hover:bg-primary/30 transition-all flex items-center justify-center gap-1.5">
+                            <Eye className="size-3" /> View Profile
+                          </button>
+                        )}
                       </div>
                     </motion.div>
                   )}

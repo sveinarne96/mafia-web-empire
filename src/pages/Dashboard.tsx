@@ -47,6 +47,7 @@ import { LiveEventBanner } from "@/components/EventBanner";
 import { EventsPage } from "@/components/EventsPage";
 import { ALL_GAME_EVENTS } from "@/data/events";
 import { OnlineList } from "@/components/OnlineList";
+import { PlayerProfilePage } from "@/components/PlayerProfile";
 import { BecomeAdminPage } from "@/components/BecomeAdmin";
 import { UpdatesPage } from "@/components/UpdatesPage";
 import { SeasonPassPage } from "@/components/SeasonPass";
@@ -1969,7 +1970,7 @@ export default function Dashboard() {
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [dismissedAtLevel, setDismissedAtLevel] = useState<number | null>(null);
-  const setPage = useCallback((p: GamePage) => setActivePage(p), []);
+  const setPage = useCallback((p: GamePage) => { setActivePage(p); setMobileMenuOpen(false); }, []);
   const { t } = useTranslation();
 
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
@@ -1999,11 +2000,14 @@ export default function Dashboard() {
     return () => clearInterval(iv);
   }, []);
 
-  const [leftExpanded, setLeftExpanded] = useState<string[]>(["Overview","Crimes","Combat","Gambling","Missions","Economy","Assets","Social","Progression","Special","Underworld","Empire","Power","World","Companies","Empire Building","Relationships","Survival","Security"]);
+  const [leftExpanded, setLeftExpanded] = useState<string[]>([]);
   const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Seasonal Events","Server Events","Help","System"]);
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
   const [rightItemsExpanded, setRightItemsExpanded] = useState<string[]>([]);
   const [showLeft, setShowLeft] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [leftSearch, setLeftSearch] = useState("");
+  const [viewProfile, setViewProfile] = useState<{ id: string; name: string } | null>(null);
   const [showRight, setShowRight] = useState(true);
   const [activeEvents, setActiveEvents] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem("activeEventIds") || "[]"); } catch { return []; }
@@ -2694,7 +2698,8 @@ const renderPage = () => {
       case "support": return <SupportPage />;
       case "admin_panel": return <AdminPanel />;
       case "become_admin": return <BecomeAdminPage />;
-      case "online_players": return <OnlineList />;
+      case "online_players": return <OnlineList onViewProfile={(id, name) => { setViewProfile({ id, name }); setActivePage("player_profile"); }} />;
+      case "player_profile": return viewProfile ? <PlayerProfilePage playerId={viewProfile.id} playerName={viewProfile.name} onBack={() => { setViewProfile(null); setActivePage("online_players"); }} /> : <OnlineList />;
       case "advanced_features": return <AdvancedFeaturesPage />;
 
             // Combat
@@ -2875,10 +2880,37 @@ const renderPage = () => {
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Menu */}
+        {/* Mobile hamburger button */}
+        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="fixed top-2 left-2 z-50 md:hidden p-2 rounded-lg bg-[oklch(0.10_0.015_35)] border border-border/50 text-muted-foreground hover:text-foreground transition-all">
+          {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+        </button>
+
+        {/* Mobile overlay */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setMobileMenuOpen(false)} />
+        )}
+
+        {/* Left Menu */}
         {showLeft && (
-          <aside className={`${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-48" : "w-64"} bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 hidden md:block transition-all`}>
+          <aside className={`
+            ${mobileMenuOpen ? "fixed inset-y-0 left-0 z-40 w-72" : "hidden"}
+            md:relative md:block
+            ${["crimes","robbery","fraud","burglary","drugs","organized","underground","steal_from_house","gta_car_theft","kill","hit_list"].includes(activePage) ? "w-48" : "w-64"}
+            bg-[oklch(0.07_0.015_35)] border-r border-border/50 overflow-y-auto shrink-0 transition-all
+          `}>
             <div className="p-3 space-y-1">
-                            {getLeftMenuSections(t).map(section => (
+              {/* Search bar */}
+              <div className="sticky top-0 z-10 pb-2 bg-[oklch(0.07_0.015_35)]">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                  <input value={leftSearch} onChange={e => setLeftSearch(e.target.value)} placeholder="Search menu..."
+                    className="w-full bg-[oklch(0.10_0.015_35)] border border-border/50 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:ring-1 focus:ring-primary outline-none text-foreground placeholder:text-muted-foreground" />
+                  {leftSearch && <button onClick={() => setLeftSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"><X className="size-3" /></button>}
+                </div>
+              </div>
+              {/* Menu sections */}
+              {getLeftMenuSections(t).filter(section => !leftSearch || section.title.toLowerCase().includes(leftSearch.toLowerCase()) || section.items.some(item => item.label.toLowerCase().includes(leftSearch.toLowerCase()))).map(section => (
                 <div key={section.title}>
                   <button onClick={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(t => t !== section.title) : [...prev, section.title])}
                     className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-white/5 transition">
