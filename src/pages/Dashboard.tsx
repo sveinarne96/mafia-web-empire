@@ -75,7 +75,6 @@ import { MissionsOverviewPage } from "@/components/MissionPages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
 // HubPages inlined below - no external import needed
-import { WorkingHub, getHubTabs } from "@/components/WorkingHubPages";
 import { WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
 import { SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
 import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
@@ -194,55 +193,152 @@ const getLeftMenuSections = (t: (k: string) => string) => [
     { label: "GTA Car Theft", page: "gta_car_theft", icon: "\u{1f697}" },
   ]},
   { title: "Combat", icon: Swords, items: [
-    { label: "Arena", page: "arena", icon: "\u2694\ufe0f" },
+    { label: "Arena", page: "arena", icon: "⚔️" },
+    { label: "1v1 Duel", page: "duel_1v1", icon: "⚔️" },
+    { label: "Crew Wars", page: "crew_wars", icon: "🏴" },
+    { label: "Capture the Flag", page: "ctf", icon: "🚩" },
+    { label: "King of the Hill", page: "koth", icon: "👑" },
+    { label: "Battle Royale", page: "battle_royale", icon: "🎯" },
+    { label: "Ladder System", page: "ladder", icon: "📊" },
+    { label: "Champion Title", page: "champion", icon: "🏆" },
+    { label: "Ambush", page: "ambush", icon: "🔥" },
   ]},
   { title: "Gambling", icon: Coins, items: [
     { label: "🎰 Casino", page: "gambling_overview", icon: "🃏" },
+    { label: "Blackjack", page: "blackjack", icon: "🂡" },
+    { label: "Roulette", page: "roulette", icon: "🎰" },
+    { label: "Slots", page: "slots", icon: "🎰" },
+    { label: "Lotto", page: "lotto", icon: "🎫" },
+    { label: "Russian Roulette", page: "russian_roulette", icon: "🔫" },
+    { label: "Dog Fight", page: "dog_fight", icon: "🐕" },
+    { label: "Street Racing", page: "street_racing", icon: "🏎️" },
+    { label: "Poker Texas", page: "poker_texas", icon: "🂡" },
+    { label: "Poker Omaha", page: "poker_omaha", icon: "🂡" },
+    { label: "Craps", page: "craps", icon: "🎲" },
+    { label: "Coin Flip", page: "coin_flip", icon: "🪙" },
+    { label: "Powerball", page: "powerball", icon: "🎰" },
+    { label: "Wheel", page: "wheel", icon: "🎡" },
+    { label: "Horse Racing", page: "horse_racing", icon: "🐎" },
+    { label: "Scratch Cards", page: "scratch_cards", icon: "🎫" },
+    { label: "Bingo", page: "bingo", icon: "🎯" },
+    { label: "Keno", page: "keno", icon: "🔢" },
+    { label: "Higher/Lower", page: "higher_lower", icon: "📈" },
+    { label: "BJ Switch", page: "bj_switch", icon: "🂡" },
   ]},
   { title: "Missions", icon: Target, items: [
     { label: "Mission Board", page: "missions", icon: "📋" },
+    { label: "Storyline", page: "storyline", icon: "📖" },
+    { label: "Side Missions", page: "side_missions", icon: "🎯" },
+    { label: "Daily Missions", page: "daily_missions", icon: "📅" },
+    { label: "Weekly Missions", page: "weekly_missions", icon: "📆" },
+    { label: "Monthly Missions", page: "monthly_missions", icon: "🗓️" },
   ]},
   { title: "Economy", icon: Coins, items: [
-    { label: "Economy Hub", page: "economy", icon: "💰" },
+    { label: "Bank Account", page: "bank_account", icon: "🏦" },
+    { label: "Bank Robbery", page: "bank_robbery", icon: "💰" },
+    { label: "Interest Rates", page: "interest_rates", icon: "📈" },
+    { label: "Credit Score", page: "credit_score", icon: "💳" },
+    { label: "Health Insurance", page: "health_insurance", icon: "🏥" },
+    { label: "Life Insurance", page: "life_insurance", icon: "❤️" },
+    { label: "Crypto Mining", page: "crypto", icon: "⛏️" },
+    { label: "Crypto Trading", page: "crypto_trading", icon: "📊" },
+    { label: "Auto Shop", page: "auto_shop", icon: "🚗" },
+    { label: "Offshore Accounts", page: "offshore", icon: "🏝️" },
+    { label: "Daily Spin", page: "daily_spin", icon: "🎰" },
+    { label: "Referral System", page: "referral", icon: "🔗" },
+    { label: "Crafting", page: "crafting", icon: "🔧" },
+    { label: "Stock Market", page: "stock_market", icon: "📈" },
   ]},
   { title: "Assets", icon: Package, items: [
-    { label: "Assets Hub", page: "assets", icon: "📦" },
+    { label: "Garage", page: "garage", icon: "🚗" },
+    { label: "My Items", page: "items", icon: "🎒" },
+    { label: "Black Market", page: "black_market", icon: "🖤" },
+    { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
+    { label: "Mystery Boxes", page: "mystery_boxes", icon: "📦" },
+    { label: "Legendary Items", page: "legendary_items", icon: "✨" },
   ]},
   { title: "Social", icon: Users, items: [
-    { label: "Social Hub", page: "social", icon: "🤝" },
+    { label: "Crew System", page: "crew", icon: "🤝" },
+    { label: "Crew Ranks", page: "crew_ranks", icon: "📊" },
+    { label: "Crew Bank", page: "crew_bank", icon: "🏦" },
+    { label: "Crew War", page: "crew_war", icon: "⚔️" },
+    { label: "Crew Territory", page: "crew_territory", icon: "📍" },
+    { label: "Crew Leaderboard", page: "crew_leaderboard", icon: "🏆" },
+    { label: "Family", page: "family", icon: "👨‍👩‍👦" },
+    { label: "Crew Challenges", page: "crew_challenges", icon: "🎯" },
+    { label: "Crew Alliance", page: "crew_alliance", icon: "🤝" },
+    { label: "Crew Safe House", page: "crew_safehouse", icon: "🏠" },
   ]},
   { title: t("right.progression"), icon: TrendingUp, items: [
-    { label: "Progression Hub", page: "progression", icon: "🧠" },
+    { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
+    { label: "Combat Skills", page: "combat_skills", icon: "⚔️" },
+    { label: "Stealth Skills", page: "stealth_skills", icon: "🥷" },
+    { label: "Hacking Skills", page: "hacking_skills", icon: "💻" },
+    { label: "Prestige", page: "prestige", icon: "⭐" },
+    { label: "Prestige Shop", page: "prestige_shop", icon: "🔮" },
+    { label: "Titles", page: "titles", icon: "👑" },
+    { label: "Achievements", page: "achievements", icon: "🏅" },
+    { label: "Legacy", page: "legacy", icon: "📜" },
+    { label: "Leaderboards", page: "leaderboards", icon: "📊" },
+    { label: "Season Pass", page: "season_pass", icon: "🎫" },
+    { label: "Daily Challenges", page: "daily_challenges", icon: "📋" },
+    { label: "Energy Drinks", page: "energy_drinks", icon: "🥤" },
   ]},
   { title: "Special", icon: Sparkles, items: [
-    { label: "Special Hub", page: "special", icon: "👻" },
+    { label: "Ghost Mode", page: "ghost_mode", icon: "👻" },
+    { label: "Ghost Status", page: "ghost_status", icon: "👁️" },
+    { label: "Secret Daily", page: "secret_daily", icon: "🔮" },
+    { label: "Secret Weekly", page: "secret_weekly", icon: "💎" },
+    { label: "Easter Eggs", page: "secret_eggs", icon: "🥚" },
+    { label: "Reputation", page: "reputation", icon: "🌍" },
+    { label: "Wanted Status", page: "wanted", icon: "🔴" },
+    { label: "Prison", page: "prison", icon: "🔒" },
+    { label: "Arena", page: "colosseum", icon: "🏟️" },
+    { label: "Last Man Standing", page: "last_man_standing", icon: "🏆" },
   ]},
   { title: "Companies", icon: Building2, items: [
     { label: "Company Empire", page: "companies_hub", icon: "🏢" },
   ]},
   { title: "Underworld", icon: Skull, items: [
-    { label: "Underworld Hub", page: "underworld_hub", icon: "🔍" },
+    { label: "Witness System", page: "witness_system", icon: "🔍" },
+    { label: "Forensics Lab", page: "forensics_lab", icon: "🔬" },
+    { label: "Court System", page: "court_system", icon: "⚖️" },
+    { label: "Crime Scene", page: "crime_scene", icon: "🔎" },
+    { label: "Spy Network", page: "spy_network", icon: "🕵️" },
+    { label: "Informants", page: "informants", icon: "🐀" },
   ]},
   { title: "Empire", icon: Building2, items: [
-    { label: "Empire Hub", page: "empire_hub", icon: "🏗️" },
+    { label: "Property Empire", page: "property_empire", icon: "🏗️" },
+    { label: "Vehicle System", page: "vehicle_system", icon: "🚗" },
+    { label: "Business Mgmt", page: "business_mgmt", icon: "🏢" },
+    { label: "Underworld Econ", page: "underworld_econ", icon: "🏴" },
+    { label: "Market", page: "market_system", icon: "📈" },
   ]},
   { title: "Power", icon: Swords, items: [
-    { label: "Power Hub", page: "power_hub", icon: "⚔️" },
+    { label: "Faction Warfare", page: "faction_warfare", icon: "⚔️" },
+    { label: "Advanced Combat", page: "advanced_combat", icon: "🥊" },
+    { label: "Advanced Crafting", page: "advanced_crafting", icon: "🔨" },
+    { label: "Pet Companions", page: "pet_system", icon: "🐾" },
   ]},
   { title: "World", icon: Globe, items: [
-    { label: "World Hub", page: "world_hub", icon: "🌍" },
+    { label: "Day/Night Cycle", page: "day_night", icon: "🌙" },
+    { label: "World Events", page: "world_events_dyn", icon: "🌍" },
+    { label: "Reputation", page: "reputation_influence", icon: "🌟" },
+    { label: "Co-op Raids", page: "coop_gameplay", icon: "🤝" },
+    { label: "Neighborhoods", page: "neighborhoods", icon: "🏘️" },
+    { label: "Seasons", page: "seasons", icon: "🍂" },
   ]},
   { title: "Empire Building", icon: Building2, items: [
-    { label: "Empire Hub", page: "empire_building", icon: "🏗️" },
+    { label: "Empire Building", page: "empire_building", icon: "🏗️" },
   ]},
   { title: "Relationships", icon: Users, items: [
-    { label: "Relationships Hub", page: "relationships", icon: "🤝" },
+    { label: "Relationships", page: "relationships", icon: "🤝" },
   ]},
   { title: "Survival", icon: Skull, items: [
-    { label: "Survival Hub", page: "survival", icon: "💀" },
+    { label: "Survival & Realism", page: "survival", icon: "💀" },
   ]},
   { title: "Security", icon: Shield, items: [
-    { label: "Security Hub", page: "security", icon: "🛡️" },
+    { label: "Security & Defense", page: "security", icon: "🛡️" },
   ]},
 ];
 
@@ -253,22 +349,59 @@ const getRightMenuSections = (t: (k: string) => string) => [
     { label: "Notifications", page: "notifications_page", icon: "🔔" },
   ]},
   { title: "Forums", icon: MessageSquare, items: [
-    { label: "Forums Hub", page: "forums", icon: "📢" },
+    { label: "General Forum", page: "forum_general", icon: "📢" },
+    { label: "Sales Forum", page: "forum_sales", icon: "💰" },
+    { label: "Off-Topic", page: "forum_offtopic", icon: "💭" },
+    { label: "Shadows Forum", page: "forum_shadows", icon: "🌑" },
+    { label: "Search Posts", page: "forum_search", icon: "🔍" },
   ]},
   { title: "Chat", icon: MessageSquare, items: [
-    { label: "Chats Hub", page: "chats", icon: "💬" },
+    { label: "Crew Chat", page: "crew_chat", icon: "💬" },
+    { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
+    { label: "Global Chat", page: "global_chat", icon: "🌐" },
+    { label: "Trade Chat", page: "trade_chat", icon: "💹" },
+    { label: "Looking for Group", page: "lfg", icon: "👥" },
   ]},
   { title: t("right.quickInfo"), icon: Globe, items: [
-    { label: "Quick Info Hub", page: "quickinfo", icon: "🗺️" },
+    { label: "Airport", page: "airport", icon: "✈️" },
+    { label: "Weather", page: "weather", icon: "🌤️" },
+    { label: "News Ticker", page: "news_ticker", icon: "📰" },
+    { label: "City Map", page: "city_map", icon: "🗺️" },
+    { label: "City Overview", page: "city_overview", icon: "🏙️" },
+    { label: "Statistics", page: "statistics", icon: "📊" },
+    { label: "World Map", page: "world_map", icon: "🌍" },
   ]},
   { title: "Seasonal Events", icon: Flame, items: [
-    { label: "Events Hub", page: "seasonal", icon: "🎆" },
+    { label: "New Year", page: "evt_newyear", icon: "🎆" },
+    { label: "Valentine", page: "evt_valentine", icon: "❤️" },
+    { label: "St. Patrick", page: "evt_patricks", icon: "☘️" },
+    { label: "Easter", page: "evt_easter", icon: "🥚" },
+    { label: "Summer", page: "evt_summer", icon: "☀️" },
+    { label: "Halloween", page: "evt_halloween", icon: "🎃" },
+    { label: "Christmas", page: "evt_christmas", icon: "🎄" },
+    { label: "Cyber Monday", page: "evt_cyber", icon: "💻" },
+    { label: "Black Friday", page: "evt_blackfriday", icon: "🛒" },
+    { label: "Tax Season", page: "evt_tax", icon: "📋" },
+    { label: "Spring Break", page: "evt_spring", icon: "🌸" },
+    { label: "Winter", page: "evt_winter", icon: "❄️" },
   ]},
   { title: "Server Events", icon: Zap, items: [
-    { label: "Events Hub", page: "server_events", icon: "⚡" },
+    { label: "Purge Night", page: "evt_purge", icon: "💀" },
+    { label: "Blood Moon", page: "evt_bloodmoon", icon: "🌑" },
+    { label: "Robber's Moon", page: "evt_robbersmoon", icon: "🌙" },
+    { label: "Full Moon", page: "evt_fullmoon", icon: "🌕" },
+    { label: "Grand Heist", page: "evt_grandheist", icon: "🏦" },
+    { label: "Tournament", page: "evt_tournament", icon: "🏆" },
+    { label: "Family War", page: "evt_familywar", icon: "⚔️" },
+    { label: "Territory", page: "evt_territory", icon: "📍" },
+    { label: "Underground", page: "evt_underground", icon: "💣" },
+    { label: "Crime Empire", page: "evt_empire", icon: "👑" },
   ]},
   { title: "Help", icon: HelpCircle, items: [
-    { label: "Help Hub", page: "help", icon: "❓" },
+    { label: "FAQ", page: "faq", icon: "❓" },
+    { label: "Support", page: "support", icon: "🆘" },
+    { label: "Guidelines", page: "community", icon: "📜" },
+    { label: "Reports", page: "reports", icon: "📢" },
   ]},
   { title: t("right.system"), icon: Settings, items: [
     { label: t("right.admin"), page: "admin_panel", icon: "⚙️" },
@@ -2393,21 +2526,6 @@ const renderPage = () => {
 
             // Combat
       case "arena": return <CombatOverviewPage />;
-      case "help": return <WorkingHub title="Help Center" icon="❓" tabs={getHubTabs("help")} navigate={setPage} />;
-      case "server_events": return <WorkingHub title="Server Events" icon="⚡" tabs={getHubTabs("server_events")} navigate={setPage} />;
-      case "seasonal": return <WorkingHub title="Seasonal Events" icon="🎆" tabs={getHubTabs("seasonal")} navigate={setPage} />;
-      case "quickinfo": return <WorkingHub title="Quick Info" icon="🗺️" tabs={getHubTabs("quickinfo")} navigate={setPage} />;
-      case "chats": return <WorkingHub title="Chats" icon="💬" tabs={getHubTabs("chats")} navigate={setPage} />;
-      case "forums": return <WorkingHub title="Forums" icon="📢" tabs={getHubTabs("forums")} navigate={setPage} />;
-      case "special": return <WorkingHub title="Special" icon="👻" tabs={getHubTabs("special")} navigate={setPage} />;
-      case "progression": return <WorkingHub title="Progression" icon="🧠" tabs={getHubTabs("progression")} navigate={setPage} />;
-      case "social": return <WorkingHub title="Social" icon="🤝" tabs={getHubTabs("social")} navigate={setPage} />;
-      case "assets": return <WorkingHub title="Assets" icon="📦" tabs={getHubTabs("assets")} navigate={setPage} />;
-      case "economy": return <WorkingHub title="Economy" icon="💰" tabs={getHubTabs("economy")} navigate={setPage} />;
-      case "underworld_hub": return <WorkingHub title="Underworld" icon="🔍" tabs={getHubTabs("underworld")} navigate={setPage} />;
-      case "empire_hub": return <WorkingHub title="Empire" icon="🏗️" tabs={getHubTabs("empire")} navigate={setPage} />;
-      case "power_hub": return <WorkingHub title="Power" icon="⚔️" tabs={getHubTabs("power")} navigate={setPage} />;
-      case "world_hub": return <WorkingHub title="World" icon="🌍" tabs={getHubTabs("world")} navigate={setPage} />;
       case "companies_hub": return <CompaniesHubPage />;
       
       
