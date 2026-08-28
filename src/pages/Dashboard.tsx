@@ -2874,6 +2874,45 @@ const renderPage = () => {
                   })()}
 
                   {/* Quick Info */}
+                  {/* Firearms & Ammo */}
+                  {(() => {
+                    try {
+                      const permit = JSON.parse(localStorage.getItem("empirePermit") || "0");
+                      if (permit === 0) return null;
+                      const armorDur = JSON.parse(localStorage.getItem("empireArmor") || "0");
+                      const lockpickLv = JSON.parse(localStorage.getItem("empireLockpick") || "0");
+                      return (
+                        <div className="px-2">
+                          <div className="mafia-card rounded-lg p-2 border border-amber-500/20">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-[10px] font-bold text-slate-300">🔫 Firearms</span>
+                              <span className="text-[9px] text-green-400 font-bold">
+                                {permit === 1 ? "Basic" : permit === 2 ? "Advanced" : permit === 3 ? "Class III" : "FFL"} Permit
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-1">
+                              <div className="text-center p-1 bg-slate-800/30 rounded">
+                                <div className="text-[9px] text-slate-500">🔫 Guns</div>
+                                <div className="text-[10px] font-bold text-red-400">{permit}+</div>
+                              </div>
+                              <div className="text-center p-1 bg-slate-800/30 rounded">
+                                <div className="text-[9px] text-slate-500">💀 Bullets</div>
+                                <div className="text-[10px] font-bold text-orange-400">&#8734;</div>
+                              </div>
+                              <div className="text-center p-1 bg-slate-800/30 rounded">
+                                <div className="text-[9px] text-slate-500">🦺 Armor</div>
+                                <div className={`text-[10px] font-bold ${armorDur > 50 ? "text-green-400" : armorDur > 20 ? "text-yellow-400" : "text-red-400"}`}>{armorDur}%</div>
+                              </div>
+                              <div className="text-center p-1 bg-slate-800/30 rounded">
+                                <div className="text-[9px] text-slate-500">🔑 Lockpick</div>
+                                <div className="text-[10px] font-bold text-amber-400">Lv.{Math.min(10, lockpickLv)}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } catch { return null; }
+                  })()}
                 </div>
               )}
 

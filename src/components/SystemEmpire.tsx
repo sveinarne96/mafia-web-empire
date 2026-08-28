@@ -439,7 +439,29 @@ function RelationshipsPage() {
 
 function SurvivalRealismPage() {
   const [tab, setTab] = useState("hospital");
+  const [tick, setTick] = useState(0);
   const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState<"green"|"red"|"amber"|"blue">("amber");
+  const [playerHealth, setPlayerHealth] = useState(() => { try { return JSON.parse(localStorage.getItem("playerData") || "{}").life ?? 120; } catch { return 120; } });
+  const [playerMaxHealth] = useState(() => { try { return JSON.parse(localStorage.getItem("playerData") || "{}").maxLife ?? 120; } catch { return 120; } });
+  const [addictions, setAddictions] = useState(() => { try { return JSON.parse(localStorage.getItem("empireAddictions") || '{"alcohol":0,"gambling":0,"painkillers":0,"stimulants":0}'); } catch { return { alcohol: 0, gambling: 0, painkillers: 0, stimulants: 0 }; } });
+  const [mentalHealth, setMentalHealth] = useState(() => { try { return JSON.parse(localStorage.getItem("empireMental") || '{"stress":30,"paranoia":20,"guilt":10,"focus":80}'); } catch { return { stress: 30, paranoia: 20, guilt: 10, focus: 80 }; } });
+  const [insuranceUntil, setInsuranceUntil] = useState(() => { try { return JSON.parse(localStorage.getItem("empireInsurance") || "0"); } catch { return 0; } });
+  const [disposalUntil, setDisposalUntil] = useState(() => { try { return JSON.parse(localStorage.getItem("empireDisposal") || "0"); } catch { return 0; } });
+  const [evidenceUntil, setEvidenceUntil] = useState(() => { try { return JSON.parse(localStorage.getItem("empireEvidence") || "0"); } catch { return 0; } });
+
+  React.useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(iv); }, []);
+
+  const save = (key: string, val: unknown) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+  const showMsg = (m: string, type: "green"|"red"|"amber"|"blue" = "amber") => { setMsg(m); setMsgType(type); setTimeout(() => setMsg(""), 4000); };
+  const formatTime = (ms: number) => {
+    if (ms <= 0) return "Expired";
+    const s = Math.floor(ms / 1000); const m = Math.floor(s / 60); const h = Math.floor(m / 60); const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h ${m % 60}m`; if (h > 0) return `${h}h ${m % 60}m`; return `${m}m ${s % 60}s`;
+  };
+  const getCash = () => { try { return JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0; } catch { return 0; } };
+  const spendCash = (amount: number) => { try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - amount; localStorage.setItem("playerData", JSON.stringify(d)); } catch {} };
+
   const tabs = [
     { id: "hospital", icon: "🏥", label: "Hospital" },
     { id: "surgery", icon: "🔬", label: "Surgery" },
@@ -453,55 +475,108 @@ function SurvivalRealismPage() {
     { id: "costs", icon: "💰", label: "Hospital Costs" },
   ];
 
+  // Addiction side effects
+  const getAddictionEffects = () => {
+    const effects: string[] = [];
+    if (addictions.alcohol > 30) effects.push(`🍺 Alcohol: -${Math.floor(addictions.alcohol / 5)}% accuracy, random blackout risk`);
+    if (addictions.gambling > 30) effects.push(`🎰 Gambling: -${Math.floor(addictions.gambling / 5)}% crime income, +${Math.floor(addictions.gambling / 3)}% gambling losses`);
+    if (addictions.painkillers > 30) effects.push(`💊 Painkillers: -${Math.floor(addictions.painkillers / 5)}% defense, healthcare costs x${1 + Math.floor(addictions.painkillers / 30)}`);
+    if (addictions.stimulants > 30) effects.push(`💉 Stimulants: +${Math.floor(addictions.stimulants / 4)}% speed but -${Math.floor(addictions.stimulants / 3)}% max HP`);
+    return effects;
+  };
+
   return (
     <div className="animate-fade-in space-y-4">
       <SectionTitle icon="💀" title="Survival & Realism" sub="Stay alive, manage addictions, and cover your tracks" />
-      {msg && <div className="px-4 py-2 bg-amber-600/20 border border-amber-500/40 rounded-xl text-xs text-amber-300 text-center">{msg}</div>}
+      {msg && <div className={`px-4 py-2 border rounded-xl text-xs text-center ${msgType === "green" ? "bg-green-600/20 border-green-500/40 text-green-300" : msgType === "red" ? "bg-red-600/20 border-red-500/40 text-red-300" : msgType === "blue" ? "bg-blue-600/20 border-blue-500/40 text-blue-300" : "bg-amber-600/20 border-amber-500/40 text-amber-300"}`}>{msg}</div>}
       <TabBar tabs={tabs} active={tab} onSelect={setTab} />
 
+      {/* Hospital — Heal with realistic effects */}
       {tab === "hospital" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4 text-center">
             <div className="text-sm text-slate-400">Current Health</div>
-            <div className="text-3xl font-black text-red-400">120 / 120</div>
-            <div className="w-full h-2 bg-slate-800 rounded-full mt-2">
-              <div className="h-full bg-gradient-to-r from-red-500 to-red-400 rounded-full" style={{ width: '100%' }} />
+            <div className={`text-3xl font-black ${playerHealth > 80 ? "text-green-400" : playerHealth > 40 ? "text-yellow-400" : "text-red-400"}`}>{playerHealth} / {playerMaxHealth}</div>
+            <div className="w-full h-3 bg-slate-800 rounded-full mt-2">
+              <div className="h-full rounded-full transition-all" style={{ width: `${(playerHealth / playerMaxHealth) * 100}%`, background: playerHealth > 80 ? "#22c55e" : playerHealth > 40 ? "#eab308" : "#ef4444" }} />
+            </div>
+            <div className="text-[10px] text-slate-500 mt-1">
+              {playerHealth <= 20 ? "⚠️ CRITICAL — You need immediate medical attention!" : playerHealth <= 50 ? "⚠️ WOUNDED — Seek treatment soon" : playerHealth <= 80 ? "Minor injuries — heal at your leisure" : "✅ Healthy"}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {[
-              { name: "ER Visit", cost: 5000, heal: 30, time: "10 min", icon: "🚑" },
-              { name: "Standard Care", cost: 15000, heal: 60, time: "20 min", icon: "💊" },
-              { name: "VIP Ward", cost: 50000, heal: 100, time: "5 min", icon: "🏨" },
-              { name: "Full Recovery", cost: 150000, heal: "MAX", time: "Instant", icon: "✨" },
-            ].map(t => (
-              <div key={t.name} className="mafia-card rounded-xl p-4">
+          {[
+            { name: "ER Visit", cost: 5000, heal: 30, time: "10 min wait", icon: "🚑", sideEffect: "Pain medication may cause drowsiness (-5% focus for 1h)" },
+            { name: "Standard Care", cost: 15000, heal: 60, time: "20 min wait", icon: "💊", sideEffect: "Antibiotics prescribed — no side effects" },
+            { name: "VIP Ward", cost: 50000, heal: 100, time: "5 min wait", icon: "🏨", sideEffect: "Private room — full recovery, no side effects" },
+            { name: "Full Recovery", cost: 150000, heal: "MAX", time: "Instant", icon: "✨", sideEffect: "Surgery + physical therapy — costs extra but zero side effects" },
+          ].map(t => {
+            const canAfford = getCash() >= t.cost;
+            const needsHeal = playerHealth < playerMaxHealth;
+            return (
+              <div key={t.name} className={`mafia-card rounded-xl p-4 border transition-all ${!needsHeal ? "border-green-500/30" : "border-amber-500/10"}`}>
                 <div className="flex items-center gap-2 mb-1"><span className="text-xl">{t.icon}</span><span className="text-sm font-bold text-slate-200">{t.name}</span></div>
-                <div className="text-[10px] text-slate-400">Heal: {t.heal} HP | Time: {t.time}</div>
-                <button onClick={() => setMsg(`Treated at ${t.name}`)} className="w-full mt-2 px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-300 rounded-lg text-xs font-bold">
-                  ${t.cost.toLocaleString()}
+                <div className="text-[10px] text-slate-400">Heal: {t.heal} HP • Wait: {t.time}</div>
+                <div className="text-[10px] text-amber-400 mt-1">⚕️ {t.sideEffect}</div>
+                <button onClick={() => {
+                  if (!needsHeal) { showMsg("You're already at full health!", "green"); return; }
+                  if (!canAfford) { showMsg(`Need $${t.cost.toLocaleString()}`, "red"); return; }
+                  spendCash(t.cost);
+                  const healed = t.heal === "MAX" ? playerMaxHealth - playerHealth : Math.min(Number(t.heal), playerMaxHealth - playerHealth);
+                  const newHP = Math.min(playerMaxHealth, playerHealth + healed);
+                  setPlayerHealth(newHP);
+                  try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.life = newHP; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                  showMsg(`Treated at ${t.name}! +${healed} HP${t.name === "ER Visit" ? " (Drowsy for 1h)" : ""}`, "green");
+                }} disabled={!needsHeal} className={`w-full mt-2 px-3 py-2 rounded-xl text-xs font-bold transition ${needsHeal ? "bg-green-600/20 border border-green-500/40 text-green-300 hover:bg-green-600/30" : "bg-slate-800/30 border border-slate-700/30 text-slate-500 cursor-not-allowed"}`}>
+                  ${t.cost.toLocaleString()}{!needsHeal ? " (Full HP)" : ""}
                 </button>
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
       )}
 
+      {/* Surgery — Realistic with complications */}
       {tab === "surgery" && (
         <div className="space-y-3">
+          <div className="p-3 bg-red-900/20 border border-red-500/20 rounded-xl text-[10px] text-red-300">
+            ⚠️ All surgeries carry risk. Higher risk = lower cost. Complications can reduce stats permanently.
+          </div>
           {[
-            { name: "Emergency Surgery", cost: 200000, desc: "Fix critical injuries — recover from near-death", risk: "5% complication", icon: "🔴" },
-            { name: "Organ Transplant", cost: 1000000, desc: "Replace damaged organ — restore full health", risk: "15% rejection", icon: "🫀" },
-            { name: "Cybernetic Implant", cost: 5000000, desc: "Mechanical arm/eye — permanent stat boost", risk: "10% malfunction", icon: "🤖" },
-            { name: "Clone Backup", cost: 25000000, desc: "Clone body backup — instant respawn on death", risk: "Memory loss possible", icon: "🧬" },
+            { name: "Wound Stitching", cost: 10000, heal: 50, risk: "2%", complication: "Infection — -5% HP for 24h", icon: "🪡" },
+            { name: "Emergency Surgery", cost: 200000, heal: 150, risk: "5%", complication: "Blood loss — -10 ATK for 12h", icon: "🔴" },
+            { name: "Organ Transplant", cost: 1000000, heal: "FULL", risk: "15%", complication: "Rejection — 20% chance of death", icon: "🫀" },
+            { name: "Cybernetic Implant", cost: 5000000, heal: "NONE", risk: "10%", complication: "Malfunction — random stat debuff", icon: "🤖", boost: "+20 ATK, +20 DEF permanent" },
           ].map(s => (
-            <div key={s.name} className="mafia-card rounded-xl p-4">
+            <div key={s.name} className="mafia-card rounded-xl p-4 border border-amber-500/10">
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-2xl">{s.icon}</span>
-                <div><div className="text-sm font-bold text-slate-200">{s.name}</div><div className="text-[10px] text-slate-400">{s.desc}</div></div>
+                <div>
+                  <div className="text-sm font-bold text-slate-200">{s.name}</div>
+                  <div className="text-[10px] text-slate-400">Recovery: {s.heal} HP{s.boost ? ` • ${s.boost}` : ""}</div>
+                </div>
               </div>
-              <div className="text-[10px] text-red-400 mb-2">⚠️ Risk: {s.risk}</div>
-              <button onClick={() => setMsg(`Scheduled ${s.name}`)} className="w-full px-3 py-1.5 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-lg text-xs font-bold">
+              <div className="text-[10px] text-red-400 mb-1">⚠️ Risk: {s.risk} — Complication: {s.complication}</div>
+              <button onClick={() => {
+                if (getCash() < s.cost) { showMsg(`Need $${s.cost.toLocaleString()}`, "red"); return; }
+                spendCash(s.cost);
+                const roll = Math.random() * 100;
+                const riskNum = parseFloat(s.risk);
+                if (roll < riskNum) {
+                  // Complication!
+                  if (s.name === "Organ Transplant" && roll < 5) {
+                    showMsg(`💀 SURGICAL FAILURE! The organ was rejected. You died on the table... Hospital bill: $${s.cost.toLocaleString()}`, "red");
+                    setPlayerHealth(Math.floor(playerMaxHealth * 0.1));
+                  } else {
+                    showMsg(`⚠️ Complication during ${s.name}! ${s.complication}. Surgery partially successful.`, "red");
+                    if (s.heal !== "NONE" && s.heal !== "FULL") setPlayerHealth((p: number) => Math.min(playerMaxHealth, p + Math.floor(Number(s.heal) * 0.5)));
+                  }
+                } else {
+                  if (s.heal === "FULL") { setPlayerHealth(playerMaxHealth); showMsg(`${s.name} successful! Full recovery.`, "green"); }
+                  else if (s.heal === "NONE") { showMsg(`${s.name} installed! ${s.boost}`, "green"); }
+                  else { setPlayerHealth((p: number) => Math.min(playerMaxHealth, p + Number(s.heal))); showMsg(`${s.name} successful! +${s.heal} HP recovered.`, "green"); }
+                }
+                try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.life = playerHealth; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+              }} className="w-full px-3 py-2 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-600/30 transition">
                 Schedule — ${s.cost.toLocaleString()}
               </button>
             </div>
@@ -509,90 +584,167 @@ function SurvivalRealismPage() {
         </div>
       )}
 
+      {/* Addiction — Realistic system with effects */}
       {tab === "addiction" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4">
-            <div className="text-sm font-bold text-slate-200 mb-3">Your Addiction Levels</div>
+            <div className="text-sm font-bold text-slate-200 mb-3">Addiction Levels</div>
             {[
-              { name: "Alcohol", level: 35, icon: "🍺" },
-              { name: "Gambling", level: 60, icon: "🎰" },
-              { name: "Painkillers", level: 15, icon: "💊" },
-              { name: "Stimulants", level: 0, icon: "💉" },
+              { key: "alcohol" as const, name: "Alcohol", icon: "🍺", desc: "Beer, whiskey, moonshine — social lubricant turned crutch" },
+              { key: "gambling" as const, name: "Gambling", icon: "🎰", desc: "Slots, cards, dice — the rush of risk" },
+              { key: "painkillers" as const, name: "Painkillers", icon: "💊", desc: "Oxy, morphine, codeine — numbs the pain, kills the mind" },
+              { key: "stimulants" as const, name: "Stimulants", icon: "💉", desc: "Cocaine, meth, amphetamines — superhuman then crash" },
             ].map(a => (
-              <div key={a.name} className="flex items-center gap-3 mb-2">
-                <span className="text-lg">{a.icon}</span>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs"><span className="text-slate-300">{a.name}</span><span className={a.level > 50 ? "text-red-400" : a.level > 20 ? "text-yellow-400" : "text-green-400"}>{a.level}%</span></div>
-                  <div className="w-full h-1.5 bg-slate-800 rounded-full mt-1">
-                    <div className="h-full rounded-full" style={{ width: `${a.level}%`, background: a.level > 50 ? "#ef4444" : a.level > 20 ? "#eab308" : "#22c55e" }} />
+              <div key={a.key} className="mb-3">
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-lg">{a.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-300 font-bold">{a.name}</span>
+                      <span className={addictions[a.key] > 60 ? "text-red-400" : addictions[a.key] > 30 ? "text-yellow-400" : addictions[a.key] > 0 ? "text-orange-400" : "text-green-400"}>
+                        {addictions[a.key]}%
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-slate-500">{a.desc}</div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full mt-1">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${addictions[a.key]}%`, background: addictions[a.key] > 60 ? "#ef4444" : addictions[a.key] > 30 ? "#eab308" : addictions[a.key] > 0 ? "#f97316" : "#22c55e" }} />
+                    </div>
                   </div>
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <button onClick={() => {
+                    const increase = Math.floor(Math.random() * 15 + 5);
+                    const newAddictions = { ...addictions, [a.key]: Math.min(100, addictions[a.key] + increase) };
+                    setAddictions(newAddictions);
+                    save("empireAddictions", newAddictions);
+                    // Addictive substances also increase faster over time
+                    showMsg(`${a.name} consumed. Addiction +${increase}%${newAddictions[a.key] > 60 ? " ⚠️ SEVERE ADDICTION!" : ""}`, newAddictions[a.key] > 60 ? "red" : "amber");
+                  }} className="flex-1 px-2 py-1 bg-red-600/20 border border-red-500/30 text-red-300 rounded-lg text-[10px] font-bold hover:bg-red-600/30 transition">
+                    Use +{Math.floor(Math.random() * 15 + 5)}%
+                  </button>
+                  <button onClick={() => {
+                    if (addictions[a.key] <= 0) { showMsg("Already clean!", "green"); return; }
+                    const decrease = Math.floor(Math.random() * 8 + 2);
+                    const newAddictions = { ...addictions, [a.key]: Math.max(0, addictions[a.key] - decrease) };
+                    setAddictions(newAddictions);
+                    save("empireAddictions", newAddictions);
+                    showMsg(`Resisted ${a.name}. Addiction -${decrease}%`, "green");
+                  }} className="flex-1 px-2 py-1 bg-green-600/20 border border-green-500/30 text-green-300 rounded-lg text-[10px] font-bold hover:bg-green-600/30 transition">
+                    Resist -{Math.floor(Math.random() * 8 + 2)}%
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mafia-card rounded-xl p-4 border border-red-500/20">
-            <div className="text-xs text-slate-400 space-y-1">
-              <div>• <b className="text-slate-300">Gambling addiction</b> — -10% crime income, +20% gambling losses</div>
-              <div>• <b className="text-slate-300">Alcohol addiction</b> — -5% accuracy, random blackout events</div>
-              <div>• <b className="text-slate-300">Painkiller addiction</b> — -10% defense, healthcare costs x2</div>
-              <div>• <b className="text-slate-300">Stimulant addiction</b> — +15% speed but -20% max HP</div>
+          {/* Active Effects */}
+          {getAddictionEffects().length > 0 && (
+            <div className="mafia-card rounded-xl p-4 border border-red-500/20">
+              <div className="text-xs font-bold text-red-400 mb-2">⚠️ Active Addiction Effects</div>
+              <div className="space-y-1">
+                {getAddictionEffects().map((e, i) => (
+                  <div key={i} className="text-[10px] text-red-300">{e}</div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
+      {/* Mental Health — Realistic effects */}
       {tab === "mental" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4">
-            <div className="text-sm font-bold text-slate-200 mb-2">Mental State</div>
+            <div className="text-sm font-bold text-slate-200 mb-3">Mental State</div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: "Stress", value: 45, icon: "😰" },
-                { label: "Paranoia", value: 30, icon: "👁️" },
-                { label: "Guilt", value: 10, icon: "😞" },
-                { label: "Focus", value: 80, icon: "🎯" },
+                { key: "stress" as const, label: "Stress", icon: "😰", color: mentalHealth.stress > 60 ? "red" : mentalHealth.stress > 30 ? "yellow" : "green" },
+                { key: "paranoia" as const, label: "Paranoia", icon: "👁️", color: mentalHealth.paranoia > 60 ? "red" : mentalHealth.paranoia > 30 ? "yellow" : "green" },
+                { key: "guilt" as const, label: "Guilt", icon: "😞", color: mentalHealth.guilt > 60 ? "red" : mentalHealth.guilt > 30 ? "yellow" : "green" },
+                { key: "focus" as const, label: "Focus", icon: "🎯", color: mentalHealth.focus > 60 ? "green" : mentalHealth.focus > 30 ? "yellow" : "red", inverted: true },
               ].map(s => (
-                <div key={s.label} className="text-center p-3 bg-slate-800/30 rounded-lg">
+                <div key={s.key} className="text-center p-3 bg-slate-800/30 rounded-lg">
                   <div className="text-lg">{s.icon}</div>
-                  <div className="text-xs font-bold text-slate-200">{s.value}%</div>
+                  <div className={`text-xs font-bold text-${s.color}-400`}>{mentalHealth[s.key]}%</div>
                   <div className="text-[10px] text-slate-400">{s.label}</div>
+                  <div className="w-full h-1.5 bg-slate-800 rounded-full mt-1">
+                    <div className="h-full rounded-full transition-all" style={{ width: `${mentalHealth[s.key]}%`, background: s.color === "red" ? "#ef4444" : s.color === "yellow" ? "#eab308" : "#22c55e" }} />
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <button onClick={() => setMsg("Meditation session — stress reduced")} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
-              <div className="text-xl mb-1">🧘</div><div className="text-xs font-bold text-slate-200">Meditate</div><div className="text-[10px] text-slate-400">-15% Stress</div>
+          <div className="grid grid-cols-2 gap-3">
+            <button onClick={() => { setMentalHealth((m: any) => ({ ...m, stress: Math.max(0, m.stress - 15) })); save("empireMental", { ...mentalHealth, stress: Math.max(0, mentalHealth.stress - 15) }); showMsg("Meditation — stress reduced", "green"); }}
+              className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
+              <div className="text-xl mb-1">🧘</div><div className="text-xs font-bold text-slate-200">Meditate</div><div className="text-[10px] text-green-400">-15% Stress</div>
             </button>
-            <button onClick={() => setMsg("Therapy session — guilt reduced")} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
-              <div className="text-xl mb-1">🛋️</div><div className="text-xs font-bold text-slate-200">Therapy</div><div className="text-[10px] text-slate-400">-20% Guilt ($50K)</div>
+            <button onClick={() => {
+              if (getCash() < 50000) { showMsg("Need $50,000", "red"); return; }
+              spendCash(50000);
+              setMentalHealth((m: any) => ({ ...m, guilt: Math.max(0, m.guilt - 20), stress: Math.max(0, m.stress - 10) }));
+              save("empireMental", { ...mentalHealth, guilt: Math.max(0, mentalHealth.guilt - 20), stress: Math.max(0, mentalHealth.stress - 10) });
+              showMsg("Therapy session — guilt and stress reduced ($50K)", "green");
+            }} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
+              <div className="text-xl mb-1">🛋️</div><div className="text-xs font-bold text-slate-200">Therapy</div><div className="text-[10px] text-amber-400">-20% Guilt ($50K)</div>
             </button>
-            <button onClick={() => setMsg("Boxing session — stress and paranoia reduced")} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
-              <div className="text-xl mb-1">🥊</div><div className="text-xs font-bold text-slate-200">Boxing</div><div className="text-[10px] text-slate-400">-10% Stress, -5% Paranoia</div>
+            <button onClick={() => {
+              setMentalHealth((m: any) => ({ ...m, stress: Math.max(0, m.stress - 10), paranoia: Math.max(0, m.paranoia - 5), focus: Math.min(100, m.focus + 5) }));
+              save("empireMental", { ...mentalHealth, stress: Math.max(0, mentalHealth.stress - 10), paranoia: Math.max(0, mentalHealth.paranoia - 5), focus: Math.min(100, mentalHealth.focus + 5) });
+              showMsg("Boxing — stress and paranoia reduced, focus improved", "green");
+            }} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
+              <div className="text-xl mb-1">🥊</div><div className="text-xs font-bold text-slate-200">Boxing</div><div className="text-[10px] text-green-400">-10% Stress, +5% Focus</div>
             </button>
-            <button onClick={() => setMsg("Night out — stress reduced but guilt increased")} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
-              <div className="text-xl mb-1">🍸</div><div className="text-xs font-bold text-slate-200">Night Out</div><div className="text-[10px] text-slate-400">-25% Stress, +10% Guilt</div>
+            <button onClick={() => {
+              setMentalHealth((m: any) => ({ ...m, stress: Math.max(0, m.stress - 25), guilt: Math.min(100, m.guilt + 10) }));
+              save("empireMental", { ...mentalHealth, stress: Math.max(0, mentalHealth.stress - 25), guilt: Math.min(100, mentalHealth.guilt + 10) });
+              showMsg("Night out — stress reduced but guilt increased", "amber");
+            }} className="mafia-card rounded-xl p-3 text-center hover:border-amber-500/20 transition">
+              <div className="text-xl mb-1">🍸</div><div className="text-xs font-bold text-slate-200">Night Out</div><div className="text-[10px] text-amber-400">-25% Stress, +10% Guilt</div>
             </button>
           </div>
         </div>
       )}
 
+      {/* Insurance Fraud — 48h active */}
       {tab === "insurance_fraud" && (
         <div className="space-y-3">
+          {insuranceUntil > Date.now() && (
+            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-xl text-center">
+              <div className="text-sm font-bold text-green-400">✅ Insurance Active</div>
+              <div className="text-xs text-green-300">{formatTime(insuranceUntil - Date.now())} remaining</div>
+            </div>
+          )}
           {[
-            { name: "Fake Car Accident", cost: 20000, payout: "80K-150K", risk: "15% caught", icon: "🚗" },
-            { name: "Staged Break-In", cost: 15000, payout: "50K-100K", risk: "10% caught", icon: "🏠" },
-            { name: "Phantom Injury", cost: 10000, payout: "30K-60K", risk: "20% caught", icon: "🤕" },
-            { name: "Arson Claim", cost: 50000, payout: "200K-500K", risk: "25% caught", icon: "🔥" },
-            { name: "Medical Fraud", cost: 30000, payout: "100K-250K", risk: "18% caught", icon: "🏥" },
+            { name: "Fake Car Accident", cost: 20000, payout: "80K-150K", risk: "15%", icon: "🚗", desc: "Staged collision — pay a partner to ram your car" },
+            { name: "Staged Break-In", cost: 15000, payout: "50K-100K", risk: "10%", icon: "🏠", desc: "Hire someone to break in — claim stolen items" },
+            { name: "Phantom Injury", cost: 10000, payout: "30K-60K", risk: "20%", icon: "🤕", desc: "Fake a slip and fall — sue the property owner" },
+            { name: "Arson Claim", cost: 50000, payout: "200K-500K", risk: "25%", icon: "🔥", desc: "Burn your own property — claim insurance" },
+            { name: "Medical Fraud", cost: 30000, payout: "100K-250K", risk: "18%", icon: "🏥", desc: "Invent injuries — claim disability payments" },
           ].map(f => (
-            <div key={f.name} className="mafia-card rounded-xl p-4">
+            <div key={f.name} className={`mafia-card rounded-xl p-4 border transition-all ${insuranceUntil > Date.now() ? "border-green-500/30" : "border-amber-500/10"}`}>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-2xl">{f.icon}</span>
-                <div><div className="text-sm font-bold text-slate-200">{f.name}</div><div className="text-[10px] text-slate-400">Payout: {f.payout}</div></div>
+                <div>
+                  <div className="text-sm font-bold text-slate-200">{f.name}</div>
+                  <div className="text-[10px] text-slate-400">{f.desc}</div>
+                  <div className="text-[10px] text-green-400">Payout: {f.payout} (48h claim window)</div>
+                </div>
               </div>
-              <div className="text-[10px] text-red-400 mb-2">⚠️ {f.risk} of investigation</div>
-              <button onClick={() => setMsg(`Filed ${f.name} claim`)} className="w-full px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-300 rounded-lg text-xs font-bold">
+              <div className="text-[10px] text-red-400 mb-2">⚠️ {f.risk} chance of investigation</div>
+              <button onClick={() => {
+                if (getCash() < f.cost) { showMsg(`Need $${f.cost.toLocaleString()}`, "red"); return; }
+                spendCash(f.cost);
+                const roll = Math.random() * 100;
+                if (roll < parseFloat(f.risk)) {
+                  showMsg(`🚨 INVESTIGATION! Your ${f.name} claim was flagged. Suspicious!`, "red");
+                } else {
+                  const payout = Math.floor(Math.random() * 100000 + 50000);
+                  try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) + payout; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                  setInsuranceUntil(Date.now() + 48 * 60 * 60 * 1000);
+                  save("empireInsurance", Date.now() + 48 * 60 * 60 * 1000);
+                  showMsg(`Filed ${f.name}! Payout: $${payout.toLocaleString()}. Active for 48h.`, "green");
+                }
+              }} className="w-full px-3 py-2 bg-green-600/20 border border-green-500/40 text-green-300 rounded-xl text-xs font-bold hover:bg-green-600/30 transition">
                 File Claim — ${f.cost.toLocaleString()}
               </button>
             </div>
@@ -600,20 +752,39 @@ function SurvivalRealismPage() {
         </div>
       )}
 
+      {/* Rehab — Buy programs */}
       {tab === "rehab" && (
         <div className="space-y-3">
           {[
-            { name: "Outpatient Program", cost: 100000, clean: "All addictions -20%", time: "7 days", icon: "🏠" },
-            { name: "30-Day Facility", cost: 500000, clean: "All addictions -50%", time: "30 days", icon: "🏥" },
-            { name: "Premium Rehab", cost: 2000000, clean: "All addictions FULL RESET", time: "14 days", icon: "✨" },
-            { name: "Detox Center", cost: 25000, clean: "Random addiction -30%", time: "3 days", icon: "💊" },
+            { name: "Detox Center", cost: 25000, clean: "Random addiction -30%", time: "3 days", icon: "💊", desc: "Quick detox — reduces one random addiction significantly" },
+            { name: "Outpatient Program", cost: 100000, clean: "All addictions -20%", time: "7 days", icon: "🏠", desc: "Attend daily sessions — go home at night" },
+            { name: "30-Day Facility", cost: 500000, clean: "All addictions -50%", time: "30 days", icon: "🏥", desc: "Full residential treatment — supervised recovery" },
+            { name: "Premium Rehab", cost: 2000000, clean: "FULL RESET", time: "14 days", icon: "✨", desc: "Luxury facility — complete addiction wipe, therapy included" },
           ].map(r => (
-            <div key={r.name} className="mafia-card rounded-xl p-4">
+            <div key={r.name} className="mafia-card rounded-xl p-4 border border-amber-500/10">
               <div className="flex items-center gap-3 mb-1">
                 <span className="text-2xl">{r.icon}</span>
-                <div><div className="text-sm font-bold text-slate-200">{r.name}</div><div className="text-[10px] text-slate-400">{r.clean} | {r.time}</div></div>
+                <div>
+                  <div className="text-sm font-bold text-slate-200">{r.name}</div>
+                  <div className="text-[10px] text-slate-400">{r.desc}</div>
+                  <div className="text-[10px] text-green-400">{r.clean} • {r.time}</div>
+                </div>
               </div>
-              <button onClick={() => setMsg(`Enrolled in ${r.name}`)} className="w-full mt-2 px-3 py-1.5 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-lg text-xs font-bold">
+              <button onClick={() => {
+                if (getCash() < r.cost) { showMsg(`Need $${r.cost.toLocaleString()}`, "red"); return; }
+                spendCash(r.cost);
+                let newAddictions = { ...addictions };
+                if (r.clean === "FULL RESET") {
+                  newAddictions = { alcohol: 0, gambling: 0, painkillers: 0, stimulants: 0 };
+                } else {
+                  const keys = Object.keys(newAddictions) as (keyof typeof newAddictions)[];
+                  const key = keys[Math.floor(Math.random() * keys.length)];
+                  newAddictions[key] = Math.max(0, newAddictions[key] - 30);
+                }
+                setAddictions(newAddictions);
+                save("empireAddictions", newAddictions);
+                showMsg(`Enrolled in ${r.name}! ${r.clean}.`, "green");
+              }} className="w-full px-3 py-2 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-600/30 transition">
                 ${r.cost.toLocaleString()}
               </button>
             </div>
@@ -621,25 +792,39 @@ function SurvivalRealismPage() {
         </div>
       )}
 
+      {/* Organ Traffic */}
       {tab === "organ" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4 border border-red-500/20">
             <div className="text-sm font-bold text-red-400 mb-2">🫀 Organ Trafficking</div>
-            <div className="text-xs text-slate-400">High risk, high reward. Get caught = 10 years prison.</div>
+            <div className="text-xs text-slate-400">High risk, high reward. Get caught = 10 years prison. Better skills = higher payout.</div>
           </div>
           {[
-            { name: "Kidney Sale", payout: "150K-300K", risk: "20% detection", icon: "🫘" },
-            { name: "Liver Deal", payout: "200K-400K", risk: "25% detection", icon: "🫀" },
-            { name: "Heart Heist", payout: "500K-1M", risk: "35% detection", icon: "❤️" },
-            { name: "Eye Harvest", payout: "100K-200K", risk: "15% detection", icon: "👁️" },
+            { name: "Kidney Sale", payout: "150K-300K", risk: "20%", icon: "🫘", desc: "Black market kidney — steady demand from wealthy patients" },
+            { name: "Liver Deal", payout: "200K-400K", risk: "25%", icon: "🫀", desc: "Partial liver — regrows, higher risk for higher reward" },
+            { name: "Heart Heist", payout: "500K-1M", risk: "35%", icon: "❤️", desc: "The ultimate organ — extremely rare, extremely valuable" },
+            { name: "Eye Harvest", payout: "100K-200K", risk: "15%", icon: "👁️", desc: "Corneas and retinas — lower risk, steady income" },
           ].map(o => (
-            <div key={o.name} className="mafia-card rounded-xl p-4">
+            <div key={o.name} className="mafia-card rounded-xl p-4 border border-red-500/10">
               <div className="flex items-center gap-3">
                 <span className="text-xl">{o.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{o.name}</div><div className="text-[10px] text-slate-400">Payout: {o.payout}</div></div>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-200">{o.name}</div>
+                  <div className="text-[10px] text-slate-400">{o.desc}</div>
+                  <div className="text-[10px] text-green-400">Payout: {o.payout}</div>
+                </div>
                 <div className="text-[10px] text-red-400">{o.risk}</div>
               </div>
-              <button onClick={() => setMsg(`Completed ${o.name} deal`)} className="w-full mt-2 px-3 py-1.5 bg-red-600/20 border border-red-500/40 text-red-300 rounded-lg text-xs font-bold">
+              <button onClick={() => {
+                const roll = Math.random() * 100;
+                if (roll < parseFloat(o.risk)) {
+                  showMsg(`🚨 CAUGHT! ${o.name} deal went wrong. 10 years in prison.`, "red");
+                } else {
+                  const payout = Math.floor(Math.random() * 300000 + 100000);
+                  try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) + payout; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                  showMsg(`${o.name} deal completed! +$${payout.toLocaleString()}`, "green");
+                }
+              }} className="w-full mt-2 px-3 py-2 bg-red-600/20 border border-red-500/40 text-red-300 rounded-xl text-xs font-bold hover:bg-red-600/30 transition">
                 Execute
               </button>
             </div>
@@ -647,75 +832,122 @@ function SurvivalRealismPage() {
         </div>
       )}
 
+      {/* Body Disposal — 7 days active */}
       {tab === "disposal" && (
         <div className="space-y-3">
+          {disposalUntil > Date.now() && (
+            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-xl text-center">
+              <div className="text-sm font-bold text-green-400">✅ Disposal Service Active</div>
+              <div className="text-xs text-green-300">{formatTime(disposalUntil - Date.now())} remaining</div>
+            </div>
+          )}
           {[
-            { name: "Acid Bath", cost: 25000, chance: "95% clean", icon: "🧪" },
-            { name: "Ocean Dump", cost: 10000, chance: "80% clean", icon: "🌊" },
-            { name: "Incinerator", cost: 50000, chance: "99% clean", icon: "🔥" },
-            { name: "Burial (Remote)", cost: 5000, chance: "60% clean", icon: "⚰️" },
-            { name: "Pig Farm", cost: 15000, chance: "90% clean", icon: "🐷" },
+            { name: "Burial (Remote)", cost: 5000, chance: "60%", desc: "Quick dig in the woods — risk of discovery", icon: "⚰️" },
+            { name: "Ocean Dump", cost: 10000, chance: "80%", desc: "Weighted bags, deep water — hard to find", icon: "🌊" },
+            { name: "Acid Bath", cost: 25000, chance: "95%", desc: "Industrial acid — complete dissolution", icon: "🧪" },
+            { name: "Pig Farm", cost: 15000, chance: "90%", desc: "Nature's disposal — pigs eat everything", icon: "🐷" },
+            { name: "Incinerator", cost: 50000, chance: "99%", desc: "Industrial furnace — zero trace", icon: "🔥" },
           ].map(d => (
-            <div key={d.name} className="mafia-card rounded-xl p-4">
+            <div key={d.name} className="mafia-card rounded-xl p-4 border border-amber-500/10">
               <div className="flex items-center gap-3">
                 <span className="text-xl">{d.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{d.name}</div><div className="text-[10px] text-slate-400">Success: {d.chance}</div></div>
-                <button onClick={() => setMsg(`${d.name} — body disposed`)} className="px-3 py-1 bg-slate-600/20 border border-slate-500/30 text-slate-300 rounded-lg text-[10px] font-bold">
-                  ${d.cost.toLocaleString()}
-                </button>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-200">{d.name}</div>
+                  <div className="text-[10px] text-slate-400">{d.desc} • Success: {d.chance}</div>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === "evidence" && (
-        <div className="space-y-3">
-          {[
-            { name: "Burn Evidence", cost: 5000, desc: "Destroy physical evidence — documents, weapons", icon: "🔥" },
-            { name: "Hack Database", cost: 50000, desc: "Erase digital records — fingerprints, DNA", icon: "💻" },
-            { name: "Bribe Forensics", cost: 100000, desc: "Pay lab techs to lose samples", icon: "💰" },
-            { name: "Plant False Evidence", cost: 75000, desc: "Frame a rival for your crime", icon: "🎭" },
-            { name: "Destroy Security Footage", cost: 30000, desc: "Hack and delete all nearby cameras", icon: "📹" },
-          ].map(e => (
-            <div key={e.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-xl">{e.icon}</span>
-                <div><div className="text-sm font-bold text-slate-200">{e.name}</div><div className="text-[10px] text-slate-400">{e.desc}</div></div>
-              </div>
-              <button onClick={() => setMsg(`${e.name} — done!`)} className="w-full px-3 py-1.5 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-lg text-xs font-bold">
-                ${e.cost.toLocaleString()}
+              <button onClick={() => {
+                if (getCash() < d.cost) { showMsg(`Need $${d.cost.toLocaleString()}`, "red"); return; }
+                spendCash(d.cost);
+                const roll = Math.random() * 100;
+                if (roll < 5) {
+                  showMsg(`🚨 PARTIAL FAILURE! Some evidence was left behind. Investigation risk increased.`, "red");
+                } else {
+                  setDisposalUntil(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                  save("empireDisposal", Date.now() + 7 * 24 * 60 * 60 * 1000);
+                  showMsg(`${d.name} — body disposed. Service active for 7 days.`, "green");
+                }
+              }} className="w-full mt-2 px-3 py-2 bg-slate-600/20 border border-slate-500/30 text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-600/30 transition">
+                ${d.cost.toLocaleString()} (7d service)
               </button>
             </div>
           ))}
         </div>
       )}
 
+      {/* Evidence Destruction — 5 days active */}
+      {tab === "evidence" && (
+        <div className="space-y-3">
+          {evidenceUntil > Date.now() && (
+            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-xl text-center">
+              <div className="text-sm font-bold text-green-400">✅ Evidence Protection Active</div>
+              <div className="text-xs text-green-300">{formatTime(evidenceUntil - Date.now())} remaining</div>
+            </div>
+          )}
+          {[
+            { name: "Burn Evidence", cost: 5000, desc: "Destroy physical evidence — documents, weapons, clothing", icon: "🔥" },
+            { name: "Destroy Security Footage", cost: 30000, desc: "Hack and delete all nearby cameras — clean the area", icon: "📹" },
+            { name: "Hack Database", cost: 50000, desc: "Erase digital records — fingerprints, DNA, phone logs", icon: "💻" },
+            { name: "Plant False Evidence", cost: 75000, desc: "Frame a rival for your crime — redirect investigation", icon: "🎭" },
+            { name: "Bribe Forensics", cost: 100000, desc: "Pay lab techs to lose/contaminate samples", icon: "💰" },
+          ].map(e => (
+            <div key={e.name} className="mafia-card rounded-xl p-4 border border-amber-500/10">
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-xl">{e.icon}</span>
+                <div>
+                  <div className="text-sm font-bold text-slate-200">{e.name}</div>
+                  <div className="text-[10px] text-slate-400">{e.desc}</div>
+                </div>
+              </div>
+              <button onClick={() => {
+                if (getCash() < e.cost) { showMsg(`Need $${e.cost.toLocaleString()}`, "red"); return; }
+                spendCash(e.cost);
+                setEvidenceUntil(Date.now() + 5 * 24 * 60 * 60 * 1000);
+                save("empireEvidence", Date.now() + 5 * 24 * 60 * 60 * 1000);
+                showMsg(`${e.name} — evidence destroyed. Protection active for 5 days.`, "green");
+              }} className="w-full px-3 py-2 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold hover:bg-amber-600/30 transition">
+                ${e.cost.toLocaleString()} (5d protection)
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Hospital Costs — Realistic breakdown */}
       {tab === "costs" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4">
             <div className="text-sm font-bold text-slate-200 mb-3">Hospital Cost Breakdown</div>
             <div className="space-y-2 text-xs">
               {[
-                { service: "ER Triage", cost: "$2,500" },
-                { service: "X-Ray", cost: "$1,500" },
-                { service: "Blood Work", cost: "$3,000" },
-                { service: "MRI Scan", cost: "$8,000" },
-                { service: "Surgery (Minor)", cost: "$25,000" },
-                { service: "Surgery (Major)", cost: "$100,000" },
-                { service: "ICU Night", cost: "$15,000" },
-                { service: "Ambulance", cost: "$5,000" },
-                { service: "Medication", cost: "$1,000-$10,000" },
+                { service: "ER Triage (Assessment)", cost: "$2,500", desc: "Initial evaluation by ER nurse" },
+                { service: "X-Ray", cost: "$1,500", desc: "Single imaging study" },
+                { service: "Blood Work", cost: "$3,000", desc: "Full panel — CBC, metabolic, toxicology" },
+                { service: "CT Scan", cost: "$5,000", desc: "Computed tomography — detailed imaging" },
+                { service: "MRI Scan", cost: "$8,000", desc: "Magnetic resonance — no radiation" },
+                { service: "Surgery (Minor)", cost: "$25,000", desc: "Outpatient procedure — same-day release" },
+                { service: "Surgery (Major)", cost: "$100,000", desc: "Open surgery — hospital stay required" },
+                { service: "ICU Night", cost: "$15,000", desc: "Intensive care — 24h monitoring" },
+                { service: "Ambulance", cost: "$5,000", desc: "Emergency transport with paramedics" },
+                { service: "Medication (Daily)", cost: "$1,000-$10,000", desc: "Painkillers, antibiotics, IV fluids" },
               ].map(c => (
-                <div key={c.service} className="flex justify-between p-2 bg-slate-800/30 rounded">
-                  <span className="text-slate-400">{c.service}</span>
-                  <span className="text-amber-400 font-bold">{c.cost}</span>
+                <div key={c.service} className="p-2 bg-slate-800/30 rounded">
+                  <div className="flex justify-between">
+                    <span className="text-slate-300 font-bold">{c.service}</span>
+                    <span className="text-amber-400 font-bold">{c.cost}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-500">{c.desc}</div>
                 </div>
               ))}
             </div>
           </div>
           <div className="mafia-card rounded-xl p-4 border border-green-500/20">
-            <div className="text-xs text-green-400">💡 Health insurance reduces all costs by 50%. Life insurance pays $500K on death.</div>
+            <div className="text-xs text-green-400 space-y-1">
+              <div>💡 <b>Health Insurance</b> reduces all costs by 50% — buy at Insurance Agency</div>
+              <div>💡 <b>Life Insurance</b> pays $500K on death — buy at Life Insurance tab</div>
+              <div>💡 <b>Criminal Record</b> increases all costs by 10% per wanted level</div>
+              <div>💡 <b>VIP Ward</b> — pay extra to skip wait times</div>
+            </div>
           </div>
         </div>
       )}
@@ -723,13 +955,55 @@ function SurvivalRealismPage() {
   );
 }
 
-/* ═══════════════════════════════════════════
-   🛡️ SECURITY & DEFENSE
-   ═══════════════════════════════════════════ */
-
 function SecurityDefensePage() {
   const [tab, setTab] = useState("guards");
+  const [tick, setTick] = useState(0);
+  const playerLevel = (() => { try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); return d.level ?? 1; } catch { return 1; } })();
+  const [activeServices, setActiveServices] = useState<Record<string, number>>(() => { try { return JSON.parse(localStorage.getItem("empireSecurity") || "{}"); } catch { return {}; } });
+  const [safehouseLevel, setSafehouseLevel] = useState(() => { try { return JSON.parse(localStorage.getItem("empireSafehouse") || "0"); } catch { return 0; } });
+  const [escapeLevel, setEscapeLevel] = useState(() => { try { return JSON.parse(localStorage.getItem("empireEscape") || "0"); } catch { return 0; } });
+  const [armorDurability, setArmorDurability] = useState(() => { try { return JSON.parse(localStorage.getItem("empireArmor") || "0"); } catch { return 0; } });
+  const [hasPermit, setHasPermit] = useState(() => { try { return JSON.parse(localStorage.getItem("empirePermit") || "0"); } catch { return 0; } });
+  const [lockpickLevel, setLockpickLevel] = useState(() => { try { return JSON.parse(localStorage.getItem("empireLockpick") || "0"); } catch { return 0; } });
+  const [lockpickXP, setLockpickXP] = useState(() => { try { return JSON.parse(localStorage.getItem("empireLockpickXP") || "0"); } catch { return 0; } });
+  const [alibiUntil, setAlibiUntil] = useState(() => { try { return JSON.parse(localStorage.getItem("empireAlibi") || "0"); } catch { return 0; } });
+  const [counterLevel, setCounterLevel] = useState(() => { try { return JSON.parse(localStorage.getItem("empireCounter") || "0"); } catch { return 0; } });
   const [msg, setMsg] = useState("");
+  const [msgType, setMsgType] = useState<"green"|"red"|"amber"|"blue">("amber");
+  const [buying, setBuying] = useState(false);
+
+  // Tick every second for timer updates
+  React.useEffect(() => { const iv = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(iv); }, []);
+
+  // Save to localStorage
+  const save = (key: string, val: unknown) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+
+  const showMsg = (m: string, type: "green"|"red"|"amber"|"blue" = "amber") => { setMsg(m); setMsgType(type); setTimeout(() => setMsg(""), 4000); };
+
+  const formatTime = (ms: number) => {
+    if (ms <= 0) return "Expired";
+    const s = Math.floor(ms / 1000);
+    const m = Math.floor(s / 60);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 0) return `${d}d ${h % 24}h ${m % 60}m`;
+    if (h > 0) return `${h}h ${m % 60}m`;
+    return `${m}m ${s % 60}s`;
+  };
+
+  const isActive = (key: string) => (activeServices[key] ?? 0) > Date.now();
+  const activateService = (key: string, durationMs: number, cost: number) => {
+    const cash = (() => { try { return JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0; } catch { return 0; } })();
+    if (cash < cost) { showMsg(`Not enough cash! Need $${cost.toLocaleString()}`, "red"); return false; }
+    // Deduct cash
+    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = cash - cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+    const newEnd = Math.max(activeServices[key] ?? 0, Date.now()) + durationMs;
+    const updated = { ...activeServices, [key]: newEnd };
+    setActiveServices(updated);
+    save("empireSecurity", updated);
+    return true;
+  };
+
   const tabs = [
     { id: "guards", icon: "🛡️", label: "Private Security" },
     { id: "alarms", icon: "🚨", label: "Alarm Systems" },
@@ -746,243 +1020,500 @@ function SecurityDefensePage() {
   return (
     <div className="animate-fade-in space-y-4">
       <SectionTitle icon="🛡️" title="Security & Defense" sub="Protect yourself, your businesses, and your empire" />
-      {msg && <div className="px-4 py-2 bg-blue-600/20 border border-blue-500/40 rounded-xl text-xs text-blue-300 text-center">{msg}</div>}
+      {msg && <div className={`px-4 py-2 border rounded-xl text-xs text-center ${msgType === "green" ? "bg-green-600/20 border-green-500/40 text-green-300" : msgType === "red" ? "bg-red-600/20 border-red-500/40 text-red-300" : msgType === "blue" ? "bg-blue-600/20 border-blue-500/40 text-blue-300" : "bg-amber-600/20 border-amber-500/40 text-amber-300"}`}>{msg}</div>}
       <TabBar tabs={tabs} active={tab} onSelect={setTab} />
 
+      {/* Private Security — 24h timer */}
       {tab === "guards" && (
         <div className="space-y-3">
-          {[
-            { name: "Street Guard", cost: 5000, daily: 2000, def: 15, icon: "👮" },
-            { name: "Armed Guard", cost: 25000, daily: 8000, def: 35, icon: "🔫" },
-            { name: "SWAT Veteran", cost: 100000, daily: 25000, def: 60, icon: "🎖️" },
-            { name: "Ex-Special Forces", cost: 500000, daily: 75000, def: 85, icon: "⭐" },
-            { name: "Private Army", cost: 2000000, daily: 200000, def: 100, icon: "💀" },
-          ].map(g => (
-            <div key={g.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">{g.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{g.name}</div><div className="text-[10px] text-slate-400">DEF +{g.def} | ${g.daily.toLocaleString()}/day</div></div>
-              </div>
-              <button onClick={() => setMsg(`Hired ${g.name}`)} className="w-full px-3 py-1.5 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-lg text-xs font-bold">
-                Hire — ${g.cost.toLocaleString()}
-              </button>
+          {isActive("guards") && (
+            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-xl text-center">
+              <div className="text-sm font-bold text-green-400">✅ Security Active</div>
+              <div className="text-xs text-green-300">{formatTime((activeServices.guards ?? 0) - Date.now())} remaining</div>
             </div>
-          ))}
+          )}
+          {[
+            { id: "street_guard", name: "Street Guard", cost: 5000, def: 15, icon: "👮", desc: "Basic protection — eyes on the street" },
+            { id: "armed_guard", name: "Armed Guard", cost: 25000, def: 35, icon: "🔫", desc: "Armed response — immediate threat neutralization" },
+            { id: "swat_vet", name: "SWAT Veteran", cost: 100000, def: 60, icon: "🎖️", desc: "Ex-SWAT — tactical expertise" },
+            { id: "special_forces", name: "Ex-Special Forces", cost: 500000, def: 85, icon: "⭐", desc: "Elite operator — near-impenetrable" },
+            { id: "private_army", name: "Private Army", cost: 2000000, def: 100, icon: "💀", desc: "Full military unit — untouchable" },
+          ].map(g => {
+            const active = isActive(g.id);
+            const remaining = (activeServices[g.id] ?? 0) - Date.now();
+            return (
+              <div key={g.id} className={`mafia-card rounded-xl p-4 border transition-all ${active ? "border-green-500/30" : "border-amber-500/10"}`}>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-2xl">{g.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-200">{g.name}</div>
+                    <div className="text-[10px] text-slate-400">{g.desc} • DEF +{g.def}</div>
+                  </div>
+                </div>
+                {active && (
+                  <div className="text-[10px] text-green-400 mb-2">⏱️ Active: {formatTime(remaining)}</div>
+                )}
+                <button onClick={() => {
+                  if (activateService(g.id, 24 * 60 * 60 * 1000, g.cost)) {
+                    showMsg(`${g.name} hired for 24 hours! DEF +${g.def}`, "green");
+                  }
+                }}
+                  className={`w-full px-3 py-2 rounded-xl text-xs font-bold transition ${active ? "bg-green-600/20 border border-green-500/40 text-green-300" : "bg-blue-600/20 border border-blue-500/40 text-blue-300 hover:bg-blue-600/30"}`}>
+                  {active ? "🔄 Renew 24h" : `Hire — $${g.cost.toLocaleString()}`} (24h)
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 
+      {/* Alarm Systems — 5 days active */}
       {tab === "alarms" && (
         <div className="space-y-3">
+          {isActive("alarms") && (
+            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-xl text-center">
+              <div className="text-sm font-bold text-green-400">✅ Alarms Active</div>
+              <div className="text-xs text-green-300">{formatTime((activeServices.alarms ?? 0) - Date.now())} remaining</div>
+            </div>
+          )}
           {[
-            { name: "Basic Alarm", cost: 10000, protection: "10% raid defense", icon: "🔔" },
-            { name: "Smart Alarm System", cost: 50000, protection: "25% raid defense", icon: "📱" },
-            { name: "Motion Sensors", cost: 100000, protection: "40% raid defense", icon: "📡" },
-            { name: "AI Security Grid", cost: 500000, protection: "65% raid defense", icon: "🤖" },
-            { name: "Full Fortress", cost: 2000000, protection: "90% raid defense", icon: "🏰" },
-          ].map(a => (
-            <div key={a.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{a.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{a.name}</div><div className="text-[10px] text-green-400">{a.protection}</div></div>
-                <button onClick={() => setMsg(`Installed ${a.name}`)} className="px-3 py-1 bg-green-600/20 border border-green-500/40 text-green-300 rounded-lg text-[10px] font-bold">
-                  ${a.cost.toLocaleString()}
+            { id: "basic_alarm", name: "Basic Alarm", cost: 10000, protection: "10%", desc: "Window/door sensors — basic deterrence", icon: "🔔" },
+            { id: "smart_alarm", name: "Smart Alarm System", cost: 50000, protection: "25%", desc: "Connected to monitoring — auto police dispatch", icon: "📱" },
+            { id: "motion_sensors", name: "Motion Sensors", cost: 100000, protection: "40%", desc: "Heat/motion detection — no blind spots", icon: "📡" },
+            { id: "ai_security", name: "AI Security Grid", cost: 500000, protection: "65%", desc: "AI-powered — learns patterns, predicts threats", icon: "🤖" },
+            { id: "full_fortress", name: "Full Fortress", cost: 2000000, protection: "90%", desc: "Retinal scanners, pressure plates, laser grid", icon: "🏰" },
+          ].map(a => {
+            const active = isActive(a.id);
+            const remaining = (activeServices[a.id] ?? 0) - Date.now();
+            return (
+              <div key={a.id} className={`mafia-card rounded-xl p-4 border transition-all ${active ? "border-green-500/30" : "border-amber-500/10"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{a.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-200">{a.name}</div>
+                    <div className="text-[10px] text-slate-400">{a.desc}</div>
+                    <div className="text-[10px] text-green-400 font-bold">{a.protection} raid defense</div>
+                  </div>
+                </div>
+                {active && (
+                  <div className="text-[10px] text-green-400 mt-2">⏱️ Active: {formatTime(remaining)}</div>
+                )}
+                <button onClick={() => {
+                  if (activateService(a.id, 5 * 24 * 60 * 60 * 1000, a.cost)) {
+                    showMsg(`${a.name} installed! Active for 5 days.`, "green");
+                  }
+                }}
+                  className={`w-full mt-2 px-3 py-2 rounded-xl text-xs font-bold transition ${active ? "bg-green-600/20 border border-green-500/40 text-green-300" : "bg-green-600/20 border border-green-500/40 text-green-300 hover:bg-green-600/30"}`}>
+                  {active ? "🔄 Renew 5 Days" : `Install — $${a.cost.toLocaleString()}`} (5d)
                 </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
+      {/* Safe Houses — Buy & Upgrade */}
       {tab === "safehouse" && (
         <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-slate-200">Your Safe House Level</div>
+              <div className="text-lg font-black text-amber-400">Lv.{safehouseLevel}</div>
+            </div>
+            <div className="w-full h-2 bg-slate-800 rounded-full mb-2">
+              <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all" style={{ width: `${Math.min(100, safehouseLevel * 10)}%` }} />
+            </div>
+            <div className="text-[10px] text-slate-400">Each level = +15% protection, more storage, faster healing</div>
+          </div>
           {[
-            { name: "Shabby Apartment", cost: 50000, slots: 1, desc: "Downtown — low profile, single bed" },
-            { name: "Suburban Hideout", cost: 200000, slots: 3, desc: "Quiet neighborhood — family cover" },
-            { name: "Industrial Loft", cost: 500000, slots: 5, desc: "Converted warehouse — armory included" },
-            { name: "Underground Bunker", cost: 2000000, slots: 10, desc: "30ft underground — blast doors, supplies for weeks" },
-            { name: "Mansion Safe Room", cost: 5000000, slots: 8, desc: "Hidden room behind bookshelf — panic button" },
-          ].map(s => (
-            <div key={s.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3 mb-1">
-                <span className="text-xl">🏠</span>
-                <div><div className="text-sm font-bold text-slate-200">{s.name}</div><div className="text-[10px] text-slate-400">{s.desc} | {s.slots} people</div></div>
+            { name: "Shabby Apartment", cost: 50000, desc: "Downtown — low profile, single bed, basic locks" },
+            { name: "Suburban Hideout", cost: 200000, desc: "Quiet neighborhood — family cover, panic room" },
+            { name: "Industrial Loft", cost: 500000, desc: "Converted warehouse — armory, tunnel access" },
+            { name: "Underground Bunker", cost: 2000000, desc: "30ft underground — blast doors, 30-day supplies" },
+            { name: "Mansion Safe Room", cost: 5000000, desc: "Hidden room — panic button, escape tunnel" },
+          ].map((s, i) => {
+            const needed = i + 1;
+            const canAfford = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= s.cost; } catch { return false; } })();
+            const isUpgrade = safehouseLevel < needed;
+            const isMax = safehouseLevel >= needed;
+            return (
+              <div key={s.name} className={`mafia-card rounded-xl p-4 border transition-all ${isMax ? "border-green-500/30" : "border-amber-500/10"}`}>
+                <div className="flex items-center gap-3 mb-1">
+                  <span className="text-xl">🏠</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-200">{s.name}</span>
+                      {isMax && <span className="text-[9px] px-1.5 py-0.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-full font-bold">OWNED</span>}
+                    </div>
+                    <div className="text-[10px] text-slate-400">{s.desc}</div>
+                  </div>
+                </div>
+                {isUpgrade && (
+                  <button onClick={() => {
+                    if (!canAfford) { showMsg(`Need $${s.cost.toLocaleString()}`, "red"); return; }
+                    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - s.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                    setSafehouseLevel(needed);
+                    save("empireSafehouse", needed);
+                    showMsg(`${s.name} acquired! Safe house upgraded to Level ${needed}`, "green");
+                  }} className="w-full mt-2 px-3 py-2 bg-green-600/20 border border-green-500/40 text-green-300 rounded-xl text-xs font-bold hover:bg-green-600/30 transition">
+                    Upgrade — ${s.cost.toLocaleString()}
+                  </button>
+                )}
               </div>
-              <button onClick={() => setMsg(`Acquired ${s.name}`)} className="w-full mt-2 px-3 py-1.5 bg-green-600/20 border border-green-500/40 text-green-300 rounded-lg text-xs font-bold">
-                ${s.cost.toLocaleString()}
+            );
+          })}
+        </div>
+      )}
+
+      {/* Escape Routes — Buy & Upgrade */}
+      {tab === "escape" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-slate-200">Escape Route Level</div>
+              <div className="text-lg font-black text-amber-400">Lv.{escapeLevel}</div>
+            </div>
+            <div className="w-full h-2 bg-slate-800 rounded-full mb-2">
+              <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all" style={{ width: `${Math.min(100, escapeLevel * 20)}%` }} />
+            </div>
+            <div className="text-[10px] text-slate-400">Higher level = faster extraction, better vehicles, more routes</div>
+          </div>
+          {[
+            { name: "Getaway Driver", cost: 30000, desc: "Pre-planned driver — 2 min pickup, sedan", level: 1 },
+            { name: "Tunnel Network", cost: 500000, desc: "Underground escape — access to 3 exit points", level: 2 },
+            { name: "Helicopter Extraction", cost: 1000000, desc: "Chopper on standby — 30 sec pickup", level: 3 },
+            { name: "Submarine Escape", cost: 5000000, desc: "Water exit — submarine to offshore", level: 4 },
+            { name: "Full Extraction Unit", cost: 10000000, desc: "Multi-vehicle convoy — decoys + satellite jamming", level: 5 },
+          ].map((e, i) => {
+            const needed = i + 1;
+            const owned = escapeLevel >= needed;
+            return (
+              <div key={e.name} className={`mafia-card rounded-xl p-4 border transition-all ${owned ? "border-green-500/30" : "border-amber-500/10"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🚪</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-200">{e.name}</span>
+                      {owned && <span className="text-[9px] px-1.5 py-0.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-full font-bold">OWNED</span>}
+                    </div>
+                    <div className="text-[10px] text-slate-400">{e.desc}</div>
+                  </div>
+                </div>
+                {!owned && (
+                  <button onClick={() => {
+                    if (escapeLevel !== needed - 1) { showMsg(`Must upgrade sequentially! Current: Lv.${escapeLevel}`, "red"); return; }
+                    const canAfford2 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= e.cost; } catch { return false; } })();
+                    if (!canAfford2) { showMsg(`Need $${e.cost.toLocaleString()}`, "red"); return; }
+                    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - e.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                    setEscapeLevel(needed);
+                    save("empireEscape", needed);
+                    showMsg(`${e.name} acquired! Route Level ${needed}`, "green");
+                  }} className="w-full mt-2 px-3 py-2 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-xl text-xs font-bold hover:bg-amber-600/30 transition">
+                    Upgrade — ${e.cost.toLocaleString()}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Body Armor — Consumable, breaks when shot */}
+      {tab === "armor" && (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-slate-200">Armor Durability</div>
+              <div className={`text-lg font-black ${armorDurability > 50 ? "text-green-400" : armorDurability > 20 ? "text-yellow-400" : "text-red-400"}`}>{armorDurability}%</div>
+            </div>
+            <div className="w-full h-2 bg-slate-800 rounded-full">
+              <div className="h-full rounded-full transition-all" style={{ width: `${armorDurability}%`, background: armorDurability > 50 ? "#22c55e" : armorDurability > 20 ? "#eab308" : "#ef4444" }} />
+            </div>
+            <div className="text-[10px] text-slate-400 mt-1">💡 Armor breaks when you get shot. Buy new armor after combat.</div>
+          </div>
+          {[
+            { name: "Leather Jacket", cost: 5000, def: 5, durability: 30, icon: "🧥", desc: "Minimal protection — stops knife wounds" },
+            { name: "Kevlar Vest", cost: 25000, def: 15, durability: 60, icon: "🦺", desc: "Stops handgun rounds — torso only" },
+            { name: "Ballistic Plate Carrier", cost: 75000, def: 30, durability: 80, icon: "🛡️", desc: "Military-grade — stops rifle rounds" },
+            { name: "Full Tactical Kit", cost: 200000, def: 50, durability: 100, icon: "🎖️", desc: "Full body protection — helmet included" },
+            { name: "Dragon Skin", cost: 1000000, def: 80, durability: 150, icon: "🤖", desc: "Next-gen scale armor — nearly indestructible" },
+          ].map(a => (
+            <div key={a.name} className="mafia-card rounded-xl p-4 border border-amber-500/10">
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{a.icon}</span>
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-slate-200">{a.name}</div>
+                  <div className="text-[10px] text-slate-400">{a.desc}</div>
+                  <div className="text-[10px] text-blue-400">DEF +{a.def} • {a.durability} durability</div>
+                </div>
+              </div>
+              <button onClick={() => {
+                const canAfford3 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= a.cost; } catch { return false; } })();
+                if (!canAfford3) { showMsg(`Need $${a.cost.toLocaleString()}`, "red"); return; }
+                try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - a.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                setArmorDurability(a.durability);
+                save("empireArmor", a.durability);
+                showMsg(`${a.name} equipped! DEF +${a.def}, ${a.durability} durability`, "green");
+              }} className="w-full mt-2 px-3 py-2 bg-green-600/20 border border-green-500/40 text-green-300 rounded-xl text-xs font-bold hover:bg-green-600/30 transition">
+                Buy — ${a.cost.toLocaleString()}
               </button>
             </div>
           ))}
-        </div>
-      )}
-
-      {tab === "escape" && (
-        <div className="space-y-3">
-          {[
-            { name: "Getaway Driver", cost: 30000, desc: "Pre-planned driver waiting within 2 min", icon: "🚗" },
-            { name: "Tunnel Network", cost: 500000, desc: "Underground escape route from your hideout", icon: "🚇" },
-            { name: "Helicopter Extraction", cost: 1000000, desc: "Chopper on standby — 30 sec pickup", icon: "🚁" },
-            { name: "Submarine Escape", cost: 5000000, desc: "Water exit via submarine dock", icon: "🚢" },
-            { name: "Decoy Convoy", cost: 100000, desc: "Fake motorcade to distract pursuers", icon: "🚓" },
-          ].map(e => (
-            <div key={e.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{e.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{e.name}</div><div className="text-[10px] text-slate-400">{e.desc}</div></div>
-                <button onClick={() => setMsg(`Prepared ${e.name}`)} className="px-3 py-1 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-lg text-[10px] font-bold">
-                  ${e.cost.toLocaleString()}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === "armor" && (
-        <div className="space-y-3">
-          {[
-            { name: "Leather Jacket", cost: 5000, def: 5, icon: "🧥" },
-            { name: "Kevlar Vest", cost: 25000, def: 15, icon: "🦺" },
-            { name: "Ballistic Plate Carrier", cost: 75000, def: 30, icon: "🛡️" },
-            { name: "Full Tactical Kit", cost: 200000, def: 50, icon: "🎖️" },
-            { name: "Titanium Exosuit", cost: 1000000, def: 80, icon: "🤖" },
-          ].map(a => (
-            <div key={a.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{a.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{a.name}</div><div className="text-[10px] text-green-400">+{a.def} DEF</div></div>
-                <button onClick={() => setMsg(`Equipped ${a.name}`)} className="px-3 py-1 bg-green-600/20 border border-green-500/40 text-green-300 rounded-lg text-[10px] font-bold">
-                  ${a.cost.toLocaleString()}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === "permits" && (
-        <div className="space-y-3">
-          {[
-            { name: "Concealed Carry", cost: 50000, bonus: "+5 ATK, legal weapon carry", icon: "📋" },
-            { name: "Firearms License", cost: 150000, bonus: "+10 ATK, all legal weapons", icon: "🔫" },
-            { name: "Class III Permit", cost: 500000, bonus: "+15 ATK, automatic weapons legal", icon: "💥" },
-            { name: "FFL License", cost: 2000000, bonus: "+20 ATK, sell weapons legally", icon: "🏪" },
-          ].map(p => (
-            <div key={p.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{p.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{p.name}</div><div className="text-[10px] text-slate-400">{p.bonus}</div></div>
-                <button onClick={() => setMsg(`Obtained ${p.name}`)} className="px-3 py-1 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-lg text-[10px] font-bold">
-                  ${p.cost.toLocaleString()}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {tab === "alibi" && (
-        <div className="space-y-3">
-          <div className="mafia-card rounded-xl p-4">
-            <div className="text-sm font-bold text-slate-200 mb-2">Alibi System</div>
-            <div className="text-xs text-slate-400 mb-3">Create ironclad proof you were somewhere else during a crime</div>
-            {[
-              { name: "Witness Coercion", cost: 20000, strength: "60% — paid witnesses", icon: "👥" },
-              { name: "Photo Manipulation", cost: 50000, strength: "75% — edited photos", icon: "📷" },
-              { name: "Video Deepfake", cost: 200000, strength: "90% — AI-generated video", icon: "🎬" },
-              { name: "Location Spoofing", cost: 100000, strength: "85% — fake GPS data", icon: "📍" },
-              { name: "Time-Stamped Receipts", cost: 15000, strength: "50% — receipts from your location", icon: "🧾" },
-            ].map(a => (
-              <div key={a.name} className="flex items-center gap-3 p-2 bg-slate-800/30 rounded-lg mb-2">
-                <span className="text-lg">{a.icon}</span>
-                <div className="flex-1"><div className="text-xs font-bold text-slate-200">{a.name}</div><div className="text-[10px] text-slate-400">{a.strength}</div></div>
-                <button onClick={() => setMsg(`Created ${a.name} alibi`)} className="px-2 py-1 bg-amber-600/20 border border-amber-500/30 text-amber-300 rounded text-[10px] font-bold">
-                  ${a.cost.toLocaleString()}
-                </button>
-              </div>
-            ))}
+          <div className="p-3 bg-red-900/20 border border-red-500/20 rounded-xl text-[10px] text-red-300">
+            ⚠️ Armor breaks when hit in combat. Higher durability = more shots absorbed. Replace after every major fight.
           </div>
         </div>
       )}
 
-      {tab === "safecrack" && (
+      {/* Gun Permits — Required for firearms + bullets */}
+      {tab === "permits" && (
         <div className="space-y-3">
-          {[
-            { name: "Simple Dial Lock", difficulty: "Easy", reward: "5K-25K", icon: "🔒" },
-            { name: "Digital Keypad", difficulty: "Medium", reward: "25K-100K", icon: "🔢" },
-            { name: "Time Lock Vault", difficulty: "Hard", reward: "100K-500K", icon: "⏰" },
-            { name: "Biometric Safe", difficulty: "Expert", reward: "500K-2M", icon: "🖐️" },
-            { name: "Bank Vault", difficulty: "Master", reward: "2M-10M", icon: "🏦" },
-          ].map(s => (
-            <div key={s.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{s.icon}</span>
-                <div className="flex-1">
-                  <div className="text-sm font-bold text-slate-200">{s.name}</div>
-                  <div className="text-[10px] text-slate-400">Difficulty: {s.difficulty} | Reward: {s.reward}</div>
-                </div>
-                <button onClick={() => setMsg(`Cracking ${s.name}...`)} className="px-3 py-1 bg-amber-600/20 border border-amber-500/40 text-amber-300 rounded-lg text-[10px] font-bold">
-                  Crack
-                </button>
-              </div>
+          <div className={`mafia-card rounded-xl p-4 border ${hasPermit > 0 ? "border-green-500/30" : "border-red-500/30"}`}>
+            <div className="text-sm font-bold text-slate-200 mb-1">Firearm License Status</div>
+            <div className={`text-xs font-bold ${hasPermit > 0 ? "text-green-400" : "text-red-400"}`}>
+              {hasPermit === 0 ? "❌ No permit — cannot own firearms" : hasPermit === 1 ? "✅ Basic — handguns only" : hasPermit === 2 ? "✅ Advanced — all legal weapons" : hasPermit === 3 ? "✅ Class III — automatic weapons" : "✅ FFL — can sell weapons legally"}
             </div>
-          ))}
+          </div>
+          {[
+            { id: 1, name: "Concealed Carry Permit", cost: 50000, bonus: "+5 ATK • Handgun carry", icon: "📋", desc: "Basic handgun license — legal carry on your person" },
+            { id: 2, name: "Firearms License", cost: 150000, bonus: "+10 ATK • All legal weapons", icon: "🔫", desc: "Full firearms license — rifles, shotguns, handguns" },
+            { id: 3, name: "Class III Permit", cost: 500000, bonus: "+15 ATK • Automatic weapons", icon: "💥", desc: "NFA stamp — machine guns, suppressors, SBS" },
+            { id: 4, name: "FFL License", cost: 2000000, bonus: "+20 ATK • Sell weapons", icon: "🏪", desc: "Federal Firearms License — deal weapons legally" },
+          ].map(p => {
+            const owned = hasPermit >= p.id;
+            return (
+              <div key={p.id} className={`mafia-card rounded-xl p-4 border transition-all ${owned ? "border-green-500/30" : "border-amber-500/10"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{p.icon}</span>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-200">{p.name}</span>
+                      {owned && <span className="text-[9px] px-1.5 py-0.5 bg-green-600/20 border border-green-500/30 text-green-400 rounded-full font-bold">OWNED</span>}
+                    </div>
+                    <div className="text-[10px] text-slate-400">{p.desc}</div>
+                    <div className="text-[10px] text-amber-400 font-bold">{p.bonus}</div>
+                  </div>
+                </div>
+                {!owned && (
+                  <button onClick={() => {
+                    if (hasPermit !== p.id - 1 && p.id > 1) { showMsg(`Must get permits in order! Current: ${["None","Basic","Advanced","Class III"][hasPermit]}`, "red"); return; }
+                    const canAfford4 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= p.cost; } catch { return false; } })();
+                    if (!canAfford4) { showMsg(`Need $${p.cost.toLocaleString()}`, "red"); return; }
+                    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - p.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                    setHasPermit(p.id);
+                    save("empirePermit", p.id);
+                    showMsg(`${p.name} obtained! You can now own firearms.`, "green");
+                  }} className="w-full mt-2 px-3 py-2 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-600/30 transition">
+                    Get Permit — ${p.cost.toLocaleString()}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
+      {/* Alibi System — 7 days active */}
+      {tab === "alibi" && (
+        <div className="space-y-3">
+          {alibiUntil > Date.now() && (
+            <div className="p-3 bg-green-900/20 border border-green-500/30 rounded-xl text-center">
+              <div className="text-sm font-bold text-green-400">🎭 Alibi Active</div>
+              <div className="text-xs text-green-300">{formatTime(alibiUntil - Date.now())} remaining</div>
+            </div>
+          )}
+          {[
+            { name: "Witness Coercion", cost: 20000, strength: "60%", desc: "Paid witnesses — shaky but passable", icon: "👥" },
+            { name: "Time-Stamped Receipts", cost: 15000, strength: "50%", desc: "Receipts proving you were elsewhere", icon: "🧾" },
+            { name: "Photo Manipulation", cost: 50000, strength: "75%", desc: "Photoshopped evidence — good but detectable", icon: "📷" },
+            { name: "Location Spoofing", cost: 100000, strength: "85%", desc: "GPS spoofing — digital trail proves alibi", icon: "📍" },
+            { name: "Video Deepfake", cost: 200000, strength: "95%", desc: "AI-generated video — nearly flawless", icon: "🎬" },
+          ].map(a => {
+            const active = alibiUntil > Date.now();
+            return (
+              <div key={a.name} className={`mafia-card rounded-xl p-4 border transition-all ${active ? "border-green-500/30" : "border-amber-500/10"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{a.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-200">{a.name}</div>
+                    <div className="text-[10px] text-slate-400">{a.desc}</div>
+                    <div className="text-[10px] text-amber-400">Strength: {a.strength}</div>
+                  </div>
+                </div>
+                <button onClick={() => {
+                  const canAfford5 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= a.cost; } catch { return false; } })();
+                  if (!canAfford5) { showMsg(`Need $${a.cost.toLocaleString()}`, "red"); return; }
+                  try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - a.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                  setAlibiUntil(Date.now() + 7 * 24 * 60 * 60 * 1000);
+                  save("empireAlibi", Date.now() + 7 * 24 * 60 * 60 * 1000);
+                  showMsg(`${a.name} alibi prepared! Active for 7 days.`, "green");
+                }} className={`w-full mt-2 px-3 py-2 rounded-xl text-xs font-bold transition ${active ? "bg-green-600/20 border border-green-500/40 text-green-300" : "bg-amber-600/20 border border-amber-500/40 text-amber-300 hover:bg-amber-600/30"}`}>
+                  {active ? "🔄 Renew 7 Days" : `Create — $${a.cost.toLocaleString()}`} (7d)
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Safe Cracking — Requires Level 10+ */}
+      {tab === "safecrack" && (
+        <div className="space-y-3">
+          <div className={`mafia-card rounded-xl p-4 border ${playerLevel >= 10 ? "border-green-500/30" : "border-red-500/30"}`}>
+            <div className="text-sm font-bold text-slate-200 mb-1">Safe Cracking Skill</div>
+            <div className={`text-xs font-bold ${playerLevel >= 10 ? "text-green-400" : "text-red-400"}`}>
+              {playerLevel >= 10 ? `✅ Level ${playerLevel} — You can crack safes` : `❌ Level ${playerLevel} — Requires Level 10+ to crack safes`}
+            </div>
+          </div>
+          {[
+            { name: "Simple Dial Lock", difficulty: "Easy", reward: "5K-25K", icon: "🔒", reqLevel: 10 },
+            { name: "Digital Keypad", difficulty: "Medium", reward: "25K-100K", icon: "🔢", reqLevel: 15 },
+            { name: "Time Lock Vault", difficulty: "Hard", reward: "100K-500K", icon: "⏰", reqLevel: 25 },
+            { name: "Biometric Safe", difficulty: "Expert", reward: "500K-2M", icon: "🖐️", reqLevel: 40 },
+            { name: "Bank Vault", difficulty: "Master", reward: "2M-10M", icon: "🏦", reqLevel: 60 },
+          ].map(s => {
+            const canCrack = playerLevel >= s.reqLevel;
+            return (
+              <div key={s.name} className={`mafia-card rounded-xl p-4 border transition-all ${canCrack ? "border-amber-500/20" : "border-red-500/10 opacity-60"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{s.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-200">{s.name}</div>
+                    <div className="text-[10px] text-slate-400">Difficulty: {s.difficulty} • Reward: {s.reward}</div>
+                    {!canCrack && <div className="text-[10px] text-red-400">🔒 Requires Level {s.reqLevel}</div>}
+                  </div>
+                </div>
+                <button onClick={() => {
+                  if (!canCrack) { showMsg(`Need Level ${s.reqLevel} to crack this safe!`, "red"); return; }
+                  // Crack attempt — random success based on level
+                  const success = Math.random() < Math.min(0.9, 0.3 + (playerLevel - s.reqLevel) * 0.02);
+                  if (success) {
+                    const reward = Math.floor(Math.random() * 50000 + 5000);
+                    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) + reward; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                    showMsg(`🔓 CRACKED! Stole $${reward.toLocaleString()}!`, "green");
+                  } else {
+                    const dmg = Math.floor(Math.random() * 20 + 5);
+                    showMsg(`❌ Failed! The alarm triggered. Lost ${dmg} HP.`, "red");
+                  }
+                }} disabled={!canCrack} className={`w-full mt-2 px-3 py-2 rounded-xl text-xs font-bold transition ${canCrack ? "bg-amber-600/20 border border-amber-500/40 text-amber-300 hover:bg-amber-600/30" : "bg-slate-800/30 border border-slate-700/30 text-slate-500 cursor-not-allowed"}`}>
+                  {canCrack ? "🔐 Crack Safe" : `🔒 Level ${s.reqLevel} Required`}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Lockpick — Skill-based, improves crime success */}
       {tab === "lockpick" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4">
-            <div className="text-sm font-bold text-slate-200 mb-2">Lockpick Skill</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-slate-200">Lockpick Skill</div>
+              <div className="text-lg font-black text-amber-400">Lv.{Math.min(10, Math.floor(lockpickLevel))}</div>
+            </div>
             <div className="w-full h-3 bg-slate-800 rounded-full mb-2">
-              <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full" style={{ width: "45%" }} />
+              <div className="h-full bg-gradient-to-r from-amber-500 to-amber-400 rounded-full transition-all" style={{ width: `${Math.min(100, lockpickXP / 10)}%` }} />
             </div>
             <div className="flex justify-between text-[10px] text-slate-400">
-              <span>Level 4 / 10</span>
-              <span>450 / 1000 XP</span>
+              <span>{lockpickXP} / {Math.max(100, lockpickLevel * 100)} XP</span>
+              <span>{Math.min(10, Math.floor(lockpickLevel))}/10 levels</span>
+            </div>
+            <div className="mt-2 text-[10px] text-green-400">
+              💡 Better lockpick level = +{Math.min(30, lockpickLevel * 3)}% success rate on ALL criminal activities
             </div>
           </div>
           {[
-            { name: "Practice Lock", xp: 50, desc: "Basic tumbler — +50 XP" },
-            { name: "Deadbolt", xp: 150, desc: "Standard door — +150 XP" },
-            { name: "Combination Lock", xp: 300, desc: "3-number combo — +300 XP" },
-            { name: "High-Security Lock", xp: 600, desc: "Pick-resistant pins — +600 XP" },
-            { name: "Electronic Lock", xp: 1000, desc: "Hack + pick — +1000 XP" },
+            { name: "Practice Lock", xp: 50, desc: "Basic tumbler — perfect for beginners", icon: "🔒" },
+            { name: "Deadbolt", xp: 150, desc: "Standard door lock — moderate difficulty", icon: "🚪" },
+            { name: "Combination Lock", xp: 300, desc: "3-number combo — steady hands required", icon: "🔢" },
+            { name: "High-Security Lock", xp: 600, desc: "Pick-resistant pins — requires precision", icon: "🔐" },
+            { name: "Electronic Lock", xp: 1000, desc: "Hack + pick combo — ultimate challenge", icon: "💻" },
           ].map(l => (
-            <button key={l.name} onClick={() => setMsg(`Picking ${l.name}... +${l.xp} XP`)}
+            <button key={l.name} onClick={() => {
+              const newXP = lockpickXP + l.xp;
+              const needed = Math.max(100, lockpickLevel * 100);
+              let newLevel = lockpickLevel;
+              let remainingXP = newXP;
+              while (remainingXP >= Math.max(100, newLevel * 100) && newLevel < 10) {
+                remainingXP -= Math.max(100, newLevel * 100);
+                newLevel++;
+              }
+              setLockpickLevel(newLevel);
+              setLockpickXP(remainingXP);
+              save("empireLockpick", newLevel);
+              save("empireLockpickXP", remainingXP);
+              const levelUp = newLevel > lockpickLevel;
+              showMsg(`Picked ${l.name}! +${l.xp} XP${levelUp ? ` 🎉 LEVEL UP! Now Lv.${newLevel}` : ""}`, levelUp ? "green" : "amber");
+            }}
               className="mafia-card rounded-xl p-3 flex items-center gap-3 hover:border-amber-500/20 transition w-full text-left">
               <span className="text-lg">🔑</span>
-              <div className="flex-1"><div className="text-xs font-bold text-slate-200">{l.name}</div><div className="text-[10px] text-slate-400">{l.desc}</div></div>
-              <span className="text-[10px] text-amber-400">→</span>
+              <div className="flex-1">
+                <div className="text-xs font-bold text-slate-200">{l.name}</div>
+                <div className="text-[10px] text-slate-400">{l.desc}</div>
+              </div>
+              <span className="text-[10px] text-amber-400">+{l.xp} XP →</span>
             </button>
           ))}
         </div>
       )}
 
+      {/* Counter-Surveillance — Buy & Upgrade */}
       {tab === "counter" && (
         <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-sm font-bold text-slate-200">Counter-Surveillance Level</div>
+              <div className="text-lg font-black text-amber-400">Lv.{counterLevel}</div>
+            </div>
+            <div className="w-full h-2 bg-slate-800 rounded-full mb-2">
+              <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full transition-all" style={{ width: `${Math.min(100, counterLevel * 16)}%` }} />
+            </div>
+            <div className="text-[10px] text-slate-400">Higher level = better detection of surveillance on you</div>
+          </div>
           {[
-            { name: "Sweep for Bugs", cost: 15000, desc: "Find and remove wiretaps and listening devices", icon: "📡" },
-            { name: "Check for Tails", cost: 10000, desc: "Detect if someone is following you", icon: "👀" },
-            { name: "Counter-Drone", cost: 75000, desc: "Jam and disable surveillance drones", icon: "🛸" },
-            { name: "RFID Shield", cost: 5000, desc: "Block tracking chips in your vehicles", icon: "🛡️" },
-            { name: "Digital Audit", cost: 100000, desc: "Scan for keyloggers, spyware, and backdoors", icon: "💻" },
-            { name: "TSCM Sweep", cost: 200000, desc: "Professional sweep of entire property", icon: "🔍" },
-          ].map(c => (
-            <div key={c.name} className="mafia-card rounded-xl p-4">
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{c.icon}</span>
-                <div className="flex-1"><div className="text-sm font-bold text-slate-200">{c.name}</div><div className="text-[10px] text-slate-400">{c.desc}</div></div>
-                <button onClick={() => setMsg(`${c.name} — sweep complete`)} className="px-3 py-1 bg-blue-600/20 border border-blue-500/40 text-blue-300 rounded-lg text-[10px] font-bold">
-                  ${c.cost.toLocaleString()}
+            { name: "Sweep for Bugs", cost: 15000, desc: "Find and remove wiretaps — basic sweep", level: 1, icon: "📡" },
+            { name: "Check for Tails", cost: 10000, desc: "Detect if someone is following you", level: 1, icon: "👀" },
+            { name: "Counter-Drone", cost: 75000, desc: "Jam and disable surveillance drones", level: 2, icon: "🛸" },
+            { name: "RFID Shield", cost: 5000, desc: "Block tracking chips in your vehicles", level: 1, icon: "🛡️" },
+            { name: "Digital Audit", cost: 100000, desc: "Scan for keyloggers, spyware, backdoors", level: 3, icon: "💻" },
+            { name: "TSCM Full Sweep", cost: 200000, desc: "Professional sweep of entire property — top-tier", level: 4, icon: "🔍" },
+          ].map(c => {
+            const canUse = counterLevel >= c.level;
+            return (
+              <div key={c.name} className={`mafia-card rounded-xl p-4 border transition-all ${canUse ? "border-amber-500/10" : "border-red-500/10 opacity-60"}`}>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{c.icon}</span>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-slate-200">{c.name}</div>
+                    <div className="text-[10px] text-slate-400">{c.desc}</div>
+                    {!canUse && <div className="text-[10px] text-red-400">🔒 Requires Counter-Surveillance Lv.{c.level}</div>}
+                  </div>
+                </div>
+                <button onClick={() => {
+                  if (!canUse) { showMsg(`Need Counter-Surveillance Level ${c.level}!`, "red"); return; }
+                  if (counterLevel < c.level) {
+                    // Buy upgrade
+                    const canAfford6 = (() => { try { return (JSON.parse(localStorage.getItem("playerData") || "{}").money ?? 0) >= c.cost; } catch { return false; } })();
+                    if (!canAfford6) { showMsg(`Need $${c.cost.toLocaleString()}`, "red"); return; }
+                    try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); d.money = (d.money ?? 0) - c.cost; localStorage.setItem("playerData", JSON.stringify(d)); } catch {}
+                    setCounterLevel(c.level);
+                    save("empireCounter", c.level);
+                    showMsg(`${c.name} acquired! Counter-Surveillance Level ${c.level}`, "green");
+                  } else {
+                    showMsg(`${c.name} — sweep complete. No surveillance detected.`, "green");
+                  }
+                }} className={`w-full mt-2 px-3 py-2 rounded-xl text-xs font-bold transition ${canUse ? "bg-blue-600/20 border border-blue-500/40 text-blue-300 hover:bg-blue-600/30" : "bg-slate-800/30 border border-slate-700/30 text-slate-500 cursor-not-allowed"}`}>
+                  {canUse ? "🔍 Run Sweep" : `🔒 Lv.${c.level} Required — $${c.cost.toLocaleString()}`}
                 </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
 
-/* ═══════════ EXPORTS ═══════════ */
+/* ═══════════ EXPORTS ═══════════ *//* ═══════════ EXPORTS ═══════════ */
 export { EmpireBuildingPage, RelationshipsPage, SurvivalRealismPage, SecurityDefensePage };
