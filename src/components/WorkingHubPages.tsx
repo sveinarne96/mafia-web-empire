@@ -318,6 +318,56 @@ export function getHubTabs(hub: string): TabDef[] {
         { icon: "👥", label: "Looking for Group", desc: "Find players for co-op missions", page: "coop_gameplay" },
       ]},
     ];
+    case "empire_building": return [
+      { id: "shell", l: "Shell Companies", ic: "🏢", d: "Launder money through legit businesses.", pg: "empire_building", items: [
+        { icon: "🏢", label: "Front Holdings LLC", desc: "Generic shell — $25K/day wash", page: "empire_building" },
+        { icon: "🚛", label: "North Star Logistics", desc: "Trucking front — $40K/day", page: "empire_building" },
+        { icon: "📦", label: "Golden Imports", desc: "Import/export — $65K/day", page: "empire_building" },
+      ]},
+      { id: "realestate", l: "Real Estate", ic: "🏠", d: "Buy properties, collect rent.", pg: "empire_building" },
+      { id: "invest", l: "Investments", ic: "📈", d: "Stocks, bonds, crypto.", pg: "empire_building" },
+      { id: "franchise", l: "Franchises", ic: "🍔", d: "Own fast food chains, gyms.", pg: "empire_building" },
+      { id: "import", l: "Import/Export", ic: "📦", d: "Smuggle goods legally.", pg: "empire_building" },
+      { id: "flip", l: "Property Flip", ic: "🔨", d: "Buy cheap, renovate, sell.", pg: "empire_building" },
+      { id: "landlord", l: "Landlord", ic: "🔑", d: "Collect rent, evict deadbeats.", pg: "empire_building" },
+      { id: "storage", l: "Storage Auctions", ic: "🗄️", d: "Bid on units, find hidden gems.", pg: "empire_building" },
+      { id: "vending", l: "Vending Routes", ic: "🥤", d: "Passive income from machines.", pg: "empire_building" },
+      { id: "laundry", l: "Laundromats", ic: "🫧", d: "Classic money laundering front.", pg: "empire_building" },
+    ];
+    case "relationships": return [
+      { id: "trust", l: "Trust System", ic: "🤝", d: "NPCs remember your actions.", pg: "relationships" },
+      { id: "diplomacy", l: "Gang Diplomacy", ic: "🕊️", d: "Negotiate truces or wars.", pg: "relationships" },
+      { id: "mentor", l: "Mentor System", ic: "🎓", d: "Train new players.", pg: "relationships" },
+      { id: "betray", l: "Betrayal", ic: "🗡️", d: "Turn on allies for bounty.", pg: "relationships" },
+      { id: "debt", l: "Personal Debt", ic: "💳", d: "Loans with interest.", pg: "relationships" },
+      { id: "favors", l: "Favor Economy", ic: "🔄", d: "Call in favors later.", pg: "relationships" },
+      { id: "informant", l: "Informant Loyalty", ic: "🐀", d: "Snitches flip back & forth.", pg: "relationships" },
+      { id: "reputation", l: "Public Rep", ic: "🌟", d: "Affects shop prices & deals.", pg: "relationships" },
+    ];
+    case "survival": return [
+      { id: "hospital", l: "Hospital", ic: "🏥", d: "Real recovery time & costs.", pg: "survival" },
+      { id: "surgery", l: "Surgery", ic: "🔬", d: "Complications can reduce stats.", pg: "survival" },
+      { id: "addiction", l: "Addiction", ic: "💊", d: "Alcohol, gambling, painkillers.", pg: "survival" },
+      { id: "mental", l: "Mental Health", ic: "🧠", d: "Violence has consequences.", pg: "survival" },
+      { id: "insurance_fraud", l: "Insurance Fraud", ic: "📄", d: "Fake accidents for payouts.", pg: "survival" },
+      { id: "rehab", l: "Rehab", ic: "🏥", d: "Clean your addiction stat.", pg: "survival" },
+      { id: "organ", l: "Organ Traffic", ic: "🫀", d: "Quick money, huge risk.", pg: "survival" },
+      { id: "disposal", l: "Body Disposal", ic: "💀", d: "Cover up after hits.", pg: "survival" },
+      { id: "evidence", l: "Evidence Destruction", ic: "🔥", d: "Erase your tracks.", pg: "survival" },
+      { id: "costs", l: "Hospital Costs", ic: "💰", d: "See full cost breakdown.", pg: "survival" },
+    ];
+    case "security": return [
+      { id: "guards", l: "Private Security", ic: "🛡️", d: "Hire armed protection.", pg: "security" },
+      { id: "alarms", l: "Alarm Systems", ic: "🚨", d: "Protect properties from raids.", pg: "security" },
+      { id: "safehouse", l: "Safe Houses", ic: "🏠", d: "Hideouts across the city.", pg: "security" },
+      { id: "escape", l: "Escape Routes", ic: "🚪", d: "Pre-planned getaways.", pg: "security" },
+      { id: "armor", l: "Body Armor", ic: "🦺", d: "Reduce damage in fights.", pg: "security" },
+      { id: "permits", l: "Gun Permits", ic: "📋", d: "Legal carry — expensive.", pg: "security" },
+      { id: "alibi", l: "Alibi System", ic: "🎭", d: "Proof you were elsewhere.", pg: "security" },
+      { id: "safecrack", l: "Safe Cracking", ic: "🔐", d: "Vault difficulty → reward.", pg: "security" },
+      { id: "lockpick", l: "Lockpick Skill", ic: "🔑", d: "Improves with practice.", pg: "security" },
+      { id: "counter", l: "Counter-Surveillance", ic: "🕵️", d: "Find bugs & tails.", pg: "security" },
+    ];
     default: return [];
   }
 }

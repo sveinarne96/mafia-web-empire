@@ -88,6 +88,7 @@ import { AdvancedCombatPage, ReputationInfluencePage } from "@/components/System
 import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/SystemUnderworldEvents";
 import { CrimeScenePage } from "@/components/SystemCrimeScene";
 import { CompaniesHubPage } from "@/components/SystemCompanies";
+import { EmpireBuildingPage, RelationshipsPage, SurvivalRealismPage, SecurityDefensePage } from "@/components/SystemEmpire";
 
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
@@ -182,7 +183,6 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   { title: "Overview", icon: Home, items: [
     { label: "Headquarters", page: "headquarters", icon: "🏠" },
     { label: t("right.bank"), page: "bank", icon: "🏦" },
-    { label: "Hospital", page: "hospital", icon: "🏥" },
     { label: t("right.pointsShop"), page: "points", icon: "🏆" },
     { label: t("right.profile"), page: "profile", icon: "👤" },
     { label: "Game Updates", page: "updates", icon: "📜" },
@@ -231,6 +231,18 @@ const getLeftMenuSections = (t: (k: string) => string) => [
   ]},
   { title: "World", icon: Globe, items: [
     { label: "World Hub", page: "world_hub", icon: "🌍" },
+  ]},
+  { title: "Empire Building", icon: Building2, items: [
+    { label: "Empire Hub", page: "empire_building", icon: "🏗️" },
+  ]},
+  { title: "Relationships", icon: Users, items: [
+    { label: "Relationships Hub", page: "relationships", icon: "🤝" },
+  ]},
+  { title: "Survival", icon: Skull, items: [
+    { label: "Survival Hub", page: "survival", icon: "💀" },
+  ]},
+  { title: "Security", icon: Shield, items: [
+    { label: "Security Hub", page: "security", icon: "🛡️" },
   ]},
 ];
 
@@ -1681,7 +1693,7 @@ export default function Dashboard() {
     return () => clearInterval(iv);
   }, []);
 
-  const [leftExpanded, setLeftExpanded] = useState<string[]>(["Overview","Crimes","Combat","Gambling","Missions","Economy","Assets","Social","Progression","Special","Underworld","Empire","Power","World","Companies"]);
+  const [leftExpanded, setLeftExpanded] = useState<string[]>(["Overview","Crimes","Combat","Gambling","Missions","Economy","Assets","Social","Progression","Special","Underworld","Empire","Power","World","Companies","Empire Building","Relationships","Survival","Security"]);
   const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Seasonal Events","Server Events","Help","System"]);
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
   const [rightItemsExpanded, setRightItemsExpanded] = useState<string[]>([]);
@@ -2500,6 +2512,10 @@ const renderPage = () => {
       case "world_events_dyn": return <DynamicWorldEventsPage />;
       case "reputation_influence": return <ReputationInfluencePage />;
       case "coop_gameplay": return <CoopGameplayPage />;
+      case "empire_building": return <EmpireBuildingPage />;
+      case "relationships": return <RelationshipsPage />;
+      case "survival": return <SurvivalRealismPage />;
+      case "security": return <SecurityDefensePage />;
       default: return <HeadquartersPage />;
     }
   };
