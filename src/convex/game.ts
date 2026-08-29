@@ -172,6 +172,17 @@ export const registerPlayer = mutation({
   },
 });
 
+export const awardActionXp = mutation({
+  args: { amount: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const xp = await addXpAndCheckLevel(ctx, player, Math.max(1, Math.floor(args.amount ?? 10)));
+    await ctx.db.patch(player._id, xp);
+    return { success: true, ...xp };
+  },
+});
+
 export const changeLocation = mutation({
   args: { location: v.string() },
   handler: async (ctx, args) => {
@@ -218,7 +229,7 @@ export const acknowledgeLevelUp = mutation({
 });
 
 // Helper: add XP and check for level-up
-async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
+export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   // XP Volume Bonus: more actions in the last hour = higher multiplier.
   // Use only valid timestamps so legacy records cannot make the counter display 0 incorrectly.
   const now = Date.now();
