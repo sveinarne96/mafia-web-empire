@@ -2,8 +2,8 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
-const REGEN_INTERVALS = { energy: 60000, stamina: 90000, focus: 120000 };
-const REGEN_AMOUNTS = { energy: 5, stamina: 3, focus: 2 };
+const REGEN_INTERVALS = { energy: 3000, stamina: 3000, focus: 3000 };
+const REGEN_AMOUNTS = { energy: 1, stamina: 1, focus: 1 };
 
 import { RESOURCE_COSTS } from "../data/resourceCosts";
 

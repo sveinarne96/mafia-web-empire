@@ -206,10 +206,10 @@ export const acknowledgeLevelUp = mutation({
       maxLife: newMaxLife,
       life: newMaxLife,
       highestLevel: Math.max(player.highestLevel ?? 0, newLevel),
-      energy: Math.min(maxE, ((player as any).energy ?? maxE) + 30),
-      stamina: Math.min(maxS, ((player as any).stamina ?? maxS) + 30),
-      focus: Math.min(maxF, ((player as any).focus ?? maxF) + 30),
-      morale: Math.min(maxM, ((player as any).morale ?? maxM) + 30),
+      energy: Math.min(maxE, ((player as any).energy ?? maxE) + 20),
+      stamina: Math.min(maxS, ((player as any).stamina ?? maxS) + 20),
+      focus: Math.min(maxF, ((player as any).focus ?? maxF) + 20),
+      morale: Math.min(maxM, ((player as any).morale ?? maxM) + 20),
     } as any);
     return { success: true, newLevel };
   },
@@ -234,26 +234,25 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   else if (actionCount >= 15) volMult = 1.5;
   else if (actionCount >= 5) volMult = 1.25;
   const finalXP = Math.floor(xpAmount * volMult);
-  const newXP = (player.experience ?? 0) + finalXP;
-  
-function consumeEnergy(p: any, amt: number) { return Math.max(0, ((p as any).energy ?? 100) - amt); }
-const xpNeeded = 2000;
-  const levelUpNow = newXP >= xpNeeded;
-  if (!levelUpNow) {
-    return { experience: newXP };
+  let remaining = (player.experience ?? 0) + finalXP;
+  let lvl = player.level ?? 1;
+  const xpNeeded = 2000;
+  const updates: Record<string, any> = {};
+  let leveled = false;
+  while (remaining >= xpNeeded) {
+    remaining -= xpNeeded;
+    lvl++;
+    leveled = true;
+    updates.attack = (updates.attack ?? (player.attack ?? 10)) + 10;
+    updates.defense = (updates.defense ?? (player.defense ?? 10)) + 10;
+    updates.maxLife = (updates.maxLife ?? (player.maxLife ?? 100)) + 75;
+    updates.life = updates.maxLife;
+    updates.skillPoints = (updates.skillPoints ?? (player.skillPoints ?? 0)) + 1;
   }
-  // Level up! Apply all stats immediately
-  return {
-    experience: 0,
-    level: (player.level ?? 1) + 1,
-    levelUpPending: false,
-    attack: (player.attack ?? 10) + 10,
-    defense: (player.defense ?? 10) + 10,
-    maxLife: (player.maxLife ?? 100) + 75,
-    life: (player.maxLife ?? 100) + 75,
-    skillPoints: (player.skillPoints ?? 0) + 1,
-    highestLevel: Math.max(player.highestLevel ?? 0, (player.level ?? 1) + 1),
-  };
+  if (leveled) {
+    return { experience: remaining, level: lvl, levelUpPending: false, highestLevel: Math.max(player.highestLevel ?? 0, lvl), ...updates };
+  }
+  return { experience: remaining, life: (player.life ?? 100) };
 }
 
 export const commitCrime = mutation({

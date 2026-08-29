@@ -98,7 +98,6 @@ import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
 import { XPVolumePanel } from "@/components/XPVolumePanel";
 import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
-import { IndividualCrimePage } from "@/components/IndividualCrimePage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
@@ -855,10 +854,7 @@ export default function Dashboard() {
           <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/30 to-transparent pointer-events-none z-10" />
           <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/30 to-transparent pointer-events-none z-10" />
         </div>
-        {/* Crime Sub-Bar — expands below when category is clicked */}
-        {activePage.startsWith("crime_") && (
-          <CrimeSubBar activePage={activePage} onNavigate={setPage} />
-        )}
+        {/* Crime sub-bar removed */}
         {/* Animated glow line at bottom */}
         <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
       </div>
