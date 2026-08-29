@@ -45,14 +45,26 @@ export const prestige = mutation({
     if ((player.level ?? 1) < 100) throw new Error("Must be level 100 to prestige!");
     const currentPrestige = player.prestige ?? 0;
     const mult = 1 + (currentPrestige + 1) * 0.1;
+    const maxLife = Math.max(100, player.maxLife ?? 100);
     await ctx.db.patch(player._id, {
       level: 1,
       experience: 0,
+      levelUpPending: false,
       prestige: currentPrestige + 1,
       prestigeMultiplier: mult,
-      money: Math.floor((player.money ?? 0) * 0.5),
-    });
-    return { success: true, newPrestige: currentPrestige + 1, multiplier: mult };
+      // Prestige resets rank progress and health, while preserving the player's economy.
+      life: 1,
+      maxLife: 100,
+      attack: 10,
+      defense: 10,
+      skillPoints: 0,
+      energy: Math.min((player as any).maxEnergy ?? 100, ((player as any).energy ?? 100) + 20),
+      stamina: Math.min((player as any).maxStamina ?? 100, (player as any).stamina ?? 100),
+      focus: Math.min((player as any).maxFocus ?? 100, (player as any).focus ?? 100),
+      morale: Math.min((player as any).maxMorale ?? 100, (player as any).morale ?? 100),
+      highestLevel: Math.max(player.highestLevel ?? 0, player.level ?? 1),
+    } as any);
+    return { success: true, newPrestige: currentPrestige + 1, multiplier: mult, life: 1, maxLife: 100 };
   },
 });
 
