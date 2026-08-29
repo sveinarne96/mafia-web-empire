@@ -517,6 +517,9 @@ export default function Dashboard() {
     { title: "Live Events", icon: Clock, items: [
       { label: "Event Calendar", page: "event_calendar", icon: "📅" },
     ]},
+    { title: "My Profile", icon: User, items: [
+      { label: "My Profile", page: "my_profile", icon: "👤" },
+    ]},
   ];
 
   const getRightMenuSections = () => [
@@ -557,6 +560,7 @@ export default function Dashboard() {
       { label: "Reports", page: "reports", icon: "📢" },
     ]},
     { title: "System", icon: Settings, items: [
+      { label: "My Profile", page: "my_profile", icon: "👤" },
       { label: "Admin", page: "admin_panel", icon: "⚙️" },
       { label: "Become Admin", page: "become_admin", icon: "🔑" },
       { label: "Online Players", page: "online_players", icon: "👥" },
@@ -669,6 +673,7 @@ export default function Dashboard() {
       case "blackjack": return <BlackjackPage />;
       case "lotto": return <LottoPage />;
       case "coin_flip": return <CoinFlipPage />;
+      case "my_profile": return <MyProfilePage />;
       default: return <HeadquartersPage />;
     }
   };
@@ -677,100 +682,68 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* Top Bar */}
+      {/* Top Bar — Stats + Navigation Tabs */}
       <div className="border-b border-border/50 bg-[oklch(0.06_0.015_35)]">
-        <div className="flex items-center justify-between px-4 py-2">
-          {/* Left: Mobile menu toggle */}
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-muted-foreground hover:text-foreground">
-            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
-
-          {/* Center: Player Stats */}
-          <div className="flex items-center gap-4 text-xs flex-wrap justify-center">
-            {/* Player Name + Rank */}
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white">{player?.nickname || player?.username || player?.name || "Player"}</span>
-              <span className="text-[10px] text-slate-400"><RankBadge level={player?.level ?? 1} /></span>
-            </div>
-
-            {/* Life Bar */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-red-400">❤️</span>
-              <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${((player?.life ?? 0) / (player?.maxLife ?? 100)) * 100}%` }} />
-              </div>
-              <span className="text-[10px] text-red-400 font-bold">{player?.life ?? 0}/{player?.maxLife ?? 100}</span>
-            </div>
-
-            {/* XP Bar */}
-            <div className="flex items-center gap-1.5">
-              <span className="text-blue-400">⭐</span>
-              <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${xpPercent}%` }} />
-              </div>
-              <span className="text-[10px] text-blue-400 font-bold">{player?.experience ?? 0}/{xpNeeded}</span>
-            </div>
-
-            {/* Cash */}
-            <div className="flex items-center gap-1">
-              <span className="text-green-400">💰</span>
-              <span className="text-[10px] font-bold text-green-400">${(player?.money ?? 0).toLocaleString()}</span>
-            </div>
-
-            {/* Points */}
-            <div className="flex items-center gap-1">
-              <span className="text-yellow-400">🏆</span>
-              <span className="text-[10px] font-bold text-yellow-400">{(player?.points ?? 0).toLocaleString()}</span>
-            </div>
-
-            {/* ATK */}
-            <div className="flex items-center gap-1">
-              <span className="text-orange-400">⚔️</span>
-              <span className="text-[10px] font-bold text-orange-400">{player?.attack ?? 0}</span>
-            </div>
-
-            {/* DEF */}
-            <div className="flex items-center gap-1">
-              <span className="text-blue-400">🛡️</span>
-              <span className="text-[10px] font-bold text-blue-400">{player?.defense ?? 0}</span>
-            </div>
-
-            {/* Kills */}
-            <div className="flex items-center gap-1">
-              <span className="text-red-400">💀</span>
-              <span className="text-[10px] font-bold text-red-400">{(player as any)?.kills ?? 0}</span>
-            </div>
+        {/* Row 1: Player Stats */}
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/30">
+          {/* Left: Name + Rank */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-bold text-white">{player?.nickname || player?.username || player?.name || "Player"}</span>
+            <RankBadge level={player?.level ?? 1} />
+            <span className="text-[10px] text-slate-500">Lv.{player?.level ?? 1}</span>
           </div>
-
-          {/* Right: Energy Drink + Boosts */}
-          <div className="flex items-center gap-2">
-            {/* Wanted Badge */}
-            {(player?.wantedLevel ?? 0) > 0 && (
-              <div className="px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[9px] font-bold text-red-400 animate-pulse">
-                🔴 WANTED {player.wantedLevel}
-              </div>
-            )}
-            {/* XP Boost */}
-            {(player as any)?.xpBoostUntil > Date.now() && (
-              <div className="px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-[9px] font-bold text-cyan-400">⚡ 3x XP</div>
-            )}
-            {/* Cash Boost */}
-            {(player as any)?.cashBoostUntil > Date.now() && (
-              <div className="px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 text-[9px] font-bold text-green-400">💰 3x Cash</div>
-            )}
-            {/* Energy Drink */}
-            {(player as any)?.energyDrinkUntil > Date.now() && (
-              <div className="px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-[9px] font-bold text-orange-400">🥤 Energy</div>
-            )}
-            {/* Rank Boost */}
-            {(player as any)?.rankBoostUntil > Date.now() && (
-              <div className="px-2 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-[9px] font-bold text-yellow-400">🚀 Rank</div>
-            )}
-            {/* Mobile right menu toggle */}
-            <button onClick={() => setShowRight(!showRight)} className="md:hidden p-2 text-muted-foreground hover:text-foreground">
-              <User className="size-5" />
+          {/* Center: Stats */}
+          <div className="hidden md:flex items-center gap-3 text-[10px]">
+            <span className="text-red-400">❤️ {player?.life ?? 0}/{player?.maxLife ?? 100}</span>
+            <span className="text-blue-400">⭐ {player?.experience ?? 0}/{xpNeeded}</span>
+            <span className="text-green-400 font-bold">${(player?.money ?? 0).toLocaleString()}</span>
+            <span className="text-yellow-400">🏆 {(player?.points ?? 0).toLocaleString()}</span>
+            <span className="text-orange-400">⚔️ {player?.attack ?? 0}</span>
+            <span className="text-blue-400">🛡️ {player?.defense ?? 0}</span>
+            <span className="text-red-400">💀 {(player as any)?.kills ?? 0}</span>
+          </div>
+          {/* Right: Boosts + Profile */}
+          <div className="flex items-center gap-1.5">
+            {(player?.wantedLevel ?? 0) > 0 && <span className="px-1.5 py-0.5 rounded bg-red-500/20 text-[8px] font-bold text-red-400 animate-pulse">🔴 WANTED</span>}
+            {(player as any)?.xpBoostUntil > Date.now() && <span className="px-1.5 py-0.5 rounded bg-cyan-500/20 text-[8px] font-bold text-cyan-400">⚡ 3x XP</span>}
+            {(player as any)?.cashBoostUntil > Date.now() && <span className="px-1.5 py-0.5 rounded bg-green-500/20 text-[8px] font-bold text-green-400">💰 3x Cash</span>}
+            {(player as any)?.energyDrinkUntil > Date.now() && <span className="px-1.5 py-0.5 rounded bg-orange-500/20 text-[8px] font-bold text-orange-400">🥤 Energy</span>}
+            <button onClick={() => setPage("my_profile")} className="ml-1 px-2 py-1 rounded-lg bg-amber-900/30 border border-amber-700/30 text-[10px] font-bold text-amber-400 hover:bg-amber-800/30 transition">👤 Profile</button>
+          </div>
+        </div>
+        {/* Row 2: Navigation Tabs */}
+        <div className="flex items-center gap-0.5 px-2 py-1 overflow-x-auto scrollbar-hide">
+          {[
+            { label: "🏠 HQ", page: "headquarters" },
+            { label: "🏦 Bank", page: "bank" },
+            { label: "🔪 Crime", page: "crimes" },
+            { label: "📋 Missions", page: "missions" },
+            { label: "💀 Murder", page: "murder" },
+            { label: "🎰 Gambling", page: "daily_spin" },
+            { label: "🎰 Poker", page: "poker_texas" },
+            { label: "🃏 Blackjack", page: "blackjack" },
+            { label: "🪙 Coin Flip", page: "coin_flip" },
+            { label: "🎲 Lotto", page: "lotto" },
+            { label: "⚔️ Combat", page: "arena" },
+            { label: "🥊 Fight Club", page: "fight_club" },
+            { label: "🚗 Garage", page: "garage" },
+            { label: "🎒 Items", page: "my_items" },
+            { label: "🖤 Market", page: "black_market" },
+            { label: "🛡️ Security", page: "security" },
+            { label: "💰 Economy", page: "stock_market" },
+            { label: "🏗️ Empire", page: "empire_building" },
+            { label: "🤝 Crew", page: "crew_system" },
+            { label: "🧠 Skills", page: "skill_tree" },
+            { label: "📅 Events", page: "events_hub" },
+            { label: "🆘 Support", page: "support" },
+          ].map(tab => (
+            <button key={tab.page} onClick={() => setPage(tab.page)}
+              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${
+                activePage === tab.page ? "bg-primary/20 text-primary border border-primary/30" : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/30"
+              }`}>
+              {tab.label}
             </button>
-          </div>
+          ))}
         </div>
       </div>
 
