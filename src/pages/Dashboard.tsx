@@ -607,10 +607,99 @@ function MessagesPage() {
 }
 
 function InboxPage() {
+  const [inboxItems, setInboxItems] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"all" | "messages" | "support">("all");
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  useEffect(() => {
+    try { setInboxItems(JSON.parse(localStorage.getItem("inbox_items") || "[]")); } catch { setInboxItems([]); }
+  }, []);
+
+  const markRead = (id: string) => {
+    const updated = inboxItems.map(item => item.id === id ? { ...item, read: true } : item);
+    setInboxItems(updated);
+    localStorage.setItem("inbox_items", JSON.stringify(updated));
+  };
+
+  const supportItems = inboxItems.filter(i => i.type === "support_response");
+  const unreadCount = inboxItems.filter(i => !i.read).length;
+  const filtered = activeTab === "all" ? inboxItems : activeTab === "support" ? supportItems : inboxItems.filter(i => i.type !== "support_response");
+
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><Inbox className="size-7 text-primary" /><h2 className="text-2xl font-bold">Inbox</h2></div>
-      <MessagesPage />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Inbox className="size-7 text-primary" />
+            {unreadCount > 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[8px] font-bold text-white">{unreadCount}</div>}
+          </div>
+          <h2 className="text-2xl font-bold">Inbox</h2>
+        </div>
+        <span className="text-xs text-slate-500">{inboxItems.length} items • {unreadCount} unread</span>
+      </div>
+
+      <div className="flex gap-2">
+        {(["all", "messages", "support"] as const).map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              activeTab === tab ? "bg-amber-600/30 border border-amber-500/40 text-amber-300" : "bg-slate-800/50 text-slate-400 hover:bg-slate-700/50"
+            }`}>
+            {tab === "all" ? "📬 All" : tab === "messages" ? "💬 Messages" : `🆘 Support (${supportItems.length})`}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-700/50 p-8 text-center">
+          <Inbox className="size-12 text-slate-700 mx-auto mb-3" />
+          <h3 className="text-sm font-bold text-slate-400">Inbox Empty</h3>
+          <p className="text-[10px] text-slate-600 mt-1">Messages and support responses will appear here</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {[...filtered].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0)).map(item => {
+            const isSupport = item.type === "support_response";
+            const isExp = expanded === item.id;
+            return (
+              <div key={item.id}
+                onClick={() => { setExpanded(isExp ? null : item.id); if (!item.read) markRead(item.id); }}
+                className={`bg-slate-900/50 rounded-xl border cursor-pointer transition-all ${
+                  isExp ? "border-amber-500/30" : !item.read ? "border-blue-500/30" : "border-slate-700/50 hover:border-slate-600/50"
+                }`}>
+                <div className="p-3 flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSupport ? "bg-green-500/20" : "bg-blue-500/20"}`}>
+                    {isSupport ? <Shield className="size-4 text-green-400" /> : <MessageSquare className="size-4 text-blue-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-bold ${!item.read ? "text-white" : "text-slate-300"} truncate`}>{item.subject}</span>
+                      {!item.read && <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />}
+                    </div>
+                    <p className="text-[10px] text-slate-500 truncate">{item.message?.substring(0, 80)}...</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-[9px] text-slate-600">{new Date(item.timestamp).toLocaleDateString()}</div>
+                    <div className="text-[9px] text-slate-600">{new Date(item.timestamp).toLocaleTimeString()}</div>
+                  </div>
+                </div>
+                {isExp && (
+                  <div className="px-3 pb-3 border-t border-slate-700/30 pt-2">
+                    <p className="text-xs text-slate-300 leading-relaxed">{item.message}</p>
+                    {item.ticketId && (
+                      <div className="mt-2 text-[9px] text-slate-500">Ticket: {item.ticketId.substring(0, 20)}...</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-4 border-t border-slate-700/50 pt-4">
+        <h3 className="text-sm font-bold text-slate-300 mb-2">💬 Direct Messages</h3>
+        <MessagesPage />
+      </div>
     </div>
   );
 }
@@ -1525,53 +1614,133 @@ function EnergyDrinksPage() {
   const buyDrink = useMutation(api.gameExtended.buyEnergyDrink);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<"boost" | "stim" | "extreme">("boost");
   if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
   const now = Date.now();
   const energyActive = ((player as any).energyDrinkUntil ?? 0) > now;
   const energyLeft = energyActive ? Math.ceil(((player as any).energyDrinkUntil - now) / 60000) : 0;
-  const drinks = [
-    { name: "Red Bull", icon: "🥤", boost: "+25% XP", duration: "30 min", cost: 5000 },
-    { name: "Monster Energy", icon: "⛽", boost: "+25% XP", duration: "1 hr", cost: 15000 },
-    { name: "Venom Shot", icon: "💉", boost: "+25% XP", duration: "2 hrs", cost: 50000 },
-    { name: "Liquid Gold", icon: "✨", boost: "+25% XP", duration: "4 hrs", cost: 200000 },
-    { name: "Shadow Elixir", icon: "🧪", boost: "+25% XP", duration: "8 hrs", cost: 500000 },
+  const energyHours = energyActive ? Math.floor(energyLeft / 60) : 0;
+  const energyMins = energyActive ? energyLeft % 60 : 0;
+
+  const boostDrinks = [
+    { name: "Red Bull", icon: "🥤", boost: "+25% XP", duration: "30 min", cost: 5000, color: "blue", desc: "Quick energy spike. The classic.", effect: "25% more XP from all crimes" },
+    { name: "Monster Energy", icon: "⛽", boost: "+25% XP", duration: "1 hr", cost: 15000, color: "green", desc: "Sustained energy for longer operations.", effect: "25% more XP for 1 hour" },
+    { name: "Venom Shot", icon: "💉", boost: "+25% XP", duration: "2 hrs", cost: 50000, color: "purple", desc: "Underground brew. Hits hard.", effect: "25% more XP for 2 hours" },
+    { name: "Liquid Gold", icon: "✨", boost: "+25% XP", duration: "4 hrs", cost: 200000, color: "amber", desc: "Premium blend. Reserved for professionals.", effect: "25% more XP for 4 hours" },
+    { name: "Shadow Elixir", icon: "🧪", boost: "+25% XP", duration: "8 hrs", cost: 500000, color: "red", desc: "The strongest drink known. Extended focus.", effect: "25% more XP for 8 hours" },
   ];
+  const stimDrinks = [
+    { name: "Adrenaline Shot", icon: "💪", boost: "+50% ATK", duration: "1 hr", cost: 75000, color: "red", desc: "Combat boost. Hit harder.", effect: "+50% attack for 1 hour" },
+    { name: "Focus Pill", icon: "🧠", boost: "+50% Stealth", duration: "1 hr", cost: 80000, color: "cyan", desc: "Mental clarity. Avoid detection.", effect: "+50% stealth for 1 hour" },
+    { name: "Tough Juice", icon: "🦾", boost: "+50% DEF", duration: "1 hr", cost: 70000, color: "green", desc: "Skin like iron. Take more hits.", effect: "+50% defense for 1 hour" },
+    { name: "Speed Drip", icon: "⚡", boost: "+30% Escape", duration: "1 hr", cost: 60000, color: "yellow", desc: "Legs like lightning. Never caught.", effect: "+30% escape chance for 1 hour" },
+  ];
+  const extremeDrinks = [
+    { name: "Chaos Cocktail", icon: "💀", boost: "+100% All Stats", duration: "30 min", cost: 500000, color: "red", desc: "Extreme boost but crashes hard. +50% crime XP after.", effect: "Double all stats for 30 minutes" },
+    { name: "Phantom Brew", icon: "👻", boost: "Ghost Mode", duration: "1 hr", cost: 1000000, color: "purple", desc: "Become invisible. No one sees you coming.", effect: "1 hour of ghost mode" },
+    { name: "Devil's Nectar", icon: "🔥", boost: "+200% Crime XP", duration: "2 hrs", cost: 2000000, color: "orange", desc: "Triple crime XP. The ultimate criminal fuel.", effect: "200% more crime XP for 2 hours" },
+  ];
+
+  const tabs = [
+    { id: "boost" as const, label: "⚡ XP Boosts", count: boostDrinks.length, color: "blue" },
+    { id: "stim" as const, label: "💪 Stimulants", count: stimDrinks.length, color: "green" },
+    { id: "extreme" as const, label: "💀 Extreme", count: extremeDrinks.length, color: "red" },
+  ];
+
+  const currentDrinks = selectedTab === "boost" ? boostDrinks : selectedTab === "stim" ? stimDrinks : extremeDrinks;
+
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><span className="text-3xl">⚡</span><h2 className="text-2xl font-bold">Energy Drinks</h2></div>
-      {energyActive && (
-        <div className="px-4 py-3 rounded-xl bg-orange-950/30 border border-orange-500/30 text-center">
-          <div className="text-sm font-bold text-orange-400">🥤 Energy Rush Active!</div>
-          <div className="text-xs text-orange-300/70">+25% XP on all crimes · {energyLeft}m remaining</div>
-        </div>
-      )}
-      <div className="text-sm text-muted-foreground mb-3">+25% XP boost on all criminal actions! Stacks with existing boosts.</div>
-      <div className="space-y-2">
-        {drinks.map((d, i) => (
-          <div key={d.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
-            <span className="text-3xl">{d.icon}</span>
-            <div className="flex-1">
-              <div className="font-bold">{d.name}</div>
-              <div className="text-xs text-muted-foreground">{d.boost} for {d.duration}</div>
+      <div className="bg-gradient-to-r from-orange-900/30 via-red-900/20 to-purple-900/30 rounded-2xl p-4 border border-orange-500/20">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">⚡</span>
+            <div>
+              <h2 className="text-xl font-black text-orange-300 tracking-wider">ENERGY DRINKS</h2>
+              <p className="text-[10px] text-slate-500">Boost your criminal performance</p>
             </div>
-            <button
-              onClick={async () => {
-                setLoading(true); setMsg("");
-                try {
-                  const r = await buyDrink({ drinkIndex: i });
-                  setMsg(r.message);
-                } catch (e: unknown) {
-                  setMsg(e instanceof Error ? e.message : "Error");
-                }
-                setLoading(false);
-              }}
-              disabled={loading || (player.money ?? 0) < d.cost}
-              className="px-3 py-1 bg-green-600 text-white rounded-lg text-xs hover:bg-green-700 disabled:opacity-40 transition-all"
-            >${d.cost.toLocaleString()}</button>
           </div>
+          {energyActive && (
+            <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-900/50 to-red-900/50 border border-orange-500/40">
+              <div className="text-sm font-black text-orange-400">🥤 ACTIVE</div>
+              <div className="text-xs text-orange-300/70">{energyHours > 0 ? `${energyHours}h ${energyMins}m` : `${energyMins}m`} left</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex gap-2 flex-wrap">
+        {tabs.map(t => (
+          <button key={t.id} onClick={() => setSelectedTab(t.id)}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              selectedTab === t.id ? `bg-${t.color}-600/30 border border-${t.color}-500/40 text-${t.color}-300` : "bg-slate-800/50 text-slate-400 hover:bg-slate-700/50"
+            }`}>
+            {t.label} ({t.count})
+          </button>
         ))}
       </div>
-      {msg && <div className="text-sm text-primary animate-fade-in">✓ {msg}</div>}
+
+      {energyActive && (
+        <div className="bg-gradient-to-r from-orange-900/30 to-red-900/20 rounded-xl p-4 border border-orange-500/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-bold text-orange-300">🥤 Energy Rush Active</div>
+              <div className="text-xs text-orange-300/70">+25% XP on all criminal actions</div>
+            </div>
+            <div className="text-right">
+              <div className="text-lg font-black text-orange-400">{energyHours > 0 ? `${energyHours}h ${energyMins}m` : `${energyMins}m`}</div>
+              <div className="text-[9px] text-orange-400/60">remaining</div>
+            </div>
+          </div>
+          <div className="w-full h-2 bg-black/40 rounded-full mt-2 overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-500" style={{ width: `${Math.max(5, energyLeft / 480 * 100)}%` }} />
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        {currentDrinks.map((d, i) => {
+          const canAfford = (player.money ?? 0) >= d.cost;
+          return (
+            <div key={d.name} className={`bg-slate-900/50 rounded-xl border border-${d.color}-500/20 p-4 transition-all hover:border-${d.color}-500/40`}>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{d.icon}</span>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold text-${d.color}-300`}>{d.name}</span>
+                    <span className={`text-[9px] px-2 py-0.5 rounded-full bg-${d.color}-500/20 text-${d.color}-300 font-bold`}>{d.boost}</span>
+                  </div>
+                  <div className="text-[10px] text-slate-400">{d.desc}</div>
+                  <div className="text-[10px] text-slate-500 mt-0.5">⏱ {d.duration} • 📊 {d.effect}</div>
+                </div>
+              </div>
+              <button onClick={async () => {
+                setLoading(true); setMsg("");
+                try { const r = await buyDrink({ drinkIndex: selectedTab === "boost" ? i : selectedTab === "stim" ? boostDrinks.length + i : boostDrinks.length + stimDrinks.length + i }); setMsg(r.message); }
+                catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
+                setLoading(false);
+              }} disabled={loading || !canAfford}
+                className={`w-full mt-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  canAfford ? `bg-${d.color}-600/20 border border-${d.color}-500/40 text-${d.color}-300 hover:bg-${d.color}-600/30` : "bg-slate-800/30 border border-slate-700/30 text-slate-500 cursor-not-allowed"
+                }`}>
+                {canAfford ? `Buy — $${d.cost.toLocaleString()}` : `Need $${d.cost.toLocaleString()}`}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {msg && <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-sm text-green-300 animate-fade-in">✅ {msg}</div>}
+
+      <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 p-4">
+        <div className="text-xs font-bold text-slate-400 mb-2">💡 Tips</div>
+        <div className="space-y-1 text-[10px] text-slate-500">
+          <p>• XP boosts stack with other boosts (3x XP events, etc.)</p>
+          <p>• Stimulants give combat/stealth/defense bonuses — useful before fights</p>
+          <p>• Extreme drinks are expensive but game-changing — save for big operations</p>
+          <p>• Energy drinks don't stack — buy the longest duration you need</p>
+        </div>
+      </div>
     </div>
   );
 }
@@ -3243,8 +3412,8 @@ const renderPage = () => {
                   {(() => {
                     try {
                       const permit = JSON.parse(localStorage.getItem("empirePermit") || "0");
-                      if (permit === 0) return null;
                       const armorDur = JSON.parse(localStorage.getItem("empireArmor") || "0");
+                      if (permit === 0 && armorDur === 0) return null;
                       const lockpickLv = JSON.parse(localStorage.getItem("empireLockpick") || "0");
                       return (
                         <div className="px-2">

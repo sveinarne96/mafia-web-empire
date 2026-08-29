@@ -958,7 +958,7 @@ function SurvivalRealismPage({ player }: { player: any }) {
 function SecurityDefensePage({ player }: { player: any }) {
   const [tab, setTab] = useState("guards");
   const [tick, setTick] = useState(0);
-  const playerLevel = (() => { try { const d = JSON.parse(localStorage.getItem("playerData") || "{}"); return d.level ?? 1; } catch { return 1; } })();
+  const playerLevel = player?.level ?? 1;
   const [activeServices, setActiveServices] = useState<Record<string, number>>(() => { try { return JSON.parse(localStorage.getItem("empireSecurity") || "{}"); } catch { return {}; } });
   const [safehouseLevel, setSafehouseLevel] = useState(() => { try { return JSON.parse(localStorage.getItem("empireSafehouse") || "0"); } catch { return 0; } });
   const [escapeLevel, setEscapeLevel] = useState(() => { try { return JSON.parse(localStorage.getItem("empireEscape") || "0"); } catch { return 0; } });
