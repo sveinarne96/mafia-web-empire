@@ -70,7 +70,7 @@ import {
 import {
   PointsShopPage, GaragePage, MyItemsPage, MissionsPage,
   OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage,
-  LegacyPage, ForumSearchPage, SupportPage,
+  LegacyPage, ForumSearchPage,
 } from "@/components/GamePages";
 import { MissionsOverviewPage } from "@/components/MissionPages";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
@@ -90,6 +90,8 @@ import { CrimeScenePage } from "@/components/SystemCrimeScene";
 import { CompaniesHubPage } from "@/components/SystemCompanies";
 import { EmpireBuildingPage, RelationshipsPage, SurvivalRealismPage, SecurityDefensePage } from "@/components/SystemEmpire";
 import LiveEventCalendar from "@/components/LiveEventCalendar";
+import { LiveSupportPage } from "@/components/LiveSupport";
+import EventsHubPage from "@/components/EventsHub";
 
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
@@ -376,35 +378,11 @@ const getRightMenuSections = (t: (k: string) => string) => [
     { label: "Statistics", page: "statistics", icon: "📊" },
     { label: "World Map", page: "world_map", icon: "🌍" },
   ]},
-  { title: "Seasonal Events", icon: Flame, items: [
-    { label: "New Year", page: "evt_newyear", icon: "🎆" },
-    { label: "Valentine", page: "evt_valentine", icon: "❤️" },
-    { label: "St. Patrick", page: "evt_patricks", icon: "☘️" },
-    { label: "Easter", page: "evt_easter", icon: "🥚" },
-    { label: "Summer", page: "evt_summer", icon: "☀️" },
-    { label: "Halloween", page: "evt_halloween", icon: "🎃" },
-    { label: "Christmas", page: "evt_christmas", icon: "🎄" },
-    { label: "Cyber Monday", page: "evt_cyber", icon: "💻" },
-    { label: "Black Friday", page: "evt_blackfriday", icon: "🛒" },
-    { label: "Tax Season", page: "evt_tax", icon: "📋" },
-    { label: "Spring Break", page: "evt_spring", icon: "🌸" },
-    { label: "Winter", page: "evt_winter", icon: "❄️" },
-  ]},
-  { title: "Server Events", icon: Zap, items: [
-    { label: "Purge Night", page: "evt_purge", icon: "💀" },
-    { label: "Blood Moon", page: "evt_bloodmoon", icon: "🌑" },
-    { label: "Robber's Moon", page: "evt_robbersmoon", icon: "🌙" },
-    { label: "Full Moon", page: "evt_fullmoon", icon: "🌕" },
-    { label: "Grand Heist", page: "evt_grandheist", icon: "🏦" },
-    { label: "Tournament", page: "evt_tournament", icon: "🏆" },
-    { label: "Family War", page: "evt_familywar", icon: "⚔️" },
-    { label: "Territory", page: "evt_territory", icon: "📍" },
-    { label: "Underground", page: "evt_underground", icon: "💣" },
-    { label: "Crime Empire", page: "evt_empire", icon: "👑" },
-  ]},
-  { title: "Help", icon: HelpCircle, items: [
+  { title: "Help & Events", icon: HelpCircle, items: [
     { label: "FAQ", page: "faq", icon: "❓" },
-    { label: "Support", page: "support", icon: "🆘" },
+    { label: "Live Support", page: "support", icon: "🆘" },
+    { label: "Events Hub", page: "events_hub", icon: "🎆" },
+    { label: "Live Calendar", page: "event_calendar", icon: "📅" },
     { label: "Guidelines", page: "community", icon: "📜" },
     { label: "Reports", page: "reports", icon: "📢" },
   ]},
@@ -2005,7 +1983,7 @@ export default function Dashboard() {
   }, []);
 
   const [leftExpanded, setLeftExpanded] = useState<string[]>([]);
-  const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Seasonal Events","Server Events","Help","System"]);
+  const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Help & Events","System"]);
   const [leftItemsExpanded, setLeftItemsExpanded] = useState<string[]>([]);
   const [rightItemsExpanded, setRightItemsExpanded] = useState<string[]>([]);
   const [showLeft, setShowLeft] = useState(true);
@@ -2699,7 +2677,7 @@ const renderPage = () => {
       case "news_ticker": return <NewsTickerPage />;
       case "world_events": return <EventsPage />;
       case "faq": return <FAQPage />;
-      case "support": return <SupportPage />;
+      case "support": return <LiveSupportPage />;
       case "admin_panel": return <AdminPanel />;
       case "become_admin": return <BecomeAdminPage />;
       case "online_players": return <OnlineList onViewProfile={(id, name) => { setViewProfile({ id, name }); setActivePage("player_profile"); }} />;
@@ -2817,6 +2795,7 @@ const renderPage = () => {
       case "survival": return <SurvivalRealismPage player={player} />;
       case "security": return <SecurityDefensePage player={player} />;
       case "event_calendar": return <LiveEventCalendar />;
+      case "events_hub": return <EventsHubPage />;
       default: return <HeadquartersPage />;
     }
   };
