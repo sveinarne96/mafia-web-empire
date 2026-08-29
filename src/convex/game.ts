@@ -467,7 +467,7 @@ export const dailyRaid = mutation({ args: { targetId: v.id("users") }, handler: 
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.isDead) throw new Error("You are dead!");
     if (((player as any).energy ?? 100) < 15) throw new Error("Not enough energy!"); if (player.inPrison) throw new Error("You are in prison!"); if ((player.dailyRaidUsed ?? 0) >= 5) throw new Error("No raids left today!");
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
-    const success = Math.random() > 0.25; const moneyStolen = success ? Math.floor((target.money ?? 0) * 0.08) : 0; const damage = Math.floor(Math.random() * 20) + 10;
+    const success = Math.random() < 0.75; const moneyStolen = success ? Math.floor((target.money ?? 0) * 0.08) : 0; const damage = Math.floor(Math.random() * 20) + 10;
     await ctx.db.insert("dailyRaids", { userId: player._id, targetUserId: args.targetId, moneyStolen, damage, timestamp: Date.now() });
     await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyStolen : (player.money ?? 0), energy: Math.max(0, ((player as any).energy ?? 100) - 25), dailyRaidUsed: (player.dailyRaidUsed ?? 0) + 1, ...(await addXpAndCheckLevel(ctx, player, success ? 50 : 15)) });
     if (success) await ctx.db.patch(args.targetId, { money: Math.max(0, (target.money ?? 0) - moneyStolen), life: Math.max(0, (target.life ?? 100) - damage) });
@@ -517,7 +517,7 @@ export const levelUp = mutation({ args: { stat: v.optional(v.union(v.literal("at
 export const killPlayer = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!");
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
-    const success = Math.random() > 0.25;
+    const success = Math.random() < 0.75;
     if (success) { await ctx.db.patch(args.targetId, { life: 0, isDead: true }); await ctx.db.patch(player._id, { energy: Math.max(0, ((player as any).energy ?? 100) - 40), totalKills: (player.totalKills ?? 0) + 1, wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 3), money: (player.money ?? 0) + Math.floor((target.money ?? 0) * 0.05), ...(await addXpAndCheckLevel(ctx, player, 100)) }); }
     else { const killFailXp = await addXpAndCheckLevel(ctx, player, 20); await ctx.db.patch(player._id, { energy: Math.max(0, ((player as any).energy ?? 100) - 40), life: killFailXp.life ?? Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 1), ...killFailXp }); }
     return { success };
