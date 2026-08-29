@@ -1,4 +1,5 @@
 import { EventsManager } from "@/components/EventsManager";
+import { DatabaseWipeUI } from "@/components/DatabaseWipeUI";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -95,6 +96,7 @@ const ADMIN_CATEGORIES: Record<string, { id: string; name: string; icon: string;
     { id: "territory_ctrl", name: "Territory Control", icon: "📍", desc: "Manually assign territories to crews" },
     { id: "npc_spawner", name: "NPC Spawner", icon: "🤖", desc: "Create AI gangs, police patrols, informants" },
     { id: "db_backup", name: "Database Backup", icon: "💾", desc: "Export/import player data" },
+    { id: "db_wipe", name: "Database Wipe", icon: "💣", desc: "Wipe all non-admin players and reset game data" },
     { id: "server_health", name: "Server Health Monitor", icon: "💓", desc: "CPU, memory, active connections" },
     { id: "mission_creator", name: "Mission Creator", icon: "🎯", desc: "Create custom missions with rewards" },
     { id: "achievement_ed", name: "Achievement Editor", icon: "🏅", desc: "Create/modify achievement requirements" },
@@ -317,7 +319,7 @@ function AdminTool({ title, icon, description, onClose }: { title: string; icon:
         )}
       </div>);
     }
-    if (["Live Player Map","Faction Management","Territory Control","NPC Spawner","Database Backup","Server Health Monitor","Mission Creator","Achievement Editor","Leaderboard Reset","Leaderboard Editor","Legacy Board Editor","Energy System Control","Maintenance Mode","Version Control","A/B Testing Panel","Analytics Dashboard"].includes(title)) {
+    if (["Live Player Map","Faction Management","Territory Control","NPC Spawner","Database Backup","Database Wipe","Server Health Monitor","Mission Creator","Achievement Editor","Leaderboard Reset","Leaderboard Editor","Legacy Board Editor","Energy System Control","Maintenance Mode","Version Control","A/B Testing Panel","Analytics Dashboard"].includes(title)) {
       return (<div className="space-y-3">
         <div><label className="text-xs text-muted-foreground">Action</label>
         <select value={action} onChange={e => setAction(e.target.value)} className="w-full bg-black/30 border border-border rounded-lg px-3 py-2 text-sm mt-1">
@@ -326,6 +328,7 @@ function AdminTool({ title, icon, description, onClose }: { title: string; icon:
           {title==="Territory Control" && <><option>Assign</option><option>Remove</option><option>View All</option><option>Reset</option></>}
           {title==="NPC Spawner" && <><option>Spawn Gang</option><option>Spawn Police</option><option>Spawn Informant</option><option>Remove</option></>}
           {title==="Database Backup" && <><option>Create</option><option>Restore</option><option>View</option><option>Download</option></>}
+          {title==="Database Wipe" && <><option>Preview</option><option>⚠️ WIPE ALL NON-ADMINS</option></>}
           {title==="Server Health Monitor" && <><option>CPU</option><option>Memory</option><option>Connections</option><option>Uptime</option></>}
           {title==="Mission Creator" && <><option>Create</option><option>Edit</option><option>Delete</option><option>Set Rewards</option></>}
           {title==="Achievement Editor" && <><option>Create</option><option>Modify</option><option>Delete</option><option>Requirements</option></>}
