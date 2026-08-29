@@ -96,6 +96,8 @@ import EventsHubPage from "@/components/EventsHub";
 
 import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
+import { CrimeSubPages, getCrimeByRoute } from "@/components/CrimeSubPages";
+import { IndividualCrimePage } from "@/components/IndividualCrimePage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
@@ -603,6 +605,7 @@ export default function Dashboard() {
       case "crime_drugs": return <CrimesOverviewPage initialCategory="drugs" />;
       case "crime_organized": return <CrimesOverviewPage initialCategory="organized" />;
       case "crime_underground": return <CrimesOverviewPage initialCategory="underground" />;
+
       case "car_theft": return <GtaCarTheftPage />;
       case "steal_house": return <StealFromHousePage />;
       case "organized_crime": return <OrganizedCrimePage />;
@@ -704,7 +707,11 @@ export default function Dashboard() {
       case "coin_flip": return <CoinFlipPage />;
       case "crime_hub": return <CrimeHub />;
       case "my_profile": return <MyProfilePage />;
-      default: return <HeadquartersPage />;
+      default:
+        if (activePage.startsWith("crime_") && activePage.split("_").length >= 3) {
+          return <IndividualCrimePage route={activePage} />;
+        }
+        return <HeadquartersPage />;
     }
   };
 
@@ -752,13 +759,6 @@ export default function Dashboard() {
           {[
             { label: "🏠 HQ", page: "headquarters", color: "from-amber-500/20 to-orange-500/10" },
             { label: "🏦 Bank", page: "bank", color: "from-green-500/20 to-emerald-500/10" },
-            { label: "🔪 Street", page: "crime_street", color: "from-green-500/20 to-emerald-500/10" },
-            { label: "💰 Robbery", page: "crime_robbery", color: "from-red-500/20 to-rose-500/10" },
-            { label: "🃏 Fraud", page: "crime_fraud", color: "from-yellow-500/20 to-amber-500/10" },
-            { label: "🏠 Burglary", page: "crime_burglary", color: "from-orange-500/20 to-red-500/10" },
-            { label: "💊 Drugs", page: "crime_drugs", color: "from-purple-500/20 to-violet-500/10" },
-            { label: "🕵️ Organized", page: "crime_organized", color: "from-blue-500/20 to-indigo-500/10" },
-            { label: "🕳️ Underground", page: "crime_underground", color: "from-gray-500/20 to-slate-500/10" },
             { label: "🚗 GTA Theft", page: "car_theft", color: "from-red-600/20 to-orange-500/10" },
             { label: "🏠 Burglarize", page: "steal_house", color: "from-red-400/20 to-amber-500/10" },
             { label: "🕵️ Organized", page: "organized_crime", color: "from-purple-600/20 to-red-500/10" },
@@ -779,6 +779,8 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
+        {/* Crime Sub-Pages */}
+        <CrimeSubPages activePage={activePage} onNavigate={setPage} />
         {/* Animated glow line at bottom */}
         <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
       </div>
