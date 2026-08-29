@@ -95,6 +95,7 @@ import { LiveSupportPage } from "@/components/LiveSupport";
 import EventsHubPage from "@/components/EventsHub";
 
 import { FamilyPage } from "@/components/FamilyPage";
+import { ResourcesPanel } from "@/components/ResourcesPanel";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
@@ -845,6 +846,11 @@ export default function Dashboard() {
                   <div className="bg-slate-800/50 rounded p-1 text-center"><span className="text-blue-400 font-bold">⚔️ {player?.attack ?? 0}</span></div>
                   <div className="bg-slate-800/50 rounded p-1 text-center"><span className="text-green-400 font-bold">🛡️ {player?.defense ?? 0}</span></div>
                 </div>
+              </div>
+
+              {/* Resources Panel */}
+              <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30">
+                <ResourcesPanel />
               </div>
 
               {/* Firearms Panel */}

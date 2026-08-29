@@ -28,6 +28,11 @@ const DEFAULT_GAME_FIELDS = {
   lastDeathAt: 0, isKidnapped: false,
   betrayalCount: 0, totalGifting: 0, totalMentoring: 0,
   lastActive: 0, lastCrimeAt: 0, isBanned: false,
+  // Resources
+  energy: 100, maxEnergy: 100, stamina: 100, maxStamina: 100,
+  focus: 100, maxFocus: 100, morale: 80, maxMorale: 100,
+  adrenaline: 0, maxAdrenaline: 100, heat: 0, maxHeat: 100,
+  lastEnergyRegen: 0, lastStaminaRegen: 0, lastFocusRegen: 0,
 };
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
