@@ -710,6 +710,20 @@ export default function Dashboard() {
       case "coin_flip": return <CoinFlipPage />;
       case "crime_hub": return <CrimeHub />;
       case "my_profile": return <MyProfilePage />;
+      case "duel": return <GenericStub title="1v1 Duel" icon="⚔️" />;
+      case "ctf": return <GenericStub title="Capture the Flag" icon="🚩" />;
+      case "koth": return <GenericStub title="King of the Hill" icon="👑" />;
+      case "battle_royale": return <GenericStub title="Battle Royale" icon="🎯" />;
+      case "ladder": return <GenericStub title="Ladder" icon="📊" />;
+      case "champion": return <GenericStub title="Champion" icon="🏆" />;
+      case "ambush": return <GenericStub title="Ambush" icon="🔥" />;
+      case "counterfeiting": return <GenericStub title="Counterfeiting" icon="💵" />;
+      case "drug_trafficking": return <GenericStub title="Drug Trafficking" icon="💊" />;
+      case "arson": return <GenericStub title="Arson" icon="🔥" />;
+      case "identity_theft": return <GenericStub title="Identity Theft" icon="🪪" />;
+      case "arms_deal": return <GenericStub title="Arms Dealing" icon="🔫" />;
+      case "tax_evasion": return <GenericStub title="Tax Evasion" icon="📋" />;
+      case "racketeering": return <GenericStub title="Racketeering" icon="💰" />;
       default:
         if (activePage.startsWith("crime_") && activePage.split("_").length >= 3) {
           return <IndividualCrimePage route={activePage} />;
