@@ -117,8 +117,9 @@ import {
   LegendaryItemsPage, MysteryBoxesPage, GhostModePage,
 } from "@/components/AllFeatures";
 import {
-  DailyLoginPage, CrewSystemPage, RankedPvpPage,
+  DailyLoginPage, RankedPvpPage,
 } from "@/components/NewFeatures";
+import { CrewSystemPage } from "@/components/CrewSystemPage";
 import {
   TournamentPage, AchievementsPage, TitlesPage,
   StockMarketPage, RealEstatePage, BusinessesPage,

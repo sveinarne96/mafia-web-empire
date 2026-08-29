@@ -789,6 +789,20 @@ const schema = defineSchema({
     code: v.string(),
     createdAt: v.number(),
   }).index("by_referrer", ["referrerId"]).index("by_referred", ["referredId"]),
+  crews: defineTable({
+    name: v.string(),
+    tag: v.string(),
+    description: v.string(),
+    leaderId: v.id("users"),
+    level: v.number(),
+    experience: v.number(),
+    treasury: v.number(),
+    memberCount: v.number(),
+    maxMembers: v.number(),
+    territory: v.string(),
+    power: v.number(),
+    createdAt: v.number(),
+  }).index("by_leader", ["leaderId"]),
 }, {
   schemaValidation: false,
 });

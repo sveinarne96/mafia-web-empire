@@ -356,6 +356,70 @@ export const disbandFamily = mutation({ args: {}, handler: async (ctx) => {
   return { success: true };
 }});
 
+// === CREW SYSTEM ===
+export const getAllCrews = query({ args: {}, handler: async (ctx) => {
+  return await ctx.db.query("crews").collect();
+}});
+
+export const getCrew = query({ args: {}, handler: async (ctx) => {
+  const player = await getCurrentUser(ctx);
+  if (!player || !(player as any).crewId) return null;
+  const crews = await ctx.db.query("crews").collect();
+  return crews.find((c: any) => c._id === (player as any).crewId) ?? null;
+}});
+
+export const getCrewMembers = query({ args: {}, handler: async (ctx) => {
+  const player = await getCurrentUser(ctx);
+  if (!player || !(player as any).crewId) return [];
+  return await ctx.db.query("users").filter((q: any) => q.eq(q.field("crewId"), (player as any).crewId)).collect();
+}});
+
+export const createCrew = mutation({ args: { name: v.string(), tag: v.string(), description: v.string(), territory: v.string() }, handler: async (ctx, args) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if ((player as any).crewId) throw new Error("Already in a crew!");
+  if ((player.money ?? 0) < 100000) throw new Error("Need $100,000!");
+  const crewId = await ctx.db.insert("crews", {
+    name: args.name, tag: args.tag, description: args.description,
+    leaderId: player._id, level: 1, experience: 0, treasury: 100000,
+    memberCount: 1, maxMembers: 15, territory: args.territory,
+    power: 100, createdAt: Date.now(),
+  });
+  await ctx.db.patch(player._id, { crewId: crewId as any, money: (player.money ?? 0) - 100000 });
+  return crewId;
+}});
+
+export const joinCrew = mutation({ args: { crewId: v.id("crews") }, handler: async (ctx, args) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if ((player as any).crewId) throw new Error("Already in a crew!");
+  const crew = await ctx.db.get(args.crewId) as any; if (!crew) throw new Error("Crew not found");
+  if ((crew.memberCount ?? 0) >= (crew.maxMembers ?? 15)) throw new Error("Crew is full!");
+  await ctx.db.patch(args.crewId, { memberCount: (crew.memberCount ?? 0) + 1 });
+  await ctx.db.patch(player._id, { crewId: args.crewId as any });
+  return { success: true };
+}});
+
+export const leaveCrew = mutation({ args: {}, handler: async (ctx) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if (!(player as any).crewId) throw new Error("Not in a crew!");
+  const crew = await ctx.db.get((player as any).crewId) as any;
+  if (crew && crew.leaderId === player._id) throw new Error("Leader cannot leave! Disband first.");
+  if (crew) await ctx.db.patch((player as any).crewId, { memberCount: Math.max(0, (crew.memberCount ?? 1) - 1) });
+  await ctx.db.patch(player._id, { crewId: undefined });
+  return { success: true };
+}});
+
+export const disbandCrew = mutation({ args: {}, handler: async (ctx) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if (!(player as any).crewId) throw new Error("Not in a crew!");
+  const crew = await ctx.db.get((player as any).crewId) as any;
+  if (!crew) { await ctx.db.patch(player._id, { crewId: undefined }); return { success: true }; }
+  if (crew.leaderId !== player._id) throw new Error("Only the leader can disband!");
+  const members = await ctx.db.query("users").filter((q: any) => q.eq(q.field("crewId"), (player as any).crewId)).collect();
+  for (const m of members) { await ctx.db.patch(m._id, { crewId: undefined }); }
+  await ctx.db.delete((player as any).crewId);
+  return { success: true };
+}});
+
 export const dailyRaid = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.isDead) throw new Error("You are dead!"); if (player.inPrison) throw new Error("You are in prison!"); if ((player.dailyRaidUsed ?? 0) >= 5) throw new Error("No raids left today!");
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
