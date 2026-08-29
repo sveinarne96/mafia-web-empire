@@ -15,7 +15,10 @@ async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
 // ===== #23 DEATH MATCH MODE =====
 // Helper: add XP and check for level-up
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
-  const newXP = (player.experience ?? 0) + xpAmount;
+  // Level-based XP scaling: +10% per level
+  const levelMult = 1 + ((player.level ?? 1) * 0.1);
+  const scaledXP = Math.floor(xpAmount * levelMult);
+  const newXP = (player.experience ?? 0) + scaledXP;
   const xpNeeded = (player.level ?? 1) * 100;
   const levelUpNow = newXP >= xpNeeded;
   if (!levelUpNow) {
