@@ -51,7 +51,7 @@ export const getResources = query({ args: {}, handler: async (ctx) => {
 export const canAfford = query({ args: { actionType: v.string() }, handler: async (ctx, args) => {
   const userId = await getAuthUserId(ctx); if (!userId) return { canAfford: false, reason: "Not authenticated" };
   const player = await ctx.db.get(userId); if (!player) return { canAfford: false, reason: "Player not found" };
-  const costs = RESOURCE_COSTS[args.actionType]; if (!costs) return { canAfford: true, reason: "No resource cost" };
+  const costs = RESOURCE_COSTS[args.actionType] ?? RESOURCE_COSTS.default; if (!costs) return { canAfford: true, reason: "No resource cost" };
   const r = getPlayerResources(player);
   const missing = checkMissing(r, costs);
   if (missing.length > 0) return { canAfford: false, reason: `Need: ${missing.join(", ")}` };
@@ -61,7 +61,7 @@ export const canAfford = query({ args: { actionType: v.string() }, handler: asyn
 export const consumeResources = mutation({ args: { actionType: v.string() }, handler: async (ctx, args) => {
   const userId = await getAuthUserId(ctx); if (!userId) throw new Error("Not authenticated");
   const player = await ctx.db.get(userId); if (!player) throw new Error("Player not found");
-  const costs = RESOURCE_COSTS[args.actionType];
+  const costs = RESOURCE_COSTS[args.actionType] ?? RESOURCE_COSTS.default;
   if (!costs) return { success: true, message: "No resources consumed" };
   const now = Date.now();
   const r = getPlayerResources(player);

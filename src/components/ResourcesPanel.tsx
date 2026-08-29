@@ -6,7 +6,9 @@ import { motion } from "framer-motion";
 function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
   label: string; icon: string; value: number; max: number; color: string; regen?: number; regenLabel?: string;
 }) {
-  const pct = Math.min(100, (value / max) * 100);
+  const safeMax = Math.max(1, Number.isFinite(max) ? max : 100);
+  const safeValue = Math.max(0, Number.isFinite(value) ? value : 0);
+  const pct = Math.min(100, (safeValue / safeMax) * 100);
   const isLow = pct < 25;
   const isCritical = pct < 10;
   return (
@@ -16,7 +18,7 @@ function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
           <span className={isCritical ? "animate-pulse" : ""}>{icon}</span>
           <span className="font-bold text-slate-300">{label}</span>
         </span>
-        <span className={`font-bold ${isLow ? "text-red-400" : "text-slate-400"}`}>{value}/{max}</span>
+        <span className={`font-bold ${isLow ? "text-red-400" : "text-slate-400"}`}>{Math.floor(safeValue)}/{Math.floor(safeMax)}</span>
       </div>
       <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
         <motion.div className={`h-full rounded-full ${color}`} initial={false} animate={{ width: `${pct}%` }}
