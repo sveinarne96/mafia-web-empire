@@ -470,6 +470,8 @@ export default function Dashboard() {
       { label: "Crew Challenges", page: "crew_challenges", icon: "🎯" },
       { label: "Crew Alliance", page: "crew_alliance", icon: "🤝" },
       { label: "Crew Safe House", page: "crew_safehouse", icon: "🏠" },
+      { label: "Crew Chat", page: "crew_chat", icon: "💬" },
+      { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
     ]},
     { title: "Progression", icon: Brain, items: [
       { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
@@ -546,8 +548,6 @@ export default function Dashboard() {
       { label: "Search Posts", page: "forum_search", icon: "🔍" },
     ]},
     { title: "Chat", icon: MessageSquare, items: [
-      { label: "Crew Chat", page: "crew_chat", icon: "💬" },
-      { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
       { label: "Global Chat", page: "global_chat", icon: "🌐" },
       { label: "Trade Chat", page: "trade_chat", icon: "💹" },
       { label: "Looking for Group", page: "lfg", icon: "👥" },
@@ -565,7 +565,6 @@ export default function Dashboard() {
       { label: "Arena", page: "arena", icon: "🏟️" },
       { label: "Fight Club", page: "fight_club", icon: "🥊" },
       { label: "1v1 Duel", page: "duel", icon: "⚔️" },
-      { label: "Crew Wars", page: "crew_war", icon: "🏴" },
       { label: "Capture the Flag", page: "ctf", icon: "🚩" },
       { label: "King of the Hill", page: "koth", icon: "👑" },
       { label: "Battle Royale", page: "battle_royale", icon: "🎯" },
