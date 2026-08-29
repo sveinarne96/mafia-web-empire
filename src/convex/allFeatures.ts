@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+function xpScale(base: number, level: number) { return Math.floor(base * (1 + Math.floor(level / 10) * 0.25)); }
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
@@ -108,7 +109,7 @@ export const placeBounty = mutation({
     if ((player.money ?? 0) < args.amount) throw new Error("Not enough money");
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Target not found");
-    await ctx.db.patch(player._id, { money: player.money - args.amount, experience: (player.experience ?? 0) + 25 });
+    await ctx.db.patch(player._id, { money: player.money - args.amount, experience: (player.experience ?? 0) + xpScale(25, (player.level ?? 1)) });
     return { success: true, message: `Bounty of $${args.amount.toLocaleString()} placed!` };
   },
 });
@@ -136,7 +137,7 @@ export const joinFightClub = mutation({
     const oppPower = (opp.attack ?? 10) + (opp.level ?? 1) * 2;
     const won = playerPower + Math.random() * 20 > oppPower + Math.random() * 20;
     const prize = won ? args.betAmount * 2 : 0;
-    if (won) await ctx.db.patch(player._id, { money: player.money + prize, experience: (player.experience ?? 0) + 25 });
+    if (won) await ctx.db.patch(player._id, { money: player.money + prize, experience: (player.experience ?? 0) + xpScale(25, (player.level ?? 1)) });
     return { success: won, opponent: opp.nickname, prize, playerPower, oppPower };
   },
 });
@@ -222,7 +223,7 @@ export const buyMysteryBox = mutation({
   handler: async (ctx, args) => {
     const player = await getUser(ctx);
     if ((player.money ?? 0) < args.cost) throw new Error("Not enough money");
-    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + 8 });
+    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + xpScale(8, (player.level ?? 1)) });
     const items = ["Golden Pistol", "Bulletproof Vest", "Flash Grenade", "Smoke Bomb", "Lockpick Set", "Night Vision Goggles", "Plasma Cutter", "EMP Device"];
     const won = items[Math.floor(Math.random() * items.length)];
     return { success: true, item: won };
@@ -272,7 +273,7 @@ export const craftItem = mutation({
   handler: async (ctx, args) => {
     const player = await getUser(ctx);
     if ((player.money ?? 0) < args.cost) throw new Error("Not enough money");
-    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + 15 });
+    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + xpScale(15, (player.level ?? 1)) });
     return { success: true, item: args.itemName };
   },
 });
@@ -283,7 +284,7 @@ export const buyCrypto = mutation({
   handler: async (ctx, args) => {
     const player = await getUser(ctx);
     if ((player.money ?? 0) < args.cost) throw new Error("Not enough money");
-    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + 8 });
+    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + xpScale(8, (player.level ?? 1)) });
     return { success: true, coins: args.amount };
   },
 });
@@ -294,7 +295,7 @@ export const buildDefense = mutation({
   handler: async (ctx, args) => {
     const player = await getUser(ctx);
     if ((player.money ?? 0) < args.cost) throw new Error("Not enough money");
-    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + 12 });
+    await ctx.db.patch(player._id, { money: player.money - args.cost, experience: (player.experience ?? 0) + xpScale(12, (player.level ?? 1)) });
     return { success: true, defense: args.defenseType };
   },
 });
