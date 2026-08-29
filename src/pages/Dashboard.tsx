@@ -99,6 +99,7 @@ import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
 import { XPVolumePanel } from "@/components/XPVolumePanel";
 import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
+import { StreetCrimesPage } from "@/components/StreetCrimesPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
@@ -699,7 +700,7 @@ export default function Dashboard() {
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
       case "crimes": return <CrimesOverviewPage />;
-      case "crime_street": return <CrimesOverviewPage initialCategory="street" />;
+      case "crime_street": return <StreetCrimesPage />;
       case "crime_robbery": return <CrimesOverviewPage initialCategory="robbery" />;
       case "crime_fraud": return <CrimesOverviewPage initialCategory="fraud" />;
       case "crime_burglary": return <CrimesOverviewPage initialCategory="burglary" />;
