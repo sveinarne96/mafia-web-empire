@@ -43,6 +43,7 @@ import {
 // Page components
 import { AdminPanel } from "@/components/AdminPanel";
 import { MyProfilePage } from "@/components/MyProfile";
+import CrimeHub from "@/components/CrimeHub";
 import { LiveEventBanner } from "@/components/EventBanner";
 import { EventsPage } from "@/components/EventsPage";
 import { ALL_GAME_EVENTS } from "@/data/events";
@@ -523,6 +524,13 @@ export default function Dashboard() {
   ];
 
   const getRightMenuSections = () => [
+    { title: "Firearms", icon: Shield, items: [
+      { label: "Permit", page: "security", icon: "📋" },
+      { label: "FFL", page: "security", icon: "🏪" },
+      { label: "Bullets", page: "security", icon: "💀" },
+      { label: "Armor", page: "security", icon: "🦺" },
+      { label: "Lockpick", page: "security", icon: "🔑" },
+    ]},
     { title: "Communication", icon: MessageSquare, items: [
       { label: "Direct Messages", page: "messages", icon: "📩" },
       { label: "Inbox", page: "inbox", icon: "📥" },
@@ -685,6 +693,7 @@ export default function Dashboard() {
       case "blackjack": return <BlackjackPage />;
       case "lotto": return <LottoPage />;
       case "coin_flip": return <CoinFlipPage />;
+      case "crime_hub": return <CrimeHub />;
       case "my_profile": return <MyProfilePage />;
       default: return <HeadquartersPage />;
     }
@@ -728,14 +737,11 @@ export default function Dashboard() {
           {[
             { label: "🏠 HQ", page: "headquarters" },
             { label: "🏦 Bank", page: "bank" },
-            { label: "🔪 Crime", page: "crimes" },
+            { label: "🔪 Crime Hub", page: "crime_hub" },
             { label: "📋 Missions", page: "missions" },
-            { label: "💀 Murder", page: "murder" },
-            { label: "🚗 Car Theft", page: "car_theft" },
-            { label: "🏠 Burglarize", page: "steal_house" },
-            { label: "🕵️ Organized", page: "organized_crime" },
             { label: "⚔️ Combat", page: "arena" },
             { label: "🥊 Fight Club", page: "fight_club" },
+            { label: "🏥 Hospital", page: "hospital" },
             { label: "🚗 Garage", page: "garage" },
             { label: "🎒 Items", page: "my_items" },
           ].map(tab => (
