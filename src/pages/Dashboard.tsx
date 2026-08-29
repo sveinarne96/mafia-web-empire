@@ -743,7 +743,11 @@ export default function Dashboard() {
           {[
             { label: "🏠 HQ", page: "headquarters", color: "from-amber-500/20 to-orange-500/10" },
             { label: "🏦 Bank", page: "bank", color: "from-green-500/20 to-emerald-500/10" },
-            { label: "🔪 Crime Hub", page: "crime_hub", color: "from-red-500/20 to-rose-500/10" },
+            { label: "🔪 Crimes", page: "crimes", color: "from-red-500/20 to-rose-500/10" },
+            { label: "🚗 GTA Theft", page: "car_theft", color: "from-red-600/20 to-orange-500/10" },
+            { label: "🏠 Burglarize", page: "steal_house", color: "from-red-400/20 to-amber-500/10" },
+            { label: "🕵️ Organized", page: "organized_crime", color: "from-purple-600/20 to-red-500/10" },
+            { label: "💀 Murder", page: "murder", color: "from-red-700/20 to-red-900/10" },
             { label: "📋 Missions", page: "missions", color: "from-blue-500/20 to-indigo-500/10" },
             { label: "⚔️ Combat", page: "arena", color: "from-orange-500/20 to-red-500/10" },
             { label: "🥊 Fight Club", page: "fight_club", color: "from-purple-500/20 to-pink-500/10" },
