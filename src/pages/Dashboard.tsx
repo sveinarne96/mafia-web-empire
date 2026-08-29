@@ -79,6 +79,7 @@ import { CombatOverviewPage } from "@/components/CombatPages";
 // HubPages inlined below - no external import needed
 import { WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
 import { SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
+import { PrisonPage } from "@/components/PrisonPage";
 import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
 import { FactionWarfarePage, AdvancedCraftingPage } from "@/components/SystemFaction";
 import { PetSystemPage, DayNightPage } from "@/components/SystemPetDayNight";
@@ -750,7 +751,7 @@ export default function Dashboard() {
       case "secret_challenges": return <SecretChallengesPage />;
       case "reputation": return <ReputationPage />;
       case "wanted_status": return <WantedStatusPage />;
-      case "prison": return <GenericStub title="Prison" icon="🔒" />;
+      case "prison": return <PrisonPage />;
       case "companies_hub": return <CompaniesHubPage />;
       case "witness_system": return <WitnessSystemPage />;
       case "forensics_lab": return <ForensicsLabPage />;
