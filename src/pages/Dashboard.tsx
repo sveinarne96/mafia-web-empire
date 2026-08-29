@@ -719,23 +719,10 @@ export default function Dashboard() {
             { label: "🔪 Crime", page: "crimes" },
             { label: "📋 Missions", page: "missions" },
             { label: "💀 Murder", page: "murder" },
-            { label: "🎰 Gambling", page: "daily_spin" },
-            { label: "🎰 Poker", page: "poker_texas" },
-            { label: "🃏 Blackjack", page: "blackjack" },
-            { label: "🪙 Coin Flip", page: "coin_flip" },
-            { label: "🎲 Lotto", page: "lotto" },
             { label: "⚔️ Combat", page: "arena" },
             { label: "🥊 Fight Club", page: "fight_club" },
             { label: "🚗 Garage", page: "garage" },
             { label: "🎒 Items", page: "my_items" },
-            { label: "🖤 Market", page: "black_market" },
-            { label: "🛡️ Security", page: "security" },
-            { label: "💰 Economy", page: "stock_market" },
-            { label: "🏗️ Empire", page: "empire_building" },
-            { label: "🤝 Crew", page: "crew_system" },
-            { label: "🧠 Skills", page: "skill_tree" },
-            { label: "📅 Events", page: "events_hub" },
-            { label: "🆘 Support", page: "support" },
           ].map(tab => (
             <button key={tab.page} onClick={() => setPage(tab.page)}
               className={`px-2.5 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all ${
