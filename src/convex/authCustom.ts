@@ -134,6 +134,10 @@ export const register = mutation({
       passwordHash,
       nickname: args.username.trim(),
       registeredAt: Date.now(),
+      energy: 100, maxEnergy: 100, stamina: 100, maxStamina: 100,
+      focus: 100, maxFocus: 100, morale: 80, maxMorale: 100,
+      adrenaline: 0, maxAdrenaline: 100, heat: 0, maxHeat: 100,
+      lastEnergyRegen: 0, lastStaminaRegen: 0, lastFocusRegen: 0,
     });
 
     return { success: true, message: "Account created!", userId };
