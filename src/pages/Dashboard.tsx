@@ -100,6 +100,7 @@ import { ResourcesPanel } from "@/components/ResourcesPanel";
 import { XPVolumePanel } from "@/components/XPVolumePanel";
 import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
 import { StreetCrimesPage } from "@/components/StreetCrimesPage";
+import { CriminalOperationsPage } from "@/components/CriminalOperationsPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
@@ -700,13 +701,13 @@ export default function Dashboard() {
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
       case "crimes": return <CrimesOverviewPage />;
-      case "crime_street": return <StreetCrimesPage />;
-      case "crime_robbery": return <CrimesOverviewPage initialCategory="robbery" />;
-      case "crime_fraud": return <CrimesOverviewPage initialCategory="fraud" />;
-      case "crime_burglary": return <CrimesOverviewPage initialCategory="burglary" />;
-      case "crime_drugs": return <CrimesOverviewPage initialCategory="drugs" />;
-      case "crime_organized": return <CrimesOverviewPage initialCategory="organized" />;
-      case "crime_underground": return <CrimesOverviewPage initialCategory="underground" />;
+      case "crime_street": return <CriminalOperationsPage category="street" />;
+      case "crime_robbery": return <CriminalOperationsPage category="robbery" />;
+      case "crime_fraud": return <CriminalOperationsPage category="fraud" />;
+      case "crime_burglary": return <CriminalOperationsPage category="burglary" />;
+      case "crime_drugs": return <CriminalOperationsPage category="drugs" />;
+      case "crime_organized": return <CriminalOperationsPage category="organized" />;
+      case "crime_underground": return <CriminalOperationsPage category="underground" />;
 
       case "car_theft": return <GtaCarTheftPage />;
       case "steal_house": return <StealFromHousePage />;
