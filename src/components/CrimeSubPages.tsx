@@ -35,13 +35,35 @@ const CATEGORY_ICONS: Record<string, string> = {
 export function CrimeSubPages({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) {
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
-  // Map crime IDs to route names
+  const getCrimeRoute = (categoryId: string, crimeId: string) => `crime_${categoryId}_${crimeId}`;
+
+  return (
+    <>
+      {crimeCategories.map(cat => (
+        <button key={cat.id}
+          onClick={() => setExpandedCategory(expandedCategory === cat.id ? null : cat.id)}
+          className={`relative px-3 py-1.5 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all duration-300 ${
+            expandedCategory === cat.id
+              ? `bg-gradient-to-r ${CATEGORY_COLORS[cat.id]} ${CATEGORY_TEXT[cat.id]} scale-105 shadow-lg`
+              : "text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:scale-105"
+          }`}>
+          {CATEGORY_ICONS[cat.id]} {cat.name} <span className="text-[8px] opacity-50">({cat.crimes.length})</span>
+        </button>
+      ))}
+    </>
+  );
+}
+
+// Sub-bar that shows below the top bar when a category is expanded
+export function CrimeSubBar({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) {
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
   const getCrimeRoute = (categoryId: string, crimeId: string) => `crime_${categoryId}_${crimeId}`;
 
   return (
     <div className="w-full">
       {/* Category Tabs */}
-      <div className="flex items-center gap-1 px-3 py-1 overflow-x-auto scrollbar-hide"
+      <div className="flex items-center gap-1 px-3 py-1.5 overflow-x-auto scrollbar-hide"
         style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.15), rgba(20,10,5,0.2), rgba(0,0,0,0.15))' }}>
         {crimeCategories.map(cat => (
           <button key={cat.id}
@@ -51,9 +73,7 @@ export function CrimeSubPages({ activePage, onNavigate }: { activePage: string; 
                 ? `bg-gradient-to-r ${CATEGORY_COLORS[cat.id]} ${CATEGORY_TEXT[cat.id]} scale-105 shadow-lg`
                 : "text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:scale-105"
             }`}>
-            <span className="mr-1">{CATEGORY_ICONS[cat.id]}</span>
-            {cat.name}
-            <span className="ml-1 text-[8px] opacity-50">({cat.crimes.length})</span>
+            {CATEGORY_ICONS[cat.id]} {cat.name} <span className="text-[8px] opacity-50">({cat.crimes.length})</span>
           </button>
         ))}
       </div>
@@ -61,13 +81,8 @@ export function CrimeSubPages({ activePage, onNavigate }: { activePage: string; 
       {/* Expanded Crime List */}
       <AnimatePresence>
         {expandedCategory && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }} className="overflow-hidden">
             <div className="px-3 py-1.5 overflow-x-auto scrollbar-hide flex gap-1"
               style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.1), rgba(20,10,5,0.15), rgba(0,0,0,0.1))' }}>
               {crimeCategories.find(c => c.id === expandedCategory)?.crimes.map(crime => {
@@ -93,7 +108,6 @@ export function CrimeSubPages({ activePage, onNavigate }: { activePage: string; 
   );
 }
 
-// Helper to generate all crime routes for the router
 export function getAllCrimeRoutes() {
   const routes: string[] = [];
   crimeCategories.forEach(cat => {
@@ -104,9 +118,7 @@ export function getAllCrimeRoutes() {
   return routes;
 }
 
-// Get crime data by route
 export function getCrimeByRoute(route: string) {
-  // route format: crime_{categoryId}_{crimeId}
   const parts = route.replace("crime_", "").split("_");
   const categoryId = parts[0];
   const crimeId = parts.slice(1).join("_");

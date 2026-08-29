@@ -96,7 +96,7 @@ import EventsHubPage from "@/components/EventsHub";
 
 import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
-import { CrimeSubPages, getCrimeByRoute } from "@/components/CrimeSubPages";
+import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
 import { IndividualCrimePage } from "@/components/IndividualCrimePage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
@@ -779,8 +779,7 @@ export default function Dashboard() {
             </button>
           ))}
         </div>
-        {/* Crime Sub-Pages */}
-        <CrimeSubPages activePage={activePage} onNavigate={setPage} />
+        <CrimeSubBar activePage={activePage} onNavigate={setPage} />
         {/* Animated glow line at bottom */}
         <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
       </div>

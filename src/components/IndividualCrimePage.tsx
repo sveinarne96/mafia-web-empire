@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { getCrimeByRoute } from "@/components/CrimeSubPages";
-import { RESOURCE_COSTS } from "@/convex/resourceSystem";
+import { RESOURCE_COSTS } from "@/data/resourceCosts";
 
 export function IndividualCrimePage({ route }: { route: string }) {
   const player = useQuery(api.game.getPlayer);

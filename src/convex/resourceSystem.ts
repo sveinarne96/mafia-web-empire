@@ -5,26 +5,7 @@ import { v } from "convex/values";
 const REGEN_INTERVALS = { energy: 60000, stamina: 90000, focus: 120000 };
 const REGEN_AMOUNTS = { energy: 5, stamina: 3, focus: 2 };
 
-export const RESOURCE_COSTS: Record<string, { energy: number; stamina: number; focus: number; morale: number; heat: number }> = {
-  pickpocket: { energy: 5, stamina: 0, focus: 3, morale: 0, heat: 2 },
-  mugging: { energy: 10, stamina: 8, focus: 0, morale: 0, heat: 8 },
-  car_theft: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 12 },
-  burglary: { energy: 25, stamina: 10, focus: 20, morale: 0, heat: 10 },
-  robbery: { energy: 30, stamina: 25, focus: 15, morale: 0, heat: 20 },
-  murder: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 35 },
-  organized_crime: { energy: 35, stamina: 20, focus: 30, morale: 0, heat: 25 },
-  fight: { energy: 15, stamina: 20, focus: 0, morale: 5, heat: 0 },
-  duel: { energy: 20, stamina: 25, focus: 10, morale: 8, heat: 0 },
-  arena: { energy: 25, stamina: 30, focus: 15, morale: 10, heat: 0 },
-  gamble: { energy: 5, stamina: 0, focus: 10, morale: 0, heat: 0 },
-  poker: { energy: 8, stamina: 0, focus: 15, morale: 0, heat: 0 },
-  blackjack: { energy: 5, stamina: 0, focus: 12, morale: 0, heat: 0 },
-  mission: { energy: 15, stamina: 10, focus: 8, morale: 0, heat: 0 },
-  work: { energy: 10, stamina: 8, focus: 5, morale: 0, heat: 0 },
-  hospital: { energy: 30, stamina: 25, focus: 20, morale: 0, heat: -20 },
-  rehab: { energy: 20, stamina: 15, focus: 10, morale: 20, heat: -10 },
-  sleep: { energy: 50, stamina: 40, focus: 30, morale: 10, heat: -15 },
-};
+import { RESOURCE_COSTS } from "../data/resourceCosts";
 
 function getPlayerResources(p: any) {
   const now = Date.now();
