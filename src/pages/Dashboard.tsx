@@ -724,10 +724,7 @@ export default function Dashboard() {
       case "tax_evasion": return <GenericStub title="Tax Evasion" icon="📋" />;
       case "racketeering": return <GenericStub title="Racketeering" icon="💰" />;
       default:
-        if (activePage.startsWith("crime_") && activePage.split("_").length >= 3) {
-          return <IndividualCrimePage route={activePage} />;
-        }
-        return <HeadquartersPage />;
+        return <GenericStub title="Crime" icon="🔪" />;
     }
   };
 
