@@ -609,8 +609,8 @@ export default function Dashboard() {
       { label: "Spy Network", page: "spy_network", icon: "🕵️" },
       { label: "Informants", page: "informants", icon: "🐀" },
     ]},
-    { title: "Progression", icon: Crown, items: [
-      { label: "Prestige", page: "prestige", icon: "⭐" },
+    { title: "Empire Systems", icon: Crown, items: [
+      { label: "Empire Building", page: "empire_building", icon: "🏗️" },
       { label: "Empire Building", page: "empire_building", icon: "🏗️" },
       { label: "Relationships", page: "relationships", icon: "🤝" },
       { label: "Survival & Realism", page: "survival", icon: "💀" },
@@ -841,10 +841,6 @@ export default function Dashboard() {
       <div className="flex flex-1 overflow-hidden">
       {/* Left Sidebar */}
         <aside className={`${mobileMenuOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} md:block md:relative md:w-64 shrink-0 border-r border-amber-500/10 overflow-y-auto`} style={{ background: 'linear-gradient(180deg, oklch(0.06 0.015 35), oklch(0.05 0.01 40))' }}>
-          <div className="p-3">
-            <input value={leftSearch} onChange={e => setLeftSearch(e.target.value)} placeholder="🔍 Search menu..."
-              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 mb-3 outline-none" />
-          </div>
           <nav className="pb-20">
             {getLeftMenuSections().filter(section => !leftSearch || section.title.toLowerCase().includes(leftSearch.toLowerCase()) || section.items.some(item => (item.label || "").toLowerCase().includes(leftSearch.toLowerCase()))).map(section => (
               <div key={section.title}>
