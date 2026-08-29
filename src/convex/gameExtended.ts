@@ -961,12 +961,16 @@ export const getBusinessShop = query({ args: {}, handler: async () => {
     { name: "Oil Company", type: "oil", icon: "🛢️", maxOwn: 5, price: 2500000000, income: 2800000000, description: "Oil empire. Earns $2.8B per company. Withdraw once per hour or lose earnings." },
   ];
 } });
-export const buyLottoTicket = mutation({ args: { type: v.string(), numbers: v.array(v.number()) }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const winning = Array.from({ length: 5 }, () => Math.floor(Math.random() * 30) + 1); const matches = args.numbers.filter(n => winning.includes(n)).length; const prize = matches >= 3 ? matches * 10000 : 0; if (prize > 0 && p) await ctx.db.patch(p._id, { money: (p.money ?? 0) + prize }); return { winning, matches, prize }; } });
+export const buyLottoTicket = mutation({ args: { type: v.string(), numbers: v.array(v.number()) }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const winning = Array.from({ length: 5 }, () => Math.floor(Math.random() * 30) + 1); const matches = args.numbers.filter(n => winning.includes(n)).length; const prize = matches >= 3 ? matches * 10000 : 0; if (prize > 0 && p) await ctx.db.patch(p._id, { money: (p.money ?? 0) + prize }); else if (p) await ctx.db.patch(p._id, { experience: ((p as any).experience ?? 0) + 3 }); return { winning, matches, prize }; } });
 export const blackjackDeal = mutation({ args: { bet: v.number() }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); return { playerHand: ['A', 'K'], dealerHand: ['10', '7'], playerCards: ['A', 'K'], dealerCards: ['10', '7'], gameOver: false, result: '', winnings: 0 }; } });
+
 export const blackjackHit = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async () => { return { card: '5', bust: false, playerHand: ['A', 'K', '5'], result: '', winnings: 0 }; } });
+
 export const blackjackStand = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async () => { return { dealerFinal: 19, won: true, dealerHand: ['10', '7', '2'], result: 'win', winnings: 100 }; } });
+
 export const searchForumPosts = query({ args: { query: v.string() }, handler: async (ctx, args) => { return await ctx.db.query("forumPosts").collect(); } });
 export const submitSupportTicket = mutation({ args: { subject: v.string(), body: v.string() }, handler: async (ctx, args) => { return { success: true }; } });
+
 export const claimDailyReward = mutation({ args: {}, handler: async (ctx) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const now = Date.now(); const lastClaim = (p as any).lastDailyClaim ?? 0; const TWELVE_HOURS = 43200000; if (lastClaim && (now - lastClaim) < TWELVE_HOURS) { const remaining = Math.ceil((TWELVE_HOURS - (now - lastClaim)) / 1000); const h = Math.floor(remaining / 3600); const m = Math.floor((remaining % 3600) / 60); const s = remaining % 60; return { success: false, message: `Locked! Wait ${h}h ${m}m ${s}s` }; } const streak = ((p as any).dailyStreak ?? 0) + 1; const rewards = [100000, 350000, 700000, 1400000, 2800000, 6000000, 12000000]; const dayIdx = ((streak - 1) % 7); const reward = rewards[dayIdx]; const isBonusDay = streak % 7 === 0; const xpBonus = isBonusDay ? 500 : 50; await ctx.db.patch(p._id, { money: (p.money ?? 0) + reward, dailyStreak: streak, lastDailyClaim: now, experience: ((p as any).experience ?? 0) + xpBonus }); return { success: true, reward, streak, day: dayIdx + 1, message: isBonusDay ? `🎁 DAY 7 BONUS! $${reward.toLocaleString()} + 500 XP! Streak resets!` : `🎁 Day ${dayIdx + 1}! $${reward.toLocaleString()} + ${xpBonus} XP! Come back in 12 hours!` }; } });
 
 export const buyEnergyDrink = mutation({ args: { drinkIndex: v.number() }, handler: async (ctx, args) => {
@@ -987,6 +991,7 @@ export const buyEnergyDrink = mutation({ args: { drinkIndex: v.number() }, handl
   await ctx.db.patch(p._id, {
     money: (p.money ?? 0) - drink.cost,
     energyDrinkUntil: Math.max((p as any).energyDrinkUntil ?? 0, until),
+    experience: ((p as any).experience ?? 0) + 2,
   } as any);
   return { success: true, message: `🥤 ${drink.name} activated! +25% XP for ${drink.hours} hour${drink.hours !== 1 ? 's' : ''}!`, cost: drink.cost };
 } });

@@ -517,7 +517,7 @@ export const upgradeBusiness = mutation({
     const cost = biz.level * 10000;
     if (player.money < cost) throw new Error(`Need $${cost}!`);
     await ctx.db.patch(args.businessId, { level: biz.level + 1, income: Math.floor(biz.income * 1.5) });
-    await ctx.db.patch(player._id, { money: player.money - cost });
+    await ctx.db.patch(player._id, { money: player.money - cost, experience: (player.experience ?? 0) + 3 });
     return { level: biz.level + 1 };
   },
 });
