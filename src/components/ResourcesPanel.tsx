@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
   const safeMax = Math.max(1, Number.isFinite(max) ? max : 100);
   const safeValue = Math.max(0, Number.isFinite(value) ? value : 0);
   const pct = Math.min(100, (safeValue / safeMax) * 100);
+  const ready = safeValue >= safeMax;
   const isLow = pct < 25;
   const isCritical = pct < 10;
   return (
@@ -20,8 +21,8 @@ function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
         </span>
         <span className={`font-bold ${isLow ? "text-red-400" : "text-slate-400"}`}>{Math.floor(safeValue)}/{Math.floor(safeMax)}</span>
       </div>
-      <div className="relative h-2 bg-slate-800 rounded-full overflow-hidden">
-        <motion.div className={`h-full rounded-full ${color}`} initial={false} animate={{ width: `${pct}%` }}
+      <div className={`relative h-2 bg-slate-800 rounded-full overflow-hidden ${isCritical ? "ring-1 ring-red-500/50" : ""}`}>
+        <motion.div className={`h-full rounded-full ${color} ${ready ? "animate-pulse" : ""}`} initial={false} animate={{ width: `${pct}%` }}
           transition={{ duration: 0.5, ease: "easeOut" }} />
         {isLow && <div className="absolute inset-0 bg-gradient-to-r from-transparent to-red-500/20 animate-pulse" />}
       </div>
@@ -36,10 +37,15 @@ function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
 
 export function ResourcesPanel() {
   const resources = useQuery(api.resourceSystem.getResources);
+  const [, setClock] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   if (!resources) return null;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 rounded-xl border border-amber-500/10 bg-black/20 p-2 shadow-[0_0_24px_rgba(245,158,11,0.04)]">
       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">⚡ Resources</div>
       <ResourceBar label="Energy" icon="⚡" value={resources.energy} max={resources.maxEnergy}
         color="bg-gradient-to-r from-yellow-500 to-amber-400" regen={resources.nextEnergyRegen} />

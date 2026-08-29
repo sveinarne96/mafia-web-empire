@@ -44,9 +44,10 @@ function getPlayerResources(p: any) {
   if (p.lastStaminaRegen) { const t = Math.floor((now - p.lastStaminaRegen) / REGEN_INTERVALS.stamina); if (t > 0) stamina = Math.min(maxStamina, stamina + t * REGEN_AMOUNTS.stamina); }
   if (p.lastFocusRegen) { const t = Math.floor((now - p.lastFocusRegen) / REGEN_INTERVALS.focus); if (t > 0) focus = Math.min(maxFocus, focus + t * REGEN_AMOUNTS.focus); }
 
-  heat = Math.max(0, heat - 1);
-  if (adrenaline > 0) adrenaline = Math.max(0, adrenaline - 2);
-  if (morale < maxMorale) morale = Math.min(maxMorale, morale + 1);
+  // Passive values decay slowly and deterministically; queries never write data.
+  heat = Math.max(0, heat - Math.floor(Math.max(0, now - (p.lastHeatUpdate ?? now)) / 300000));
+  adrenaline = Math.max(0, adrenaline - Math.floor(Math.max(0, now - (p.lastAdrenalineUpdate ?? now)) / 300000));
+  morale = Math.min(maxMorale, morale + Math.floor(Math.max(0, now - (p.lastMoraleUpdate ?? now)) / 300000));
 
   return { energy: Math.floor(energy), maxEnergy, stamina: Math.floor(stamina), maxStamina, focus: Math.floor(focus), maxFocus, morale: Math.floor(morale), maxMorale, adrenaline: Math.floor(adrenaline), maxAdrenaline, heat: Math.floor(heat), maxHeat };
 }
@@ -69,6 +70,8 @@ export const getResources = query({ args: {}, handler: async (ctx) => {
     nextEnergyRegen: Math.max(0, ((player as any).lastEnergyRegen ?? now) + REGEN_INTERVALS.energy - now),
     nextStaminaRegen: Math.max(0, ((player as any).lastStaminaRegen ?? now) + REGEN_INTERVALS.stamina - now),
     nextFocusRegen: Math.max(0, ((player as any).lastFocusRegen ?? now) + REGEN_INTERVALS.focus - now),
+    regenIntervalMs: REGEN_INTERVALS.energy,
+    generatedAt: now,
   };
 }});
 
@@ -99,7 +102,7 @@ export const consumeResources = mutation({ args: { actionType: v.string() }, han
   let adrenaline = r.adrenaline;
   if (["fight", "duel", "arena", "murder"].includes(args.actionType)) adrenaline = Math.min(r.maxAdrenaline, adrenaline + 15);
 
-  await ctx.db.patch(userId, { energy, stamina, focus, morale, heat, adrenaline, lastEnergyRegen: now, lastStaminaRegen: now, lastFocusRegen: now } as any);
+  await ctx.db.patch(userId, { energy, stamina, focus, morale, heat, adrenaline, lastEnergyRegen: now, lastStaminaRegen: now, lastFocusRegen: now, lastHeatUpdate: now, lastAdrenalineUpdate: now, lastMoraleUpdate: now } as any);
   return { success: true, energy, stamina, focus, morale, heat, adrenaline };
 }});
 
