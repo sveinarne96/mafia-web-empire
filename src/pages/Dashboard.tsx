@@ -677,15 +677,101 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-3 border-b border-border/50 bg-[oklch(0.06_0.015_35)]">
-        <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-muted-foreground hover:text-foreground">
-          {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
-        <div className="text-sm font-bold">Shadow Empire</div>
-        <button onClick={() => setShowRight(!showRight)} className="p-2 text-muted-foreground hover:text-foreground">
-          <User className="size-5" />
-        </button>
+      {/* Top Bar */}
+      <div className="border-b border-border/50 bg-[oklch(0.06_0.015_35)]">
+        <div className="flex items-center justify-between px-4 py-2">
+          {/* Left: Mobile menu toggle */}
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2 text-muted-foreground hover:text-foreground">
+            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+          </button>
+
+          {/* Center: Player Stats */}
+          <div className="flex items-center gap-4 text-xs flex-wrap justify-center">
+            {/* Player Name + Rank */}
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-white">{player?.nickname || "Unknown"}</span>
+              <span className="text-[10px] text-slate-400"><RankBadge level={player?.level ?? 1} /></span>
+            </div>
+
+            {/* Life Bar */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-red-400">❤️</span>
+              <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${((player?.life ?? 0) / (player?.maxLife ?? 100)) * 100}%` }} />
+              </div>
+              <span className="text-[10px] text-red-400 font-bold">{player?.life ?? 0}/{player?.maxLife ?? 100}</span>
+            </div>
+
+            {/* XP Bar */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-blue-400">⭐</span>
+              <div className="w-16 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${xpPercent}%` }} />
+              </div>
+              <span className="text-[10px] text-blue-400 font-bold">{player?.experience ?? 0}/{xpNeeded}</span>
+            </div>
+
+            {/* Cash */}
+            <div className="flex items-center gap-1">
+              <span className="text-green-400">💰</span>
+              <span className="text-[10px] font-bold text-green-400">${(player?.money ?? 0).toLocaleString()}</span>
+            </div>
+
+            {/* Points */}
+            <div className="flex items-center gap-1">
+              <span className="text-yellow-400">🏆</span>
+              <span className="text-[10px] font-bold text-yellow-400">{(player?.points ?? 0).toLocaleString()}</span>
+            </div>
+
+            {/* ATK */}
+            <div className="flex items-center gap-1">
+              <span className="text-orange-400">⚔️</span>
+              <span className="text-[10px] font-bold text-orange-400">{player?.attack ?? 0}</span>
+            </div>
+
+            {/* DEF */}
+            <div className="flex items-center gap-1">
+              <span className="text-blue-400">🛡️</span>
+              <span className="text-[10px] font-bold text-blue-400">{player?.defense ?? 0}</span>
+            </div>
+
+            {/* Kills */}
+            <div className="flex items-center gap-1">
+              <span className="text-red-400">💀</span>
+              <span className="text-[10px] font-bold text-red-400">{(player as any)?.kills ?? 0}</span>
+            </div>
+          </div>
+
+          {/* Right: Energy Drink + Boosts */}
+          <div className="flex items-center gap-2">
+            {/* Wanted Badge */}
+            {(player?.wantedLevel ?? 0) > 0 && (
+              <div className="px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/40 text-[9px] font-bold text-red-400 animate-pulse">
+                🔴 WANTED {player.wantedLevel}
+              </div>
+            )}
+            {/* XP Boost */}
+            {(player as any)?.xpBoostUntil > Date.now() && (
+              <div className="px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-[9px] font-bold text-cyan-400">⚡ 3x XP</div>
+            )}
+            {/* Cash Boost */}
+            {(player as any)?.cashBoostUntil > Date.now() && (
+              <div className="px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/40 text-[9px] font-bold text-green-400">💰 3x Cash</div>
+            )}
+            {/* Energy Drink */}
+            {(player as any)?.energyDrinkUntil > Date.now() && (
+              <div className="px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-[9px] font-bold text-orange-400">🥤 Energy</div>
+            )}
+            {/* Rank Boost */}
+            {(player as any)?.rankBoostUntil > Date.now() && (
+              <div className="px-2 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-500/40 text-[9px] font-bold text-yellow-400">🚀 Rank</div>
+            )}
+            {/* Mobile right menu toggle */}
+            <button onClick={() => setShowRight(!showRight)} className="md:hidden p-2 text-muted-foreground hover:text-foreground">
+              <User className="size-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
