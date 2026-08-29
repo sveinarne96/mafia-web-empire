@@ -84,7 +84,7 @@ import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemPropert
 import { FactionWarfarePage, AdvancedCraftingPage } from "@/components/SystemFaction";
 import { PetSystemPage, DayNightPage } from "@/components/SystemPetDayNight";
 import { VehicleSystemPage, BusinessManagementPage } from "@/components/SystemVehicleBusiness";
-import { CoopGameplayPage } from "@/components/SystemPrestigeCoop";
+import { CoopGameplayPage, PrestigeLegacyPage } from "@/components/SystemPrestigeCoop";
 
 import { AdvancedCombatPage, ReputationInfluencePage } from "@/components/SystemCombatReputation";
 import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/SystemUnderworldEvents";
@@ -174,7 +174,7 @@ type GamePage = string;
 function HeadquartersPage() {
   const player = useQuery(api.game.getPlayer);
   if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
-  const xpNeeded = (player.level ?? 1) * 100;
+  const xpNeeded = 2000;
   const xpPercent = Math.min(100, ((player.experience ?? 0) / xpNeeded) * 100);
   return (
     <div className="animate-fade-in space-y-6">
@@ -489,7 +489,9 @@ export default function Dashboard() {
   const [leftSearch, setLeftSearch] = useState("");
   const [showRight, setShowRight] = useState(true);
   const [activeEvents, setActiveEvents] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem("activeEventIds") || "[]"); } catch { return []; } });
-  const xpNeeded = (player?.level ?? 1) * 100;
+  // Rank progression is always measured against the fixed 2,000 XP threshold.
+  // Clamp display values so legacy records such as 1,620/700 cannot overflow the bar.
+  const xpNeeded = 2000;
 
   useEffect(() => {
     if (!player?.inPrison || !player?.lastCrimeAt) return;
@@ -580,6 +582,7 @@ export default function Dashboard() {
       { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
     ]},
     { title: "Progression", icon: Brain, items: [
+      { label: "Prestige", page: "prestige", icon: "⭐" },
       { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
       { label: "Titles", page: "titles", icon: "👑" },
       { label: "Achievements", page: "achievements", icon: "🏅" },
@@ -606,7 +609,8 @@ export default function Dashboard() {
       { label: "Spy Network", page: "spy_network", icon: "🕵️" },
       { label: "Informants", page: "informants", icon: "🐀" },
     ]},
-    { title: "Empire", icon: Crown, items: [
+    { title: "Progression", icon: Crown, items: [
+      { label: "Prestige", page: "prestige", icon: "⭐" },
       { label: "Empire Building", page: "empire_building", icon: "🏗️" },
       { label: "Relationships", page: "relationships", icon: "🤝" },
       { label: "Survival & Realism", page: "survival", icon: "💀" },
@@ -742,6 +746,7 @@ export default function Dashboard() {
       case "crew_challenges": return <CrewChallengesPage />;
       case "crew_alliance": return <CrewAlliancePage />;
       case "crew_safehouse": return <GenericStub title="Crew Safe House" icon="🏠" />;
+      case "prestige": return <PrestigeLegacyPage />;
       case "skill_tree": return <SkillTreePage />;
       case "titles": return <TitlesPage />;
       case "achievements": return <AchievementsPage />;
