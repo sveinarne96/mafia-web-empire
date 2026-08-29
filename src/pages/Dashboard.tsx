@@ -703,6 +703,69 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      {/* ═══ FULL-WIDTH TOP BAR ═══ */}
+      <div className="shrink-0 border-b border-amber-500/20 animate-gradient" style={{ background: 'linear-gradient(135deg, oklch(0.07 0.02 30), oklch(0.09 0.03 45), oklch(0.07 0.02 30), oklch(0.10 0.025 55))' }}>
+        {/* Animated glow line at top */}
+        <div className="h-[1px] w-full relative overflow-hidden" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.3), rgba(255,100,50,0.3), rgba(200,150,255,0.2), transparent)' }}>
+          <div className="absolute inset-0 animate-shimmer" style={{ background: 'linear-gradient(90deg, transparent 30%, rgba(255,220,80,0.5) 50%, transparent 70%)' }} />
+        </div>
+        {/* Row 1: Player Stats — Centered */}
+        <div className="flex items-center justify-center px-4 py-2 gap-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-black animate-neon-glow" style={{ color: '#ffd700' }}>{player?.nickname || player?.username || player?.name || "Player"}</span>
+            <RankBadge level={player?.level ?? 1} />
+            <span className="text-[10px] text-amber-400/70">Lv.{player?.level ?? 1}</span>
+          </div>
+          <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
+          <div className="flex items-center gap-3 text-[11px]">
+            <span className="flex items-center gap-1 text-red-400"><span className="animate-float">❤️</span> {player?.life ?? 0}/{player?.maxLife ?? 100}</span>
+            <span className="flex items-center gap-1 text-blue-400"><span className="animate-float" style={{ animationDelay: '0.3s' }}>⭐</span> {player?.experience ?? 0}/{xpNeeded}</span>
+            <span className="flex items-center gap-1 text-green-400 font-black"><span className="animate-float" style={{ animationDelay: '0.6s' }}>💰</span> ${(player?.money ?? 0).toLocaleString()}</span>
+            <span className="flex items-center gap-1 text-yellow-400"><span className="animate-float" style={{ animationDelay: '0.9s' }}>🏆</span> {(player?.points ?? 0).toLocaleString()}</span>
+            <span className="flex items-center gap-1 text-orange-400">⚔️ {player?.attack ?? 0}</span>
+            <span className="flex items-center gap-1 text-blue-400">🛡️ {player?.defense ?? 0}</span>
+            <span className="flex items-center gap-1 text-red-400">💀 {(player as any)?.kills ?? 0}</span>
+          </div>
+          <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
+          <div className="flex items-center gap-1.5">
+            {(player?.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-[9px] font-bold text-red-400 animate-pulse border border-red-500/30">🔴 WANTED</span>}
+            {(player as any)?.xpBoostUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-[9px] font-bold text-cyan-400 border border-cyan-500/30 animate-breathe">⚡ 3x XP</span>}
+            {(player as any)?.cashBoostUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-[9px] font-bold text-green-400 border border-green-500/30 animate-breathe">💰 3x Cash</span>}
+            {(player as any)?.energyDrinkUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-[9px] font-bold text-orange-400 border border-orange-500/30 animate-breathe">🥤 Energy</span>}
+            <button onClick={() => setPage("my_profile")} className="ml-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-900/40 to-amber-800/30 border border-amber-600/30 text-[10px] font-bold text-amber-400 hover:from-amber-800/50 hover:to-amber-700/40 hover:text-amber-300 transition-all animate-border-glow relative overflow-hidden">
+              👤 Profile
+              <div className="absolute inset-0 animate-slide-glow" />
+            </button>
+          </div>
+        </div>
+        {/* Row 2: Navigation Tabs — Centered with animated colors */}
+        <div className="flex items-center justify-center gap-1 px-3 py-1.5 overflow-x-auto scrollbar-hide" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.2), rgba(20,10,5,0.3), rgba(0,0,0,0.2))' }}>
+          {[
+            { label: "🏠 HQ", page: "headquarters", color: "from-amber-500/20 to-orange-500/10" },
+            { label: "🏦 Bank", page: "bank", color: "from-green-500/20 to-emerald-500/10" },
+            { label: "🔪 Crime Hub", page: "crime_hub", color: "from-red-500/20 to-rose-500/10" },
+            { label: "📋 Missions", page: "missions", color: "from-blue-500/20 to-indigo-500/10" },
+            { label: "⚔️ Combat", page: "arena", color: "from-orange-500/20 to-red-500/10" },
+            { label: "🥊 Fight Club", page: "fight_club", color: "from-purple-500/20 to-pink-500/10" },
+            { label: "🏥 Hospital", page: "hospital", color: "from-teal-500/20 to-cyan-500/10" },
+            { label: "🚗 Garage", page: "garage", color: "from-slate-500/20 to-zinc-500/10" },
+            { label: "🎒 Items", page: "my_items", color: "from-yellow-500/20 to-amber-500/10" },
+          ].map(tab => (
+            <button key={tab.page} onClick={() => setPage(tab.page)}
+              className={`relative px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all duration-300 ${
+                activePage === tab.page 
+                  ? `bg-gradient-to-r ${tab.color} text-white border border-white/10 shadow-lg shadow-primary/10 scale-105` 
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5 hover:scale-105"
+              }`}>
+              {activePage === tab.page && <div className="absolute inset-0 rounded-xl animate-slide-glow" />}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        {/* Animated glow line at bottom */}
+        <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
+      </div>
+
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
         <aside className={`${mobileMenuOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} md:block md:relative md:w-64 shrink-0 border-r border-amber-500/10 overflow-y-auto`} style={{ background: 'linear-gradient(180deg, oklch(0.06 0.015 35), oklch(0.05 0.01 40))' }}>
@@ -739,74 +802,6 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          {/* ═══ CENTERED TOP BAR ═══ */}
-          <div className="sticky top-0 z-30 border-b border-amber-500/20 animate-gradient" style={{ background: 'linear-gradient(135deg, oklch(0.07 0.02 30), oklch(0.09 0.03 45), oklch(0.07 0.02 30), oklch(0.10 0.025 55))' }}>
-            {/* Animated glow line at top */}
-            <div className="h-[1px] w-full relative overflow-hidden" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.3), rgba(255,100,50,0.3), rgba(200,150,255,0.2), transparent)' }}>
-              <div className="absolute inset-0 animate-shimmer" style={{ background: 'linear-gradient(90deg, transparent 30%, rgba(255,220,80,0.5) 50%, transparent 70%)' }} />
-            </div>
-            {/* Row 1: Player Stats — Centered */}
-            <div className="flex items-center justify-center px-4 py-2 gap-4 flex-wrap">
-              {/* Name + Rank */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-black animate-neon-glow" style={{ color: '#ffd700' }}>{player?.nickname || player?.username || player?.name || "Player"}</span>
-                <RankBadge level={player?.level ?? 1} />
-                <span className="text-[10px] text-amber-400/70">Lv.{player?.level ?? 1}</span>
-              </div>
-              {/* Divider */}
-              <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
-              {/* Stats */}
-              <div className="flex items-center gap-3 text-[11px]">
-                <span className="flex items-center gap-1 text-red-400"><span className="animate-float">❤️</span> {player?.life ?? 0}/{player?.maxLife ?? 100}</span>
-                <span className="flex items-center gap-1 text-blue-400"><span className="animate-float" style={{ animationDelay: '0.3s' }}>⭐</span> {player?.experience ?? 0}/{xpNeeded}</span>
-                <span className="flex items-center gap-1 text-green-400 font-black"><span className="animate-float" style={{ animationDelay: '0.6s' }}>💰</span> ${(player?.money ?? 0).toLocaleString()}</span>
-                <span className="flex items-center gap-1 text-yellow-400"><span className="animate-float" style={{ animationDelay: '0.9s' }}>🏆</span> {(player?.points ?? 0).toLocaleString()}</span>
-                <span className="flex items-center gap-1 text-orange-400">⚔️ {player?.attack ?? 0}</span>
-                <span className="flex items-center gap-1 text-blue-400">🛡️ {player?.defense ?? 0}</span>
-                <span className="flex items-center gap-1 text-red-400">💀 {(player as any)?.kills ?? 0}</span>
-              </div>
-              {/* Divider */}
-              <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
-              {/* Boosts + Profile */}
-              <div className="flex items-center gap-1.5">
-                {(player?.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-[9px] font-bold text-red-400 animate-pulse border border-red-500/30">🔴 WANTED</span>}
-                {(player as any)?.xpBoostUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-[9px] font-bold text-cyan-400 border border-cyan-500/30 animate-breathe">⚡ 3x XP</span>}
-                {(player as any)?.cashBoostUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-[9px] font-bold text-green-400 border border-green-500/30 animate-breathe">💰 3x Cash</span>}
-                {(player as any)?.energyDrinkUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-[9px] font-bold text-orange-400 border border-orange-500/30 animate-breathe">🥤 Energy</span>}
-                <button onClick={() => setPage("my_profile")} className="ml-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-900/40 to-amber-800/30 border border-amber-600/30 text-[10px] font-bold text-amber-400 hover:from-amber-800/50 hover:to-amber-700/40 hover:text-amber-300 transition-all animate-border-glow relative overflow-hidden">
-                  👤 Profile
-                  <div className="absolute inset-0 animate-slide-glow" />
-                </button>
-              </div>
-            </div>
-            {/* Row 2: Navigation Tabs — Centered with animated colors */}
-            <div className="flex items-center justify-center gap-1 px-3 py-1.5 overflow-x-auto scrollbar-hide" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.2), rgba(20,10,5,0.3), rgba(0,0,0,0.2))' }}>
-              {[
-                { label: "🏠 HQ", page: "headquarters", color: "from-amber-500/20 to-orange-500/10" },
-                { label: "🏦 Bank", page: "bank", color: "from-green-500/20 to-emerald-500/10" },
-                { label: "🔪 Crime Hub", page: "crime_hub", color: "from-red-500/20 to-rose-500/10" },
-                { label: "📋 Missions", page: "missions", color: "from-blue-500/20 to-indigo-500/10" },
-                { label: "⚔️ Combat", page: "arena", color: "from-orange-500/20 to-red-500/10" },
-                { label: "🥊 Fight Club", page: "fight_club", color: "from-purple-500/20 to-pink-500/10" },
-                { label: "🏥 Hospital", page: "hospital", color: "from-teal-500/20 to-cyan-500/10" },
-                { label: "🚗 Garage", page: "garage", color: "from-slate-500/20 to-zinc-500/10" },
-                { label: "🎒 Items", page: "my_items", color: "from-yellow-500/20 to-amber-500/10" },
-              ].map(tab => (
-                <button key={tab.page} onClick={() => setPage(tab.page)}
-                  className={`relative px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all duration-300 ${
-                    activePage === tab.page 
-                      ? `bg-gradient-to-r ${tab.color} text-white border border-white/10 shadow-lg shadow-primary/10 scale-105` 
-                      : "text-slate-400 hover:text-slate-200 hover:bg-white/5 hover:scale-105"
-                  }`}>
-                  {activePage === tab.page && <div className="absolute inset-0 rounded-xl animate-slide-glow" />}
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-            {/* Animated glow line at bottom */}
-            <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
-          </div>
-          {/* Page Content */}
           <div className="p-4 md:p-6 animate-page-enter" key={activePage}>
             <ErrorBoundary>
               {renderPage()}
