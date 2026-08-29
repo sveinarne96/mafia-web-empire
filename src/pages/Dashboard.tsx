@@ -689,7 +689,7 @@ export default function Dashboard() {
           <div className="flex items-center gap-4 text-xs flex-wrap justify-center">
             {/* Player Name + Rank */}
             <div className="flex items-center gap-2">
-              <span className="font-bold text-white">{player?.nickname || "Unknown"}</span>
+              <span className="font-bold text-white">{player?.nickname || player?.username || player?.name || "Player"}</span>
               <span className="text-[10px] text-slate-400"><RankBadge level={player?.level ?? 1} /></span>
             </div>
 
@@ -821,7 +821,7 @@ export default function Dashboard() {
             <div className="p-3 space-y-2">
               {/* Player Status */}
               <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30">
-                <div className="text-xs font-bold text-slate-300">{player?.nickname || "Unknown"}</div>
+                <div className="text-xs font-bold text-slate-300">{player?.nickname || player?.username || player?.name || "Player"}</div>
                 <div className="text-[10px] text-slate-500"><RankBadge level={player?.level ?? 1} /> Lv.{player?.level ?? 1}</div>
                 <div className="mt-2 space-y-1">
                   <div className="flex justify-between text-[10px]"><span className="text-slate-500">❤️ Life</span><span className="text-red-400">{player?.life ?? 0}/{player?.maxLife ?? 100}</span></div>
