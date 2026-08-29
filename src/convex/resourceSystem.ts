@@ -98,7 +98,7 @@ export const consumeResources = mutation({ args: { actionType: v.string() }, han
   let stamina = Math.max(0, r.stamina - costs.stamina);
   let focus = Math.max(0, r.focus - costs.focus);
   let morale = Math.max(0, r.morale - costs.morale);
-  let heat = Math.min(r.maxHeat, r.heat + costs.heat);
+  let heat = Math.min(r.maxHeat, Math.max(0, r.heat + costs.heat));
   let adrenaline = r.adrenaline;
   if (["fight", "duel", "arena", "murder"].includes(args.actionType)) adrenaline = Math.min(r.maxAdrenaline, adrenaline + 15);
 
