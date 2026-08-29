@@ -719,8 +719,45 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
-      {/* ═══ FULL-WIDTH TOP BAR ═══ */}
-      <div className="shrink-0 border-b border-amber-500/20 animate-gradient" style={{ background: 'linear-gradient(135deg, oklch(0.07 0.02 30), oklch(0.09 0.03 45), oklch(0.07 0.02 30), oklch(0.10 0.025 55))' }}>
+      <div className="flex flex-1 overflow-hidden">
+      {/* Left Sidebar */}
+        <aside className={`${mobileMenuOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} md:block md:relative md:w-64 shrink-0 border-r border-amber-500/10 overflow-y-auto`} style={{ background: 'linear-gradient(180deg, oklch(0.06 0.015 35), oklch(0.05 0.01 40))' }}>
+          <div className="p-3">
+            <input value={leftSearch} onChange={e => setLeftSearch(e.target.value)} placeholder="🔍 Search menu..."
+              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 mb-3 outline-none" />
+          </div>
+          <nav className="pb-20">
+            {getLeftMenuSections().filter(section => !leftSearch || section.title.toLowerCase().includes(leftSearch.toLowerCase()) || section.items.some(item => (item.label || "").toLowerCase().includes(leftSearch.toLowerCase()))).map(section => (
+              <div key={section.title}>
+                <button onClick={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(s => s !== section.title) : [...prev, section.title])}
+                  className="w-full px-4 py-2.5 flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-amber-300 hover:bg-amber-500/5 transition-all duration-300 group">
+                  <section.icon className="size-3.5 group-hover:animate-float" />
+                  <span className="flex-1 text-left group-hover:animate-color-cycle">{section.title}</span>
+                  {leftExpanded.includes(section.title) ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                </button>
+                {leftExpanded.includes(section.title) && (
+                  <div className="pl-4 space-y-0.5 pb-1">
+                    {section.items.map(item => (
+                      <button key={item.page} onClick={() => { setPage(item.page); setMobileMenuOpen(false); }}
+                        className={`w-full px-3 py-1.5 flex items-center gap-2 text-xs rounded-lg transition-all ${
+                          activePage === item.page ? "bg-primary/20 text-primary font-bold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
+                        }`}>
+                        <span>{item.icon}</span>
+                        <span>{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </nav>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 overflow-y-auto">
+          {/* ═══ TOP BAR — CENTERED ═══ */}
+          
+      <div className="border-b border-amber-500/20 animate-gradient" style={{ background: 'linear-gradient(135deg, oklch(0.07 0.02 30), oklch(0.09 0.03 45), oklch(0.07 0.02 30), oklch(0.10 0.025 55))' }}>
         {/* Animated glow line at top */}
         <div className="h-[1px] w-full relative overflow-hidden" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.3), rgba(255,100,50,0.3), rgba(200,150,255,0.2), transparent)' }}>
           <div className="absolute inset-0 animate-shimmer" style={{ background: 'linear-gradient(90deg, transparent 30%, rgba(255,220,80,0.5) 50%, transparent 70%)' }} />
@@ -825,42 +862,6 @@ export default function Dashboard() {
         <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <aside className={`${mobileMenuOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} md:block md:relative md:w-64 shrink-0 border-r border-amber-500/10 overflow-y-auto`} style={{ background: 'linear-gradient(180deg, oklch(0.06 0.015 35), oklch(0.05 0.01 40))' }}>
-          <div className="p-3">
-            <input value={leftSearch} onChange={e => setLeftSearch(e.target.value)} placeholder="🔍 Search menu..."
-              className="w-full bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 mb-3 outline-none" />
-          </div>
-          <nav className="pb-20">
-            {getLeftMenuSections().filter(section => !leftSearch || section.title.toLowerCase().includes(leftSearch.toLowerCase()) || section.items.some(item => (item.label || "").toLowerCase().includes(leftSearch.toLowerCase()))).map(section => (
-              <div key={section.title}>
-                <button onClick={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(s => s !== section.title) : [...prev, section.title])}
-                  className="w-full px-4 py-2.5 flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-amber-300 hover:bg-amber-500/5 transition-all duration-300 group">
-                  <section.icon className="size-3.5 group-hover:animate-float" />
-                  <span className="flex-1 text-left group-hover:animate-color-cycle">{section.title}</span>
-                  {leftExpanded.includes(section.title) ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-                </button>
-                {leftExpanded.includes(section.title) && (
-                  <div className="pl-4 space-y-0.5 pb-1">
-                    {section.items.map(item => (
-                      <button key={item.page} onClick={() => { setPage(item.page); setMobileMenuOpen(false); }}
-                        className={`w-full px-3 py-1.5 flex items-center gap-2 text-xs rounded-lg transition-all ${
-                          activePage === item.page ? "bg-primary/20 text-primary font-bold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
-                        }`}>
-                        <span>{item.icon}</span>
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </nav>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-6 animate-page-enter" key={activePage}>
             <ErrorBoundary>
               {renderPage()}
