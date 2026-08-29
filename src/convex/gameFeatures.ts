@@ -15,7 +15,24 @@ async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
 // ===== #23 DEATH MATCH MODE =====
 // Helper: add XP and check for level-up
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
-  const newXP = (player.experience ?? 0) + xpAmount;
+  // XP Volume Bonus: more actions in the last hour = higher multiplier
+  const now = Date.now();
+  const timestamps: number[] = (player as any).actionTimestamps ?? [];
+  const recent = timestamps.filter((t: number) => now - t < 3600000);
+  const actionCount = recent.length;
+  let volMult = 1.0;
+  if (actionCount >= 500) volMult = 8.0;
+  else if (actionCount >= 300) volMult = 6.0;
+  else if (actionCount >= 200) volMult = 5.0;
+  else if (actionCount >= 150) volMult = 4.0;
+  else if (actionCount >= 100) volMult = 3.5;
+  else if (actionCount >= 75) volMult = 3.0;
+  else if (actionCount >= 50) volMult = 2.5;
+  else if (actionCount >= 30) volMult = 2.0;
+  else if (actionCount >= 15) volMult = 1.5;
+  else if (actionCount >= 5) volMult = 1.25;
+  const finalXP = Math.floor(xpAmount * volMult);
+  const newXP = (player.experience ?? 0) + finalXP;
   const xpNeeded = (player.level ?? 1) * 100;
   const levelUpNow = newXP >= xpNeeded;
   if (!levelUpNow) {

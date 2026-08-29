@@ -96,6 +96,7 @@ import EventsHubPage from "@/components/EventsHub";
 
 import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
+import { XPVolumePanel } from "@/components/XPVolumePanel";
 import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
 import { IndividualCrimePage } from "@/components/IndividualCrimePage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -881,6 +882,9 @@ export default function Dashboard() {
               <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30">
                 <ResourcesPanel />
               </div>
+
+              {/* XP Volume Panel */}
+              <XPVolumePanel />
 
               {/* Firearms Panel */}
               {(() => {
