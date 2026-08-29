@@ -94,6 +94,7 @@ import LiveEventCalendar from "@/components/LiveEventCalendar";
 import { LiveSupportPage } from "@/components/LiveSupport";
 import EventsHubPage from "@/components/EventsHub";
 
+import { FamilyPage } from "@/components/FamilyPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { MurderPage } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
@@ -630,7 +631,7 @@ export default function Dashboard() {
       case "crew_war": return <CrewWarPage />;
       case "crew_territory": return <CrewTerritoryPage />;
       case "crew_leaderboard": return <CrewLeaderboardPage />;
-      case "family": return <CrewSystemPage />;
+      case "family": return <FamilyPage />;
       case "crew_challenges": return <CrewChallengesPage />;
       case "crew_alliance": return <CrewAlliancePage />;
       case "crew_safehouse": return <GenericStub title="Crew Safe House" icon="🏠" />;

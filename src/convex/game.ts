@@ -321,6 +321,41 @@ export const createFamily = mutation({ args: { name: v.string(), tag: v.string()
 export const getFamily = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player || !player.familyId) return null; return await ctx.db.get(player.familyId); } });
 export const getFamilyMembers = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player || !player.familyId) return []; return await ctx.db.query("users").withIndex("by_family", (q) => q.eq("familyId", player.familyId)).collect(); } });
 
+export const getAllFamilies = query({ args: {}, handler: async (ctx) => {
+  return await ctx.db.query("families").collect();
+}});
+
+export const joinFamily = mutation({ args: { familyId: v.id("families") }, handler: async (ctx, args) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if (player.familyId) throw new Error("Already in a family!");
+  const family = await ctx.db.get(args.familyId) as any; if (!family) throw new Error("Family not found");
+  if ((family.memberCount ?? 0) >= (family.maxMembers ?? 10)) throw new Error("Family is full!");
+  await ctx.db.patch(args.familyId, { memberCount: (family.memberCount ?? 0) + 1 });
+  await ctx.db.patch(player._id, { familyId: args.familyId });
+  return { success: true };
+}});
+
+export const leaveFamily = mutation({ args: {}, handler: async (ctx) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if (!player.familyId) throw new Error("Not in a family!");
+  const family = await ctx.db.get(player.familyId) as any; if (!family) { await ctx.db.patch(player._id, { familyId: undefined }); return { success: true }; }
+  if (family.leaderId === player._id) throw new Error("Leader cannot leave! Disband the family first.");
+  await ctx.db.patch(player.familyId, { memberCount: Math.max(0, (family.memberCount ?? 1) - 1) });
+  await ctx.db.patch(player._id, { familyId: undefined });
+  return { success: true };
+}});
+
+export const disbandFamily = mutation({ args: {}, handler: async (ctx) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if (!player.familyId) throw new Error("Not in a family!");
+  const family = await ctx.db.get(player.familyId) as any; if (!family) { await ctx.db.patch(player._id, { familyId: undefined }); return { success: true }; }
+  if (family.leaderId !== player._id) throw new Error("Only the leader can disband!");
+  const members = await ctx.db.query("users").withIndex("by_family", (q: any) => q.eq("familyId", player.familyId!)).collect();
+  for (const m of members) { await ctx.db.patch(m._id, { familyId: undefined }); }
+  await ctx.db.delete(player.familyId);
+  return { success: true };
+}});
+
 export const dailyRaid = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.isDead) throw new Error("You are dead!"); if (player.inPrison) throw new Error("You are in prison!"); if ((player.dailyRaidUsed ?? 0) >= 5) throw new Error("No raids left today!");
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
