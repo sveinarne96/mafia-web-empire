@@ -42,9 +42,9 @@ export const getResources = query({ args: {}, handler: async (ctx) => {
   const now = Date.now();
   const r = getPlayerResources(player);
   return { ...r,
-    nextEnergyRegen: ((player as any).lastEnergyRegen ?? now) + REGEN_INTERVALS.energy - now,
-    nextStaminaRegen: ((player as any).lastStaminaRegen ?? now) + REGEN_INTERVALS.stamina - now,
-    nextFocusRegen: ((player as any).lastFocusRegen ?? now) + REGEN_INTERVALS.focus - now,
+    nextEnergyRegen: Math.max(0, ((player as any).lastEnergyRegen ?? now) + REGEN_INTERVALS.energy - now),
+    nextStaminaRegen: Math.max(0, ((player as any).lastStaminaRegen ?? now) + REGEN_INTERVALS.stamina - now),
+    nextFocusRegen: Math.max(0, ((player as any).lastFocusRegen ?? now) + REGEN_INTERVALS.focus - now),
   };
 }});
 

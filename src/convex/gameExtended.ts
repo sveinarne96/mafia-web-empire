@@ -883,7 +883,7 @@ export const buyPointsService = mutation({
       "faster_bounty": { cost: 300, action: async (pl) => { return "🎯 BOUNTY PLACEMENT FASTER!"; }},
       "express_shooting": { cost: 200, action: async (pl) => { const b = Math.floor((pl.attack ?? 10) * 0.1); await ctx.db.patch(pl._id, { attack: (pl.attack ?? 10) + b }); return `🎯 ACCURACY +${b} ATK INSTANTLY!`; }},
       "remove_bank_cd": { cost: 400, action: async (pl) => { await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any); return "🏦 BANK ROBBERY COOLDOWN CLEARED!"; }},
-      "quick_kidnapping": { cost: 350, action: async (pl) => { return "绑架 KIDNAPPING READY!"; }},
+      "quick_kidnapping": { cost: 350, action: async (pl) => { return "KIDNAPPING READY!"; }},
       "express_counterfeit": { cost: 300, action: async (pl) => { const cash = Math.floor(Math.random() * 2000000) + 500000; await ctx.db.patch(pl._id, { money: (pl.money ?? 0) + cash }); return `💵 COUNTERFEIT PRINTED! +$${cash.toLocaleString()}!`; }},
       "faster_harbor": { cost: 250, action: async (pl) => { return "🚢 HARBOR SHIPPING FASTER!"; }},
       "remove_street_cd": { cost: 150, action: async (pl) => { await ctx.db.patch(pl._id, { crimeCooldowns: {} } as any); return "🥊 STREET FIGHT COOLDOWN CLEARED!"; }},
