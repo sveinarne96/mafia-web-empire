@@ -217,10 +217,7 @@ export const acknowledgeLevelUp = mutation({
 
 // Helper: add XP and check for level-up
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
-  // Level-based XP scaling: +10% per level (level 10 = 2x, level 50 = 6x, level 100 = 11x)
-  const levelMult = 1 + ((player.level ?? 1) * 0.1);
-  const scaledXP = Math.floor(xpAmount * levelMult);
-  const newXP = (player.experience ?? 0) + scaledXP;
+  const newXP = (player.experience ?? 0) + xpAmount;
   const xpNeeded = (player.level ?? 1) * 100;
   const levelUpNow = newXP >= xpNeeded;
   if (!levelUpNow) {
@@ -261,8 +258,7 @@ export const commitCrime = mutation({
     await ctx.db.insert("crimes", { userId: player._id, type: args.type, target: args.type === "rob_player" ? (args.targetId ?? "unknown") : "environment", success, moneyEarned, pointsEarned, damageTaken, timestamp: Date.now() });
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
         // XP: 1000% bonus + level bonus
-    const levelBonusXp = 1 + ((player.level ?? 1) * 0.1);
-    const boostMult = Date.now() < (player.xpBoostUntil ?? 0) ? 3 : 1; const energyMult = Date.now() < ((player as any).energyDrinkUntil ?? 0) ? 1.25 : 1; const xpGain = Math.floor((success ? 15 : 3) * 11.0 * levelBonusXp * boostMult * energyMult); const newXP = (player.experience ?? 0) + xpGain; const levelUpNow = newXP >= (player.level ?? 1) * 100;
+    const boostMult = Date.now() < (player.xpBoostUntil ?? 0) ? 3 : 1; const energyMult = Date.now() < ((player as any).energyDrinkUntil ?? 0) ? 1.25 : 1; const xpGain = Math.floor((success ? 75 : 15) * boostMult * energyMult); const newXP = (player.experience ?? 0) + xpGain; const levelUpNow = newXP >= (player.level ?? 1) * 100;
     await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyEarned : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, experience: levelUpNow ? 0 : newXP, levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false), inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5) });
     if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "You were arrested during a crime!", read: false, timestamp: Date.now() });
     return { success, moneyEarned, pointsEarned, damageTaken, arrested };
@@ -279,7 +275,7 @@ export const fightPlayer = mutation({ args: { defenderId: v.id("users") }, handl
     const dDmg = Math.max(1, Math.floor((defender.attack ?? 10) * (0.8 + Math.random() * 0.4) - (attacker.defense ?? 10) * 0.3));
     const attackerWins = aDmg > dDmg; const moneyStolen = Math.floor(((attackerWins ? defender : attacker).money ?? 0) * 0.05);
     await ctx.db.insert("fights", { attackerId: attacker._id, defenderId: args.defenderId, attackerDamage: aDmg, defenderDamage: dDmg, winnerId: attackerWins ? attacker._id : args.defenderId, moneyStolen, timestamp: Date.now() });
-    const fightXp = await addXpAndCheckLevel(ctx, attacker, 15); await ctx.db.patch(attacker._id, { life: fightXp.life ?? Math.max(0, (attacker.life ?? 100) - dDmg), totalFights: (attacker.totalFights ?? 0) + 1, totalKills: attackerWins ? (attacker.totalKills ?? 0) + 1 : (attacker.totalKills ?? 0), money: attackerWins ? (attacker.money ?? 0) + moneyStolen : Math.max(0, (attacker.money ?? 0) - moneyStolen), ...fightXp });
+    const fightXp = await addXpAndCheckLevel(ctx, attacker, 35); await ctx.db.patch(attacker._id, { life: fightXp.life ?? Math.max(0, (attacker.life ?? 100) - dDmg), totalFights: (attacker.totalFights ?? 0) + 1, totalKills: attackerWins ? (attacker.totalKills ?? 0) + 1 : (attacker.totalKills ?? 0), money: attackerWins ? (attacker.money ?? 0) + moneyStolen : Math.max(0, (attacker.money ?? 0) - moneyStolen), ...fightXp });
     if (!attackerWins) { 
       await ctx.db.patch(args.defenderId, { money: (defender.money ?? 0) + moneyStolen, totalKills: (defender.totalKills ?? 0) + 1 }); 
     }
@@ -298,7 +294,7 @@ export const gambleDice = mutation({ args: { amount: v.number(), guess: v.union(
     let won = false, multiplier = 0;
     if (args.guess === "high" && total > 7) { won = true; multiplier = 2; } else if (args.guess === "low" && total < 7) { won = true; multiplier = 2; } else if (args.guess === "seven" && total === 7) { won = true; multiplier = 5; }
     const winnings = won ? args.amount * multiplier : 0;
-    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + winnings - args.amount : (player.money ?? 0) - args.amount, ...(await addXpAndCheckLevel(ctx, player, 2)) });
+    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + winnings - args.amount : (player.money ?? 0) - args.amount, ...(await addXpAndCheckLevel(ctx, player, 8)) });
     return { die1, die2, total, won, winnings };
   },
 });
@@ -306,7 +302,7 @@ export const gambleDice = mutation({ args: { amount: v.number(), guess: v.union(
 export const gambleCoinToss = mutation({ args: { amount: v.number(), guess: v.union(v.literal("heads"), v.literal("tails")) }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (args.amount > (player.money ?? 0)) throw new Error("Not enough money!");
     const result = Math.random() > 0.5 ? "heads" : "tails"; const won = args.guess === result;
-    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + args.amount : (player.money ?? 0) - args.amount, ...(await addXpAndCheckLevel(ctx, player, 2)) });
+    await ctx.db.patch(player._id, { money: won ? (player.money ?? 0) + args.amount : (player.money ?? 0) - args.amount, ...(await addXpAndCheckLevel(ctx, player, 8)) });
     return { result, won };
   },
 });
@@ -437,7 +433,7 @@ export const dailyRaid = mutation({ args: { targetId: v.id("users") }, handler: 
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
     const success = Math.random() > 0.25; const moneyStolen = success ? Math.floor((target.money ?? 0) * 0.08) : 0; const damage = Math.floor(Math.random() * 20) + 10;
     await ctx.db.insert("dailyRaids", { userId: player._id, targetUserId: args.targetId, moneyStolen, damage, timestamp: Date.now() });
-    await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyStolen : (player.money ?? 0), dailyRaidUsed: (player.dailyRaidUsed ?? 0) + 1, ...(await addXpAndCheckLevel(ctx, player, success ? 20 : 5)) });
+    await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyStolen : (player.money ?? 0), dailyRaidUsed: (player.dailyRaidUsed ?? 0) + 1, ...(await addXpAndCheckLevel(ctx, player, success ? 50 : 15)) });
     if (success) await ctx.db.patch(args.targetId, { money: Math.max(0, (target.money ?? 0) - moneyStolen), life: Math.max(0, (target.life ?? 100) - damage) });
     return { success, moneyStolen, damage };
   },
@@ -486,8 +482,8 @@ export const killPlayer = mutation({ args: { targetId: v.id("users") }, handler:
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!");
     const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found");
     const success = Math.random() > 0.25;
-    if (success) { await ctx.db.patch(args.targetId, { life: 0, isDead: true }); await ctx.db.patch(player._id, { totalKills: (player.totalKills ?? 0) + 1, wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 3), money: (player.money ?? 0) + Math.floor((target.money ?? 0) * 0.05), ...(await addXpAndCheckLevel(ctx, player, 30)) }); }
-    else { const killFailXp = await addXpAndCheckLevel(ctx, player, 5); await ctx.db.patch(player._id, { life: killFailXp.life ?? Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 1), ...killFailXp }); }
+    if (success) { await ctx.db.patch(args.targetId, { life: 0, isDead: true }); await ctx.db.patch(player._id, { totalKills: (player.totalKills ?? 0) + 1, wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 3), money: (player.money ?? 0) + Math.floor((target.money ?? 0) * 0.05), ...(await addXpAndCheckLevel(ctx, player, 100)) }); }
+    else { const killFailXp = await addXpAndCheckLevel(ctx, player, 20); await ctx.db.patch(player._id, { life: killFailXp.life ?? Math.max(0, (player.life ?? 100) - 30), wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 1), ...killFailXp }); }
     return { success };
   },
 });
@@ -514,7 +510,7 @@ export const getDuels = query({ args: {}, handler: async (ctx) => await ctx.db.q
 export const getPendingDuels = query({ args: {}, handler: async (ctx) => await ctx.db.query("duels").collect() });
 export const acceptDuel = mutation({ args: { duelId: v.id("duels") }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const duel = await ctx.db.get(args.duelId); if (!duel) throw new Error("Duel not found"); const won = Math.random() > 0.5; await ctx.db.patch(args.duelId, { status: "finished", winnerId: won ? player._id : duel.challengerId }); if (won) await ctx.db.patch(player._id, { money: (player.money ?? 0) + (duel.stake ?? 0) * 2 }); return { won }; } });
 
-export const sparPlayer = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found"); const won = (player.attack ?? 10) + Math.random() * 10 > (target.attack ?? 10) + Math.random() * 10; await ctx.db.patch(player._id, { ...(await addXpAndCheckLevel(ctx, player, won ? 10 : 3)), totalFights: (player.totalFights ?? 0) + 1 }); return { won }; } });
+export const sparPlayer = mutation({ args: { targetId: v.id("users") }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found"); const won = (player.attack ?? 10) + Math.random() * 10 > (target.attack ?? 10) + Math.random() * 10; await ctx.db.patch(player._id, { ...(await addXpAndCheckLevel(ctx, player, won ? 25 : 8)), totalFights: (player.totalFights ?? 0) + 1 }); return { won }; } });
 
 export const getTournaments = query({ args: {}, handler: async (ctx) => await ctx.db.query("tournaments").collect() });
 export const getStats = query({ args: {}, handler: async (ctx) => { const players = await ctx.db.query("users").collect(); const registered = players.filter((p: any) => p.nickname); const families = await ctx.db.query("families").collect(); return { totalPlayers: registered.length, totalMoney: registered.reduce((s: number, p: any) => s + (p.money ?? 0), 0), totalCrimes: registered.reduce((s: number, p: any) => s + (p.totalCrimes ?? 0), 0), totalKills: registered.reduce((s: number, p: any) => s + (p.totalKills ?? 0), 0), totalFights: registered.reduce((s: number, p: any) => s + (p.totalFights ?? 0), 0), totalFamilies: families.length, topPlayers: registered.sort((a: any, b: any) => (b.level ?? 0) - (a.level ?? 0)).slice(0, 10).map((p: any) => ({ nickname: p.nickname, level: p.level ?? 0, kills: p.totalKills ?? 0, money: p.money ?? 0 })) }; } });
@@ -525,7 +521,7 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
 export const commitCategoryCrime = mutation({ args: { crimeId: v.string(), reward: v.number(), risk: v.number(), xp: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!"); if (player.isDead) throw new Error("You are dead!");    // Level-based success rate: base 60% + 0.5% per level, max 95%
     const levelBonus = Math.min(0.35, ((player.level ?? 1) * 0.005));
     const succeeded = Math.random() < Math.min(0.95, 0.75 + levelBonus);
-    const cashBoostOn = Date.now() < (player.cashBoostUntil ?? 0) ? 3 : 1; const moneyEarned = succeeded ? Math.floor((args.reward * cashBoostOn) + Math.random() * args.reward * 0.2) : -Math.floor(Math.random() * 500 + 100); const levelBonusXp = 1 + ((player.level ?? 1) * 0.1); const xpEarned = succeeded ? Math.floor(args.xp * 11.0 * levelBonusXp * (Date.now() < (player.xpBoostUntil ?? 0) ? 3 : 1) * (Date.now() < ((player as any).energyDrinkUntil ?? 0) ? 1.25 : 1)) : Math.floor(args.xp * 0.15); const lifeDamage = succeeded ? 0 : Math.floor(Math.random() * 20 + 5); const newLife = Math.max(0, (player.life ?? 100) - lifeDamage); const newXP = (player.experience ?? 0) + xpEarned; const levelUpNow = newXP >= (player.level ?? 1) * 100; const arrested = !succeeded && Math.random() > Math.max(0.15, 0.6 - (player.wantedLevel ?? 0) * 0.015); const pointsLevelMult = 1 + Math.min(2.0, ((player.level ?? 1) * 0.04)); const pointsEarned = succeeded ? Math.floor((Math.floor(Math.random() * 151) + 50) * pointsLevelMult) * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1) : 0; // Track completed crimes per category - no per-crime cooldown
+    const cashBoostOn = Date.now() < (player.cashBoostUntil ?? 0) ? 3 : 1; const moneyEarned = succeeded ? Math.floor((args.reward * cashBoostOn) + Math.random() * args.reward * 0.2) : -Math.floor(Math.random() * 500 + 100); const xpEarned = succeeded ? Math.floor(args.xp * (Date.now() < (player.xpBoostUntil ?? 0) ? 3 : 1) * (Date.now() < ((player as any).energyDrinkUntil ?? 0) ? 1.25 : 1)) : Math.floor(args.xp * 0.2); const lifeDamage = succeeded ? 0 : Math.floor(Math.random() * 20 + 5); const newLife = Math.max(0, (player.life ?? 100) - lifeDamage); const newXP = (player.experience ?? 0) + xpEarned; const levelUpNow = newXP >= (player.level ?? 1) * 100; const arrested = !succeeded && Math.random() > Math.max(0.15, 0.6 - (player.wantedLevel ?? 0) * 0.015); const pointsLevelMult = 1 + Math.min(2.0, ((player.level ?? 1) * 0.04)); const pointsEarned = succeeded ? Math.floor((Math.floor(Math.random() * 151) + 50) * pointsLevelMult) * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1) : 0; // Track completed crimes per category - no per-crime cooldown
     const crimeCategoryMap: Record<string, string[]> = {
       street: ["pickpocket","mugging","shoplifting","phone_snatch","bicycle_theft","purse_snatch","car_breakin","drug_rip","scrap_metal","garbage_scavenge","ticket_scalp","scam_call","panhandle","vandalism","egg_smuggle","bootlegging","fence_stolen","dumpster_dive","sneak_bus","atm_skim"],
       robbery: ["breaking_entering","smash_grab","convenience_store","gas_station","pawn_shop","pharmacy_robbery","atm_bombing","construction_theft","electronics_heist","credit_fraud","identity_theft","armed_robbery","jewelry_blitz","art_gallery","museum_heist","armored_car","bank_vault","casino_heist","yacht_theft","diamond_raid","train_robbery","cargo_hijack","drug_lab_raid","luxury_car_theft","power_plant","warehouse_raid","hospital_theft","charity_embezzle","church_theft","school_theft"],
