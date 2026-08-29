@@ -2,7 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Camera, Save, Globe, Shield, Award, Palette, Sparkles, ChevronRight, Check, X } from "lucide-react";
+import { User, Camera, Save, Globe, Shield, Award, Palette, Sparkles, ChevronRight, Check, X, Monitor, Smartphone } from "lucide-react";
 import { LANGUAGES, BADGES, COLOR_ROLES, type GameBadge, type ColorRole } from "@/data/profileData";
 
 // Title presets
@@ -29,6 +29,12 @@ const TITLES = [
   { id: "Zero Hour", color: "text-white" },
 ];
 
+const PLATFORMS = [
+  { id: "pc", name: "PC", icon: "🖥️", desc: "Playing on Desktop/Laptop", color: "blue" },
+  { id: "mobile", name: "Mobile", icon: "📱", desc: "Playing on Phone/Tablet", color: "green" },
+  { id: "both", name: "Both", icon: "🔄", desc: "Playing on PC and Mobile", color: "purple" },
+];
+
 export function MyProfilePage() {
   const player = useQuery(api.game.getPlayer);
   const updateProfile = useMutation(api.profileSystem.updateProfile);
@@ -40,10 +46,11 @@ export function MyProfilePage() {
   const [selectedBadge, setSelectedBadge] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [selectedTitle, setSelectedTitle] = useState("");
+  const [selectedPlatform, setSelectedPlatform] = useState("pc");
   const [previewPic, setPreviewPic] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [activeTab, setActiveTab] = useState<"general" | "badge" | "role" | "title" | "language">("general");
+  const [activeTab, setActiveTab] = useState<"general" | "badge" | "role" | "title" | "language" | "platform">("general");
   const [initialized, setInitialized] = useState(false);
 
   // Load from DB once
@@ -54,6 +61,7 @@ export function MyProfilePage() {
       setSelectedBadge((player as any).activeBadge ?? "");
       setSelectedRole((player as any).activeRole ?? "");
       setSelectedTitle((player as any).activeTitle ?? "");
+      setSelectedPlatform((player as any).activePlatform ?? "pc");
       setPreviewPic((player as any).profilePictureUrl ?? null);
       setInitialized(true);
     }
@@ -62,10 +70,8 @@ export function MyProfilePage() {
   const handlePictureUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onloadend = () => {
-      // Compress image to fit Convex size limits
       const img = new window.Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
@@ -94,6 +100,7 @@ export function MyProfilePage() {
         activeBadge: selectedBadge,
         activeRole: selectedRole,
         activeTitle: selectedTitle,
+        activePlatform: selectedPlatform,
         profilePictureUrl: previewPic ?? "",
       });
       setSaved(true);
@@ -103,16 +110,18 @@ export function MyProfilePage() {
       alert("Save failed: " + (err?.message || "Unknown error"));
     }
     setSaving(false);
-  }, [bio, selectedLang, selectedBadge, selectedRole, selectedTitle, previewPic, updateProfile]);
+  }, [bio, selectedLang, selectedBadge, selectedRole, selectedTitle, selectedPlatform, previewPic, updateProfile]);
 
   if (!player) return <div className="flex items-center justify-center h-64 text-muted-foreground text-sm">Loading profile...</div>;
 
   const currentLang = LANGUAGES.find(l => l.id === selectedLang);
   const currentBadge = BADGES.find(b => b.id === selectedBadge);
   const currentRole = COLOR_ROLES.find(r => r.id === selectedRole);
+  const currentPlatform = PLATFORMS.find(p => p.id === selectedPlatform);
 
   const tabs = [
     { id: "general" as const, label: "General", icon: <User size={14} /> },
+    { id: "platform" as const, label: "Platform", icon: <Monitor size={14} /> },
     { id: "badge" as const, label: "Badge", icon: <Award size={14} /> },
     { id: "role" as const, label: "Color Role", icon: <Palette size={14} /> },
     { id: "title" as const, label: "Title", icon: <Sparkles size={14} /> },
@@ -128,7 +137,6 @@ export function MyProfilePage() {
         </div>
         <div className="relative px-5 pb-5">
           <div className="relative -mt-10 flex items-end gap-3 mb-3">
-            {/* Profile Picture */}
             <div className="relative w-20 h-20 rounded-xl border-2 border-amber-700/50 overflow-hidden cursor-pointer hover:border-amber-500/70 transition group" onClick={() => fileInputRef.current?.click()}>
               {previewPic ? (
                 <img src={previewPic} alt="Profile" className="w-full h-full object-cover" />
@@ -138,12 +146,16 @@ export function MyProfilePage() {
               <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><Camera size={18} className="text-white" /></div>
             </div>
             <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePictureUpload} />
-
             <div className="flex-1 pb-1">
               <div className="text-base font-bold text-amber-400">{(player as any).username ?? (player as any).name ?? "Unknown"}</div>
               {currentBadge && <div className="text-[11px] text-amber-600/80">{currentBadge.icon} {currentBadge.name}</div>}
               {currentRole && <div className="text-[11px]" style={{ background: currentRole.gradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{currentRole.prefix} {currentRole.name}</div>}
               {selectedTitle && <div className="text-[10px] text-amber-500/60">★ {selectedTitle}</div>}
+              {currentPlatform && (
+                <div className="text-[10px] text-amber-400/60 flex items-center gap-1 mt-0.5">
+                  <span>{currentPlatform.icon}</span> {currentPlatform.name}
+                </div>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -179,11 +191,39 @@ export function MyProfilePage() {
               <div className="space-y-2">
                 <h3 className="text-xs font-bold text-amber-500/80">Currently Equipped</h3>
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  {[["Badge", currentBadge ? `${currentBadge.icon} ${currentBadge.name}` : "None"], ["Role", currentRole ? `${currentRole.prefix} ${currentRole.name}` : "None"], ["Title", selectedTitle || "None"], ["Language", `${currentLang?.flag ?? "🇬🇧"} ${currentLang?.name ?? "English"}`]].map(([label, value]) => (
+                  {[["Badge", currentBadge ? `${currentBadge.icon} ${currentBadge.name}` : "None"], ["Role", currentRole ? `${currentRole.prefix} ${currentRole.name}` : "None"], ["Title", selectedTitle || "None"], ["Platform", `${currentPlatform?.icon ?? "🖥️"} ${currentPlatform?.name ?? "PC"}`]].map(([label, value]) => (
                     <div key={label} className="p-2.5 rounded-lg bg-black/30 border border-amber-900/20">
                       <div className="text-muted-foreground mb-0.5">{label}</div>
                       <div className="text-amber-300 truncate">{value}</div>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {activeTab === "platform" && (
+            <motion.div key="platform" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="space-y-4">
+              <div>
+                <h3 className="text-xs font-bold text-amber-500/80 mb-1">Choose Your Platform</h3>
+                <p className="text-[10px] text-muted-foreground mb-3">Let other players know what device you play on</p>
+                <div className="space-y-2">
+                  {PLATFORMS.map(p => (
+                    <button key={p.id} onClick={() => setSelectedPlatform(p.id)}
+                      className={`w-full p-4 rounded-xl text-left transition-all cursor-pointer ${
+                        selectedPlatform === p.id
+                          ? "border-2 border-amber-500 bg-amber-900/20"
+                          : "border border-amber-900/20 bg-black/30 hover:border-amber-700/40"
+                      }`}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-3xl">{p.icon}</span>
+                        <div className="flex-1">
+                          <div className="text-sm font-bold text-amber-300">{p.name}</div>
+                          <div className="text-[10px] text-muted-foreground">{p.desc}</div>
+                        </div>
+                        {selectedPlatform === p.id && <Check size={16} className="text-amber-400" />}
+                      </div>
+                    </button>
                   ))}
                 </div>
               </div>

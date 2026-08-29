@@ -9,6 +9,7 @@ export const updateProfile = mutation({
     activeBadge: v.optional(v.string()),
     activeRole: v.optional(v.string()),
     activeTitle: v.optional(v.string()),
+    activePlatform: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
@@ -21,6 +22,7 @@ export const updateProfile = mutation({
     if (args.activeBadge !== undefined) patch.activeBadge = args.activeBadge;
     if (args.activeRole !== undefined) patch.activeRole = args.activeRole;
     if (args.activeTitle !== undefined) patch.activeTitle = args.activeTitle;
+    if (args.activePlatform !== undefined) patch.activePlatform = args.activePlatform;
     if (args.profilePictureUrl !== undefined) patch.profilePictureUrl = args.profilePictureUrl;
 
     await ctx.db.patch(userId, patch);
