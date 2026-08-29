@@ -754,63 +754,71 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
-        {/* Row 2: Navigation Tabs — Animated gradient colors */}
-        <div className="flex items-center gap-1 px-3 py-1.5 overflow-x-auto scrollbar-hide" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.2), rgba(20,10,5,0.3), rgba(0,0,0,0.2))' }}>
-          {(
-            [
-              // ═══ CORE ═══
-              { label: "🏠 HQ", page: "headquarters", gradient: "linear-gradient(135deg, rgba(217,119,6,0.3), rgba(180,83,9,0.15))", text: "text-amber-400", border: "border-amber-500/30", glow: "shadow-amber-500/20" },
-              { label: "🏦 Bank", page: "bank", gradient: "linear-gradient(135deg, rgba(34,197,94,0.3), rgba(22,163,74,0.15))", text: "text-green-400", border: "border-green-500/30", glow: "shadow-green-500/20" },
-              // ═══ CRIMES ═══
-              { label: "🚗 GTA Theft", page: "car_theft", gradient: "linear-gradient(135deg, rgba(220,38,38,0.3), rgba(185,28,28,0.15))", text: "text-red-400", border: "border-red-500/30", glow: "shadow-red-500/20" },
-              { label: "🏠 Burglarize", page: "steal_house", gradient: "linear-gradient(135deg, rgba(249,115,22,0.3), rgba(234,88,12,0.15))", text: "text-orange-400", border: "border-orange-500/30", glow: "shadow-orange-500/20" },
-              { label: "🕵️ Organized", page: "organized_crime", gradient: "linear-gradient(135deg, rgba(147,51,234,0.3), rgba(126,34,206,0.15))", text: "text-purple-400", border: "border-purple-500/30", glow: "shadow-purple-500/20" },
-              { label: "💀 Murder", page: "murder", gradient: "linear-gradient(135deg, rgba(185,28,28,0.4), rgba(127,29,29,0.2))", text: "text-red-500", border: "border-red-600/30", glow: "shadow-red-600/20" },
-              // ═══ ASSETS ═══
-              { label: "🚗 Garage", page: "garage", gradient: "linear-gradient(135deg, rgba(100,116,139,0.3), rgba(71,85,105,0.15))", text: "text-slate-400", border: "border-slate-500/30", glow: "shadow-slate-500/20" },
-              { label: "🎒 Items", page: "my_items", gradient: "linear-gradient(135deg, rgba(234,179,8,0.3), rgba(202,138,4,0.15))", text: "text-yellow-400", border: "border-yellow-500/30", glow: "shadow-yellow-500/20" },
-            ] as const
-          ).map(tab => (
-            <button key={tab.page} onClick={() => setPage(tab.page)}
-              className={`relative px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all duration-300 border ${
-                activePage === tab.page 
-                  ? `${tab.text} ${tab.border} shadow-lg ${tab.glow} scale-105`
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5 hover:scale-105 border-transparent"
-              }`}
-              style={activePage === tab.page ? { background: tab.gradient } : undefined}>
-              {activePage === tab.page && <div className="absolute inset-0 rounded-xl animate-slide-glow" />}
-              <span className="relative z-10">{tab.label}</span>
-            </button>
-          ))}
-          {/* Divider */}
-          <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent mx-1" />
-          {/* ═══ CRIME CATEGORIES ═══ */}
-          {(
-            [
-              { label: "🔪 Street Crimes", count: 20, gradient: "linear-gradient(135deg, rgba(34,197,94,0.35), rgba(5,150,105,0.15))", text: "text-emerald-400", border: "border-emerald-500/40", glow: "shadow-emerald-500/20", id: "street" },
-              { label: "💰 Robberies & Heists", count: 30, gradient: "linear-gradient(135deg, rgba(239,68,68,0.35), rgba(220,38,38,0.15))", text: "text-red-400", border: "border-red-500/40", glow: "shadow-red-500/20", id: "robbery" },
-              { label: "🃏 Fraud & Scams", count: 14, gradient: "linear-gradient(135deg, rgba(234,179,8,0.35), rgba(202,138,4,0.15))", text: "text-yellow-400", border: "border-yellow-500/40", glow: "shadow-yellow-500/20", id: "fraud" },
-              { label: "🏠 Burglary", count: 8, gradient: "linear-gradient(135deg, rgba(249,115,22,0.35), rgba(234,88,12,0.15))", text: "text-orange-400", border: "border-orange-500/40", glow: "shadow-orange-500/20", id: "burglary" },
-              { label: "💊 Drug Operations", count: 12, gradient: "linear-gradient(135deg, rgba(168,85,247,0.35), rgba(147,51,234,0.15))", text: "text-purple-400", border: "border-purple-500/40", glow: "shadow-purple-500/20", id: "drugs" },
-              { label: "🕵️ Organized Crime", count: 20, gradient: "linear-gradient(135deg, rgba(59,130,246,0.35), rgba(37,99,235,0.15))", text: "text-blue-400", border: "border-blue-500/40", glow: "shadow-blue-500/20", id: "organized" },
-              { label: "🕳️ Underground", count: 24, gradient: "linear-gradient(135deg, rgba(148,163,184,0.35), rgba(100,116,139,0.15))", text: "text-slate-300", border: "border-slate-400/40", glow: "shadow-slate-400/20", id: "underground" },
-            ] as const
-          ).map(cat => (
-            <button key={cat.id} onClick={() => setPage(`crime_${cat.id}`)}
-              className={`relative px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap transition-all duration-300 border ${
-                activePage === `crime_${cat.id}`
-                  ? `${cat.text} ${cat.border} shadow-lg ${cat.glow} scale-105`
-                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:scale-105 border-transparent"
-              }`}
-              style={activePage === `crime_${cat.id}` ? { background: cat.gradient } : undefined}>
-              {activePage === `crime_${cat.id}` && <div className="absolute inset-0 rounded-xl animate-slide-glow" />}
-              <span className="relative z-10">{cat.label}</span>
-              <span className="relative z-10 ml-1 text-[8px] opacity-50">({cat.count})</span>
-            </button>
-          ))}
+        {/* Row 2: Navigation Tabs — Smooth & Compact */}
+        <div className="relative">
+          <div className="flex items-center gap-0.5 px-2 py-1 overflow-x-auto scrollbar-hide" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.15), rgba(15,8,3,0.25), rgba(0,0,0,0.15))' }}>
+            {(
+              [
+                // ═══ CORE ═══
+                { icon: "🏠", label: "HQ", page: "headquarters", c: ["amber","217,119,6"] },
+                { icon: "🏦", label: "Bank", page: "bank", c: ["green","34,197,94"] },
+                // ═══ CRIMES ═══
+                { icon: "🚗", label: "GTA", page: "car_theft", c: ["red","220,38,38"] },
+                { icon: "🏠", label: "Burg", page: "steal_house", c: ["orange","249,115,22"] },
+                { icon: "🕵️", label: "Org", page: "organized_crime", c: ["purple","147,51,234"] },
+                { icon: "💀", label: "Kill", page: "murder", c: ["red","185,28,28"] },
+                // ═══ ASSETS ═══
+                { icon: "🚗", label: "Gar", page: "garage", c: ["slate","100,116,139"] },
+                { icon: "🎒", label: "Items", page: "my_items", c: ["yellow","234,179,8"] },
+              ] as const
+            ).map(tab => {
+              const isActive = activePage === tab.page;
+              const [color, rgb] = tab.c;
+              return (
+                <button key={tab.page} onClick={() => setPage(tab.page)}
+                  className={`relative px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all duration-200 border ${
+                    isActive ? `text-${color}-400 border-${color}-500/40 shadow-md shadow-${color}-500/15 scale-[1.03]` : "text-slate-500 hover:text-slate-300 hover:bg-white/5 border-transparent"
+                  }`}
+                  style={isActive ? { background: `linear-gradient(135deg, rgba(${rgb},0.25), rgba(${rgb},0.1))` } : undefined}>
+                  {isActive && <div className="absolute inset-0 rounded-lg animate-slide-glow" />}
+                  <span className="relative z-10 flex items-center gap-0.5"><span className="text-[11px]">{tab.icon}</span>{tab.label}</span>
+                </button>
+              );
+            })}
+            {/* Smooth divider */}
+            <div className="w-px h-4 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent mx-0.5" />
+            {/* ═══ CRIME CATEGORIES ═══ */}
+            {(
+              [
+                { icon: "🔪", label: "Street", count: 20, c: ["emerald","34,197,94"], id: "street" },
+                { icon: "💰", label: "Heists", count: 30, c: ["red","239,68,68"], id: "robbery" },
+                { icon: "🃏", label: "Fraud", count: 14, c: ["yellow","234,179,8"], id: "fraud" },
+                { icon: "🏠", label: "Burg", count: 8, c: ["orange","249,115,22"], id: "burglary" },
+                { icon: "💊", label: "Drugs", count: 12, c: ["purple","168,85,247"], id: "drugs" },
+                { icon: "🕵️", label: "Crime", count: 20, c: ["blue","59,130,246"], id: "organized" },
+                { icon: "🕳️", label: "Under", count: 24, c: ["slate","148,163,184"], id: "underground" },
+              ] as const
+            ).map(cat => {
+              const isActive = activePage === `crime_${cat.c}`;
+              const [color, rgb] = cat.c;
+              return (
+                <button key={cat.id} onClick={() => setPage(`crime_${cat.id}`)}
+                  className={`relative px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all duration-200 border ${
+                    activePage === `crime_${cat.id}` ? `text-${color}-400 border-${color}-500/40 shadow-md shadow-${color}-500/15 scale-[1.03]` : "text-slate-500 hover:text-slate-300 hover:bg-white/5 border-transparent"
+                  }`}
+                  style={activePage === `crime_${cat.id}` ? { background: `linear-gradient(135deg, rgba(${rgb},0.25), rgba(${rgb},0.1))` } : undefined}>
+                  {activePage === `crime_${cat.id}` && <div className="absolute inset-0 rounded-lg animate-slide-glow" />}
+                  <span className="relative z-10 flex items-center gap-0.5"><span className="text-[11px]">{cat.icon}</span>{cat.label} <span className="text-[7px] opacity-40">{cat.count}</span></span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Edge fade gradients for smooth scroll hint */}
+          <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/30 to-transparent pointer-events-none z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/30 to-transparent pointer-events-none z-10" />
         </div>
         {/* Crime Sub-Bar — expands below when category is clicked */}
-        {activePage.startsWith("crime_") && !activePage.includes("_") && (
+        {activePage.startsWith("crime_") && (
           <CrimeSubBar activePage={activePage} onNavigate={setPage} />
         )}
         {/* Animated glow line at bottom */}

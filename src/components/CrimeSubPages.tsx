@@ -56,35 +56,33 @@ export function CrimeSubPages({ activePage, onNavigate }: { activePage: string; 
 
 // Sub-bar that shows below the top bar when a category is expanded
 export function CrimeSubBar({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) {
-  // Extract category from activePage (e.g. "crime_street" -> "street")
   const activeCategoryId = activePage.startsWith("crime_") ? activePage.replace("crime_", "") : null;
   const activeCategory = activeCategoryId ? crimeCategories.find(c => c.id === activeCategoryId) : null;
-
   if (!activeCategory) return null;
 
-  const getCrimeRoute = (categoryId: string, crimeId: string) => `crime_${categoryId}_${crimeId}`;
+  const getCrimeRoute = (catId: string, crimeId: string) => `crime_${catId}_${crimeId}`;
 
   return (
     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-      transition={{ duration: 0.2 }} className="overflow-hidden w-full">
-      <div className="px-3 py-1.5 overflow-x-auto scrollbar-hide flex gap-1"
-        style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.1), rgba(20,10,5,0.15), rgba(0,0,0,0.1))' }}>
-        <span className="text-[9px] font-bold text-slate-500 self-center mr-1">{CATEGORY_ICONS[activeCategoryId!]} {activeCategory.name}:</span>
-        {activeCategory.crimes.map(crime => {
-          const route = getCrimeRoute(activeCategoryId!, crime.id);
-          const isCrimeActive = activePage === route;
-          return (
-            <button key={crime.id}
-              onClick={() => onNavigate(route)}
-              className={`px-2.5 py-1 rounded-lg text-[9px] font-bold whitespace-nowrap transition-all duration-200 ${
-                isCrimeActive
-                  ? `bg-gradient-to-r ${CATEGORY_COLORS[activeCategoryId!]} ${CATEGORY_TEXT[activeCategoryId!]} scale-105 border ${CATEGORY_COLORS[activeCategoryId!]?.split(' ')[1] || 'border-white/10'}`
-                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-              }`}>
-              <span className="opacity-60">Lv.{crime.levelRequired}</span> {crime.name}
-            </button>
-          );
-        })}
+      transition={{ duration: 0.15 }} className="overflow-hidden w-full">
+      <div className="relative">
+        <div className="px-2 py-1 overflow-x-auto scrollbar-hide flex gap-0.5 items-center"
+          style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.1), rgba(15,8,3,0.15), rgba(0,0,0,0.1))' }}>
+          {activeCategory.crimes.map(crime => {
+            const route = getCrimeRoute(activeCategoryId!, crime.id);
+            const isActive = activePage === route;
+            return (
+              <button key={crime.id} onClick={() => onNavigate(route)}
+                className={`px-2 py-0.5 rounded text-[9px] font-bold whitespace-nowrap transition-all duration-150 ${
+                  isActive ? `${CATEGORY_TEXT[activeCategoryId!]} bg-white/5` : "text-slate-600 hover:text-slate-400 hover:bg-white/3"
+                }`}>
+                <span className="opacity-50">{crime.levelRequired}</span> {crime.name}
+              </button>
+            );
+          })}
+        </div>
+        <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black/20 to-transparent pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-black/20 to-transparent pointer-events-none" />
       </div>
     </motion.div>
   );
