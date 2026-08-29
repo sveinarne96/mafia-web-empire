@@ -1,4 +1,5 @@
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 // XP Volume System: More actions = higher XP multiplier
 // Tracks actions in a rolling window and applies a stacking bonus
@@ -69,7 +70,9 @@ export const getVolumeStatus = query({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
 
-    const player = await ctx.db.get(identity.subject as any);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
+    const player = await ctx.db.get(userId);
     if (!player) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
 
     const now = Date.now();
