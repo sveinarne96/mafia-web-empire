@@ -192,6 +192,11 @@ export const acknowledgeLevelUp = mutation({
     // Actually apply the level up: level+1, +10 ATK, +10 DEF, +75 HP
     const newLevel = (player.level ?? 1) + 1;
     const newMaxLife = (player.maxLife ?? 100) + 75;
+    // Resource boost on rankup
+    const maxE = (player as any).maxEnergy ?? 100;
+    const maxS = (player as any).maxStamina ?? 100;
+    const maxF = (player as any).maxFocus ?? 100;
+    const maxM = (player as any).maxMorale ?? 100;
     await ctx.db.patch(userId, {
       level: newLevel,
       levelUpPending: false,
@@ -201,7 +206,11 @@ export const acknowledgeLevelUp = mutation({
       maxLife: newMaxLife,
       life: newMaxLife,
       highestLevel: Math.max(player.highestLevel ?? 0, newLevel),
-    });
+      energy: Math.min(maxE, ((player as any).energy ?? maxE) + 20),
+      stamina: Math.min(maxS, ((player as any).stamina ?? maxS) + 20),
+      focus: Math.min(maxF, ((player as any).focus ?? maxF) + 20),
+      morale: Math.min(maxM, ((player as any).morale ?? maxM) + 20),
+    } as any);
     return { success: true, newLevel };
   },
 });

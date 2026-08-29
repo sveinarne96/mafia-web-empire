@@ -763,8 +763,8 @@ export default function Dashboard() {
             { label: "🏠 Burglarize", page: "steal_house", color: "from-red-400/20 to-amber-500/10" },
             { label: "🕵️ Organized", page: "organized_crime", color: "from-purple-600/20 to-red-500/10" },
             { label: "💀 Murder", page: "murder", color: "from-red-700/20 to-red-900/10" },
-            { label: "📋 Missions", page: "missions", color: "from-blue-500/20 to-indigo-500/10" },
-            { label: "🏥 Hospital", page: "hospital", color: "from-teal-500/20 to-cyan-500/10" },
+
+
             { label: "🚗 Garage", page: "garage", color: "from-slate-500/20 to-zinc-500/10" },
             { label: "🎒 Items", page: "my_items", color: "from-yellow-500/20 to-amber-500/10" },
           ].map(tab => (
