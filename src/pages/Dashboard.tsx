@@ -320,15 +320,113 @@ function StatisticsPage() {
 }
 
 function AirportPage() {
-  const cities = ["New York", "Los Angeles", "Chicago", "Miami", "Las Vegas", "London", "Tokyo", "Berlin", "Sydney", "Dubai"];
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [traveling, setTraveling] = useState(false);
+  const [destination, setDestination] = useState<string | null>(null);
+
+  const cities = [
+    { name: "Small Town", risk: "Low", color: "from-emerald-500/20 to-emerald-600/10", border: "border-emerald-500/30", text: "text-emerald-400", cost: 500, xp: 10, unlocks: "Level 1" },
+    { name: "Suburbia", risk: "Low", color: "from-green-500/20 to-green-600/10", border: "border-green-500/30", text: "text-green-400", cost: 1000, xp: 15, unlocks: "Level 1" },
+    { name: "Midwest City", risk: "Low", color: "from-teal-500/20 to-teal-600/10", border: "border-teal-500/30", text: "text-teal-400", cost: 2000, xp: 20, unlocks: "Level 1" },
+    { name: "Dallas", risk: "Medium", color: "from-yellow-500/20 to-amber-600/10", border: "border-yellow-500/30", text: "text-yellow-400", cost: 5000, xp: 30, unlocks: "Level 5" },
+    { name: "Chicago", risk: "Medium", color: "from-amber-500/20 to-orange-600/10", border: "border-amber-500/30", text: "text-amber-400", cost: 8000, xp: 40, unlocks: "Level 5" },
+    { name: "Los Angeles", risk: "Medium", color: "from-orange-500/20 to-red-600/10", border: "border-orange-500/30", text: "text-orange-400", cost: 12000, xp: 50, unlocks: "Level 10" },
+    { name: "Miami", risk: "High", color: "from-red-500/20 to-rose-600/10", border: "border-red-500/30", text: "text-red-400", cost: 20000, xp: 75, unlocks: "Level 10" },
+    { name: "New York", risk: "High", color: "from-rose-500/20 to-pink-600/10", border: "border-rose-500/30", text: "text-rose-400", cost: 35000, xp: 100, unlocks: "Level 15" },
+    { name: "Las Vegas", risk: "High", color: "from-pink-500/20 to-purple-600/10", border: "border-pink-500/30", text: "text-pink-400", cost: 50000, xp: 125, unlocks: "Level 20" },
+    { name: "London", risk: "Very High", color: "from-purple-500/20 to-violet-600/10", border: "border-purple-500/30", text: "text-purple-400", cost: 75000, xp: 150, unlocks: "Level 25" },
+    { name: "Tokyo", risk: "Very High", color: "from-violet-500/20 to-indigo-600/10", border: "border-violet-500/30", text: "text-violet-400", cost: 100000, xp: 175, unlocks: "Level 30" },
+    { name: "Dubai", risk: "Extreme", color: "from-indigo-500/20 to-blue-600/10", border: "border-indigo-500/30", text: "text-indigo-400", cost: 150000, xp: 200, unlocks: "Level 35" },
+    { name: "Berlin", risk: "Extreme", color: "from-blue-500/20 to-cyan-600/10", border: "border-blue-500/30", text: "text-blue-400", cost: 200000, xp: 225, unlocks: "Level 40" },
+    { name: "Sydney", risk: "Extreme", color: "from-cyan-500/20 to-sky-600/10", border: "border-cyan-500/30", text: "text-cyan-400", cost: 250000, xp: 250, unlocks: "Level 45" },
+    { name: "Shanghai", risk: "Extreme", color: "from-sky-500/20 to-blue-700/10", border: "border-sky-500/30", text: "text-sky-400", cost: 300000, xp: 275, unlocks: "Level 50" },
+    { name: "Mogadishu", risk: "Death Row", color: "from-gray-500/20 to-red-900/10", border: "border-gray-500/30", text: "text-gray-300", cost: 500000, xp: 500, unlocks: "Level 75" },
+  ];
+
+  const riskColors: Record<string, string> = {
+    "Low": "bg-emerald-500/20 text-emerald-400",
+    "Medium": "bg-yellow-500/20 text-yellow-400",
+    "High": "bg-red-500/20 text-red-400",
+    "Very High": "bg-purple-500/20 text-purple-400",
+    "Extreme": "bg-indigo-500/20 text-indigo-400",
+    "Death Row": "bg-gray-500/20 text-gray-300",
+  };
+
+  const handleTravel = (city: string) => {
+    setTraveling(true);
+    setDestination(city);
+    setTimeout(() => {
+      setTraveling(false);
+      setSelectedCity(city);
+    }, 2000);
+  };
+
+  if (traveling) {
+    return (
+      <div className="animate-fade-in flex flex-col items-center justify-center h-64 space-y-6">
+        <div className="relative">
+          <div className="text-6xl animate-bounce">✈️</div>
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-2 bg-black/30 rounded-full blur-sm animate-pulse" />
+        </div>
+        <div className="text-lg font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-pulse">Flying to {destination}...</div>
+        <div className="flex gap-1">
+          {[0,1,2,3,4].map(i => (
+            <div key={i} className="w-2 h-2 rounded-full bg-primary animate-ping" style={{ animationDelay: `${i * 0.2}s` }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (selectedCity) {
+    const city = cities.find(c => c.name === selectedCity)!;
+    return (
+      <div className="animate-fade-in space-y-4">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setSelectedCity(null)} className="px-3 py-1 bg-secondary rounded-lg text-xs hover:bg-secondary/80 transition">← Back</button>
+          <div className="flex-1"><h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{selectedCity}</h2></div>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold ${riskColors[city.risk]}`}>{city.risk} Risk</span>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">Travel Cost</div><div className="text-lg font-bold text-yellow-400">${city.cost.toLocaleString()}</div></div>
+          <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">XP Reward</div><div className="text-lg font-bold text-purple-400">+{city.xp} XP</div></div>
+          <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">Risk Level</div><div className="text-lg font-bold text-red-400">{city.risk}</div></div>
+        </div>
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4">
+            <div className="text-sm font-bold mb-2">🏙️ City Overview</div>
+            <div className="text-xs text-muted-foreground">{selectedCity} is a {city.risk.toLowerCase()} risk destination with crime opportunities ranging from petty theft to organized crime. Higher risk means higher rewards but more chance of getting caught.</div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">🔪</div><div className="text-xs font-bold">Street Crime</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 0.5)} XP</div></div>
+            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">💰</div><div className="text-xs font-bold">Robbery</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 0.8)} XP</div></div>
+            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">🏠</div><div className="text-xs font-bold">Burglary</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 0.6)} XP</div></div>
+            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">🕵️</div><div className="text-xs font-bold">Organized Crime</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 1.2)} XP</div></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><Plane className="size-7 text-primary" /><h2 className="text-2xl font-bold">Airport</h2></div>
+      <div className="flex items-center gap-3"><Plane className="size-7 text-cyan-400" /><h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">Airport</h2></div>
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-muted-foreground">Select a destination:</span>
+        <span className="text-xs text-cyan-400">Click to travel to a city</span>
+      </div>
       <div className="space-y-2">
-        {cities.map(city => (
-          <div key={city} className="mafia-card rounded-xl p-4 flex items-center gap-4 hover:border-primary/30 transition cursor-pointer">
-            <span className="text-2xl">✈️</span><div className="flex-1 font-bold">{city}</div>
-            <button className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-xs">Travel</button>
+        {cities.map((city, i) => (
+          <div key={city.name} onClick={() => handleTravel(city.name)} className={`bg-gradient-to-r ${city.color} border ${city.border} rounded-xl p-4 flex items-center gap-4 hover:scale-[1.01] transition-all cursor-pointer group`}>
+            <span className="text-2xl group-hover:scale-110 transition-transform">✈️</span>
+            <div className="flex-1">
+              <div className="font-bold">{city.name}</div>
+              <div className="text-[10px] text-muted-foreground">{city.unlocks} · {city.xp} XP</div>
+            </div>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${riskColors[city.risk]}`}>{city.risk}</span>
+            <div className="text-right">
+              <div className="text-sm font-bold text-yellow-400">${city.cost.toLocaleString()}</div>
+            </div>
           </div>
         ))}
       </div>
