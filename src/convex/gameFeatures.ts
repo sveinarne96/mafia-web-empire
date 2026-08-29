@@ -33,7 +33,7 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   else if (actionCount >= 5) volMult = 1.25;
   const finalXP = Math.floor(xpAmount * volMult);
   const newXP = (player.experience ?? 0) + finalXP;
-  const xpNeeded = 500;
+  const xpNeeded = 2000;
   const levelUpNow = newXP >= xpNeeded;
   if (!levelUpNow) {
     return { experience: newXP };
