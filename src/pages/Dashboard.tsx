@@ -437,6 +437,8 @@ export default function Dashboard() {
       { label: "Organized Crime", page: "organized_crime", icon: "🕵️" },
       { label: "Missions", page: "missions", icon: "📋" },
       { label: "Murder", page: "murder", icon: "💀" },
+      { label: "Garage", page: "garage", icon: "🚗" },
+      { label: "Items", page: "my_items", icon: "🎒" },
     ]},
     { title: "Economy", icon: Wallet, items: [
       { label: "Stock Market", page: "stock_market", icon: "📈" },
@@ -812,9 +814,6 @@ export default function Dashboard() {
                 { icon: "🏠", label: "Burglarize", page: "steal_house", c: ["rose","225,29,72"], isCrime: false },
                 { icon: "🕵️", label: "Org Crime", page: "organized_crime", c: ["purple","147,51,234"], isCrime: false },
                 { icon: "💀", label: "Murder", page: "murder", c: ["red","185,28,28"], isCrime: false },
-                // ═══ ASSETS ═══
-                { icon: "🚗", label: "Garage", page: "garage", c: ["slate","100,116,139"], isCrime: false },
-                { icon: "🎒", label: "Items", page: "my_items", c: ["yellow","234,179,8"], isCrime: false },
               ] as const
             ).map((tab, idx) => {
               const isActive = activePage === tab.page;
