@@ -219,9 +219,12 @@ export const acknowledgeLevelUp = mutation({
 
 // Helper: add XP and check for level-up
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
-  // XP Volume Bonus: more actions in the last hour = higher multiplier
+  // XP Volume Bonus: more actions in the last hour = higher multiplier.
+  // Use only valid timestamps so legacy records cannot make the counter display 0 incorrectly.
   const now = Date.now();
-  const timestamps: number[] = (player as any).actionTimestamps ?? [];
+  const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
+    ? (player as any).actionTimestamps.filter((timestamp: unknown): timestamp is number => typeof timestamp === "number" && Number.isFinite(timestamp))
+    : [];
   const recent = timestamps.filter((t: number) => now - t < 3600000);
   const actionCount = recent.length;
   let volMult = 1.0;

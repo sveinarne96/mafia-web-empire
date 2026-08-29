@@ -42,7 +42,9 @@ export const recordAction = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return { volumeActions: 0, volumeMult: 1, volumeLabel: "" };
 
-    const player = await ctx.db.get(identity.subject as any);
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { volumeActions: 0, volumeMult: 1, volumeLabel: "" };
+    const player = await ctx.db.get(userId);
     if (!player) return { volumeActions: 0, volumeMult: 1, volumeLabel: "" };
 
     const now = Date.now();
@@ -56,7 +58,7 @@ export const recordAction = mutation({
     
     const { mult, label, tier } = getVolumeMult(trimmed.length);
     
-    await ctx.db.patch(identity.subject as any, {
+    await ctx.db.patch(userId, {
       actionTimestamps: trimmed,
     } as any);
 
@@ -76,8 +78,10 @@ export const getVolumeStatus = query({
     if (!player) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
 
     const now = Date.now();
-    const timestamps: number[] = (player as any).actionTimestamps ?? [];
-    const recent = timestamps.filter((t: number) => now - t < WINDOW_MS);
+    const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
+      ? (player as any).actionTimestamps.filter((timestamp: unknown): timestamp is number => typeof timestamp === "number" && Number.isFinite(timestamp))
+      : [];
+    const recent = timestamps.filter((t: number) => now - t >= 0 && now - t < WINDOW_MS);
     
     const { mult, label, tier } = getVolumeMult(recent.length);
     
