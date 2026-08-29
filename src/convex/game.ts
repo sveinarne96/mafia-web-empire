@@ -208,10 +208,10 @@ export const acknowledgeLevelUp = mutation({
       maxLife: newMaxLife,
       life: newMaxLife,
       highestLevel: Math.max(player.highestLevel ?? 0, newLevel),
-      energy: Math.min(maxE, ((player as any).energy ?? maxE) + 20),
-      stamina: Math.min(maxS, ((player as any).stamina ?? maxS) + 20),
-      focus: Math.min(maxF, ((player as any).focus ?? maxF) + 20),
-      morale: Math.min(maxM, ((player as any).morale ?? maxM) + 20),
+      energy: Math.min(maxE, ((player as any).energy ?? maxE) + 50),
+      stamina: Math.min(maxS, ((player as any).stamina ?? maxS) + 50),
+      focus: Math.min(maxF, ((player as any).focus ?? maxF) + 50),
+      morale: Math.min(maxM, ((player as any).morale ?? maxM) + 50),
     } as any);
     return { success: true, newLevel };
   },
