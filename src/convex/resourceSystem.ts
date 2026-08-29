@@ -2,19 +2,43 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
+// Each resource refills from empty to full in five minutes.
 const REGEN_INTERVALS = { energy: 3000, stamina: 3000, focus: 3000 };
 const REGEN_AMOUNTS = { energy: 1, stamina: 1, focus: 1 };
+const DEFAULT_MAX = 100;
+
+type ResourceCost = { energy: number; stamina: number; focus: number; morale: number; heat: number };
+
+function finite(value: unknown, fallback: number) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function normalizedCost(value: Partial<ResourceCost> | undefined): ResourceCost {
+  return {
+    energy: Math.max(0, finite(value?.energy, 0)),
+    stamina: Math.max(0, finite(value?.stamina, 0)),
+    focus: Math.max(0, finite(value?.focus, 0)),
+    morale: Math.max(0, finite(value?.morale, 0)),
+    heat: finite(value?.heat, 0),
+  };
+}
 
 import { RESOURCE_COSTS } from "../data/resourceCosts";
 
 function getPlayerResources(p: any) {
   const now = Date.now();
-  let energy = p.energy ?? 100, maxEnergy = p.maxEnergy ?? 100;
-  let stamina = p.stamina ?? 100, maxStamina = p.maxStamina ?? 100;
-  let focus = p.focus ?? 100, maxFocus = p.maxFocus ?? 100;
-  let morale = p.morale ?? 80, maxMorale = p.maxMorale ?? 100;
-  let adrenaline = p.adrenaline ?? 0, maxAdrenaline = p.maxAdrenaline ?? 100;
-  let heat = p.heat ?? 0, maxHeat = p.maxHeat ?? 100;
+  const maxEnergy = Math.max(1, finite(p.maxEnergy, DEFAULT_MAX));
+  const maxStamina = Math.max(1, finite(p.maxStamina, DEFAULT_MAX));
+  const maxFocus = Math.max(1, finite(p.maxFocus, DEFAULT_MAX));
+  const maxMorale = Math.max(1, finite(p.maxMorale, DEFAULT_MAX));
+  const maxAdrenaline = Math.max(1, finite(p.maxAdrenaline, DEFAULT_MAX));
+  const maxHeat = Math.max(1, finite(p.maxHeat, DEFAULT_MAX));
+  let energy = Math.min(maxEnergy, Math.max(0, finite(p.energy, maxEnergy)));
+  let stamina = Math.min(maxStamina, Math.max(0, finite(p.stamina, maxStamina)));
+  let focus = Math.min(maxFocus, Math.max(0, finite(p.focus, maxFocus)));
+  let morale = Math.min(maxMorale, Math.max(0, finite(p.morale, 80)));
+  let adrenaline = Math.min(maxAdrenaline, Math.max(0, finite(p.adrenaline, 0)));
+  let heat = Math.min(maxHeat, Math.max(0, finite(p.heat, 0)));
 
   if (p.lastEnergyRegen) { const t = Math.floor((now - p.lastEnergyRegen) / REGEN_INTERVALS.energy); if (t > 0) energy = Math.min(maxEnergy, energy + t * REGEN_AMOUNTS.energy); }
   if (p.lastStaminaRegen) { const t = Math.floor((now - p.lastStaminaRegen) / REGEN_INTERVALS.stamina); if (t > 0) stamina = Math.min(maxStamina, stamina + t * REGEN_AMOUNTS.stamina); }
@@ -27,7 +51,7 @@ function getPlayerResources(p: any) {
   return { energy: Math.floor(energy), maxEnergy, stamina: Math.floor(stamina), maxStamina, focus: Math.floor(focus), maxFocus, morale: Math.floor(morale), maxMorale, adrenaline: Math.floor(adrenaline), maxAdrenaline, heat: Math.floor(heat), maxHeat };
 }
 
-function checkMissing(r: any, costs: { energy: number; stamina: number; focus: number; morale: number; heat: number }) {
+function checkMissing(r: any, costs: ResourceCost) {
   const missing: string[] = [];
   if (costs.energy > 0 && r.energy < costs.energy) missing.push(`Energy (${r.energy}/${costs.energy})`);
   if (costs.stamina > 0 && r.stamina < costs.stamina) missing.push(`Stamina (${r.stamina}/${costs.stamina})`);
@@ -51,7 +75,7 @@ export const getResources = query({ args: {}, handler: async (ctx) => {
 export const canAfford = query({ args: { actionType: v.string() }, handler: async (ctx, args) => {
   const userId = await getAuthUserId(ctx); if (!userId) return { canAfford: false, reason: "Not authenticated" };
   const player = await ctx.db.get(userId); if (!player) return { canAfford: false, reason: "Player not found" };
-  const costs = RESOURCE_COSTS[args.actionType] ?? RESOURCE_COSTS.default; if (!costs) return { canAfford: true, reason: "No resource cost" };
+  const costs = normalizedCost(RESOURCE_COSTS[args.actionType] ?? RESOURCE_COSTS.default);
   const r = getPlayerResources(player);
   const missing = checkMissing(r, costs);
   if (missing.length > 0) return { canAfford: false, reason: `Need: ${missing.join(", ")}` };
@@ -61,8 +85,7 @@ export const canAfford = query({ args: { actionType: v.string() }, handler: asyn
 export const consumeResources = mutation({ args: { actionType: v.string() }, handler: async (ctx, args) => {
   const userId = await getAuthUserId(ctx); if (!userId) throw new Error("Not authenticated");
   const player = await ctx.db.get(userId); if (!player) throw new Error("Player not found");
-  const costs = RESOURCE_COSTS[args.actionType] ?? RESOURCE_COSTS.default;
-  if (!costs) return { success: true, message: "No resources consumed" };
+  const costs = normalizedCost(RESOURCE_COSTS[args.actionType] ?? RESOURCE_COSTS.default);
   const now = Date.now();
   const r = getPlayerResources(player);
   const missing = checkMissing(r, costs);
@@ -84,13 +107,14 @@ export const useRecovery = mutation({ args: { recoveryType: v.string() }, handle
   const userId = await getAuthUserId(ctx); if (!userId) throw new Error("Not authenticated");
   const player = await ctx.db.get(userId); if (!player) throw new Error("Player not found");
   const costs = RESOURCE_COSTS[args.recoveryType]; if (!costs) throw new Error("Unknown recovery type");
+  const recovery = normalizedCost(costs);
   const now = Date.now();
   const r = getPlayerResources(player);
-  const energy = Math.min(r.maxEnergy, r.energy + Math.abs(costs.energy));
-  const stamina = Math.min(r.maxStamina, r.stamina + Math.abs(costs.stamina));
-  const focus = Math.min(r.maxFocus, r.focus + Math.abs(costs.focus));
-  const morale = Math.min(r.maxMorale, r.morale + Math.abs(costs.morale));
-  const heat = Math.max(0, r.heat + costs.heat);
+  const energy = Math.min(r.maxEnergy, r.energy + Math.abs(recovery.energy));
+  const stamina = Math.min(r.maxStamina, r.stamina + Math.abs(recovery.stamina));
+  const focus = Math.min(r.maxFocus, r.focus + Math.abs(recovery.focus));
+  const morale = Math.min(r.maxMorale, r.morale + Math.abs(recovery.morale));
+  const heat = Math.max(0, Math.min(r.maxHeat, r.heat + recovery.heat));
   await ctx.db.patch(userId, { energy, stamina, focus, morale, heat, lastEnergyRegen: now, lastStaminaRegen: now, lastFocusRegen: now } as any);
   return { success: true, energy, stamina, focus, morale, heat };
 }});

@@ -25,8 +25,10 @@ function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
           transition={{ duration: 0.5, ease: "easeOut" }} />
         {isLow && <div className="absolute inset-0 bg-gradient-to-r from-transparent to-red-500/20 animate-pulse" />}
       </div>
-      {regen !== undefined && regen > 0 && (
-        <div className="text-[8px] text-slate-600">+1 in {Math.ceil(regen / 1000)}s</div>
+      {regen !== undefined && (
+        <div className="text-[8px] text-slate-600">
+          {regen > 0 ? `+1 in ${Math.ceil(regen / 1000)}s` : safeValue >= safeMax ? "FULL" : "+1 ready"}
+        </div>
       )}
     </div>
   );
