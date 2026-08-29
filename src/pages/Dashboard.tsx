@@ -594,6 +594,13 @@ export default function Dashboard() {
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
       case "crimes": return <CrimesOverviewPage />;
+      case "crime_street": return <CrimesOverviewPage initialCategory="street" />;
+      case "crime_robbery": return <CrimesOverviewPage initialCategory="robbery" />;
+      case "crime_fraud": return <CrimesOverviewPage initialCategory="fraud" />;
+      case "crime_burglary": return <CrimesOverviewPage initialCategory="burglary" />;
+      case "crime_drugs": return <CrimesOverviewPage initialCategory="drugs" />;
+      case "crime_organized": return <CrimesOverviewPage initialCategory="organized" />;
+      case "crime_underground": return <CrimesOverviewPage initialCategory="underground" />;
       case "car_theft": return <GtaCarTheftPage />;
       case "steal_house": return <StealFromHousePage />;
       case "organized_crime": return <OrganizedCrimePage />;
@@ -743,7 +750,13 @@ export default function Dashboard() {
           {[
             { label: "🏠 HQ", page: "headquarters", color: "from-amber-500/20 to-orange-500/10" },
             { label: "🏦 Bank", page: "bank", color: "from-green-500/20 to-emerald-500/10" },
-            { label: "🔪 Crimes", page: "crimes", color: "from-red-500/20 to-rose-500/10" },
+            { label: "🔪 Street", page: "crime_street", color: "from-green-500/20 to-emerald-500/10" },
+            { label: "💰 Robbery", page: "crime_robbery", color: "from-red-500/20 to-rose-500/10" },
+            { label: "🃏 Fraud", page: "crime_fraud", color: "from-yellow-500/20 to-amber-500/10" },
+            { label: "🏠 Burglary", page: "crime_burglary", color: "from-orange-500/20 to-red-500/10" },
+            { label: "💊 Drugs", page: "crime_drugs", color: "from-purple-500/20 to-violet-500/10" },
+            { label: "🕵️ Organized", page: "crime_organized", color: "from-blue-500/20 to-indigo-500/10" },
+            { label: "🕳️ Underground", page: "crime_underground", color: "from-gray-500/20 to-slate-500/10" },
             { label: "🚗 GTA Theft", page: "car_theft", color: "from-red-600/20 to-orange-500/10" },
             { label: "🏠 Burglarize", page: "steal_house", color: "from-red-400/20 to-amber-500/10" },
             { label: "🕵️ Organized", page: "organized_crime", color: "from-purple-600/20 to-red-500/10" },

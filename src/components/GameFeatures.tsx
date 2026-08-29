@@ -903,9 +903,11 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
     c.crimes.map(cr => ({ ...cr, categoryId: c.id, categoryName: c.name, categoryIcon: c.icon }))
   );
 
+  const baseCrimes = initialCategory ? allCrimes.filter(c => c.categoryId === initialCategory) : allCrimes;
+
   const filtered = searchQuery
-    ? allCrimes.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase()) || c.categoryName.toLowerCase().includes(searchQuery.toLowerCase()))
-    : allCrimes;
+    ? baseCrimes.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase()) || c.categoryName.toLowerCase().includes(searchQuery.toLowerCase()))
+    : baseCrimes;
 
   const sorted = [...filtered].sort((a, b) => b.xp - a.xp);
 
@@ -943,7 +945,7 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
       )}
       <div className="flex items-center gap-3">
         <span className="text-3xl">🔥</span>
-        <div><h2 className="text-2xl font-bold">All Crimes</h2><p className="text-xs text-muted-foreground">{sorted.length} crimes sorted by XP</p></div>
+        <div><h2 className="text-2xl font-bold">All Crimes</h2><p className="text-xs text-muted-foreground">{sorted.length} crimes (filtered by category)</p></div>
       </div>
       <div className="relative">
         <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="🔍 Search crimes..." className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:border-primary/50 transition" />
