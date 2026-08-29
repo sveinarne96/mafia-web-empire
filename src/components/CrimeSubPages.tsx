@@ -56,55 +56,37 @@ export function CrimeSubPages({ activePage, onNavigate }: { activePage: string; 
 
 // Sub-bar that shows below the top bar when a category is expanded
 export function CrimeSubBar({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  // Extract category from activePage (e.g. "crime_street" -> "street")
+  const activeCategoryId = activePage.startsWith("crime_") ? activePage.replace("crime_", "") : null;
+  const activeCategory = activeCategoryId ? crimeCategories.find(c => c.id === activeCategoryId) : null;
+
+  if (!activeCategory) return null;
 
   const getCrimeRoute = (categoryId: string, crimeId: string) => `crime_${categoryId}_${crimeId}`;
 
   return (
-    <div className="w-full">
-      {/* Category Tabs */}
-      <div className="flex items-center gap-1 px-3 py-1.5 overflow-x-auto scrollbar-hide"
-        style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.15), rgba(20,10,5,0.2), rgba(0,0,0,0.15))' }}>
-        {crimeCategories.map(cat => (
-          <button key={cat.id}
-            onClick={() => setExpandedCategory(expandedCategory === cat.id ? null : cat.id)}
-            className={`relative px-3 py-1.5 rounded-xl text-[10px] font-bold whitespace-nowrap transition-all duration-300 ${
-              expandedCategory === cat.id
-                ? `bg-gradient-to-r ${CATEGORY_COLORS[cat.id]} ${CATEGORY_TEXT[cat.id]} scale-105 shadow-lg`
-                : "text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:scale-105"
-            }`}>
-            {CATEGORY_ICONS[cat.id]} {cat.name} <span className="text-[8px] opacity-50">({cat.crimes.length})</span>
-          </button>
-        ))}
+    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.2 }} className="overflow-hidden w-full">
+      <div className="px-3 py-1.5 overflow-x-auto scrollbar-hide flex gap-1"
+        style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.1), rgba(20,10,5,0.15), rgba(0,0,0,0.1))' }}>
+        <span className="text-[9px] font-bold text-slate-500 self-center mr-1">{CATEGORY_ICONS[activeCategoryId!]} {activeCategory.name}:</span>
+        {activeCategory.crimes.map(crime => {
+          const route = getCrimeRoute(activeCategoryId!, crime.id);
+          const isCrimeActive = activePage === route;
+          return (
+            <button key={crime.id}
+              onClick={() => onNavigate(route)}
+              className={`px-2.5 py-1 rounded-lg text-[9px] font-bold whitespace-nowrap transition-all duration-200 ${
+                isCrimeActive
+                  ? `bg-gradient-to-r ${CATEGORY_COLORS[activeCategoryId!]} ${CATEGORY_TEXT[activeCategoryId!]} scale-105 border ${CATEGORY_COLORS[activeCategoryId!]?.split(' ')[1] || 'border-white/10'}`
+                  : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
+              }`}>
+              <span className="opacity-60">Lv.{crime.levelRequired}</span> {crime.name}
+            </button>
+          );
+        })}
       </div>
-
-      {/* Expanded Crime List */}
-      <AnimatePresence>
-        {expandedCategory && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }} className="overflow-hidden">
-            <div className="px-3 py-1.5 overflow-x-auto scrollbar-hide flex gap-1"
-              style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.1), rgba(20,10,5,0.15), rgba(0,0,0,0.1))' }}>
-              {crimeCategories.find(c => c.id === expandedCategory)?.crimes.map(crime => {
-                const route = getCrimeRoute(expandedCategory, crime.id);
-                const isActive = activePage === route;
-                return (
-                  <button key={crime.id}
-                    onClick={() => { onNavigate(route); setExpandedCategory(null); }}
-                    className={`px-2.5 py-1 rounded-lg text-[9px] font-bold whitespace-nowrap transition-all duration-200 ${
-                      isActive
-                        ? `bg-gradient-to-r ${CATEGORY_COLORS[expandedCategory]} ${CATEGORY_TEXT[expandedCategory]} scale-105`
-                        : "text-slate-500 hover:text-slate-300 hover:bg-white/5"
-                    }`}>
-                    <span className="opacity-70">Lv.{crime.levelRequired}</span> {crime.name}
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
 
