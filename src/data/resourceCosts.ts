@@ -1,3 +1,5 @@
+import { crimeCategories } from "./crimes";
+
 // Shared resource costs - used by both client and server
 export const RESOURCE_COSTS: Record<string, { energy: number; stamina: number; focus: number; morale: number; heat: number }> = {
   // ===== STREET CRIMES (low cost) =====
@@ -237,3 +239,33 @@ export const RESOURCE_COSTS: Record<string, { energy: number; stamina: number; f
   // Safe fallback for legacy action IDs.
   default: { energy: 5, stamina: 3, focus: 3, morale: 0, heat: 0 },
 };
+
+// ═══ AUTO-SCALED TOP-BAR ENERGY COSTS (5 ⚡ → 100 ⚡ by tier) ═══
+// Every top-bar criminal category scales its energy cost from cheap (5 ⚡)
+// for low-level jobs up to 100 ⚡ for the most serious operations.
+const TOP_BAR_ENERGY_SCALE: Record<string, { min: number; max: number }> = {
+  street: { min: 5, max: 20 },
+  robbery: { min: 10, max: 60 },
+  fraud: { min: 8, max: 50 },
+  burglary: { min: 10, max: 70 },
+  drugs: { min: 10, max: 65 },
+  organized: { min: 20, max: 85 },
+  underground: { min: 10, max: 95 },
+  gta_theft: { min: 15, max: 100 },
+  steal_house: { min: 10, max: 80 },
+  murder: { min: 25, max: 100 },
+};
+
+for (const category of crimeCategories) {
+  const scale = TOP_BAR_ENERGY_SCALE[category.id];
+  if (!scale) continue;
+  const levels = category.crimes.map((crime) => crime.levelRequired);
+  const minLevel = Math.min(...levels);
+  const maxLevel = Math.max(...levels);
+  const span = maxLevel - minLevel;
+  for (const crime of category.crimes) {
+    const t = span === 0 ? 1 : (crime.levelRequired - minLevel) / span;
+    const energy = Math.min(scale.max, Math.max(scale.min, Math.round(scale.min + t * (scale.max - scale.min))));
+    RESOURCE_COSTS[crime.id] = { ...(RESOURCE_COSTS[crime.id] ?? {}), energy };
+  }
+}
