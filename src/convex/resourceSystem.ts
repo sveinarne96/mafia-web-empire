@@ -3,8 +3,9 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { v } from "convex/values";
 
 // Each resource refills from empty to full in five minutes.
-const REGEN_INTERVALS = { energy: 3000, stamina: 3000, focus: 3000 };
-const REGEN_AMOUNTS = { energy: 1, stamina: 1, focus: 1 };
+// Energy restores 5 points every minute; all resource values remain capped.
+const REGEN_INTERVALS = { energy: 60000, stamina: 60000, focus: 60000 };
+const REGEN_AMOUNTS = { energy: 5, stamina: 5, focus: 5 };
 const DEFAULT_MAX = 100;
 
 type ResourceCost = { energy: number; stamina: number; focus: number; morale: number; heat: number };

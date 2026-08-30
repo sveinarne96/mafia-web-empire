@@ -28,7 +28,7 @@ function ResourceBar({ label, icon, value, max, color, regen, regenLabel }: {
       </div>
       {regen !== undefined && (
         <div className="text-[8px] text-slate-600">
-          {regen > 0 ? `+1 in ${Math.ceil(regen / 1000)}s` : safeValue >= safeMax ? "FULL" : "+1 ready"}
+          {regen > 0 ? `+5 in ${Math.ceil(regen / 1000)}s` : safeValue >= safeMax ? "FULL" : "+5 ready"}
         </div>
       )}
     </div>

@@ -198,5 +198,12 @@ export const RESOURCE_COSTS: Record<string, { energy: number; stamina: number; f
   street_atm_skim: { energy: 8, stamina: 3, focus: 10, morale: 0, heat: 5 },
 
   // Default fallback for any unknown action
+  // Explicit costs for every top-bar criminal action.
+  gta: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 12 },
+  gta_theft: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 12 },
+  organized: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
+  org_crime: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
+
+  // Safe fallback for legacy action IDs.
   default: { energy: 5, stamina: 3, focus: 3, morale: 0, heat: 0 },
 };
