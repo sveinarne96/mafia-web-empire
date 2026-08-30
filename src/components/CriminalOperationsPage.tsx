@@ -13,6 +13,9 @@ const categoryMeta: Record<string, { title: string; icon: string; tone: string; 
   drugs: { title: "Distribution Network", icon: "💊", tone: "purple", tagline: "Routes, contacts, and controlled risk." },
   organized: { title: "Organized Crime", icon: "🕵️", tone: "blue", tagline: "Bigger crews. Bigger exposure. Bigger returns." },
   underground: { title: "Underground Desk", icon: "🕳️", tone: "slate", tagline: "The jobs nobody puts on a ledger." },
+  gta_theft: { title: "GTA Car Theft", icon: "🚗", tone: "red", tagline: "Steal anything with wheels. The bigger the engine, the bigger the score." },
+  steal_house: { title: "House Infiltration", icon: "🏠", tone: "rose", tagline: "Every home has a weakness. Find it, exploit it, vanish." },
+  murder: { title: "Contract Killings", icon: "💀", tone: "red", tagline: "No witnesses. No evidence. No mercy." },
 };
 
 export function CriminalOperationsPage({ category }: { category: string }) {

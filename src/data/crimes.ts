@@ -214,6 +214,62 @@ export const crimeCategories: CrimeCategory[] = [
       { id: "zero_day", name: "Zero-Day Exploit", description: "Discover and sell zero-day vulnerabilities.", reward: 60000, risk: 70, xp: 900, levelRequired: 23 },
     ],
   },
+
+  // GTA THEFT (40 energy)
+  {
+    id: "gta_theft",
+    name: "GTA Car Theft",
+    icon: "🚗",
+    description: "Steal vehicles from junk cars to luxury rides.",
+    crimes: [
+      { id: "gta_junk_car", name: "Steal Junk Car", description: "Boost a beat-up car from a lot.", reward: 300, risk: 5, xp: 100, levelRequired: 1 },
+      { id: "gta_parked_car", name: "Parked Car Theft", description: "Hotwire a car parked on the street.", reward: 600, risk: 10, xp: 125, levelRequired: 1 },
+      { id: "gta_delivery_van", name: "Delivery Van Hijack", description: "Intercept a delivery van mid-route.", reward: 1200, risk: 15, xp: 150, levelRequired: 2 },
+      { id: "gta_sports_car", name: "Sports Car Theft", description: "Steal a high-performance sports car.", reward: 3000, risk: 25, xp: 200, levelRequired: 4 },
+      { id: "gta_luxury_suv", name: "Luxury SUV Theft", description: "Swipe an expensive SUV from a dealership.", reward: 5000, risk: 30, xp: 250, levelRequired: 6 },
+      { id: "gta_supercar", name: "Supercar Heist", description: "Steal a Lamborghini or Ferrari.", reward: 15000, risk: 50, xp: 400, levelRequired: 10 },
+      { id: "gta_armored_truck", name: "Armored Truck Theft", description: "Highjacking an armored transport.", reward: 25000, risk: 65, xp: 600, levelRequired: 15 },
+      { id: "gta_helicopter", name: "Helicopter Theft", description: "Steal a helicopter from a rooftop pad.", reward: 40000, risk: 80, xp: 800, levelRequired: 20 },
+    ],
+  },
+
+  // STEAL FROM HOUSE (40 energy)
+  {
+    id: "steal_house",
+    name: "Steal from House",
+    icon: "🏠",
+    description: "Break into homes and grab what you can.",
+    crimes: [
+      { id: "sh_easy_home", name: "Easy Suburban Home", description: "An unlocked door in the suburbs.", reward: 400, risk: 5, xp: 100, levelRequired: 1 },
+      { id: "sh_poor_apartment", name: "Poor Apartment", description: "A ground-floor apartment.", reward: 800, risk: 10, xp: 125, levelRequired: 1 },
+      { id: "sh_average_house", name: "Average Family Home", description: "A standard house with basic security.", reward: 1500, risk: 15, xp: 150, levelRequired: 2 },
+      { id: "sh_suburban_mansion", name: "Suburban Mansion", description: "A big house in the wealthy suburbs.", reward: 4000, risk: 25, xp: 200, levelRequired: 5 },
+      { id: "sh_penthouse", name: "Downtown Penthouse", description: "A luxury penthouse apartment.", reward: 10000, risk: 40, xp: 350, levelRequired: 8 },
+      { id: "sh_rich_estate", name: "Rich Estate", description: "A gated estate with private security.", reward: 20000, risk: 55, xp: 500, levelRequired: 12 },
+      { id: "sh_ceo_condo", name: "CEO Condo", description: "The penthouse of a tech billionaire.", reward: 40000, risk: 70, xp: 700, levelRequired: 18 },
+      { id: "sh_villa_heist", name: "Private Villa Heist", description: "An oceanfront villa with armed guards.", reward: 75000, risk: 85, xp: 900, levelRequired: 22 },
+    ],
+  },
+
+  // MURDER (40 energy)
+  {
+    id: "murder",
+    name: "Murder",
+    icon: "💀",
+    description: "The darkest jobs. Maximum risk, maximum reward.",
+    crimes: [
+      { id: "mur_back_alley", name: "Back Alley Hit", description: "A quick job in a dark alley.", reward: 2000, risk: 20, xp: 200, levelRequired: 1 },
+      { id: "mur_drug_dealer", name: "Drug Dealer Hit", description: "Eliminate a competing dealer.", reward: 5000, risk: 30, xp: 300, levelRequired: 3 },
+      { id: "mur_witness", name: "Witness Elimination", description: "Silence a key witness.", reward: 8000, risk: 40, xp: 400, levelRequired: 5 },
+      { id: "mur_businessman", name: "Businessman Assassination", description: "Take out a corporate rival.", reward: 15000, risk: 50, xp: 500, levelRequired: 8 },
+      { id: "mur_politician", name: "Political Hit", description: "Eliminate a politician.", reward: 30000, risk: 65, xp: 700, levelRequired: 12 },
+      { id: "mur_sniper", name: "Sniper Assassination", description: "Long-range precision kill.", reward: 25000, risk: 55, xp: 600, levelRequired: 10 },
+      { id: "mur_car_bomb", name: "Car Bombing", description: "Plant explosives on a target vehicle.", reward: 20000, risk: 60, xp: 550, levelRequired: 9 },
+      { id: "mur_poison", name: "Poison Contract", description: "A slow, untraceable death.", reward: 18000, risk: 45, xp: 500, levelRequired: 7 },
+      { id: "mur_mass_hit", name: "Mass Elimination", description: "Take out multiple targets in one job.", reward: 50000, risk: 80, xp: 900, levelRequired: 18 },
+      { id: "mur_donor_removal", name: "Donor Removal", description: "Eliminate a high-value organ donor.", reward: 35000, risk: 70, xp: 750, levelRequired: 15 },
+    ],
+  },
 ];
 
 export function getCrimeTypeColor(type: string): string {

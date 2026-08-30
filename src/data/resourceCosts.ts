@@ -204,6 +204,36 @@ export const RESOURCE_COSTS: Record<string, { energy: number; stamina: number; f
   organized: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
   org_crime: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
 
+  // GTA THEFT (40 energy each)
+  gta_junk_car: { energy: 40, stamina: 30, focus: 20, morale: 0, heat: 15 },
+  gta_parked_car: { energy: 40, stamina: 30, focus: 20, morale: 0, heat: 18 },
+  gta_delivery_van: { energy: 40, stamina: 35, focus: 20, morale: 0, heat: 20 },
+  gta_sports_car: { energy: 40, stamina: 35, focus: 25, morale: 0, heat: 25 },
+  gta_luxury_suv: { energy: 40, stamina: 35, focus: 25, morale: 0, heat: 28 },
+  gta_supercar: { energy: 40, stamina: 35, focus: 30, morale: 0, heat: 35 },
+  gta_armored_truck: { energy: 40, stamina: 35, focus: 30, morale: 5, heat: 40 },
+  gta_helicopter: { energy: 40, stamina: 35, focus: 35, morale: 5, heat: 45 },
+  // STEAL FROM HOUSE (40 energy each)
+  sh_easy_home: { energy: 40, stamina: 25, focus: 15, morale: 0, heat: 10 },
+  sh_poor_apartment: { energy: 40, stamina: 25, focus: 15, morale: 0, heat: 12 },
+  sh_average_house: { energy: 40, stamina: 30, focus: 20, morale: 0, heat: 15 },
+  sh_suburban_mansion: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 20 },
+  sh_penthouse: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 28 },
+  sh_rich_estate: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 35 },
+  sh_ceo_condo: { energy: 40, stamina: 30, focus: 35, morale: 0, heat: 40 },
+  sh_villa_heist: { energy: 40, stamina: 30, focus: 35, morale: 5, heat: 45 },
+  // MURDER (40 energy each)
+  mur_back_alley: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 20 },
+  mur_drug_dealer: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 25 },
+  mur_witness: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 30 },
+  mur_businessman: { energy: 40, stamina: 30, focus: 30, morale: 5, heat: 35 },
+  mur_politician: { energy: 40, stamina: 30, focus: 35, morale: 5, heat: 45 },
+  mur_sniper: { energy: 40, stamina: 30, focus: 35, morale: 0, heat: 35 },
+  mur_car_bomb: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 40 },
+  mur_poison: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 30 },
+  mur_mass_hit: { energy: 40, stamina: 30, focus: 35, morale: 10, heat: 50 },
+  mur_donor_removal: { energy: 40, stamina: 30, focus: 35, morale: 5, heat: 40 },
+
   // Safe fallback for legacy action IDs.
   default: { energy: 5, stamina: 3, focus: 3, morale: 0, heat: 0 },
 };

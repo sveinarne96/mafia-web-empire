@@ -713,11 +713,11 @@ export default function Dashboard() {
       case "crime_organized": return <CriminalOperationsPage category="organized" />;
       case "crime_underground": return <CriminalOperationsPage category="underground" />;
 
-      case "car_theft": return <GtaCarTheftPage />;
-      case "steal_house": return <StealFromHousePage />;
+      case "car_theft": return <CriminalOperationsPage category="gta_theft" />;
+      case "steal_house": return <CriminalOperationsPage category="steal_house" />;
       case "organized_crime": return <OrganizedCrimePage />;
       case "missions": return <MissionsOverviewPage />;
-      case "murder": return <MurderPage />;
+      case "murder": return <CriminalOperationsPage category="murder" />;
       case "stock_market": return <StockMarketPage />;
       case "interest_rates": return <InterestRatesPage />;
       case "credit_score": return <CreditScorePage />;
