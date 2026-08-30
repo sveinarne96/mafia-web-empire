@@ -1,20 +1,6 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-const TIER_COLORS = [
-  "text-slate-500",     // 0
-  "text-orange-400",    // 5
-  "text-orange-500",    // 15
-  "text-red-400",       // 30
-  "text-red-500",       // 50
-  "text-pink-400",      // 75
-  "text-pink-500",      // 100
-  "text-purple-400",    // 150
-  "text-purple-500",    // 200
-  "text-amber-400",     // 300
-  "text-yellow-300",    // 500
-];
-
 const TIER_BARS = ["▱▱▱▱▱", "▰▱▱▱▱", "▰▰▱▱▱", "▰▰▰▱▱", "▰▰▰▰▱", "▰▰▰▰▰"];
 
 export function XPVolumePanel() {
@@ -24,15 +10,14 @@ export function XPVolumePanel() {
 
   const { actions, mult, label, tier, nextTierAt, nextTierMult } = volume;
   const progress = nextTierAt > 0 ? Math.min(100, (actions / nextTierAt) * 100) : 100;
-  const colorClass = TIER_COLORS[Math.min(tier, TIER_COLORS.length - 1)];
   const barIndex = Math.min(Math.floor(tier / 2), TIER_BARS.length - 1);
 
   return (
-    <div className="bg-slate-900/50 rounded-xl p-3 border border-slate-700/30">
+    <div className="animate-neon-light-glow bg-slate-900/50 rounded-xl p-3 border border-cyan-400/20">
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-bold text-slate-400">⚡ XP Volume</span>
+        <span className="text-xs font-bold animate-neon-light-text drop-shadow">⚡ XP Volume</span>
         {mult > 1 && (
-          <span className={`text-[10px] font-black ${colorClass}`}>
+          <span className="text-sm font-black animate-neon-light-text drop-shadow">
             {mult}x
           </span>
         )}
@@ -44,35 +29,34 @@ export function XPVolumePanel() {
           className="h-full rounded-full transition-all duration-500"
           style={{
             width: `${progress}%`,
-            background: tier >= 5
-              ? "linear-gradient(90deg, #f97316, #ef4444, #ec4899, #a855f7)"
-              : tier >= 2
-              ? "linear-gradient(90deg, #f97316, #ef4444)"
-              : "#f97316",
+            background: "linear-gradient(90deg, #67e8f9, #a7f3d0, #fde68a, #fbcfe8, #c4b5fd, #67e8f9)",
+            backgroundSize: "300% 100%",
+            animation: "neon-light-flow 4s linear infinite",
+            boxShadow: "0 0 10px rgba(150,230,255,0.5)",
           }}
         />
       </div>
 
-      <div className="flex justify-between text-[9px]">
-        <span className="text-slate-500">
+      <div className="flex justify-between text-[11px]">
+        <span className="text-slate-300">
           {actions} actions/hr
         </span>
         {label ? (
-          <span className={`font-bold ${colorClass}`}>{label}</span>
+          <span className="font-bold animate-neon-light-text drop-shadow">{label}</span>
         ) : (
-          <span className="text-slate-600">Do actions to boost XP</span>
+          <span className="text-slate-400">Do actions to boost XP</span>
         )}
       </div>
 
       {nextTierAt > 0 && actions < nextTierAt && (
-        <div className="mt-1 text-[8px] text-slate-600">
+        <div className="mt-1 text-[10px] animate-neon-light-text drop-shadow">
           {nextTierAt - actions} more for {nextTierMult}x
         </div>
       )}
 
       {mult > 1 && (
         <div className="mt-1.5 text-center">
-          <span className={`text-xs font-black ${colorClass} animate-pulse`}>
+          <span className="text-base font-black animate-neon-light-text drop-shadow">
             {TIER_BARS[barIndex]}
           </span>
         </div>
