@@ -44,7 +44,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
   const level = player.level ?? 1;
   const unlocked = crimes.filter((crime) => level >= crime.levelRequired).length;
   const selectedLocked = level < selected.levelRequired;
-  const energyBlocked = Boolean(resources && resources.energy <= 0);
+  const energyBlocked = Boolean(resources && resources.energy < 25);
   const cooldown = cooldowns[selected.id] ?? 0;
   const run = async () => {
     if (busy || selectedLocked || energyBlocked || cooldown > 0) return;

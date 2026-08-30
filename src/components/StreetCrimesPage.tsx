@@ -40,7 +40,7 @@ export function StreetCrimesPage() {
   const level = player?.level ?? 1;
   const locked = level < activeCrime.level;
   const cooldown = cooldowns[activeCrime.id] ?? 0;
-  const energyBlocked = Boolean(resources && resources.energy <= 0);
+  const energyBlocked = Boolean(resources && resources.energy < 25);
 
   const execute = async (crime: Crime) => {
     if (busy || energyBlocked || level < crime.level || cooldowns[crime.id]) return;
