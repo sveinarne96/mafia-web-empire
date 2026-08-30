@@ -203,9 +203,9 @@ export const acknowledgeLevelUp = mutation({
     const player = await ctx.db.get(userId);
     if (!player) throw new Error("Player not found");
     // Actually apply the level up: level+1, +10 ATK, +10 DEF, +75 HP
+    if ((player.experience ?? 0) < XP_PER_LEVEL) throw new Error(`Need ${XP_PER_LEVEL} XP to rank up!`);
     const newLevel = (player.level ?? 1) + 1;
     const newMaxLife = (player.maxLife ?? 100) + 75;
-    if ((player.experience ?? 0) < XP_PER_LEVEL) throw new Error(`Need ${XP_PER_LEVEL} XP to rank up!`);
     // Resource boost on rankup
     const maxE = (player as any).maxEnergy ?? 100;
     const maxS = (player as any).maxStamina ?? 100;
@@ -220,10 +220,11 @@ export const acknowledgeLevelUp = mutation({
       maxLife: newMaxLife,
       life: newMaxLife,
       highestLevel: Math.max(player.highestLevel ?? 0, newLevel),
-      energy: Math.min(maxE, ((player as any).energy ?? maxE) + 50),
-      stamina: Math.min(maxS, ((player as any).stamina ?? maxS) + 50),
-      focus: Math.min(maxF, ((player as any).focus ?? maxF) + 50),
-      morale: Math.min(maxM, ((player as any).morale ?? maxM) + 50),
+      experience: Math.max(0, (player.experience ?? 0) - XP_PER_LEVEL),
+      energy: maxE,
+      stamina: maxS,
+      focus: maxF,
+      morale: maxM,
     } as any);
     return { success: true, newLevel };
   },
