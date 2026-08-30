@@ -55,8 +55,8 @@ function getPlayerResources(p: any) {
 
 function checkMissing(r: any, costs: ResourceCost) {
   const missing: string[] = [];
-  // Gameplay is locked while energy is critically low; actions resume at 25 energy.
-  if (costs.energy > 0 && r.energy < Math.max(25, costs.energy)) missing.push(`Energy (${r.energy}/25 minimum)`);
+  // Actions use their configured cost. The 25-energy rule is only a recovery gate after depletion.
+  if (costs.energy > 0 && r.energy < costs.energy) missing.push(`Energy (${r.energy}/${costs.energy})`);
   if (costs.stamina > 0 && r.stamina < costs.stamina) missing.push(`Stamina (${r.stamina}/${costs.stamina})`);
   if (costs.focus > 0 && r.focus < costs.focus) missing.push(`Focus (${r.focus}/${costs.focus})`);
   if (costs.morale > 0 && r.morale < costs.morale) missing.push(`Morale (${r.morale}/${costs.morale})`);
