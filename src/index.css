@@ -848,25 +848,28 @@
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+/* Execute button themed with the resource panel colors (Energy yellow, Stamina green,
+   Focus cyan, Morale orange, Adrenaline pink, Heat red) flowing in a light animated loop. */
 .animate-execute-light {
   background: linear-gradient(120deg,
-    #a7f3d0,
-    #bae6fd,
-    #ddd6fe,
-    #fde68a,
-    #fbcfe8,
-    #a7f3d0);
+    #fbbf24,
+    #34d399,
+    #06b6d4,
+    #f97316,
+    #ec4899,
+    #dc2626,
+    #fbbf24);
   background-size: 300% 100%;
-  animation: execute-light-flow 4s ease infinite;
-  color: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 16px rgba(190, 225, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.65);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  animation: execute-light-flow 5s ease infinite;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   transition: all 0.2s ease;
 }
 .animate-execute-light:hover:not(:disabled) {
-  box-shadow: 0 0 22px rgba(190, 225, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  filter: brightness(1.08);
+  box-shadow: 0 0 24px rgba(251, 191, 36, 0.45), 0 0 40px rgba(236, 72, 153, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  filter: brightness(1.1);
 }
 
 /* Light neon animated text (XP Volume & similar panels) */
