@@ -41,7 +41,7 @@ function getPlayerResources(p: any) {
   let adrenaline = Math.min(maxAdrenaline, Math.max(0, finite(p.adrenaline, 0)));
   let heat = Math.min(maxHeat, Math.max(0, finite(p.heat, 0)));
 
-  if (p.lastEnergyRegen) { const t = Math.floor((now - p.lastEnergyRegen) / REGEN_INTERVALS.energy); if (t > 0) energy = Math.min(maxEnergy, energy + t * REGEN_AMOUNTS.energy); }
+  if (p.lastEnergyRegen) { const t = Math.floor(Math.max(0, now - p.lastEnergyRegen) / REGEN_INTERVALS.energy); if (t > 0) energy = Math.min(maxEnergy, energy + t * REGEN_AMOUNTS.energy); }
   if (p.lastStaminaRegen) { const t = Math.floor((now - p.lastStaminaRegen) / REGEN_INTERVALS.stamina); if (t > 0) stamina = Math.min(maxStamina, stamina + t * REGEN_AMOUNTS.stamina); }
   if (p.lastFocusRegen) { const t = Math.floor((now - p.lastFocusRegen) / REGEN_INTERVALS.focus); if (t > 0) focus = Math.min(maxFocus, focus + t * REGEN_AMOUNTS.focus); }
 
@@ -69,7 +69,7 @@ export const getResources = query({ args: {}, handler: async (ctx) => {
   const now = Date.now();
   const r = getPlayerResources(player);
   return { ...r,
-    nextEnergyRegen: Math.max(0, ((player as any).lastEnergyRegen ?? now) + REGEN_INTERVALS.energy - now),
+    nextEnergyRegen: r.energy >= r.maxEnergy ? 0 : Math.max(0, ((player as any).lastEnergyRegen ?? now) + REGEN_INTERVALS.energy - now),
     nextStaminaRegen: Math.max(0, ((player as any).lastStaminaRegen ?? now) + REGEN_INTERVALS.stamina - now),
     nextFocusRegen: Math.max(0, ((player as any).lastFocusRegen ?? now) + REGEN_INTERVALS.focus - now),
     regenIntervalMs: REGEN_INTERVALS.energy,
