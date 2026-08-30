@@ -848,26 +848,26 @@
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
-/* Execute button: single amber/gold hue (the game's signature color), still animated
-   as a flowing light shimmer between light and rich amber. */
+/* Execute button: single light amber hue (the game's signature gold), still animated
+   as a soft flowing shimmer between pale and light amber. Light enough to read easily. */
 .animate-execute-light {
   background: linear-gradient(120deg,
+    #fef3c7,
     #fde68a,
-    #fbbf24,
-    #f59e0b,
-    #fbbf24,
-    #fde68a);
+    #fcd34d,
+    #fde68a,
+    #fef3c7);
   background-size: 300% 100%;
   animation: execute-light-flow 4s ease infinite;
-  color: #1a1206;
-  border: 1px solid rgba(253, 230, 138, 0.55);
-  box-shadow: 0 0 16px rgba(251, 191, 36, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: #713f12;
+  border: 1px solid rgba(253, 230, 138, 0.6);
+  box-shadow: 0 0 16px rgba(253, 230, 138, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: all 0.2s ease;
 }
 .animate-execute-light:hover:not(:disabled) {
-  box-shadow: 0 0 24px rgba(251, 191, 36, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  filter: brightness(1.08);
+  box-shadow: 0 0 24px rgba(253, 230, 138, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  filter: brightness(1.05);
 }
 
 /* Light neon animated text (XP Volume & similar panels) */
