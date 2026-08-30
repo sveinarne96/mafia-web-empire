@@ -284,6 +284,18 @@ export const GTA_LOOT: Record<string, { name: string; speed: number; storage: nu
   gta_helicopter: { name: "Bell 206 JetRanger Helicopter", speed: 120, storage: 32, price: 150000 },
 };
 
+// Specific loot granted by each Steal-from-House option (last = most expensive).
+export const SH_LOOT: Record<string, { name: string; rarity: string; attack?: number; defense?: number; price: number }> = {
+  sh_easy_home: { name: "Old DVD Collection", rarity: "common", price: 400 },
+  sh_poor_apartment: { name: "Second-Hand TV", rarity: "common", defense: 1, price: 800 },
+  sh_average_house: { name: "Hidden Jewelry Box", rarity: "uncommon", defense: 2, price: 1500 },
+  sh_suburban_mansion: { name: "Designer Watches & Cash", rarity: "uncommon", defense: 3, price: 4000 },
+  sh_penthouse: { name: "Luxury Art Piece", rarity: "rare", attack: 3, defense: 3, price: 10000 },
+  sh_rich_estate: { name: "Solid Gold Bar", rarity: "rare", attack: 4, defense: 4, price: 20000 },
+  sh_ceo_condo: { name: "CEO's Rare Coin Collection", rarity: "legendary", attack: 5, defense: 5, price: 40000 },
+  sh_villa_heist: { name: "Black Diamond Necklace", rarity: "legendary", attack: 8, defense: 8, price: 75000 },
+};
+
 export function getCrimeTypeColor(type: string): string {
   const colors: Record<string, string> = {
     street: "text-green-400",
