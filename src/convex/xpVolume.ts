@@ -5,17 +5,20 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 // Tracks actions in a rolling window and applies a stacking bonus
 
 export const XP_VOLUME_TIERS = [
-  { min: 0,   mult: 1.0, label: "" },
-  { min: 5,   mult: 1.25, label: "🔥 Warming Up" },
-  { min: 15,  mult: 1.5, label: "🔥🔥 On Fire" },
-  { min: 30,  mult: 2.0, label: "🔥🔥🔥 Burning Bright" },
-  { min: 50,  mult: 2.5, label: "💥 Rampage" },
-  { min: 75,  mult: 3.0, label: "💥💥 Frenzy" },
-  { min: 100, mult: 3.5, label: "💀 Bloodlust" },
-  { min: 150, mult: 4.0, label: "💀💀 Rampage Mode" },
-  { min: 200, mult: 5.0, label: "☠️ RELENTLESS" },
-  { min: 300, mult: 6.0, label: "☠️☠️ UNSTOPPABLE" },
-  { min: 500, mult: 8.0, label: "👹 LEGENDARY GRIND" },
+  { min: 0,   mult: 1.0,  label: "" },
+  { min: 3,   mult: 1.25, label: "🔥 Warming Up" },
+  { min: 8,   mult: 1.5,  label: "🔥🔥 On Fire" },
+  { min: 15,  mult: 2.0,  label: "🔥🔥🔥 Burning Bright" },
+  { min: 25,  mult: 2.5,  label: "💥 Rampage" },
+  { min: 40,  mult: 3.0,  label: "💥💥 Frenzy" },
+  { min: 60,  mult: 4.0,  label: "💀 Bloodlust" },
+  { min: 85,  mult: 5.0,  label: "💀💀 Rampage Mode" },
+  { min: 115, mult: 6.0,  label: "☠️ RELENTLESS" },
+  { min: 150, mult: 8.0,  label: "☠️☠️ UNSTOPPABLE" },
+  { min: 190, mult: 10.0, label: "👹 LEGENDARY GRIND" },
+  { min: 230, mult: 12.0, label: "👑 GODLIKE GRIND" },
+  { min: 270, mult: 15.0, label: "⚡ OVERDRIVE" },
+  { min: 320, mult: 20.0, label: "🌋 MAXIMUM OVERDRIVE" },
 ];
 
 const WINDOW_MS = 3600000; // 1 hour rolling window
@@ -70,12 +73,12 @@ export const getVolumeStatus = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
+    if (!identity) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 3, nextTierMult: 1.25 };
 
     const userId = await getAuthUserId(ctx);
-    if (!userId) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
+    if (!userId) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 3, nextTierMult: 1.25 };
     const player = await ctx.db.get(userId);
-    if (!player) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 5, nextTierMult: 1.25 };
+    if (!player) return { actions: 0, mult: 1, label: "", tier: 0, nextTierAt: 3, nextTierMult: 1.25 };
 
     const now = Date.now();
     const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
