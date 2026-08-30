@@ -272,6 +272,18 @@ export const crimeCategories: CrimeCategory[] = [
   },
 ];
 
+// Specific vehicles granted by each GTA Car Theft option (last = most expensive).
+export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; armored?: boolean; price: number }> = {
+  gta_junk_car: { name: "1985 Honda Civic", speed: 35, storage: 12, price: 4000 },
+  gta_parked_car: { name: "2015 Toyota Corolla", speed: 55, storage: 18, price: 8000 },
+  gta_delivery_van: { name: "2020 Ford Transit Van", speed: 50, storage: 45, price: 15000 },
+  gta_sports_car: { name: "2019 BMW M4", speed: 84, storage: 14, price: 30000 },
+  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 80, storage: 26, price: 52000 },
+  gta_supercar: { name: "2018 Lamborghini Huracán", speed: 112, storage: 10, price: 95000 },
+  gta_armored_truck: { name: "2022 Brinks Armored Truck", speed: 66, storage: 55, armored: true, price: 125000 },
+  gta_helicopter: { name: "Bell 206 JetRanger Helicopter", speed: 120, storage: 32, price: 150000 },
+};
+
 export function getCrimeTypeColor(type: string): string {
   const colors: Record<string, string> = {
     street: "text-green-400",
