@@ -205,6 +205,7 @@ export const acknowledgeLevelUp = mutation({
     // Actually apply the level up: level+1, +10 ATK, +10 DEF, +75 HP
     const newLevel = (player.level ?? 1) + 1;
     const newMaxLife = (player.maxLife ?? 100) + 75;
+    if ((player.experience ?? 0) < XP_PER_LEVEL) throw new Error(`Need ${XP_PER_LEVEL} XP to rank up!`);
     // Resource boost on rankup
     const maxE = (player as any).maxEnergy ?? 100;
     const maxS = (player as any).maxStamina ?? 100;
@@ -252,7 +253,7 @@ export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number
   const finalXP = Math.floor(xpAmount * volMult);
   let remaining = (player.experience ?? 0) + finalXP;
   let lvl = player.level ?? 1;
-  const xpNeeded = 2000;
+  const xpNeeded = XP_PER_LEVEL;
   const updates: Record<string, any> = {};
   let leveled = false;
   while (remaining >= XP_PER_LEVEL) {
@@ -294,8 +295,8 @@ export const commitCrime = mutation({
     const arrested = !success && Math.random() < 0.10;
     await ctx.db.insert("crimes", { userId: player._id, type: args.type, target: args.type === "rob_player" ? (args.targetId ?? "unknown") : "environment", success, moneyEarned, pointsEarned, damageTaken, timestamp: Date.now() });
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-        // XP: 1000% bonus + level bonus
-    const boostMult = Date.now() < (player.xpBoostUntil ?? 0) ? 3 : 1; const energyMult = Date.now() < ((player as any).energyDrinkUntil ?? 0) ? 1.25 : 1; const lvlMult = 1 + Math.floor((player.level ?? 1) / 10) * 0.25; const xpGain = Math.floor((success ? 75 : 15) * lvlMult * boostMult * energyMult); const newXP = (player.experience ?? 0) + xpGain; const levelUpNow = newXP >= XP_PER_LEVEL;
+        const xpUpdate = await addXpAndCheckLevel(ctx, player, success ? 75 : 15);
+    const levelUpNow = (xpUpdate.level ?? player.level ?? 1) > (player.level ?? 1);
     await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyEarned : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, experience: levelUpNow ? 0 : newXP, levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false), inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), energy: Math.max(0, regeneratedEnergy - 5), lastEnergyRegen: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5), actionTimestamps: [,...((player as any).actionTimestamps ?? []).filter((t: number) => Date.now() - t < 3600000).slice(-999), Date.now()] } as any);
     if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "You were arrested during a crime!", read: false, timestamp: Date.now() });
     return { success, moneyEarned, pointsEarned, damageTaken, arrested };
@@ -499,9 +500,9 @@ export const collectBusinessIncome = mutation({ args: {}, handler: async (ctx) =
 
 export const levelUp = mutation({ args: { stat: v.optional(v.union(v.literal("attack"), v.literal("defense"), v.literal("maxLife"))) }, handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
-    const xpNeeded = 2000;
-    // Auto-detect if level up is due (don't require flag)
-    if (!(player.levelUpPending ?? false) && (player.experience ?? 0) < xpNeeded) throw new Error("No level up available!");
+    const xpNeeded = XP_PER_LEVEL;
+    // A rank-up is earned only at the full threshold; never depend on a stale pending flag.
+    if ((player.experience ?? 0) < xpNeeded) throw new Error(`Need ${xpNeeded} XP to rank up!`);
     const newLevel = (player.level ?? 1) + 1;
     const patch: Record<string, unknown> = { level: newLevel, levelUpPending: false, skillPoints: (player.skillPoints ?? 0) + 1, maxLife: (player.maxLife ?? 100) + 75, life: (player.maxLife ?? 100) + 75, attack: (player.attack ?? 10) + 10, defense: (player.defense ?? 10) + 10, highestLevel: Math.max(player.highestLevel ?? 0, newLevel) };
         // +10 ATK, +10 DEF, +75HP on EVERY level up
