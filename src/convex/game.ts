@@ -505,6 +505,7 @@ export const levelUp = mutation({ args: { stat: v.optional(v.union(v.literal("at
     patch.defense = (player.defense ?? 10) + 10;
     patch.maxLife = (player.maxLife ?? 100) + 75;
     patch.life = (player.maxLife ?? 100) + 75;
+    patch.energy = 100;
     // Extra bonus for stat choice
     if (args.stat === "maxLife") { patch.maxLife = (player.maxLife ?? 100) + 75 + 15; patch.life = patch.maxLife; } else if (args.stat === "attack") { patch.attack = (player.attack ?? 10) + 10 + 5; } else if (args.stat === "defense") { patch.defense = (player.defense ?? 10) + 10 + 5; }
     await ctx.db.patch(player._id, patch);
