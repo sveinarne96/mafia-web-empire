@@ -222,14 +222,14 @@ export const crimeCategories: CrimeCategory[] = [
     icon: "🚗",
     description: "Steal vehicles from junk cars to luxury rides.",
     crimes: [
-      { id: "gta_junk_car", name: "Steal Junk Car", description: "Boost a beat-up car from a lot.", reward: 300, risk: 5, xp: 100, levelRequired: 1 },
-      { id: "gta_parked_car", name: "Parked Car Theft", description: "Hotwire a car parked on the street.", reward: 600, risk: 10, xp: 125, levelRequired: 1 },
-      { id: "gta_delivery_van", name: "Delivery Van Hijack", description: "Intercept a delivery van mid-route.", reward: 1200, risk: 15, xp: 150, levelRequired: 2 },
-      { id: "gta_sports_car", name: "Sports Car Theft", description: "Steal a high-performance sports car.", reward: 3000, risk: 25, xp: 200, levelRequired: 4 },
-      { id: "gta_luxury_suv", name: "Luxury SUV Theft", description: "Swipe an expensive SUV from a dealership.", reward: 5000, risk: 30, xp: 250, levelRequired: 6 },
-      { id: "gta_supercar", name: "Supercar Heist", description: "Steal a Lamborghini or Ferrari.", reward: 15000, risk: 50, xp: 400, levelRequired: 10 },
-      { id: "gta_armored_truck", name: "Armored Truck Theft", description: "Highjacking an armored transport.", reward: 25000, risk: 65, xp: 600, levelRequired: 15 },
-      { id: "gta_helicopter", name: "Helicopter Theft", description: "Steal a helicopter from a rooftop pad.", reward: 40000, risk: 80, xp: 800, levelRequired: 20 },
+      { id: "gta_junk_car", name: "Steal Junk Car", description: "Boost a beat-up car from a lot.", reward: 10000, risk: 5, xp: 100, levelRequired: 1 },
+      { id: "gta_parked_car", name: "Parked Car Theft", description: "Hotwire a car parked on the street.", reward: 25000, risk: 10, xp: 125, levelRequired: 1 },
+      { id: "gta_delivery_van", name: "Delivery Van Hijack", description: "Intercept an armored courier van mid-route.", reward: 60000, risk: 15, xp: 150, levelRequired: 2 },
+      { id: "gta_sports_car", name: "Sports Car Theft", description: "Steal a high-performance sports car.", reward: 150000, risk: 25, xp: 200, levelRequired: 4 },
+      { id: "gta_luxury_suv", name: "Luxury SUV Theft", description: "Swipe an expensive SUV from a dealership.", reward: 500000, risk: 30, xp: 250, levelRequired: 6 },
+      { id: "gta_supercar", name: "Supercar Heist", description: "Steal an exotic hypercar worth millions.", reward: 1500000, risk: 50, xp: 400, levelRequired: 10 },
+      { id: "gta_armored_truck", name: "Armored Transport Heist", description: "Highjacking a bank-grade armored transport.", reward: 5000000, risk: 65, xp: 600, levelRequired: 15 },
+      { id: "gta_helicopter", name: "Helicopter Theft", description: "Steal a luxury helicopter from a rooftop pad.", reward: 15000000, risk: 80, xp: 800, levelRequired: 20 },
     ],
   },
 
@@ -240,14 +240,14 @@ export const crimeCategories: CrimeCategory[] = [
     icon: "🏠",
     description: "Break into homes and grab what you can.",
     crimes: [
-      { id: "sh_easy_home", name: "Easy Suburban Home", description: "An unlocked door in the suburbs.", reward: 400, risk: 5, xp: 100, levelRequired: 1 },
-      { id: "sh_poor_apartment", name: "Poor Apartment", description: "A ground-floor apartment.", reward: 800, risk: 10, xp: 125, levelRequired: 1 },
-      { id: "sh_average_house", name: "Average Family Home", description: "A standard house with basic security.", reward: 1500, risk: 15, xp: 150, levelRequired: 2 },
-      { id: "sh_suburban_mansion", name: "Suburban Mansion", description: "A big house in the wealthy suburbs.", reward: 4000, risk: 25, xp: 200, levelRequired: 5 },
-      { id: "sh_penthouse", name: "Downtown Penthouse", description: "A luxury penthouse apartment.", reward: 10000, risk: 40, xp: 350, levelRequired: 8 },
-      { id: "sh_rich_estate", name: "Rich Estate", description: "A gated estate with private security.", reward: 20000, risk: 55, xp: 500, levelRequired: 12 },
-      { id: "sh_ceo_condo", name: "CEO Condo", description: "The penthouse of a tech billionaire.", reward: 40000, risk: 70, xp: 700, levelRequired: 18 },
-      { id: "sh_villa_heist", name: "Private Villa Heist", description: "An oceanfront villa with armed guards.", reward: 75000, risk: 85, xp: 900, levelRequired: 22 },
+      { id: "sh_easy_home", name: "Easy Suburban Home", description: "An unlocked door in the suburbs.", reward: 10000, risk: 5, xp: 100, levelRequired: 1 },
+      { id: "sh_poor_apartment", name: "Tenant Apartment", description: "A ground-floor apartment with a hidden stash.", reward: 30000, risk: 10, xp: 125, levelRequired: 1 },
+      { id: "sh_average_house", name: "Average Family Home", description: "A standard house with a jewelry safe.", reward: 75000, risk: 15, xp: 150, levelRequired: 2 },
+      { id: "sh_suburban_mansion", name: "Suburban Mansion", description: "A big house in the wealthy suburbs.", reward: 200000, risk: 25, xp: 200, levelRequired: 5 },
+      { id: "sh_penthouse", name: "Downtown Penthouse", description: "A luxury penthouse apartment.", reward: 600000, risk: 40, xp: 350, levelRequired: 8 },
+      { id: "sh_rich_estate", name: "Rich Estate", description: "A gated estate with private security.", reward: 2000000, risk: 55, xp: 500, levelRequired: 12 },
+      { id: "sh_ceo_condo", name: "CEO Condo", description: "The penthouse of a tech billionaire.", reward: 6000000, risk: 70, xp: 700, levelRequired: 18 },
+      { id: "sh_villa_heist", name: "Private Villa Heist", description: "An oceanfront villa with armed guards.", reward: 15000000, risk: 85, xp: 900, levelRequired: 22 },
     ],
   },
 
@@ -274,26 +274,26 @@ export const crimeCategories: CrimeCategory[] = [
 
 // Specific vehicles granted by each GTA Car Theft option (last = most expensive).
 export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; armored?: boolean; price: number }> = {
-  gta_junk_car: { name: "1985 Honda Civic", speed: 35, storage: 12, price: 4000 },
-  gta_parked_car: { name: "2015 Toyota Corolla", speed: 55, storage: 18, price: 8000 },
-  gta_delivery_van: { name: "2020 Ford Transit Van", speed: 50, storage: 45, price: 15000 },
-  gta_sports_car: { name: "2019 BMW M4", speed: 84, storage: 14, price: 30000 },
-  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 80, storage: 26, price: 52000 },
-  gta_supercar: { name: "2018 Lamborghini Huracán", speed: 112, storage: 10, price: 95000 },
-  gta_armored_truck: { name: "2022 Brinks Armored Truck", speed: 66, storage: 55, armored: true, price: 125000 },
-  gta_helicopter: { name: "Bell 206 JetRanger Helicopter", speed: 120, storage: 32, price: 150000 },
+  gta_junk_car: { name: "1985 Honda Civic", speed: 45, storage: 15, price: 10000 },
+  gta_parked_car: { name: "2015 Toyota Corolla", speed: 60, storage: 20, price: 25000 },
+  gta_delivery_van: { name: "2020 Cash Transport Van", speed: 55, storage: 50, price: 60000 },
+  gta_sports_car: { name: "2019 BMW M4 Competition", speed: 88, storage: 16, price: 150000 },
+  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 82, storage: 30, price: 500000 },
+  gta_supercar: { name: "2018 Lamborghini Huracán Performante", speed: 116, storage: 12, price: 1500000 },
+  gta_armored_truck: { name: "2022 Armored Bank Transport", speed: 70, storage: 60, armored: true, price: 5000000 },
+  gta_helicopter: { name: "AgustaWestland AW109 Luxury Helicopter", speed: 120, storage: 36, price: 15000000 },
 };
 
 // Specific loot granted by each Steal-from-House option (last = most expensive).
 export const SH_LOOT: Record<string, { name: string; rarity: string; attack?: number; defense?: number; price: number }> = {
-  sh_easy_home: { name: "Old DVD Collection", rarity: "common", price: 400 },
-  sh_poor_apartment: { name: "Second-Hand TV", rarity: "common", defense: 1, price: 800 },
-  sh_average_house: { name: "Hidden Jewelry Box", rarity: "uncommon", defense: 2, price: 1500 },
-  sh_suburban_mansion: { name: "Designer Watches & Cash", rarity: "uncommon", defense: 3, price: 4000 },
-  sh_penthouse: { name: "Luxury Art Piece", rarity: "rare", attack: 3, defense: 3, price: 10000 },
-  sh_rich_estate: { name: "Solid Gold Bar", rarity: "rare", attack: 4, defense: 4, price: 20000 },
-  sh_ceo_condo: { name: "CEO's Rare Coin Collection", rarity: "legendary", attack: 5, defense: 5, price: 40000 },
-  sh_villa_heist: { name: "Black Diamond Necklace", rarity: "legendary", attack: 8, defense: 8, price: 75000 },
+  sh_easy_home: { name: "Coin & Stamp Collection", rarity: "common", defense: 1, price: 10000 },
+  sh_poor_apartment: { name: "Hidden Jewelry Case", rarity: "common", defense: 2, price: 30000 },
+  sh_average_house: { name: "Solid Gold Watch", rarity: "uncommon", defense: 3, price: 75000 },
+  sh_suburban_mansion: { name: "Hi-End Watch Collection", rarity: "uncommon", attack: 2, defense: 4, price: 200000 },
+  sh_penthouse: { name: "Original Master Painting", rarity: "rare", attack: 4, defense: 4, price: 600000 },
+  sh_rich_estate: { name: "Kilo Gold Bars (5x)", rarity: "rare", attack: 5, defense: 5, price: 2000000 },
+  sh_ceo_condo: { name: "Historic Diamond Vault", rarity: "legendary", attack: 6, defense: 6, price: 6000000 },
+  sh_villa_heist: { name: "Rare Black Diamond Crown", rarity: "legendary", attack: 10, defense: 10, price: 15000000 },
 };
 
 export function getCrimeTypeColor(type: string): string {
