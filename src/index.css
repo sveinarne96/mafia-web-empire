@@ -842,6 +842,33 @@
   animation: page-enter 0.4s ease-out forwards;
 }
 
+/* Light animated execute button for criminal operations */
+@keyframes execute-light-flow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-execute-light {
+  background: linear-gradient(120deg,
+    #a7f3d0,
+    #bae6fd,
+    #ddd6fe,
+    #fde68a,
+    #fbcfe8,
+    #a7f3d0);
+  background-size: 300% 100%;
+  animation: execute-light-flow 4s ease infinite;
+  color: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 0 16px rgba(190, 225, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: all 0.2s ease;
+}
+.animate-execute-light:hover:not(:disabled) {
+  box-shadow: 0 0 22px rgba(190, 225, 255, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  filter: brightness(1.08);
+}
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
