@@ -171,17 +171,18 @@ export function PerksPanel() {
   const [busy, setBusy] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
+  // live 1s tick to keep instant-perk cooldowns counting down
+  // NOTE: must be called before any early return so hook order stays constant.
+  useEffect(() => {
+    const t = setInterval(() => setTick((v) => v + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+
   if (!store) return <div className="animate-pulse py-6 text-center text-muted-foreground">Loading perks...</div>;
 
   const perks: Record<string, number> = store.perks ?? {};
   const until: Record<string, number> = store.perkActiveUntil ?? {};
   const now = Date.now();
-
-  // live 1s tick to keep instant-perk cooldowns counting down
-  useEffect(() => {
-    const t = setInterval(() => setTick((v) => v + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   const fieldFor = (id: string): number => {
     switch (id) {
