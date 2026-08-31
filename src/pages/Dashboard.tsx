@@ -131,6 +131,9 @@ import {
   StockMarketPage, RealEstatePage, BusinessesPage,
   AuctionHousePage, InsurancePage, LoansPage,
 } from "@/components/NewPages";
+import { CarDealerPage } from "@/components/CarDealerPage";
+import { RIGHT_MENU_SECTIONS } from "@/data/menuSections";
+import { ObjectivesPage, PointStorePage, CoinStorePage } from "@/components/StorePages";
 
 
 // ===== RANK SYSTEM =====
@@ -632,71 +635,17 @@ export default function Dashboard() {
     { title: "Live Events", icon: Clock, items: [
       { label: "Event Calendar", page: "event_calendar", icon: "📅" },
     ]},
+    { title: "Stores & Goals", icon: ShoppingBag, items: [
+      { label: "Game Objectives", page: "objectives", icon: "🎯" },
+      { label: "Point Store", page: "point_store", icon: "💎" },
+      { label: "Coin Store", page: "coin_store", icon: "🪙" },
+    ]},
     { title: "My Profile", icon: User, items: [
       { label: "My Profile", page: "my_profile", icon: "👤" },
     ]},
   ];
 
-  const getRightMenuSections = () => [
-    { title: "Firearms", icon: Shield, items: [
-      { label: "Permit", page: "security", icon: "📋" },
-      { label: "FFL", page: "security", icon: "🏪" },
-      { label: "Bullets", page: "security", icon: "💀" },
-      { label: "Armor", page: "security", icon: "🦺" },
-      { label: "Lockpick", page: "security", icon: "🔑" },
-    ]},
-    { title: "Communication", icon: MessageSquare, items: [
-      { label: "Direct Messages", page: "messages", icon: "📩" },
-      { label: "Inbox", page: "inbox", icon: "📥" },
-      { label: "Notifications", page: "notifications_page", icon: "🔔" },
-    ]},
-    { title: "Forums", icon: MessageSquare, items: [
-      { label: "General Forum", page: "forum_general", icon: "📢" },
-      { label: "Sales Forum", page: "forum_sales", icon: "💰" },
-      { label: "Off-Topic", page: "forum_offtopic", icon: "💭" },
-      { label: "Shadows Forum", page: "forum_shadows", icon: "🌑" },
-      { label: "Search Posts", page: "forum_search", icon: "🔍" },
-    ]},
-    { title: "Chat", icon: MessageSquare, items: [
-      { label: "Global Chat", page: "global_chat", icon: "🌐" },
-      { label: "Trade Chat", page: "trade_chat", icon: "💹" },
-      { label: "Looking for Group", page: "lfg", icon: "👥" },
-    ]},
-    { title: "Quick Info", icon: Globe, items: [
-      { label: "Airport", page: "airport", icon: "✈️" },
-      { label: "Weather", page: "weather", icon: "🌤️" },
-      { label: "News Ticker", page: "news_ticker", icon: "📰" },
-      { label: "City Map", page: "city_map", icon: "🗺️" },
-      { label: "City Overview", page: "city_overview", icon: "🏙️" },
-      { label: "Statistics", page: "statistics", icon: "📊" },
-      { label: "World Map", page: "world_map", icon: "🌍" },
-    ]},
-    { title: "Combat", icon: Swords, items: [
-      { label: "Arena", page: "arena", icon: "🏟️" },
-      { label: "Fight Club", page: "fight_club", icon: "🥊" },
-      { label: "1v1 Duel", page: "duel", icon: "⚔️" },
-      { label: "Capture the Flag", page: "ctf", icon: "🚩" },
-      { label: "King of the Hill", page: "koth", icon: "👑" },
-      { label: "Battle Royale", page: "battle_royale", icon: "🎯" },
-      { label: "Ladder", page: "ladder", icon: "📊" },
-      { label: "Champion", page: "champion", icon: "🏆" },
-      { label: "Ambush", page: "ambush", icon: "🔥" },
-    ]},
-    { title: "Help & Events", icon: HelpCircle, items: [
-      { label: "FAQ", page: "faq", icon: "❓" },
-      { label: "Live Support", page: "support", icon: "🆘" },
-      { label: "Events Hub", page: "events_hub", icon: "🎆" },
-      { label: "Live Calendar", page: "event_calendar", icon: "📅" },
-      { label: "Guidelines", page: "community", icon: "📜" },
-      { label: "Reports", page: "reports", icon: "📢" },
-    ]},
-    { title: "System", icon: Settings, items: [
-      { label: "My Profile", page: "my_profile", icon: "👤" },
-      { label: "Admin", page: "admin_panel", icon: "⚙️" },
-      { label: "Become Admin", page: "become_admin", icon: "🔑" },
-      { label: "Online Players", page: "online_players", icon: "👥" },
-    ]},
-  ];
+  const getRightMenuSections = () => RIGHT_MENU_SECTIONS;
 
   const renderPage = () => {
     switch (activePage) {
@@ -713,7 +662,10 @@ export default function Dashboard() {
       case "crime_organized": return <CriminalOperationsPage category="organized" />;
       case "crime_underground": return <CriminalOperationsPage category="underground" />;
 
-      case "car_theft": return <CriminalOperationsPage category="gta_theft" />;
+      case "car_theft": return <CarDealerPage />;
+      case "objectives": return <ObjectivesPage />;
+      case "point_store": return <PointStorePage />;
+      case "coin_store": return <CoinStorePage />;
       case "steal_house": return <CriminalOperationsPage category="steal_house" />;
       case "organized_crime": return <OrganizedCrimePage />;
       case "missions": return <MissionsOverviewPage />;
@@ -835,6 +787,7 @@ export default function Dashboard() {
   };
 
   const inPrison = player?.inPrison;
+  const igCoins = (player as any)?.coins ?? 0;
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
@@ -879,6 +832,7 @@ export default function Dashboard() {
         </div>
         {/* Row 1: Player Stats — Centered */}
         <div className="flex items-center justify-center px-4 py-2 gap-4 flex-wrap">
+          <span className="flex items-center gap-1 text-amber-300"><span className="animate-float" style={{ animationDelay: '1.1s' }}>🪙</span> {igCoins}</span>
           <div className="flex items-center gap-2">
             <span className="text-sm font-black animate-neon-glow" style={{ color: '#ffd700' }}>{player?.nickname || player?.username || player?.name || "Player"}</span>
             <RankBadge level={player?.level ?? 1} />

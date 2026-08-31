@@ -22,6 +22,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
   const player = useQuery(api.game.getPlayer);
   const resources = useQuery(api.resourceSystem.getResources);
   const executeCrime = useMutation(api.game.commitCategoryCrime);
+  const recordCrime = useMutation(api.storeSystem.recordCrime);
   const [selectedId, setSelectedId] = useState<string>();
   const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
@@ -57,6 +58,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
     try {
       const response = await executeCrime({ crimeId: selected.id, reward: selected.reward, risk: selected.risk, xp: selected.xp });
       setResult({ success: Boolean(response.success), money: response.moneyEarned ?? 0, xp: response.xpEarned ?? 0 });
+      recordCrime({ category: definition.id, reward: Math.max(0, response.moneyEarned ?? 0), xp: response.xpEarned ?? 0 }).catch(() => {});
       setCooldowns((current) => ({ ...current, [selected.id]: Math.max(3, Math.round(selected.risk / 3)) }));
     } catch (error) {
       setResult({ success: false, money: 0, xp: 0, message: error instanceof Error ? error.message : "Operation unavailable." });

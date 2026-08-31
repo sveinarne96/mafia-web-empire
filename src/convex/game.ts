@@ -164,6 +164,13 @@ export const registerPlayer = mutation({
         armorDurability: 0, weaponProficiency: 0, killsThisSeason: 0, deathsThisSeason: 0,
         retaliationUntil: 0, lastDeathAt: 0, isKidnapped: false, betrayalCount: 0,
         totalGifting: 0, totalMentoring: 0, lastActive: Date.now(), lastCrimeAt: 0, isBanned: false,
+        coins: 2, bullets: 0, robotBodyguards: [], accountUpgrades: {}, perks: {},
+        seasonXp: 0, seasonTiersClaimed: [], vipUntil: 0, objectiveProgress: {},
+        objectivesClaimed: {}, milestonesClaimed: {}, totalActions: 0,
+        carsMelted: 0, carsRepaired: 0, legendaryRepaired: 0, epicRepaired: 0,
+        rareRepaired: 0, commonRepaired: 0, totalRepairSpent: 0, lastAutoMelt: 0,
+        meltLimitLevel: 0, starterClaimed: false, pointsSent: 0, pointsReceived: 0,
+        packsOpened: 0, scratchCards: 0,
       });
       return { success: true };
     } catch (e) {
