@@ -17,6 +17,7 @@ export const LEFT_MENU_SECTIONS = [
   ]},
   { title: "Crime", icon: Skull, items: [
     { label: "Crimes Hub", page: "crimes", icon: "🔪" },
+    { label: "Crack the Safe", page: "crack_safe", icon: "🔐" },
     { label: "Car Theft", page: "car_theft", icon: "🚗" },
     { label: "Burglarize", page: "steal_house", icon: "🏠" },
     { label: "Organized Crime", page: "organized_crime", icon: "🕵️" },
@@ -27,6 +28,9 @@ export const LEFT_MENU_SECTIONS = [
   ]},
   { title: "Economy", icon: Wallet, items: [
     { label: "Stock Market", page: "stock_market", icon: "📈" },
+    { label: "Supply Running", page: "supply_running", icon: "📦" },
+    { label: "Real Estate", page: "real_estate", icon: "🏘️" },
+    { label: "Dead/Alive", page: "dead_alive", icon: "💀" },
     { label: "Interest Rates", page: "interest_rates", icon: "💰" },
     { label: "Credit Score", page: "credit_score", icon: "💳" },
     { label: "Health Insurance", page: "health_insurance", icon: "🏥" },

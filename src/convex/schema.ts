@@ -200,6 +200,14 @@ const schema = defineSchema({
     prisonBailoutAt: v.optional(v.number()),
     redeemedPromos: v.optional(v.array(v.string())),
     currentPromo: v.optional(v.string()),
+    // ═══ WORLD SYSTEMS (bank, safe, stocks, supply, estate) ═══
+    interestBank: v.optional(v.number()),
+    swissBank: v.optional(v.number()),
+    lastInterestApplied: v.optional(v.number()),
+    bankStats: v.optional(v.any()),
+    transferHistory: v.optional(v.any()),
+    worldState: v.optional(v.any()),
+    worldRentAt: v.optional(v.number()),
   })
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])

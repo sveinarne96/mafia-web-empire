@@ -133,9 +133,12 @@ import {
 import { CrewSystemPage } from "@/components/CrewSystemPage";
 import {
   TournamentPage, AchievementsPage, TitlesPage,
-  StockMarketPage, RealEstatePage, BusinessesPage,
-  AuctionHousePage, InsurancePage, LoansPage,
+  BusinessesPage, AuctionHousePage, InsurancePage, LoansPage,
 } from "@/components/NewPages";
+import {
+  BankPage as FullBankPage, CrackSafePage, StockMarketPage,
+  SupplyRunningPage, RealEstatePage, DeadAlivePage,
+} from "@/components/WorldPages";
 import { CarDealerPage } from "@/components/CarDealerPage";
 import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
 import { ObjectivesPage, PointStorePage, CoinStorePage } from "@/components/StorePages";
@@ -544,7 +547,11 @@ export default function Dashboard() {
   const renderPage = () => {
     switch (activePage) {
       case "headquarters": return <HeadquartersPage />;
-      case "bank": return <BankPage />;
+      case "bank": return <FullBankPage />;
+      case "crack_safe": return <CrackSafePage />;
+      case "supply_running": return <SupplyRunningPage />;
+      case "dead_alive": return <DeadAlivePage />;
+      case "real_estate": return <RealEstatePage />;
       case "hospital": return <HospitalPage />;
       case "points": return <PointsShopPage />;
       case "crimes": return <CrimesOverviewPage />;
