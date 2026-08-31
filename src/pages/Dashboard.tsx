@@ -143,6 +143,7 @@ import { CarDealerPage } from "@/components/CarDealerPage";
 import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
 import { ObjectivesPage, PointStorePage, CoinStorePage, ObjectivesPanel } from "@/components/StorePages";
 import { InventoryPage } from "@/components/InventoryPage";
+import { PromoCodesPage } from "@/components/PromoCodesPage";
 
 
 // ===== RANK SYSTEM =====
@@ -663,6 +664,7 @@ export default function Dashboard() {
       case "events_hub": return <EventsHubPage />;
       case "community": return <CommunityPage />;
       case "reports": return <GenericStub title="Reports" icon="📢" />;
+      case "promo_codes": return <PromoCodesPage />;
       case "admin_panel": return <AdminPanel />;
       case "become_admin": return <BecomeAdminPage />;
       case "online_players": return <OnlineList />;
@@ -701,6 +703,24 @@ export default function Dashboard() {
       <div className="flex flex-1 overflow-hidden">
       {/* Left Sidebar */}
         <aside className={`${mobileMenuOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} md:block md:relative md:w-64 shrink-0 border-r border-amber-500/10 overflow-y-auto`} style={{ background: 'linear-gradient(180deg, oklch(0.06 0.015 35), oklch(0.05 0.01 40))' }}>
+          {/* Search Box */}
+          <div className="px-3 pt-3 pb-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-slate-500" />
+              <input
+                type="text"
+                value={leftSearch}
+                onChange={(e) => setLeftSearch(e.target.value)}
+                placeholder="Search menu..."
+                className="w-full bg-slate-900/60 border border-slate-700/40 rounded-lg pl-8 pr-3 py-1.5 text-[11px] text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-amber-500/40 transition-colors"
+              />
+              {leftSearch && (
+                <button onClick={() => setLeftSearch("")} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                  <X className="size-3" />
+                </button>
+              )}
+            </div>
+          </div>
           <nav className="pb-20">
             {getLeftMenuSections().filter(section => !leftSearch || section.title.toLowerCase().includes(leftSearch.toLowerCase()) || section.items.some(item => (item.label || "").toLowerCase().includes(leftSearch.toLowerCase()))).map(section => (
               <div key={section.title}>
