@@ -110,7 +110,13 @@ export const getEmpire = query({
     const scrapRare = Math.floor(districtsCompleted / 2);
     const scrapEpic = Math.floor(districtsCompleted / 4);
     const empireValue = districtsCompleted * 50_000 + totalTasks * 2_000;
+    const PAYOUT_MS = 24 * 3600000;
+    const lastPayout = n(player.lastEmpirePayout, 0);
+    // Paid-out so far factor for display (payout happens lazily via collectEmpireIncome)
+    const nextPayoutIn = lastPayout > 0 ? Math.max(0, lastPayout + PAYOUT_MS - Date.now()) : 0;
     return {
+      lastEmpirePayout: lastPayout,
+      nextPayoutIn,
       districtsCompleted,
       totalTasks,
       cashPerDay,
@@ -126,6 +132,48 @@ export const getEmpire = query({
     };
   },
 });
+
+// Lazily collects empire income: pays out for every full 24h period elapsed since
+// the last collection (stacking), capped at 30 days. Called on login/HQ and missions.
+export const collectEmpireIncome = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const now = Date.now();
+    const PAYOUT_MS = 24 * 3600000;
+    const last = n(player.lastEmpirePayout, now);
+    const elapsed = Math.max(0, now - last);
+    const periods = Math.floor(elapsed / PAYOUT_MS);
+    if (periods < 1) return { success: true, collected: false, periods: 0 };
+    const capped = Math.min(periods, 30);
+
+    const progress: Record<string, number> = player.empireProgress && typeof player.empireProgress === "object" ? player.empireProgress : {};
+    const districtsCompleted = EMPIRE_DISTRICTS.filter((d) => n(progress[d], 0) >= 3).length;
+    if (districtsCompleted < 1) {
+      await ctx.db.patch(player._id, { lastEmpirePayout: now });
+      return { success: true, collected: true, periods: 0, districtsCompleted: 0 };
+    }
+
+    const cashPerDay = EMPIRE_DISTRICTS.slice(0, districtsCompleted).reduce((s, _, i) => s + DISTRICT_CASH[i], 0);
+    const patch: any = {
+      lastEmpirePayout: now,
+      money: n(player.money, 0) + cashPerDay * capped,
+      points: n(player.points, 0) + districtsCompleted * 25 * capped,
+      bullets: n(player.bullets, 0) + districtsCompleted * 150 * capped,
+    };
+    let scraps = player.scraps && typeof player.scraps === "object" ? { ...player.scraps } : { common: 0, rare: 0, epic: 0 };
+    scraps.common = n(scraps.common, 0) + districtsCompleted * capped;
+    scraps.rare = n(scraps.rare, 0) + Math.floor(districtsCompleted / 2) * capped;
+    scraps.epic = n(scraps.epic, 0) + Math.floor(districtsCompleted / 4) * capped;
+    patch.scraps = scraps;
+    await ctx.db.patch(player._id, patch);
+    return { success: true, collected: true, periods: capped, cash: cashPerDay * capped, points: districtsCompleted * 25 * capped, bullets: districtsCompleted * 150 * capped, districtsCompleted };
+  },
+});
+
+// Payout helper exposed so the UI's "next payout" can be derived via getEmpire.
+export const empirePayoutWindowMs = 24 * 3600000;
 
 export const completeDistrictTask = mutation({
   args: { district: v.string() },

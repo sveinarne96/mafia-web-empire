@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { EMPIRE_DISTRICTS } from "@/data/empire";
@@ -15,10 +15,24 @@ function Msg({ msg }: { msg: { ok: boolean; text: string } | null }) {
 export function EmpirePanel() {
   const empire = useQuery(api.empireSystem.getEmpire);
   const doTask = useMutation(api.empireSystem.completeDistrictTask);
+  const collect = useMutation(api.empireSystem.collectEmpireIncome);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [payout, setPayout] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
+  useEffect(() => {
+    let alive = true;
+    collect().then((r) => {
+      if (!alive || !r.collected) return;
+      if (r.periods > 0) setPayout(`🏙️ Collected ${r.periods}d of empire income — ` + (r.cash ? "$" + Math.floor(r.cash).toLocaleString() : "") + ` +${Math.floor(r.points ?? 0)} pts +${Math.floor(r.bullets ?? 0)} 💀`);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [collect]);
+
   if (!empire) return <div className="animate-pulse py-6 text-center text-muted-foreground">Loading your empire...</div>;
+
+  const nextIn = empire.nextPayoutIn ?? 0;
+  const nextClock = nextIn > 0 ? `${String(Math.floor(nextIn / 3600000)).padStart(2, "0")}h ${String(Math.floor((nextIn % 3600000) / 60000)).padStart(2, "0")}m` : "Ready";
 
   const run = async (d: string) => {
     setBusy(d); setMsg(null);
@@ -29,7 +43,8 @@ export function EmpirePanel() {
 
   return (
     <div className="mafia-card rounded-xl border border-green-500/20 p-5 space-y-4">
-      <div className="text-sm font-bold">🏙️ Your Empire <span className="text-[10px] text-muted-foreground font-normal">— daily income from completed districts</span></div>
+      <div className="text-sm font-bold">🏙️ Your Empire <span className="text-[10px] text-muted-foreground font-normal">— daily income from completed districts · next payout in <span className={nextIn > 0 ? "text-cyan-400" : "text-green-400"}>{nextClock}</span></span></div>
+      {payout && <div className="rounded-xl border border-green-500/40 bg-green-950/20 p-3 text-xs font-bold text-green-400">{payout}</div>}
       {msg && <Msg msg={msg} />}
       <div className="grid grid-cols-3 md:grid-cols-7 gap-2 text-center">
         <div className="rounded-lg border border-green-500/30 bg-green-950/10 p-2"><div className="text-[8px] text-muted-foreground">Cash</div><div className="text-xs font-black text-green-400">{fmt(empire.cashPerDay)}<span className="text-[8px]">/day</span></div></div>

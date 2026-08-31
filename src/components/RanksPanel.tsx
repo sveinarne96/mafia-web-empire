@@ -1,4 +1,5 @@
-import { useQuery } from "convex/react";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { wealthRankFor, wealthRankIndex, gameRankForLevel, nextGameRank, GAME_RANKS, WEALTH_RANKS } from "@/data/ranks";
 
@@ -13,6 +14,18 @@ const short = (n: number) => {
 
 export function RanksPanel() {
   const player = useQuery(api.game.getPlayer);
+  const collect = useMutation(api.empireSystem.collectEmpireIncome);
+  const [payout, setPayout] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    collect().then((r) => {
+      if (!alive || !r.collected) return;
+      if (r.periods > 0) setPayout(`🏙️ Empire income collected — ${r.periods}d · ${r.cash ? "$" + Math.floor(r.cash).toLocaleString() : ""} +${Math.floor(r.points ?? 0)} pts +${Math.floor(r.bullets ?? 0)} 💀`);
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [collect]);
+
   if (!player) return <div className="animate-pulse py-6 text-center text-muted-foreground">Loading ranks...</div>;
 
   const total = (player.money ?? 0) + (player.bank ?? 0);
@@ -30,6 +43,7 @@ export function RanksPanel() {
   return (
     <div className="mafia-card rounded-xl p-5 space-y-4">
       <div className="text-sm font-bold">🎖️ Your Ranks</div>
+      {payout && <div className="rounded-xl border border-green-500/30 bg-green-950/20 p-3 text-xs font-bold text-green-400">{payout}</div>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Wealth rank */}
         <div className="rounded-xl border border-slate-700/40 bg-slate-900/30 p-4">

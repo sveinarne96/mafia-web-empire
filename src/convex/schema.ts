@@ -194,6 +194,7 @@ const schema = defineSchema({
     lastHeistAt: v.optional(v.number()),
     empireProgress: v.optional(v.any()),
     empireValue: v.optional(v.number()),
+    lastEmpirePayout: v.optional(v.number()),
     bustStats: v.optional(v.any()),
     bustReward: v.optional(v.number()),
     prisonBailoutAt: v.optional(v.number()),
