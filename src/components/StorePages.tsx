@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import {
@@ -661,6 +661,76 @@ export function CoinStorePage() {
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ═══════════════ HQ OBJECTIVES PANEL (with claim timers) ═══════════════
+function useMidnightCountdown() {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const mid = new Date();
+  mid.setHours(24, 0, 0, 0);
+  const ms = Math.max(0, mid.getTime() - now);
+  const hh = String(Math.floor(ms / 3600000)).padStart(2, "0");
+  const mm = String(Math.floor((ms % 3600000) / 60000)).padStart(2, "0");
+  const ss = String(Math.floor((ms % 60000) / 1000)).padStart(2, "0");
+  return { clock: `${hh}:${mm}:${ss}`, ready: ms <= 0 };
+}
+
+// Compact panel shown on the Headquarters page. For every claimed (used)
+// objective milestone it shows a live countdown to the next midnight reset,
+// when that objective can be claimed again.
+export function ObjectivesPanel() {
+  const store = useQuery(api.storeSystem.getStoreState);
+  const { clock } = useMidnightCountdown();
+  if (!store) return (
+    <div className="mafia-card rounded-xl p-4 animate-pulse">
+      <div className="text-sm font-bold text-amber-300">🎯 Daily Objectives</div>
+      <div className="text-[11px] text-muted-foreground mt-1">Loading...</div>
+    </div>
+  );
+  const cats: any[] = store.objectives ?? [];
+  const claimedCount = cats.reduce((s, c) => s + (c.milestones || []).filter((m: any) => m.claimed).length, 0);
+  const totalCount = cats.reduce((s, c) => s + (c.milestones || []).length, 0);
+
+  return (
+    <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-sm font-bold text-amber-300">🎯 Daily Objectives</div>
+        <div className="px-2 py-0.5 rounded-lg bg-slate-900 border border-cyan-500/30 text-[10px] font-black text-cyan-400">🔄 {clock} to reset</div>
+      </div>
+      <div className="text-[10px] text-muted-foreground mb-3">Complete actions to claim cash. Claimed objectives refresh at midnight ({claimedCount}/{totalCount} claimed today).</div>
+      {cats.length === 0 && <div className="text-[11px] text-muted-foreground">No objectives yet — go commit crimes!</div>}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {cats.map((cat) => {
+          const count = cat.progress ?? 0;
+          const milestones: any[] = cat.milestones ?? [];
+          const used = milestones.filter((m: any) => m.claimed);
+          const ready = milestones.filter((m: any) => !m.claimed && count >= m.count).length;
+          return (
+            <div key={cat.categoryId} className="rounded-lg border border-slate-700/40 bg-slate-900/30 p-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{cat.icon}</span>
+                <span className="text-xs font-bold flex-1">{cat.name}</span>
+                <span className="text-[11px] font-black" style={{ color: cat.color }}>{nf(count)}</span>
+                {ready > 0 && <span className="text-[9px] font-bold text-amber-400 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30">{ready} READY</span>}
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {used.length === 0 && <span className="text-[9px] text-muted-foreground">Nothing used yet</span>}
+                {used.map((m: any) => (
+                  <span key={m.count} className="px-1.5 py-0.5 rounded bg-green-500/10 border border-green-500/30 text-[9px] text-green-400 font-bold">
+                    {nf(m.count)} · {short(m.reward)} · <span className="text-cyan-300">🔄 {clock}</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

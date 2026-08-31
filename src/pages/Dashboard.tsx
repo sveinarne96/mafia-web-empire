@@ -141,7 +141,7 @@ import {
 } from "@/components/WorldPages";
 import { CarDealerPage } from "@/components/CarDealerPage";
 import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
-import { ObjectivesPage, PointStorePage, CoinStorePage } from "@/components/StorePages";
+import { ObjectivesPage, PointStorePage, CoinStorePage, ObjectivesPanel } from "@/components/StorePages";
 
 
 // ===== RANK SYSTEM =====
@@ -207,6 +207,7 @@ function HeadquartersPage() {
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🏆 Points</div><div className="text-lg font-bold text-yellow-400">{(player.points ?? 0).toLocaleString()}</div></div>
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🪙 Coins</div><div className="text-lg font-bold text-amber-300">{(player.coins ?? 0).toLocaleString()}</div></div>
       </div>
+      <ObjectivesPanel />
       <RanksPanel />
       <PacksOverviewPanel />
       <PerksPanel />
