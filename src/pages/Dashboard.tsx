@@ -56,6 +56,9 @@ import { LogoDropdown } from "@/components/LogoDropdown";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
 import { PacksOverviewPanel, PerksPanel } from "@/components/PacksPerksPanel";
+import { RanksPanel } from "@/components/RanksPanel";
+import { HeistPage } from "@/components/HeistPage";
+import { PromoBanner } from "@/components/PromoBanner";
 import { WantedStatusPage } from "@/components/GameEnhanced";
 import {
   CrimesOverviewPage, CrimeCategoryPage, CrimeEmpirePage, HeistPlanningPage,
@@ -75,7 +78,7 @@ import {
   OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage,
   LegacyPage, ForumSearchPage,
 } from "@/components/GamePages";
-import { MissionsOverviewPage } from "@/components/MissionPages";
+import { FullMissionsPage } from "@/components/FullMissionsPage";
 import { GamblingOverviewPage } from "@/components/GamblingPages";
 import { CombatOverviewPage } from "@/components/CombatPages";
 // HubPages inlined below - no external import needed
@@ -134,7 +137,7 @@ import {
   AuctionHousePage, InsurancePage, LoansPage,
 } from "@/components/NewPages";
 import { CarDealerPage } from "@/components/CarDealerPage";
-import { RIGHT_MENU_SECTIONS } from "@/data/menuSections";
+import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
 import { ObjectivesPage, PointStorePage, CoinStorePage } from "@/components/StorePages";
 
 
@@ -201,6 +204,7 @@ function HeadquartersPage() {
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🏆 Points</div><div className="text-lg font-bold text-yellow-400">{(player.points ?? 0).toLocaleString()}</div></div>
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🪙 Coins</div><div className="text-lg font-bold text-amber-300">{(player.coins ?? 0).toLocaleString()}</div></div>
       </div>
+      <RanksPanel />
       <PacksOverviewPanel />
       <PerksPanel />
     </div>
@@ -534,122 +538,7 @@ export default function Dashboard() {
     );
   }
 
-  const getLeftMenuSections = () => [
-    { title: "Overview", icon: Home, items: [
-      { label: "Headquarters", page: "headquarters", icon: "🏠" },
-      { label: "Bank Account", page: "bank", icon: "🏦" },
-      { label: "Points Shop", page: "points", icon: "🏆" },
-      { label: "Hospital", page: "hospital", icon: "🏥" },
-    ]},
-    { title: "Crime", icon: Skull, items: [
-      { label: "Crimes Hub", page: "crimes", icon: "🔪" },
-      { label: "Car Theft", page: "car_theft", icon: "🚗" },
-      { label: "Burglarize", page: "steal_house", icon: "🏠" },
-      { label: "Organized Crime", page: "organized_crime", icon: "🕵️" },
-      { label: "Missions", page: "missions", icon: "📋" },
-      { label: "Murder", page: "murder", icon: "💀" },
-      { label: "Garage", page: "garage", icon: "🚗" },
-      { label: "Items", page: "my_items", icon: "🎒" },
-    ]},
-    { title: "Economy", icon: Wallet, items: [
-      { label: "Stock Market", page: "stock_market", icon: "📈" },
-      { label: "Interest Rates", page: "interest_rates", icon: "💰" },
-      { label: "Credit Score", page: "credit_score", icon: "💳" },
-      { label: "Health Insurance", page: "health_insurance", icon: "🏥" },
-      { label: "Life Insurance", page: "life_insurance", icon: "❤️" },
-      { label: "Crypto Mining", page: "crypto_mining", icon: "⛏️" },
-      { label: "Crypto Trading", page: "crypto", icon: "📊" },
-      { label: "Auto Shop", page: "auto_shop", icon: "🚗" },
-      { label: "Offshore Accounts", page: "offshore", icon: "🏝️" },
-      { label: "Daily Spin", page: "daily_spin", icon: "🎰" },
-      { label: "Referral", page: "referral", icon: "🔗" },
-      { label: "Crafting", page: "crafting", icon: "🔧" },
-    ]},
-    { title: "Assets", icon: Package, items: [
-      { label: "Garage", page: "garage", icon: "🚗" },
-      { label: "My Items", page: "my_items", icon: "🎒" },
-      { label: "Black Market", page: "black_market", icon: "🖤" },
-      { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
-    ]},
-    { title: "Combat", icon: Swords, items: [
-      { label: "Arena", page: "arena", icon: "🏟️" },
-      { label: "Fight Club", page: "fight_club", icon: "🥊" },
-    ]},
-    { title: "Social", icon: Users, items: [
-      { label: "Crew System", page: "crew_system", icon: "🤝" },
-      { label: "Crew Ranks", page: "crew_ranks", icon: "📊" },
-      { label: "Crew Bank", page: "crew_bank", icon: "🏦" },
-      { label: "Crew War", page: "crew_war", icon: "⚔️" },
-      { label: "Crew Territory", page: "crew_territory", icon: "📍" },
-      { label: "Crew Leaderboard", page: "crew_leaderboard", icon: "🏆" },
-      { label: "Family", page: "family", icon: "👨‍👩‍👦" },
-      { label: "Crew Challenges", page: "crew_challenges", icon: "🎯" },
-      { label: "Crew Alliance", page: "crew_alliance", icon: "🤝" },
-      { label: "Crew Safe House", page: "crew_safehouse", icon: "🏠" },
-      { label: "Crew Chat", page: "crew_chat", icon: "💬" },
-      { label: "Family Chat", page: "family_chat", icon: "👨‍👩‍👦" },
-    ]},
-    { title: "Progression", icon: Brain, items: [
-      { label: "Prestige", page: "prestige", icon: "⭐" },
-      { label: "Skill Tree", page: "skill_tree", icon: "🧠" },
-      { label: "Titles", page: "titles", icon: "👑" },
-      { label: "Achievements", page: "achievements", icon: "🏅" },
-      { label: "Leaderboards", page: "leaderboards", icon: "📊" },
-      { label: "Season Pass", page: "season_pass", icon: "🎫" },
-      { label: "Daily Challenges", page: "daily_challenges", icon: "📋" },
-      { label: "Energy Drinks", page: "energy_drinks", icon: "🥤" },
-    ]},
-    { title: "Special", icon: Shield, items: [
-      { label: "Ghost Mode", page: "ghost_mode", icon: "👻" },
-      { label: "Secret Challenges", page: "secret_challenges", icon: "🔮" },
-      { label: "Reputation", page: "reputation", icon: "🌍" },
-      { label: "Wanted Status", page: "wanted_status", icon: "🔴" },
-      { label: "Prison", page: "prison", icon: "🔒" },
-    ]},
-    { title: "Companies", icon: Building2, items: [
-      { label: "Company Empire", page: "companies_hub", icon: "🏢" },
-    ]},
-    { title: "Underworld", icon: EyeOff, items: [
-      { label: "Witness System", page: "witness_system", icon: "🔍" },
-      { label: "Forensics Lab", page: "forensics_lab", icon: "🔬" },
-      { label: "Court System", page: "court_system", icon: "⚖️" },
-      { label: "Crime Scene", page: "crime_scene", icon: "🔎" },
-      { label: "Spy Network", page: "spy_network", icon: "🕵️" },
-      { label: "Informants", page: "informants", icon: "🐀" },
-    ]},
-    { title: "Empire Systems", icon: Crown, items: [
-      { label: "Empire Building", page: "empire_building", icon: "🏗️" },
-      { label: "Empire Building", page: "empire_building", icon: "🏗️" },
-      { label: "Relationships", page: "relationships", icon: "🤝" },
-      { label: "Survival & Realism", page: "survival", icon: "💀" },
-      { label: "Security & Defense", page: "security", icon: "🛡️" },
-    ]},
-    { title: "Power", icon: Zap, items: [
-      { label: "Faction Warfare", page: "faction_warfare", icon: "⚔️" },
-      { label: "Advanced Combat", page: "advanced_combat", icon: "🥊" },
-      { label: "Advanced Crafting", page: "advanced_crafting", icon: "🔨" },
-      { label: "Pet Companions", page: "pets", icon: "🐾" },
-    ]},
-    { title: "World", icon: Globe, items: [
-      { label: "Day/Night Cycle", page: "day_night", icon: "🌙" },
-      { label: "World Events", page: "world_events", icon: "🌍" },
-      { label: "Co-op Raids", page: "coop_gameplay", icon: "🤝" },
-      { label: "Neighborhoods", page: "neighborhoods", icon: "🏘️" },
-      { label: "Dynamic Events", page: "dynamic_events", icon: "⚡" },
-    ]},
-    { title: "Live Events", icon: Clock, items: [
-      { label: "Event Calendar", page: "event_calendar", icon: "📅" },
-    ]},
-    { title: "Stores & Goals", icon: ShoppingBag, items: [
-      { label: "Game Objectives", page: "objectives", icon: "🎯" },
-      { label: "Point Store", page: "point_store", icon: "💎" },
-      { label: "Coin Store", page: "coin_store", icon: "🪙" },
-    ]},
-    { title: "My Profile", icon: User, items: [
-      { label: "My Profile", page: "my_profile", icon: "👤" },
-    ]},
-  ];
-
+  const getLeftMenuSections = () => LEFT_MENU_SECTIONS;
   const getRightMenuSections = () => RIGHT_MENU_SECTIONS;
 
   const renderPage = () => {
@@ -673,8 +562,10 @@ export default function Dashboard() {
       case "coin_store": return <CoinStorePage />;
       case "steal_house": return <CriminalOperationsPage category="steal_house" />;
       case "organized_crime": return <OrganizedCrimePage />;
-      case "missions": return <MissionsOverviewPage />;
+      case "missions": return <FullMissionsPage />;
       case "murder": return <CriminalOperationsPage category="murder" />;
+      case "heist": return <HeistPage />;
+      case "season_progress": return <SeasonPassPage />;
       case "stock_market": return <StockMarketPage />;
       case "interest_rates": return <InterestRatesPage />;
       case "credit_score": return <CreditScorePage />;
@@ -796,6 +687,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <PromoBanner />
       <div className="flex flex-1 overflow-hidden">
       {/* Left Sidebar */}
         <aside className={`${mobileMenuOpen ? "fixed inset-0 z-50 bg-black/50" : "hidden"} md:block md:relative md:w-64 shrink-0 border-r border-amber-500/10 overflow-y-auto`} style={{ background: 'linear-gradient(180deg, oklch(0.06 0.015 35), oklch(0.05 0.01 40))' }}>
@@ -886,6 +778,7 @@ export default function Dashboard() {
                 { icon: "🏠", label: "Burglarize", page: "steal_house", c: ["rose","225,29,72"], isCrime: false },
                 { icon: "🕵️", label: "Org Crime", page: "organized_crime", c: ["purple","147,51,234"], isCrime: false },
                 { icon: "💀", label: "Murder", page: "murder", c: ["red","185,28,28"], isCrime: false },
+                { icon: "💰", label: "Heist", page: "heist", c: ["amber","210,153,43"], isCrime: false },
               ] as const
             ).map((tab, idx) => {
               const isActive = activePage === tab.page;

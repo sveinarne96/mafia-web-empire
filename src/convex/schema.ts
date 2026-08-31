@@ -186,6 +186,19 @@ const schema = defineSchema({
     assassinationProfit: v.optional(v.number()),
     assassinationTarget: v.optional(v.any()),
     assassinationCooldownUntil: v.optional(v.number()),
+    // ═══ HEIST, EMPIRE, PRISON BUST, PROMO ═══
+    heistsTotal: v.optional(v.number()),
+    heistsSuccess: v.optional(v.number()),
+    heistsFailed: v.optional(v.number()),
+    heistProfit: v.optional(v.number()),
+    lastHeistAt: v.optional(v.number()),
+    empireProgress: v.optional(v.any()),
+    empireValue: v.optional(v.number()),
+    bustStats: v.optional(v.any()),
+    bustReward: v.optional(v.number()),
+    prisonBailoutAt: v.optional(v.number()),
+    redeemedPromos: v.optional(v.array(v.string())),
+    currentPromo: v.optional(v.string()),
   })
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])
@@ -867,6 +880,22 @@ const schema = defineSchema({
     power: v.number(),
     createdAt: v.number(),
   }).index("by_leader", ["leaderId"]),
+  prisonBots: defineTable({
+    name: v.string(),
+    sentence: v.number(),
+    reward: v.number(),
+    active: v.boolean(),
+  }).index("by_active", ["active"]),
+  promoCodes: defineTable({
+    code: v.string(),
+    message: v.string(),
+    rewardLabel: v.string(),
+    expiresAt: v.number(),
+    createdBy: v.id("users"),
+    createdAt: v.number(),
+    active: v.boolean(),
+    claimed: v.number(),
+  }).index("by_code", ["code"]),
 }, {
   schemaValidation: false,
 });

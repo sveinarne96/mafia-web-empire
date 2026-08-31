@@ -473,6 +473,15 @@ export const claimSeasonTier = mutation({
     } else if (tier.type === "heistTimer") { perks.heistTimer = (perks.heistTimer ?? 0) + tier.amount; patch.perks = perks; }
     else if (tier.type === "heistChance") { perks.heistChance = (perks.heistChance ?? 0) + tier.amount; patch.perks = perks; }
     else if (tier.type === "points") { patch.points = n(player.points, 0) + tier.amount; }
+    else if (tier.type === "legendaryPack") { patch.packs = addPacks(d.packs, "legendary", tier.amount); }
+    else if (tier.type === "cash") { patch.money = n(player.money, 0) + tier.amount; }
+    else if (tier.type === "coins") { patch.coins = n(player.coins, 0) + tier.amount; }
+    else if (tier.type === "car") {
+      await ctx.db.insert("vehicles", {
+        userId: player._id, name: "Hired Limo", type: "car", armored: false, speed: 88, storage: 24, stolen: true, purchasePrice: 150_000,
+        damage: 0, rarity: "rare", forSale: false, salePrice: 0, isWreck: false,
+      });
+    }
 
     await ctx.db.patch(player._id, patch);
     return { success: true, reward: tier.reward };

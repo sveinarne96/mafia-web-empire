@@ -1,5 +1,6 @@
 import { EventsManager } from "@/components/EventsManager";
 import { DatabaseWipeUI } from "@/components/DatabaseWipeUI";
+import { PromoCodesPanel } from "./AdminPromo";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -428,6 +429,9 @@ export function AdminPanel() {
   if (activeTool === "player_mgmt") {
     return <div className="animate-fade-in"><PlayerManagementModal players={players || []} onClose={() => setActiveTool(null)} /></div>;
   }
+  if (activeTool === "promo") {
+    return <div className="animate-fade-in"><PromoCodesPanel onClose={() => setActiveTool(null)} /></div>;
+  }
   if (activeTool === "events" || activeTool === "event_mgr") {
     return <div className="animate-fade-in"><EventsManager onClose={() => setActiveTool(null)} /></div>;
   }
@@ -491,6 +495,10 @@ export function AdminPanel() {
         <button onClick={() => setActiveTool("broadcast")}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
           📣 Broadcast
+        </button>
+        <button onClick={() => setActiveTool("promo")}
+          className="px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
+          🎁 Promo Codes
         </button>
         <button onClick={() => setActiveTool("announcements")}
           className="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">

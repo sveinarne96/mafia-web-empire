@@ -163,7 +163,30 @@ export const FREE_TRACK: SeasonTierDef[] = [
   { tier: 8, xp: 33_900_000, reward: "5 Heist Timer Perks", type: "heistTimer", amount: 5 },
   { tier: 9, xp: 40_850_000, reward: "5 Heist Chance Perks", type: "heistChance", amount: 5 },
   { tier: 10, xp: 45_000_000, reward: "2 Epic Packs", type: "epicPack", amount: 2 },
+  // ═══ UNLIMITED EXTENSION (tiers 11+) — keeps everything scaling forever ═══
+  { tier: 11, xp: 50_000_000, reward: "10,000 Bullets", type: "bullets", amount: 10000 },
+  { tier: 12, xp: 58_000_000, reward: "250 Points", type: "points", amount: 250 },
+  { tier: 13, xp: 67_000_000, reward: "1 Legendary Pack", type: "legendaryPack", amount: 1 },
+  { tier: 14, xp: 78_000_000, reward: "10 Auto Rank Perks", type: "autoRank", amount: 10 },
+  { tier: 15, xp: 90_000_000, reward: "25,000 Bullets", type: "bullets", amount: 25000 },
+  { tier: 16, xp: 105_000_000, reward: "1,000,000 Cash", type: "cash", amount: 1000000 },
+  { tier: 17, xp: 122_000_000, reward: "500 Points", type: "points", amount: 500 },
+  { tier: 18, xp: 142_000_000, reward: "5 Double XP + 5 Double Pay", type: "doubleXp", amount: 5 },
+  { tier: 19, xp: 165_000_000, reward: "2 Legendary Packs", type: "legendaryPack", amount: 2 },
+  { tier: 20, xp: 190_000_000, reward: "50,000 Bullets", type: "bullets", amount: 50000 },
+  { tier: 21, xp: 220_000_000, reward: "1,000 Points", type: "points", amount: 1000 },
+  { tier: 22, xp: 255_000_000, reward: "1 Hired Limo (garage)", type: "car", amount: 0 },
+  { tier: 23, xp: 295_000_000, reward: "10 Gold Bars", type: "goldBar", amount: 10 },
+  { tier: 24, xp: 340_000_000, reward: "100,000 Bullets", type: "bullets", amount: 100000 },
+  { tier: 25, xp: 390_000_000, reward: "3 Legendary Packs", type: "legendaryPack", amount: 3 },
+  { tier: 26, xp: 450_000_000, reward: "2,500 Points", type: "points", amount: 2500 },
+  { tier: 27, xp: 520_000_000, reward: "5,000,000 Cash", type: "cash", amount: 5000000 },
+  { tier: 28, xp: 600_000_000, reward: "250,000 Bullets", type: "bullets", amount: 250000 },
+  { tier: 29, xp: 700_000_000, reward: "5,000 Points", type: "points", amount: 5000 },
+  { tier: 30, xp: 820_000_000, reward: "5 Legendary Packs + 1,000 Coins", type: "coins", amount: 1000 },
 ];
+
+export const UNLIMITED_SEASON = true;
 
 // VIP track: 100 levels, XP per level scales gently (level 1 = 2,800).
 export const VIP_LEVELS = 100;

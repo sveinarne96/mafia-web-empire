@@ -27,6 +27,9 @@ const REWARD_META: Record<string, { icon: string; color: string }> = {
   cash: { icon: "💵", color: "text-green-400" },
   bustBoost: { icon: "💥", color: "text-red-400" },
   commonScrap: { icon: "🧩", color: "text-slate-400" },
+  legendaryPack: { icon: "💎", color: "text-amber-400" },
+  coins: { icon: "🪙", color: "text-amber-300" },
+  car: { icon: "🚗", color: "text-cyan-400" },
 };
 
 function rewardRow(type: string, amount: number, cash: number) {
