@@ -27,6 +27,7 @@ function ensureDefaults(player: any) {
     perks: player.perks && typeof player.perks === "object" ? player.perks : {},
     seasonXp: n(player.seasonXp, 0),
     seasonTiersClaimed: Array.isArray(player.seasonTiersClaimed) ? player.seasonTiersClaimed : [],
+    vipLevelsClaimed: Array.isArray(player.vipLevelsClaimed) ? player.vipLevelsClaimed : [],
     vipUntil: n(player.vipUntil, 0),
     objectiveProgress: player.objectiveProgress && typeof player.objectiveProgress === "object" ? player.objectiveProgress : {},
     objectivesClaimed: player.objectivesClaimed && typeof player.objectivesClaimed === "object" ? player.objectivesClaimed : {},
@@ -100,7 +101,11 @@ export const getStoreState = query({
       freeTrackProgress: currentFree,
       vipLevel: currentVip,
       vipActive: d.vipUntil > Date.now(),
+      vipLevelsClaimed: d.vipLevelsClaimed,
       seasonEndsAt: seasonEnd(),
+      nextAutoMeltAt: n(player.lastAutoMelt, 0) + 5 * 60 * 1000,
+      carCount: ownedCars.length,
+      meltableCount: ownedCars.filter((v: any) => v.isWreck || v.damage >= 40).length,
     };
   },
 });
@@ -207,6 +212,31 @@ export const purchasePointItem = mutation({
 
     await ctx.db.patch(player._id, patch);
     return { success: true, item: item.name, group };
+  },
+});
+
+// ===== UPGRADE BODYGUARD =====
+export const upgradeBodyguard = mutation({
+  args: { bodyguardId: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    const list = d.robotBodyguards.map((b: any) => ({ ...b }));
+    const bg = list.find((b: any) => b.id === args.bodyguardId);
+    if (!bg) throw new Error("Bodyguard not found");
+    const rank = n(bg.rank, 1);
+    if (rank >= 5) throw new Error("Already at max rank (5)");
+    const cost = rank * 200;
+    if (n(player.points, 0) < cost) throw new Error(`Need ${cost} points to upgrade`);
+    bg.rank = rank + 1;
+    bg.defense = Math.round(n(bg.defense, 0) * 1.4);
+    bg.maxRank = 5;
+    await ctx.db.patch(player._id, {
+      robotBodyguards: list,
+      points: n(player.points, 0) - cost,
+    });
+    return { success: true, rank: bg.rank, defense: bg.defense };
   },
 });
 

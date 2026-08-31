@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -64,6 +64,31 @@ export function CarDealerPage() {
   // Scrap
   const [meltSel, setMeltSel] = useState<Id<"vehicles">[]>([]);
   const [bulletAmt, setBulletAmt] = useState(100);
+
+  // Auto-melt countdown — every 5 minutes the furnace runs while 10+ cars sit in the scrapyard
+  const [now, setNow] = useState(() => Date.now());
+  const autoFiring = useRef(false);
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const autoCars = (store?.ownedCars ?? []).filter((v: any) => v.isWreck || (v.damage ?? 0) >= 40);
+  const autoReady = (store?.ownedCars ?? []).length >= 10 && autoCars.length > 0;
+  const meltRemaining = Math.max(0, (store?.nextAutoMeltAt ?? 0) - now);
+  const meltClock = `${Math.floor(meltRemaining / 60000)}:${String(Math.floor((meltRemaining % 60000) / 1000)).padStart(2, "0")}`;
+
+  useEffect(() => {
+    if (meltRemaining > 0 || !autoReady || busy === "auto" || autoFiring.current) return;
+    autoFiring.current = true;
+    let cancelled = false;
+    autoMelt()
+      .then((r: any) => { if (!cancelled) setMsg({ ok: true, text: `⚙️ Auto-melted ${r.count} car(s) for ${nf(r.bullets - (store?.bullets ?? 0))} 💀 bullets!` }); })
+      .catch((e: any) => { if (!cancelled) setMsg({ ok: false, text: `⚠️ ${e.message || "Auto-melt failed"}` }); })
+      .finally(() => { if (!cancelled) { autoFiring.current = false; setNow(Date.now()); } });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meltRemaining, autoReady, busy]);
 
   const owned = store?.ownedCars ?? [];
   const filteredMarket = useMemo(() => {
@@ -273,7 +298,7 @@ export function CarDealerPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               <div className="rounded-lg border border-slate-700/40 bg-slate-900/30 p-3 text-center"><div className="text-[9px] text-muted-foreground">Total Melted</div><div className="text-base font-black text-amber-400">{nf(store.carsMelted)}</div></div>
               <div className="rounded-lg border border-slate-700/40 bg-slate-900/30 p-3 text-center"><div className="text-[9px] text-muted-foreground">Melt Limit</div><div className="text-base font-black text-cyan-400">{store.meltLimit} cars</div></div>
-              <div className="rounded-lg border border-slate-700/40 bg-slate-900/30 p-3 text-center"><div className="text-[9px] text-muted-foreground">Auto-Melt Ready</div><div className="text-base font-black text-green-400">{owned.length >= 10 ? "✅" : "🔒"}</div></div>
+              <div className="rounded-lg border border-slate-700/40 bg-slate-900/30 p-3 text-center"><div className="text-[9px] text-muted-foreground">Next Auto-Melt</div><div className={`text-base font-black ${meltRemaining === 0 && autoReady ? "text-green-400 animate-pulse" : meltRemaining > 0 ? "text-cyan-400" : "text-slate-500"}`}>{autoReady ? (meltRemaining > 0 ? meltClock : "MELTING...") : "—"}</div></div>
               <div className="rounded-lg border border-slate-700/40 bg-slate-900/30 p-3 text-center"><div className="text-[9px] text-muted-foreground">Meltable Cars</div><div className="text-base font-black text-red-400">{meltable.length}</div></div>
             </div>
             <div className="text-[10px] text-muted-foreground mt-2">⚙️ Cars in the scrapyard auto-melt into bullets every 5 minutes as long as you have at least 10 cars there (wrecks and 40%+ damaged cars first).</div>

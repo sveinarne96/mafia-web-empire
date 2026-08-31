@@ -53,7 +53,8 @@ import { BecomeAdminPage } from "@/components/BecomeAdmin";
 import { UpdatesPage } from "@/components/UpdatesPage";
 import { SeasonPassPage } from "@/components/SeasonPass";
 import { LogoDropdown } from "@/components/LogoDropdown";
-import { StealFromHousePage, GtaCarTheftPage, BodyguardsPage } from "@/components/GameEnhanced";
+import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
+import { BodyguardsPage } from "@/components/BodyguardsPage";
 import { WantedStatusPage } from "@/components/GameEnhanced";
 import {
   CrimesOverviewPage, CrimeCategoryPage, CrimeEmpirePage, HeistPlanningPage,
