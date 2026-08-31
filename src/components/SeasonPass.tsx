@@ -43,6 +43,7 @@ export function SeasonPassPage() {
   const store = useQuery(api.storeSystem.getStoreState);
   const claimTier = useMutation(api.storeSystem.claimSeasonTier);
   const claimVip = useMutation(api.storeSystem.claimVipLevel);
+  const buyVip = useMutation(api.storeSystem.purchasePointItem);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [showVip, setShowVip] = useState(false);
@@ -209,7 +210,23 @@ export function SeasonPassPage() {
         {store.vipActive ? (
           <div className="text-[10px] text-green-400 font-bold">✅ VIP active — Lv.{vipLevel} of {VIP_LEVELS} · {vipNext ? `${short(vipNeed - seasonXp)} XP to Lv.${vipNext}` : "Max level reached!"}</div>
         ) : (
-          <div className="text-[10px] text-muted-foreground">Buy <span className="text-amber-400 font-bold">VIP Membership (30 days)</span> in the 💎 Point Store to unlock this track.</div>
+          <div className="mafia-card rounded-xl p-3 flex flex-wrap items-center gap-3 border-amber-500/20">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-bold text-amber-400">👑 VIP Membership (30 days)</div>
+              <div className="text-[10px] text-muted-foreground mt-0.5">Unlocks the VIP track and every claimable level reward. You have <span className="text-yellow-300 font-bold">{nf(store.points ?? 0)}</span> points.</div>
+            </div>
+            <button
+              disabled={busy === "vipbuy" || (store.points ?? 0) < 2500}
+              onClick={async () => {
+                setBusy("vipbuy"); setMsg(null);
+                try { const r = await buyVip({ itemId: "vip" }); setMsg({ ok: true, text: `✅ ${r.item} activated — VIP track unlocked for 30 days!` }); }
+                catch (e: any) { setMsg({ ok: false, text: `⚠️ ${e.message || "Failed"}` }); }
+                setBusy(null);
+              }}
+              className={`px-4 py-2 rounded-lg text-[11px] font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed ${(store.points ?? 0) >= 2500 ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black hover:brightness-110" : "bg-slate-800 text-slate-500"}`}>
+              Get VIP · 2,500 pts
+            </button>
+          </div>
         )}
         {showVip && store.vipActive && (
           <div className="space-y-1.5 pt-2">
