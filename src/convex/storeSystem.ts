@@ -675,10 +675,11 @@ export const toggleAutoConvert = mutation({
 // ===== PERKS =====
 // Instant perks (no timed boost) share a short cooldown so players must
 // pace them — the UI surfaces this as a live countdown.
-// NOTE: autoRank is excluded so players can stack multiple Auto Rank refills
-// back-to-back (each grants +1 rank immediately) instead of waiting 10min.
+// NOTE: autoRank and jailImmunity are excluded so players can stack multiple
+// of those refills back-to-back (each grants +1 rank / +1 skip immediately)
+// instead of waiting 10min.
 const INSTANT_COOLDOWN_MS = 10 * 60 * 1000;
-const INSTANT_PERKS = ["jailImmunity", "supplyUnit"];
+const INSTANT_PERKS = ["supplyUnit"];
 
 export const usePerk = mutation({
   args: { perkId: v.string() },
