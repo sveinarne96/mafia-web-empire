@@ -730,14 +730,26 @@ export const usePerk = mutation({
         patch.bullets = n(player.bullets, 0) + 100;
         patch.energy = Math.min(100, n((player as any).energy, 100) + 25);
         break;
-      // Auto Rank is now a timed perk: it grants the player +1 rank every
-      // 10 minutes throughout the active 1-hour window instead of instantly.
-      // The actual XP/ranks are applied lazily via processAutoRank (called on
-      // every action tick and via the autoRankTick mutation below).
+      // Auto Rank is now a timed perk: activating grants an instant +1 rank,
+      // then keeps ranking you +1 every 10 minutes throughout the active
+      // 1-hour window. The extra ranks are applied lazily via processAutoRank
+      // (called on every action tick, the autoRankTick mutation, and the
+      // global heartbeat below).
       case "autoRank": {
         const prevUntil = Math.max(d.autoRankUntil, now);
         patch.autoRankUntil = prevUntil + 3600000;
         patch.autoRankAppliedAt = Math.max(d.autoRankAppliedAt, d.autoRankUntil > now ? d.autoRankAppliedAt : now);
+        // Immediate +1 rank on activation so it feels responsive.
+        const kick: any = await addXpAndCheckLevel(ctx, player, 2000);
+        if (typeof kick.level === "number" && kick.level > (player.level ?? 1)) {
+          patch.level = kick.level;
+          patch.highestLevel = Math.max(player.highestLevel ?? 0, kick.level);
+          if (kick.attack !== undefined) patch.attack = kick.attack;
+          if (kick.defense !== undefined) patch.defense = kick.defense;
+          if (kick.maxLife !== undefined) patch.maxLife = kick.maxLife;
+          if (kick.life !== undefined) patch.life = kick.life;
+        }
+        if (kick.experience !== undefined) patch.experience = kick.experience;
         break;
       }
       default: throw new Error("Unknown perk");
@@ -754,7 +766,7 @@ const AUTO_RANK_MS = AUTO_RANK_MINUTES_PER_RANK * 60 * 1000;
 // Apply any elapsed Auto Rank ranks inside the active window. Idempotent &
 // lazy: safe to call on every action or tick; it only advances the
 // autoRankAppliedAt timestamp by whole 10-minute blocks that have elapsed.
-async function processAutoRank(ctx: any) {
+export async function processAutoRank(ctx: any) {
   const player = await getCurrentUser(ctx);
   if (!player) return { ranks: 0 };
   const until = n(player.autoRankUntil, 0);

@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { processAutoRank } from "./storeSystem";
 
 // Helper: get authenticated player
 async function getAuthPlayer(ctx: any) {
@@ -23,6 +24,9 @@ export const heartbeat = mutation({
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
     await ctx.db.patch(player._id, { lastActive: Date.now() } as any);
+    // Accrue any pending Auto Rank ranks every heartbeat (runs ~30s) so the
+    // perk keeps ranking the player on any page, not just crime/HQ screens.
+    try { await processAutoRank(ctx); } catch {}
   },
 });
 
