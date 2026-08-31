@@ -759,9 +759,8 @@ export const usePerk = mutation({
   },
 });
 
-// Auto Rank accrual — every 10 minutes of active window = +1 rank.
-const AUTO_RANK_MINUTES_PER_RANK = 10;
-const AUTO_RANK_MS = AUTO_RANK_MINUTES_PER_RANK * 60 * 1000;
+// Auto Rank accrual — ~3500 ranks per hour (≈1 rank every 1.03 s).
+const AUTO_RANK_MS = Math.round(3600000 / 3500); // ~1029 ms
 
 // Apply any elapsed Auto Rank ranks inside the active window. Idempotent &
 // lazy: safe to call on every action or tick; it only advances the
@@ -780,7 +779,7 @@ export async function processAutoRank(ctx: any) {
   const ranksToGrant = Math.floor(elapsed / AUTO_RANK_MS);
   if (ranksToGrant < 1) return { ranks: 0 };
   // Grant ranks in a single batch so the O(1) level-up math stays fast.
-  const xpAmt = Math.min(ranksToGrant, 24) * 2000;
+  const xpAmt = ranksToGrant * 2000;
   const xpUpd: any = await addXpAndCheckLevel(ctx, player, xpAmt);
   const patch: any = {
     autoRankAppliedAt: start + ranksToGrant * AUTO_RANK_MS,

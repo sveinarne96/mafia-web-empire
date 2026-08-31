@@ -173,14 +173,14 @@ export function PerksPanel() {
   const [, setTick] = useState(0);
 
   // live 1s tick to keep instant-perk cooldowns counting down,
-  // and to lazily apply pending Auto Rank ranks on mount + every 30s.
+  // and to lazily apply pending Auto Rank ranks on mount + every 2s.
   // NOTE: must be called before any early return so hook order stays constant.
   useEffect(() => {
     autoRankTick().catch(() => {});
     const start = Date.now();
     const t = setInterval(() => {
       setTick((v) => v + 1);
-      if (Date.now() - start > 30_000) autoRankTick().catch(() => {});
+      if (Date.now() - start > 2_000) autoRankTick().catch(() => {});
     }, 1000);
     return () => clearInterval(t);
   }, []);
@@ -241,7 +241,7 @@ export function PerksPanel() {
       let text = stacking ? `⚡ Extended ${def.label} by ${def.duration}!` : `⚡ Activated ${def.label}!`;
       if (id === "supplyUnit") text = `📦 Supply Unit used! +100 bullets, +25 energy`;
       if (id === "jailImmunity") text = `🛡️ Jail Immunity banked! +1 skip`;
-      if (id === "autoRank") text = stacking ? `⭐ Auto Rank running! +1 rank every 10 min, ${def.duration} (stacked)` : `⭐ Auto Rank started! +1 rank every 10 min for ${def.duration}`;
+      if (id === "autoRank") text = stacking ? `⭐ Auto Rank running! +1 rank every ~1s, ${def.duration} (stacked)` : `⭐ Auto Rank started! +1 rank every ~1s for ${def.duration}`;
       setMsg({ ok: true, text });
     }
     catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }
