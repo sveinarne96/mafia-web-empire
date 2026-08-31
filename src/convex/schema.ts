@@ -199,6 +199,12 @@ const schema = defineSchema({
     bustReward: v.optional(v.number()),
     prisonBailoutAt: v.optional(v.number()),
     redeemedPromos: v.optional(v.array(v.string())),
+    promoHistory: v.optional(v.array(v.object({
+      code: v.string(),
+      message: v.string(),
+      rewardLabel: v.string(),
+      at: v.number(),
+    }))),
     currentPromo: v.optional(v.string()),
     // ═══ WORLD SYSTEMS (bank, safe, stocks, supply, estate) ═══
     interestBank: v.optional(v.number()),

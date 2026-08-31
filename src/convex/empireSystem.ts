@@ -390,7 +390,33 @@ export const redeemPromoCode = mutation({
     patch.experience = xpUpd.experience;
     if (xpUpd.level !== undefined) { patch.level = xpUpd.level; patch.highestLevel = xpUpd.highestLevel; patch.energy = 100; if (xpUpd.attack !== undefined) patch.attack = xpUpd.attack; if (xpUpd.defense !== undefined) patch.defense = xpUpd.defense; }
     await ctx.db.patch(player._id, patch);
+    // Record the claim so the player's Overview > Promotional Codes page can
+    // show their recent claimed codes.
+    const history = Array.isArray((player as any).promoHistory)
+      ? [...(player as any).promoHistory]
+      : [];
+    history.push({ code: promo.code, message: promo.message, rewardLabel: promo.rewardLabel, at: now });
+    await ctx.db.patch(player._id, { promoHistory: history.slice(-25) });
     await ctx.db.patch(promo._id, { claimed: promo.claimed + 1 });
     return { success: true, money, coinBonus, promo: promo.message, rewardLabel: promo.rewardLabel };
+  },
+});
+
+// Player-facing state for the Overview > Promotional Codes page.
+export const getMyPromos = query({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) return null;
+    const now = Date.now();
+    const activeList = await ctx.db.query("promoCodes").filter((q) => q.eq(q.field("active"), true)).collect();
+    const activeCurr = activeList.find((a: any) => a.expiresAt > now) ?? null;
+    const active = activeCurr ? { code: activeCurr.code, message: activeCurr.message, rewardLabel: activeCurr.rewardLabel, expiresAt: activeCurr.expiresAt } : null;
+    return {
+      active,
+      history: Array.isArray((player as any).promoHistory)
+        ? [...(player as any).promoHistory].sort((a: any, b: any) => b.at - a.at)
+        : [],
+    };
   },
 });
