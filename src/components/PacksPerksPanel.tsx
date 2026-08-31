@@ -228,9 +228,13 @@ export function PerksPanel() {
     try {
       await usePerk({ perkId: id });
       const def = PERK_DEFS.find((p) => p.id === id)!;
-      const isInstantNow = def.duration === "instant" || id === "jailImmunity" || id === "autoRank" || id === "supplyUnit";
-      const stacking = !isInstantNow && fieldFor(id) > now;
-      setMsg({ ok: true, text: stacking ? `⚡ Extended ${def.label} by ${def.duration}!` : `⚡ Activated ${def.label}!` });
+      const isTimed = !(def.duration === "instant" || id === "jailImmunity" || id === "autoRank" || id === "supplyUnit");
+      const stacking = isTimed && fieldFor(id) > now;
+      let text = stacking ? `⚡ Extended ${def.label} by ${def.duration}!` : `⚡ Activated ${def.label}!`;
+      if (id === "autoRank") text = `⭐ Auto Rank used! +1 rank (${Math.max(0, (perks[id] ?? 1) - 1)} left)`;
+      if (id === "supplyUnit") text = `📦 Supply Unit used! +100 bullets, +25 energy`;
+      if (id === "jailImmunity") text = `🛡️ Jail Immunity banked! +1 skip`;
+      setMsg({ ok: true, text });
     }
     catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }
     setBusy(null);
