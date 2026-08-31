@@ -225,7 +225,13 @@ export function PerksPanel() {
   const useIt = async (id: string) => {
     setBusy(id);
     setMsg(null);
-    try { await usePerk({ perkId: id }); setMsg({ ok: true, text: `⚡ Activated ${PERK_DEFS.find((p) => p.id === id)?.label}!` }); }
+    try {
+      await usePerk({ perkId: id });
+      const def = PERK_DEFS.find((p) => p.id === id)!;
+      const isInstantNow = def.duration === "instant" || id === "jailImmunity" || id === "autoRank" || id === "supplyUnit";
+      const stacking = !isInstantNow && fieldFor(id) > now;
+      setMsg({ ok: true, text: stacking ? `⚡ Extended ${def.label} by ${def.duration}!` : `⚡ Activated ${def.label}!` });
+    }
     catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }
     setBusy(null);
   };
@@ -282,10 +288,10 @@ export function PerksPanel() {
                   </td>
                   <td className="py-2">
                     <button
-                      disabled={busy === p.id || stock < 1 || (!instant && isActive) || (instant && instantRemain(p.id) > 0)}
+                      disabled={busy === p.id || stock < 1 || (instant && instantRemain(p.id) > 0)}
                       onClick={() => useIt(p.id)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed ${stock > 0 && !(instant && instantRemain(p.id) > 0) && (instant || !isActive) ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black" : "bg-slate-800 text-slate-500"}`}>
-                      {stock < 1 ? "-" : instant && instantRemain(p.id) > 0 ? "⏳" : isActive && !instant ? "Active" : "Use"}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed ${stock > 0 && !(instant && instantRemain(p.id) > 0) ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black" : "bg-slate-800 text-slate-500"}`}>
+                      {stock < 1 ? "-" : instant && instantRemain(p.id) > 0 ? "⏳" : isActive && !instant ? "Extend" : "Use"}
                     </button>
                   </td>
                 </tr>

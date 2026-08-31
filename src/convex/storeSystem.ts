@@ -702,15 +702,19 @@ export const usePerk = mutation({
       perkActiveUntil[args.perkId] = now;
       patch.perkActiveUntil = perkActiveUntil;
     }
+    // Timed perks STACK: re-using a perk while it is already active extends the
+    // remaining timer (from max(existing, now)) instead of restarting it. This
+    // lets players burn multiple refills of the same perk at once, so e.g. two
+    // Double XP refills gives 2 hours of boost.
     switch (args.perkId) {
-      case "doubleXp": patch.xpBoostUntil = now + 3600000; break;
-      case "doublePay": patch.cashBoostUntil = now + 3600000; break;
-      case "heistChance": patch.heistChanceUntil = now + 3600000; break;
-      case "heistTimer": patch.heistTimerUntil = now + 3600000; break;
-      case "bustBoost": patch.bustBoostUntil = now + 3600000; break;
-      case "gtaRarity": patch.gtaRarityUntil = now + 3600000; break;
-      case "meltValue": patch.meltValueUntil = now + 24 * 3600000; break;
-      case "meltLimit": patch.meltLimitUntil = now + 24 * 3600000; break;
+      case "doubleXp": patch.xpBoostUntil = Math.max(n(player.xpBoostUntil, 0), now) + 3600000; break;
+      case "doublePay": patch.cashBoostUntil = Math.max(n(player.cashBoostUntil, 0), now) + 3600000; break;
+      case "heistChance": patch.heistChanceUntil = Math.max(d.heistChanceUntil, now) + 3600000; break;
+      case "heistTimer": patch.heistTimerUntil = Math.max(d.heistTimerUntil, now) + 3600000; break;
+      case "bustBoost": patch.bustBoostUntil = Math.max(d.bustBoostUntil, now) + 3600000; break;
+      case "gtaRarity": patch.gtaRarityUntil = Math.max(d.gtaRarityUntil, now) + 3600000; break;
+      case "meltValue": patch.meltValueUntil = Math.max(d.meltValueUntil, now) + 24 * 3600000; break;
+      case "meltLimit": patch.meltLimitUntil = Math.max(d.meltLimitUntil, now) + 24 * 3600000; break;
       case "jailImmunity": patch.jailImmunityCount = d.jailImmunityCount + 1; break;
       case "supplyUnit":
         patch.bullets = n(player.bullets, 0) + 100;
