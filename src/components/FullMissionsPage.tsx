@@ -1,4 +1,4 @@
-import { EmpirePanel, MissionGuidePanel, PrisonBustPanel } from "./EmpireAndBust";
+import { EmpirePanel, MissionGuidePanel } from "./EmpireAndBust";
 import { MissionsOverviewPage } from "./MissionPages";
 
 export function FullMissionsPage() {
@@ -7,7 +7,6 @@ export function FullMissionsPage() {
       <EmpirePanel />
       <MissionGuidePanel />
       <MissionsOverviewPage />
-      <PrisonBustPanel />
     </div>
   );
 }

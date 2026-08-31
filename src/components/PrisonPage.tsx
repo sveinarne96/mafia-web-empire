@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { PrisonBustPanel } from "./EmpireAndBust";
 
 export function PrisonPage() {
   const player = useQuery(api.game.getPlayer);
@@ -111,6 +112,7 @@ export function PrisonPage() {
             <div className="text-xs text-muted-foreground">Prison Currency</div>
           </div>
         </div>
+        <PrisonBustPanel />
       </div>
     );
   }
@@ -333,6 +335,8 @@ export function PrisonPage() {
           </div>
         </div>
       )}
+
+      <PrisonBustPanel />
     </div>
   );
 }
