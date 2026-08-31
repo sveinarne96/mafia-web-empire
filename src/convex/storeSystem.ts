@@ -391,8 +391,8 @@ export const purchaseCoinItem = mutation({
     let bullets = d.bullets;
 
     if (item.kind === "pack") {
-      await openPackInto(ctx, player._id, item.packType ?? "common", item.id === "legendaryPack" ? 1 : item.id === "epicPack" ? 1 : 1, 0);
-      patch.packsOpened = d.packsOpened + 1;
+      // Stack purchased packs into the player's inventory to open later.
+      patch.packs = addPacks(d.packs, item.packType ?? "common", 1);
     } else if (item.kind === "perk") {
       perks[item.perkId!] = (perks[item.perkId!] ?? 0) + (item.perkAmount ?? 1);
       patch.perks = perks;
