@@ -56,14 +56,24 @@ export function InventoryPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-        {PACK_RARITY_ORDER.map((r) => (
-          <div key={r} className="mafia-card rounded-lg p-2 text-center border border-slate-700/40">
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{r}</div>
-            <div className={`text-base font-black ${r === "legendary" ? "text-amber-400" : r === "epic" ? "text-purple-400" : r === "rare" ? "text-blue-400" : "text-slate-300"}`}>
-              {nf(packs[r] ?? 0)} {short(scraps[r] ?? 0) + " scrap"}
+        {PACK_RARITY_ORDER.map((r) => {
+          const color = r === "legendary" ? "text-amber-400" : r === "epic" ? "text-purple-400" : r === "rare" ? "text-blue-400" : "text-slate-300";
+          return (
+            <div key={r} className="mafia-card rounded-xl p-2.5 border border-slate-700/40">
+              <div className={`text-[10px] font-black uppercase tracking-wider ${color}`}>{r}</div>
+              <div className="mt-2 grid grid-cols-2 gap-1.5">
+                <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-1.5 text-center">
+                  <div className="text-[9px] text-muted-foreground">📦 Packs</div>
+                  <div className={`text-lg font-black ${color}`}>{nf(packs[r] ?? 0)}</div>
+                </div>
+                <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-1.5 text-center">
+                  <div className="text-[9px] text-muted-foreground">🧩 Scraps</div>
+                  <div className="text-lg font-black text-cyan-300">{r === "legendary" ? "—" : nf(scraps[r] ?? 0)}</div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <PacksOverviewPanel />
