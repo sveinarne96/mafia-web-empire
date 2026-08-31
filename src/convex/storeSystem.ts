@@ -673,18 +673,35 @@ export const toggleAutoConvert = mutation({
 });
 
 // ===== PERKS =====
+// Instant perks (no timed boost) share a short cooldown so players must
+// pace them — the UI surfaces this as a live countdown.
+const INSTANT_COOLDOWN_MS = 10 * 60 * 1000;
+const INSTANT_PERKS = ["jailImmunity", "autoRank", "supplyUnit"];
+
 export const usePerk = mutation({
   args: { perkId: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
     const d = ensureDefaults(player);
+    const now = Date.now();
+    if (INSTANT_PERKS.includes(args.perkId)) {
+      const last = n(d.perkActiveUntil?.[args.perkId] as any, 0);
+      const elapsed = now - last;
+      if (elapsed < INSTANT_COOLDOWN_MS) {
+        throw new Error(`Recharging… ${Math.ceil((INSTANT_COOLDOWN_MS - elapsed) / 1000)}s until you can use this again`);
+      }
+    }
     const stock = n(d.perks[args.perkId], 0);
     if (stock < 1) throw new Error("No stock of this perk");
     const perks = { ...d.perks };
     perks[args.perkId] = stock - 1;
     const patch: any = { perks };
-    const now = Date.now();
+    const perkActiveUntil = { ...(d.perkActiveUntil || {}) };
+    if (INSTANT_PERKS.includes(args.perkId)) {
+      perkActiveUntil[args.perkId] = now;
+      patch.perkActiveUntil = perkActiveUntil;
+    }
     switch (args.perkId) {
       case "doubleXp": patch.xpBoostUntil = now + 3600000; break;
       case "doublePay": patch.cashBoostUntil = now + 3600000; break;

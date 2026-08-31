@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { PACK_CONFIG, PACK_RARITY_ORDER, SCRAP_TO_PACK, PERK_DEFS } from "@/data/objectives";
@@ -162,17 +162,26 @@ export function PacksOverviewPanel() {
   );
 }
 
+const INSTANT_COOLDOWN_MS = 10 * 60 * 1000;
+
 export function PerksPanel() {
   const store = useQuery(api.storeSystem.getStoreState);
   const usePerk = useMutation(api.storeSystem.usePerk);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [, setTick] = useState(0);
 
   if (!store) return <div className="animate-pulse py-6 text-center text-muted-foreground">Loading perks...</div>;
 
   const perks: Record<string, number> = store.perks ?? {};
   const until: Record<string, number> = store.perkActiveUntil ?? {};
   const now = Date.now();
+
+  // live 1s tick to keep instant-perk cooldowns counting down
+  useEffect(() => {
+    const t = setInterval(() => setTick((v) => v + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const fieldFor = (id: string): number => {
     switch (id) {
@@ -195,6 +204,21 @@ export function PerksPanel() {
     const m = Math.floor(t / 60000);
     const s = Math.floor((t % 60000) / 1000);
     return `${m}m ${s}s`;
+  };
+
+  // For instant (one-shot) perks: returns seconds left until usable again, or 0.
+  const instantRemain = (id: string) => {
+    const start = until[id] ?? 0;
+    const rem = start + INSTANT_COOLDOWN_MS - now;
+    return Math.max(0, rem);
+  };
+  const instantText = (id: string) => {
+    const ms = instantRemain(id);
+    if (ms <= 0) return "";
+    const s = Math.ceil(ms / 1000);
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
   };
 
   const useIt = async (id: string) => {
@@ -226,7 +250,7 @@ export function PerksPanel() {
             {PERK_DEFS.map((p) => {
               const stock = perks[p.id] ?? 0;
               const isActive = active(p.id);
-              const instant = p.duration === "instant" || p.id === "jailImmunity" || p.id === "autoRank";
+              const instant = p.duration === "instant" || p.id === "jailImmunity" || p.id === "autoRank" || p.id === "supplyUnit";
               return (
                 <tr key={p.id} className="border-b border-slate-800/40">
                   <td className="py-2 pr-2">
@@ -241,7 +265,14 @@ export function PerksPanel() {
                   <td className="py-2 pr-2 text-center text-amber-400 font-black">{stock}</td>
                   <td className="py-2 pr-2">
                     {instant ? (
-                      <span className="text-[10px] text-slate-400">Instant</span>
+                      (() => {
+                        const cd = instantRemain(p.id);
+                        return cd > 0 ? (
+                          <span className="text-[10px] font-bold text-cyan-400 animate-pulse">⏳ {instantText(p.id)}</span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">Ready</span>
+                        );
+                      })()
                     ) : isActive ? (
                       <span className="text-[10px] font-bold text-green-400 animate-pulse">● Active · {remainText(p.id)}</span>
                     ) : (
@@ -250,10 +281,10 @@ export function PerksPanel() {
                   </td>
                   <td className="py-2">
                     <button
-                      disabled={busy === p.id || stock < 1 || (!instant && isActive)}
+                      disabled={busy === p.id || stock < 1 || (!instant && isActive) || (instant && instantRemain(p.id) > 0)}
                       onClick={() => useIt(p.id)}
-                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed ${stock > 0 && (instant || !isActive) ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black" : "bg-slate-800 text-slate-500"}`}>
-                      {stock < 1 ? "-" : isActive && !instant ? "Active" : "Use"}
+                      className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed ${stock > 0 && !(instant && instantRemain(p.id) > 0) && (instant || !isActive) ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black" : "bg-slate-800 text-slate-500"}`}>
+                      {stock < 1 ? "-" : instant && instantRemain(p.id) > 0 ? "⏳" : isActive && !instant ? "Active" : "Use"}
                     </button>
                   </td>
                 </tr>
