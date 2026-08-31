@@ -243,6 +243,93 @@ export const POINT_STORE_EXTRA: PointStoreItem[] = [
   { id: "vip", name: "VIP Membership (30 days)", cost: 2500, icon: "👑", desc: "Unlocks the VIP Season track", group: "vip" },
 ];
 
+// ===== PACKS =====
+export interface PackConfigDef {
+  key: string;
+  name: string;
+  icon: string;
+  coinCost: number; // coins per pack (0 = not coin-purchasable)
+  rewards: number;
+  guarantee: { rarity: string; qty: number }[];
+  drops: { common: number; rare: number; epic: number; legendary: number };
+  scrapYield: [number, number]; // min-max scraps of the same rarity per open
+}
+
+export const PACK_CONFIG: Record<string, PackConfigDef> = {
+  common: {
+    key: "common", name: "Common Pack", icon: "📦", coinCost: 0, rewards: 2,
+    guarantee: [{ rarity: "common", qty: 1 }],
+    drops: { common: 80, rare: 15, epic: 4, legendary: 1 },
+    scrapYield: [1, 3],
+  },
+  rare: {
+    key: "rare", name: "Rare Pack", icon: "🎁", coinCost: 0, rewards: 3,
+    guarantee: [{ rarity: "rare", qty: 1 }],
+    drops: { common: 70, rare: 20, epic: 8, legendary: 2 },
+    scrapYield: [1, 3],
+  },
+  epic: {
+    key: "epic", name: "Epic Pack", icon: "✨", coinCost: 1, rewards: 4,
+    guarantee: [{ rarity: "epic", qty: 1 }, { rarity: "rare", qty: 1 }],
+    drops: { common: 60, rare: 20, epic: 15, legendary: 5 },
+    scrapYield: [2, 4],
+  },
+  legendary: {
+    key: "legendary", name: "Legendary Pack", icon: "💎", coinCost: 2, rewards: 6,
+    guarantee: [{ rarity: "legendary", qty: 1 }, { rarity: "epic", qty: 2 }],
+    drops: { common: 50, rare: 20, epic: 20, legendary: 10 },
+    scrapYield: [2, 4],
+  },
+};
+
+export const PACK_RARITY_ORDER = ["legendary", "epic", "rare", "common"];
+
+export const SCRAP_TO_PACK = 10; // 10 scraps of a rarity -> 1 pack of the same rarity
+
+// ===== PERKS =====
+export interface PerkDef {
+  id: string;
+  label: string;
+  icon: string;
+  desc: string;
+  duration: string;
+}
+
+export const PERK_DEFS: PerkDef[] = [
+  { id: "heistTimer", label: "Heist Timer", icon: "⏳", desc: "Faster heist cooldowns for 1 hour", duration: "1h" },
+  { id: "heistChance", label: "Heist Chance", icon: "🎰", desc: "Higher heist success for 1 hour", duration: "1h" },
+  { id: "doublePay", label: "Double Pay", icon: "💰", desc: "3x cash from crimes for 1 hour", duration: "1h" },
+  { id: "doubleXp", label: "Double XP", icon: "✨", desc: "3x XP from crimes for 1 hour", duration: "1h" },
+  { id: "jailImmunity", label: "Jail Immune", icon: "🛡️", desc: "Skip one prison sentence", duration: "1 use" },
+  { id: "bustBoost", label: "Bust Boost", icon: "💥", desc: "Better bust avoidance for 1 hour", duration: "1h" },
+  { id: "autoRank", label: "Auto Rank", icon: "⭐", desc: "Instantly gain +1 rank", duration: "1 use" },
+  { id: "meltValue", label: "Melt Value", icon: "♻️", desc: "+50% scrapyard melt value for 24h", duration: "24h" },
+  { id: "meltLimit", label: "Melt Limit", icon: "🔩", desc: "+2 melt slots for 24h", duration: "24h" },
+  { id: "gtaRarity", label: "GTA Rarity", icon: "🚗", desc: "Better GTA car drops for 1 hour", duration: "1h" },
+  { id: "supplyUnit", label: "Supply Unit", icon: "📦", desc: "Instantly gain 100 bullets + 25 energy", duration: "instant" },
+];
+
+// ===== ASSASSINATION TARGETS =====
+export interface AssassinTargetDef {
+  name: string;
+  rank: string;
+  bounty: number;
+  difficulty: number; // success base chance 0-1
+}
+
+export const ASSASSIN_TARGETS: AssassinTargetDef[] = [
+  { name: "Slippery Sal", rank: "Street Rat", bounty: 150_000, difficulty: 0.8 },
+  { name: "Two-Face Tony", rank: "Hustler", bounty: 300_000, difficulty: 0.75 },
+  { name: "Vinnie the Vulture", rank: "Enforcer", bounty: 600_000, difficulty: 0.7 },
+  { name: "Madame Rouge", rank: "Madame", bounty: 1_200_000, difficulty: 0.65 },
+  { name: "Silent Sam", rank: "Silencer", bounty: 2_500_000, difficulty: 0.6 },
+  { name: "Boss Bones", rank: "Underboss", bounty: 5_000_000, difficulty: 0.55 },
+  { name: "Crown Vic", rank: "Kingpin", bounty: 10_000_000, difficulty: 0.5 },
+  { name: "The Ghost", rank: "Phantom", bounty: 20_000_000, difficulty: 0.45 },
+  { name: "Emperor Kane", rank: "Crime Emperor", bounty: 40_000_000, difficulty: 0.4 },
+  { name: "Shadow Lord", rank: "Shadow Emperor", bounty: 80_000_000, difficulty: 0.35 },
+];
+
 // ===== COIN STORE =====
 export interface CoinStoreItem {
   id: string;
@@ -304,6 +391,14 @@ export const PACK_ITEMS: Record<string, { name: string; rarity: string; attack: 
     { name: "Bulletproof Vest (I)", rarity: "common", attack: 0, defense: 5, price: 2_500 },
     { name: "Stolen Phone", rarity: "common", attack: 1, defense: 1, price: 800 },
     { name: "Lockpick Set", rarity: "common", attack: 0, defense: 2, price: 1_000 },
+  ],
+  rare: [
+    { name: "Sawn-Off Shotgun", rarity: "rare", attack: 12, defense: 0, price: 9_000 },
+    { name: "Kevlar Vest", rarity: "rare", attack: 0, defense: 15, price: 12_000 },
+    { name: "Hunting Knife", rarity: "rare", attack: 10, defense: 3, price: 8_000 },
+    { name: "Night-Vision Goggles", rarity: "rare", attack: 3, defense: 8, price: 11_000 },
+    { name: "Master Lockpick Set", rarity: "rare", attack: 0, defense: 6, price: 7_500 },
+    { name: "Stolen Police Radio", rarity: "rare", attack: 5, defense: 5, price: 9_500 },
   ],
   epic: [
     { name: "Tactical Shotgun", rarity: "epic", attack: 18, defense: 2, price: 25_000 },

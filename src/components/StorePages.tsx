@@ -81,9 +81,25 @@ export function ObjectivesPage() {
 
   if (!store) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading objectives...</div>;
 
+  const dailyObjectives: any[] = store.objectives ?? [];
+  const dayLabel = store.objectivesDay || "today";
+  const dayDate = new Date();
+  const nextMidnight = new Date(dayDate);
+  nextMidnight.setHours(24, 0, 0, 0);
+  const resetIn = Math.max(0, nextMidnight.getTime() - dayDate.getTime());
+  const resetClock = `${String(Math.floor(resetIn / 3600000)).padStart(2, "0")}:${String(Math.floor((resetIn % 3600000) / 60000)).padStart(2, "0")}:${String(Math.floor((resetIn % 60000) / 1000)).padStart(2, "0")}`;
+
   return (
     <div className="animate-fade-in space-y-6">
       <PageHeader icon="🎯" title="Game Objectives Overview" sub="Complete criminal actions to unlock milestone rewards in every category." />
+      <div className="mafia-card rounded-xl p-3 flex flex-wrap items-center gap-2 border-amber-500/20">
+        <span className="text-lg">🌙</span>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-bold text-amber-300">Daily objectives — reset at midnight</div>
+          <div className="text-[10px] text-muted-foreground">Progress started {dayLabel}. New milestones appear automatically once the required ones are finished.</div>
+        </div>
+        <div className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700/40 text-xs font-black text-cyan-400">⏳ {resetClock}</div>
+      </div>
       {msg && (
         <div className={`mafia-card rounded-xl p-3 text-xs font-bold ${msg.ok ? "text-green-400 border-green-500/30" : "text-red-400 border-red-500/30"}`}>
           {msg.ok ? "✅ " : "⚠️ "}{msg.text}
@@ -97,10 +113,8 @@ export function ObjectivesPage() {
       </div>
 
       <div className="space-y-4">
-        {CATEGORY_OBJECTIVES.map((cat) => {
-          const count = progress[cat.categoryId] ?? 0;
-          const claimedList = claimed[cat.categoryId] ?? [];
-          const next = cat.milestones.find(m => !claimedList.includes(m.count) && count >= m.count);
+        {dailyObjectives.map((cat) => {
+          const count = cat.progress ?? 0;
           return (
             <div key={cat.categoryId} className="mafia-card rounded-xl p-4 border-l-4" style={{ borderLeftColor: cat.color }}>
               <div className="flex items-center gap-3">
@@ -111,12 +125,12 @@ export function ObjectivesPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-black" style={{ color: cat.color }}>{nf(count)}</div>
-                  <div className="text-[9px] text-muted-foreground">actions</div>
+                  <div className="text-[9px] text-muted-foreground">actions today</div>
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-2">
-                {cat.milestones.map((m, idx) => {
-                  const done = claimedList.includes(m.count);
+                {cat.milestones.map((m: any, idx: number) => {
+                  const done = m.claimed;
                   const ready = !done && count >= m.count;
                   return (
                     <div key={m.count} className={`rounded-lg border p-2.5 ${done ? "border-green-500/40 bg-green-950/20" : ready ? "border-amber-500/50 bg-amber-950/20 animate-border-glow" : "border-slate-700/40 bg-slate-900/30"}`}>

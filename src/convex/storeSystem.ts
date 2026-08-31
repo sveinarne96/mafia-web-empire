@@ -7,7 +7,9 @@ import {
   COIN_STORE_ITEMS, SCRATCH_PRIZES, PACK_ITEMS,
   CATEGORY_OBJECTIVES, MILESTONE_OBJECTIVES, FREE_TRACK, VIP_LEVELS,
   VIP_XP_PER_LEVEL, vipRewardForLevel,
+  PACK_CONFIG, PACK_RARITY_ORDER, SCRAP_TO_PACK, PERK_DEFS, ASSASSIN_TARGETS,
 } from "../data/objectives";
+import { addXpAndCheckLevel } from "./game";
 
 // ===== HELPERS =====
 async function getCurrentUser(ctx: { auth: any; db: any }) {
@@ -48,14 +50,94 @@ function ensureDefaults(player: any) {
     pointsReceived: n(player.pointsReceived, 0),
     packsOpened: n(player.packsOpened, 0),
     scratchCards: n(player.scratchCards, 0),
+    packs: player.packs && typeof player.packs === "object" ? { common: n(player.packs.common, 0), rare: n(player.packs.rare, 0), epic: n(player.packs.epic, 0), legendary: n(player.packs.legendary, 0) } : { common: 0, rare: 0, epic: 0, legendary: 0 },
+    scraps: player.scraps && typeof player.scraps === "object" ? { common: n(player.scraps.common, 0), rare: n(player.scraps.rare, 0), epic: n(player.scraps.epic, 0) } : { common: 0, rare: 0, epic: 0 },
+    autoConvertScraps: !!player.autoConvertScraps,
+    perkActiveUntil: player.perkActiveUntil && typeof player.perkActiveUntil === "object" ? player.perkActiveUntil : {},
+    meltValueUntil: n(player.meltValueUntil, 0),
+    meltLimitUntil: n(player.meltLimitUntil, 0),
+    gtaRarityUntil: n(player.gtaRarityUntil, 0),
+    bustBoostUntil: n(player.bustBoostUntil, 0),
+    heistChanceUntil: n(player.heistChanceUntil, 0),
+    heistTimerUntil: n(player.heistTimerUntil, 0),
+    jailImmunityCount: n(player.jailImmunityCount, 0),
+    objectivesDay: player.objectivesDay ?? "",
+    assassinationKills: n(player.assassinationKills, 0),
+    assassinationProfit: n(player.assassinationProfit, 0),
+    assassinationTarget: player.assassinationTarget ?? null,
+    assassinationCooldownUntil: n(player.assassinationCooldownUntil, 0),
   };
+}
+
+function addPacks(packs: any, rarity: string, count: number) {
+  const p = { ...(packs || {}), common: n(packs?.common, 0), rare: n(packs?.rare, 0), epic: n(packs?.epic, 0), legendary: n(packs?.legendary, 0) };
+  p[rarity] = n(p[rarity], 0) + count;
+  return p;
+}
+
+function addScraps(scraps: any, rarity: string, count: number) {
+  const s = { ...(scraps || {}), common: n(scraps?.common, 0), rare: n(scraps?.rare, 0), epic: n(scraps?.epic, 0) };
+  s[rarity] = n(s[rarity], 0) + count;
+  return s;
+}
+
+// Auto-convert: every 10 scraps of a rarity become 1 pack of that rarity.
+function autoConvertScraps(packs: any, scraps: any): { packs: any; scraps: any; converted: number } {
+  let converted = 0;
+  const p = { ...packs };
+  const s = { ...scraps };
+  for (const rarity of ["common", "rare", "epic"] as const) {
+    while (n(s[rarity], 0) >= SCRAP_TO_PACK) {
+      s[rarity] = n(s[rarity], 0) - SCRAP_TO_PACK;
+      p[rarity] = n(p[rarity], 0) + 1;
+      converted++;
+    }
+  }
+  return { packs: p, scraps: s, converted };
+}
+
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// Daily objectives: base 4 milestones per category, then auto-extend with more
+// (scaled) milestones once the original set has been fully claimed.
+function extendedMilestonesFor(def: any, claimedCount: number) {
+  const base = def.milestones as { count: number; reward: number }[];
+  const milestones = [...base];
+  const baseCount = base[base.length - 1]?.count ?? 300;
+  const baseReward = base[base.length - 1]?.reward ?? 5_000_000;
+  const blocks = Math.max(0, Math.ceil((claimedCount - base.length) / 4));
+  for (let b = 1; b <= blocks + 1; b++) {
+    for (let i = 0; i < 4; i++) {
+      const count = baseCount + (b - 1) * 50 + (i + 1) * 50;
+      const reward = Math.round(baseReward * (1 + b * 0.5));
+      milestones.push({ count, reward });
+    }
+  }
+  return milestones;
+}
+
+function rollRarity(drops: Record<string, number>): string {
+  const roll = Math.random() * 100;
+  let acc = 0;
+  for (const rarity of PACK_RARITY_ORDER) {
+    acc += drops[rarity] ?? 0;
+    if (roll <= acc) return rarity;
+  }
+  return "common";
+}
+
+function randInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function meltLimitFor(player: any): number {
   return 2 + (n(player.meltLimitLevel, 0) * 3);
 }
 
-const PERK_IDS = ["autoRank", "doubleXp", "doublePay", "jailImmunity", "bustBoost", "heistChance", "heistTimer"];
+const PERK_IDS = ["autoRank", "doubleXp", "doublePay", "jailImmunity", "bustBoost", "heistChance", "heistTimer", "meltValue", "meltLimit", "gtaRarity", "supplyUnit"];
 
 async function grantPerks(player: any, perkId: string, amount: number) {
   const perks = { ...(player.perks || {}) };
@@ -106,6 +188,36 @@ export const getStoreState = query({
       nextAutoMeltAt: n(player.lastAutoMelt, 0) + 5 * 60 * 1000,
       carCount: ownedCars.length,
       meltableCount: ownedCars.filter((v: any) => v.isWreck || v.damage >= 40).length,
+      packs: d.packs,
+      scraps: d.scraps,
+      autoConvertScraps: d.autoConvertScraps,
+      perkActiveUntil: d.perkActiveUntil,
+      meltValueUntil: d.meltValueUntil,
+      meltLimitUntil: d.meltLimitUntil,
+      gtaRarityUntil: d.gtaRarityUntil,
+      bustBoostUntil: d.bustBoostUntil,
+      heistChanceUntil: d.heistChanceUntil,
+      heistTimerUntil: d.heistTimerUntil,
+      jailImmunityCount: d.jailImmunityCount,
+      objectivesDay: d.objectivesDay,
+      objectives: CATEGORY_OBJECTIVES.map((def) => {
+        const claimedList: number[] = (d.objectivesClaimed[def.categoryId] ?? []);
+        const milestones = extendedMilestonesFor(def, claimedList.length);
+        return {
+          categoryId: def.categoryId, name: def.name, icon: def.icon, color: def.color, tagline: def.tagline,
+          progress: d.objectiveProgress[def.categoryId] ?? 0,
+          milestones: milestones.map((m) => ({
+            count: m.count, reward: m.reward,
+            claimed: claimedList.includes(m.count),
+          })),
+        };
+      }),
+      assassinationKills: d.assassinationKills,
+      assassinationProfit: d.assassinationProfit,
+      assassinationTarget: d.assassinationTarget,
+      assassinationCooldownUntil: d.assassinationCooldownUntil,
+      xpBoostUntil: n(player.xpBoostUntil, 0),
+      cashBoostUntil: n(player.cashBoostUntil, 0),
     };
   },
 });
@@ -353,8 +465,8 @@ export const claimSeasonTier = mutation({
     };
     if (tier.type === "bullets") { bullets += tier.amount; patch.bullets = bullets; }
     else if (tier.type === "autoRank") { perks.autoRank = (perks.autoRank ?? 0) + tier.amount; patch.perks = perks; }
-    else if (tier.type === "commonPack") { await openPackInto(ctx, player._id, "common", tier.amount, 0); }
-    else if (tier.type === "epicPack") { await openPackInto(ctx, player._id, "epic", tier.amount, 0); }
+    else if (tier.type === "commonPack") { patch.packs = addPacks(d.packs, "common", tier.amount); }
+    else if (tier.type === "epicPack") { patch.packs = addPacks(d.packs, "epic", tier.amount); }
     else if (tier.type === "doubleXp") { perks.doubleXp = (perks.doubleXp ?? 0) + tier.amount; patch.perks = perks; }
     else if (tier.type === "goldBar") {
       await ctx.db.insert("inventory", { userId: player._id, itemId: "gold_bar", name: "Gold Bar", type: "valuable", equipped: false, quantity: tier.amount, rarity: "legendary", price: 100_000 });
@@ -390,9 +502,9 @@ export const claimVipLevel = mutation({
     else if (reward.type === "bustBoost") { perks.bustBoost = (perks.bustBoost ?? 0) + reward.amount; patch.perks = perks; }
     else if (reward.type === "autoRank") { perks.autoRank = (perks.autoRank ?? 0) + reward.amount; patch.perks = perks; }
     else if (reward.type === "commonScrap") { perks.commonScrap = (perks.commonScrap ?? 0) + reward.amount; patch.perks = perks; }
-    else if (reward.type === "commonPack") { await openPackInto(ctx, player._id, "common", reward.amount, 0); }
+    else if (reward.type === "commonPack") { patch.packs = addPacks(d.packs, "common", reward.amount); }
     else if (reward.type === "doublePay") { perks.doublePay = (perks.doublePay ?? 0) + reward.amount; patch.perks = perks; }
-    else if (reward.type === "epicPack") { await openPackInto(ctx, player._id, "epic", reward.amount, 0); }
+    else if (reward.type === "epicPack") { patch.packs = addPacks(d.packs, "epic", reward.amount); }
 
     await ctx.db.patch(player._id, patch);
     return { success: true, reward: `${reward.label} +${reward.type === "cash" ? "$" + reward.cash.toLocaleString() : reward.amount}` };
@@ -412,15 +524,249 @@ export const recordCrime = mutation({
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
     if (!player) return { success: true };
-    const progress = { ...((player.objectiveProgress as any) || {}) };
+
+    // Daily objectives: reset progress & claims every day at midnight (local server day).
+    const today = todayStr();
+    let progress = { ...((player.objectiveProgress as any) || {}) };
+    let claimed = { ...((player.objectivesClaimed as any) || {}) };
+    const patch: any = { objectivesDay: today };
+    if ((player.objectivesDay ?? "") !== today) {
+      progress = {};
+      claimed = {};
+      patch.objectiveProgress = progress;
+      patch.objectivesClaimed = claimed;
+    }
+
     progress[args.category] = (progress[args.category] ?? 0) + 1;
+
+    // Random coin drop: ~35% of actions drop 1-30 IG coins.
+    let coinDrop = 0;
+    if (Math.random() < 0.35) {
+      coinDrop = randInt(1, 30);
+    }
+
+    // Auto-convert scraps -> packs when the toggle is on.
+    let packs = (player.packs && typeof player.packs === "object" ? player.packs : { common: 0, rare: 0, epic: 0, legendary: 0 });
+    let scraps = (player.scraps && typeof player.scraps === "object" ? player.scraps : { common: 0, rare: 0, epic: 0 });
+    let autoConverted = 0;
+    if (player.autoConvertScraps) {
+      const res = autoConvertScraps(packs, scraps);
+      packs = res.packs; scraps = res.scraps; autoConverted = res.converted;
+    }
+    if (autoConverted > 0) { patch.packs = packs; patch.scraps = scraps; }
+
+    patch.totalActions = ((player.totalActions as any) ?? 0) + 1;
+    patch.seasonXp = ((player.seasonXp as any) ?? 0) + Math.max(1, Math.floor(args.xp || 0));
+    patch.totalEarned = ((player.totalEarned as any) ?? 0) + Math.max(0, Math.floor(args.reward || 0));
+    patch.objectiveProgress = progress;
+    if (coinDrop > 0) patch.coins = n(player.coins, 0) + coinDrop;
+
+    await ctx.db.patch(player._id, patch);
+    return { success: true, coinDrop, autoConverted };
+  },
+});
+
+// ===== PACKS =====
+function rollItem(rarity: string) {
+  const table = PACK_ITEMS[rarity] ?? PACK_ITEMS.common;
+  return { ...table[Math.floor(Math.random() * table.length)] };
+}
+
+export const buyPack = mutation({
+  args: { packType: v.string(), qty: v.number() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    const cfg = PACK_CONFIG[args.packType];
+    if (!cfg) throw new Error("Unknown pack type");
+    const qty = Math.max(1, Math.floor(args.qty));
+    const cost = cfg.coinCost * qty;
+    if (cost < 1) throw new Error("This pack cannot be purchased with coins");
+    if (d.coins < cost) throw new Error(`Need ${cost} coins (you have ${d.coins})`);
     await ctx.db.patch(player._id, {
-      totalActions: ((player.totalActions as any) ?? 0) + 1,
-      seasonXp: ((player.seasonXp as any) ?? 0) + Math.max(1, Math.floor(args.xp || 0)),
-      totalEarned: ((player.totalEarned as any) ?? 0) + Math.max(0, Math.floor(args.reward || 0)),
-      objectiveProgress: progress,
+      coins: d.coins - cost,
+      packs: addPacks(d.packs, cfg.key, qty),
+    });
+    return { success: true, cost, qty };
+  },
+});
+
+export const openPack = mutation({
+  args: { packType: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    const cfg = PACK_CONFIG[args.packType];
+    if (!cfg) throw new Error("Unknown pack type");
+    if (n((d.packs as any)[cfg.key], 0) < 1) throw new Error("You don't own this pack");
+
+    const rewards: { name: string; rarity: string; attack: number; defense: number; price: number }[] = [];
+    for (const g of cfg.guarantee) {
+      for (let i = 0; i < g.qty; i++) rewards.push(rollItem(g.rarity));
+    }
+    const remaining = cfg.rewards - rewards.length;
+    for (let i = 0; i < remaining; i++) {
+      rewards.push(rollItem(rollRarity(cfg.drops)));
+    }
+    for (const r of rewards) {
+      await ctx.db.insert("inventory", {
+        userId: player._id, itemId: `pack_${cfg.key}_${r.name.replace(/\s+/g, "_")}`, name: r.name, type: "item",
+        equipped: false, quantity: 1, attack: r.attack, defense: r.defense, rarity: r.rarity, price: r.price,
+      });
+    }
+    const scrapAmt = randInt(cfg.scrapYield[0], cfg.scrapYield[1]);
+    let packs = addPacks(d.packs, cfg.key, -1);
+    let scraps = addScraps(d.scraps, cfg.key, scrapAmt);
+    const patch: any = { packs, scraps, packsOpened: d.packsOpened + 1 };
+    if (d.autoConvertScraps) {
+      const res = autoConvertScraps(packs, scraps);
+      packs = res.packs; scraps = res.scraps;
+      patch.packs = packs; patch.scraps = scraps;
+    }
+    await ctx.db.patch(player._id, patch);
+    return { success: true, rewards, scraps: scrapAmt };
+  },
+});
+
+export const convertScraps = mutation({
+  args: { rarity: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    if (!["common", "rare", "epic"].includes(args.rarity)) throw new Error("Invalid rarity");
+    if (n((d.scraps as any)[args.rarity], 0) < SCRAP_TO_PACK) throw new Error(`Need ${SCRAP_TO_PACK} ${args.rarity} scraps`);
+    await ctx.db.patch(player._id, {
+      scraps: addScraps(d.scraps, args.rarity, -SCRAP_TO_PACK),
+      packs: addPacks(d.packs, args.rarity, 1),
     });
     return { success: true };
+  },
+});
+
+export const toggleAutoConvert = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const next = !player.autoConvertScraps;
+    const d = ensureDefaults(player);
+    const patch: any = { autoConvertScraps: next };
+    if (next) {
+      const res = autoConvertScraps(d.packs, d.scraps);
+      patch.packs = res.packs; patch.scraps = res.scraps;
+    }
+    await ctx.db.patch(player._id, patch);
+    return { success: true, enabled: next };
+  },
+});
+
+// ===== PERKS =====
+export const usePerk = mutation({
+  args: { perkId: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    const stock = n(d.perks[args.perkId], 0);
+    if (stock < 1) throw new Error("No stock of this perk");
+    const perks = { ...d.perks };
+    perks[args.perkId] = stock - 1;
+    const patch: any = { perks };
+    const now = Date.now();
+    switch (args.perkId) {
+      case "doubleXp": patch.xpBoostUntil = now + 3600000; break;
+      case "doublePay": patch.cashBoostUntil = now + 3600000; break;
+      case "heistChance": patch.heistChanceUntil = now + 3600000; break;
+      case "heistTimer": patch.heistTimerUntil = now + 3600000; break;
+      case "bustBoost": patch.bustBoostUntil = now + 3600000; break;
+      case "gtaRarity": patch.gtaRarityUntil = now + 3600000; break;
+      case "meltValue": patch.meltValueUntil = now + 24 * 3600000; break;
+      case "meltLimit": patch.meltLimitUntil = now + 24 * 3600000; break;
+      case "jailImmunity": patch.jailImmunityCount = d.jailImmunityCount + 1; break;
+      case "supplyUnit":
+        patch.bullets = n(player.bullets, 0) + 100;
+        patch.energy = Math.min(100, n((player as any).energy, 100) + 25);
+        break;
+      case "autoRank": {
+        const xpUpd: any = await addXpAndCheckLevel(ctx, player, 2000);
+        if (typeof xpUpd.level === "number" && xpUpd.level > (player.level ?? 1)) {
+          patch.level = xpUpd.level;
+          patch.experience = xpUpd.experience;
+          patch.highestLevel = xpUpd.highestLevel;
+          patch.energy = 100;
+          if (xpUpd.attack !== undefined) patch.attack = xpUpd.attack;
+          if (xpUpd.defense !== undefined) patch.defense = xpUpd.defense;
+          if (xpUpd.maxLife !== undefined) patch.maxLife = xpUpd.maxLife;
+          if (xpUpd.life !== undefined) patch.life = xpUpd.life;
+          if (xpUpd.skillPoints !== undefined) patch.skillPoints = xpUpd.skillPoints;
+        } else {
+          patch.experience = xpUpd.experience ?? player.experience;
+        }
+        break;
+      }
+      default: throw new Error("Unknown perk");
+    }
+    await ctx.db.patch(player._id, patch);
+    return { success: true, perkId: args.perkId };
+  },
+});
+
+// ===== ASSASSINATION =====
+export const getAssassinationTarget = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    const now = Date.now();
+    if (d.assassinationTarget) throw new Error("You already have an active target");
+    if (d.assassinationCooldownUntil > now) {
+      const mins = Math.ceil((d.assassinationCooldownUntil - now) / 60000);
+      throw new Error(`Contract broker cooling down — ${mins}m until next target`);
+    }
+    const t = ASSASSIN_TARGETS[Math.floor(Math.random() * ASSASSIN_TARGETS.length)];
+    await ctx.db.patch(player._id, {
+      assassinationTarget: { name: t.name, rank: t.rank, bounty: t.bounty, difficulty: t.difficulty, issuedAt: now, expiresAt: now + 24 * 3600000 },
+    });
+    return { success: true, target: t };
+  },
+});
+
+export const completeAssassination = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const d = ensureDefaults(player);
+    if (!d.assassinationTarget) throw new Error("No active target — get one first");
+    const t = d.assassinationTarget;
+    const level = player.level ?? 1;
+    const chance = Math.min(0.95, (t.difficulty ?? 0.5) + level * 0.004);
+    const success = Math.random() < chance;
+    const patch: any = {
+      assassinationTarget: null,
+      assassinationCooldownUntil: Date.now() + 30 * 60000,
+    };
+    let bounty = 0;
+    if (success) {
+      bounty = Math.round((t.bounty ?? 0) * (1 + level * 0.01));
+      const coinDrop = randInt(1, 10);
+      patch.money = n(player.money, 0) + bounty;
+      patch.coins = n(player.coins, 0) + coinDrop;
+      patch.assassinationKills = d.assassinationKills + 1;
+      patch.assassinationProfit = d.assassinationProfit + bounty;
+      patch.wantedLevel = Math.min(20, n(player.wantedLevel, 0) + 2);
+      const xpUpd: any = await addXpAndCheckLevel(ctx, player, Math.max(50, Math.floor((t.bounty ?? 0) / 100000)));
+      patch.experience = xpUpd.experience;
+      if (xpUpd.level !== undefined) { patch.level = xpUpd.level; patch.highestLevel = xpUpd.highestLevel; if (xpUpd.attack !== undefined) patch.attack = xpUpd.attack; if (xpUpd.defense !== undefined) patch.defense = xpUpd.defense; if (xpUpd.maxLife !== undefined) patch.maxLife = xpUpd.maxLife; if (xpUpd.life !== undefined) patch.life = xpUpd.life; }
+      await ctx.db.patch(player._id, patch);
+      return { success: true, bounty, coinDrop, killed: true, targetName: t.name };
+    }
+    await ctx.db.patch(player._id, patch);
+    return { success: false, killed: false, targetName: t.name };
   },
 });
 
@@ -433,7 +779,9 @@ export const claimObjective = mutation({
     const d = ensureDefaults(player);
     const def = CATEGORY_OBJECTIVES.find((c) => c.categoryId === args.categoryId);
     if (!def) throw new Error("Category not found");
-    const milestone = def.milestones[args.milestoneIndex];
+    const claimedList: number[] = d.objectivesClaimed[args.categoryId] ?? [];
+    const extended = extendedMilestonesFor(def, claimedList.length);
+    const milestone = extended[args.milestoneIndex];
     if (!milestone) throw new Error("Milestone not found");
     const progress = d.objectiveProgress[args.categoryId] ?? 0;
     if (progress < milestone.count) throw new Error(`Need ${milestone.count} actions in ${def.name}`);

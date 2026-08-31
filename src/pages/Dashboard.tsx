@@ -55,6 +55,7 @@ import { SeasonPassPage } from "@/components/SeasonPass";
 import { LogoDropdown } from "@/components/LogoDropdown";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
+import { PacksOverviewPanel, PerksPanel } from "@/components/PacksPerksPanel";
 import { WantedStatusPage } from "@/components/GameEnhanced";
 import {
   CrimesOverviewPage, CrimeCategoryPage, CrimeEmpirePage, HeistPlanningPage,
@@ -198,7 +199,10 @@ function HeadquartersPage() {
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">⚔️ ATK</div><div className="text-lg font-bold text-orange-400">{player.attack ?? 0}</div></div>
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🛡️ DEF</div><div className="text-lg font-bold text-blue-400">{player.defense ?? 0}</div></div>
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🏆 Points</div><div className="text-lg font-bold text-yellow-400">{(player.points ?? 0).toLocaleString()}</div></div>
+        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🪙 Coins</div><div className="text-lg font-bold text-amber-300">{(player.coins ?? 0).toLocaleString()}</div></div>
       </div>
+      <PacksOverviewPanel />
+      <PerksPanel />
     </div>
   );
 }

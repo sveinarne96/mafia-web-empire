@@ -170,6 +170,22 @@ const schema = defineSchema({
     pointsReceived: v.optional(v.number()),
     packsOpened: v.optional(v.number()),
     scratchCards: v.optional(v.number()),
+    packs: v.optional(v.any()),
+    scraps: v.optional(v.any()),
+    autoConvertScraps: v.optional(v.boolean()),
+    perkActiveUntil: v.optional(v.any()),
+    meltValueUntil: v.optional(v.number()),
+    meltLimitUntil: v.optional(v.number()),
+    gtaRarityUntil: v.optional(v.number()),
+    bustBoostUntil: v.optional(v.number()),
+    heistChanceUntil: v.optional(v.number()),
+    heistTimerUntil: v.optional(v.number()),
+    jailImmunityCount: v.optional(v.number()),
+    objectivesDay: v.optional(v.string()),
+    assassinationKills: v.optional(v.number()),
+    assassinationProfit: v.optional(v.number()),
+    assassinationTarget: v.optional(v.any()),
+    assassinationCooldownUntil: v.optional(v.number()),
   })
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])
