@@ -325,7 +325,7 @@ export const PERK_DEFS: PerkDef[] = [
   { id: "doubleXp", label: "Double XP", icon: "✨", desc: "3x XP from crimes for 1 hour", duration: "1h" },
   { id: "jailImmunity", label: "Jail Immune", icon: "🛡️", desc: "Skip one prison sentence", duration: "1 use" },
   { id: "bustBoost", label: "Bust Boost", icon: "💥", desc: "Better bust avoidance for 1 hour", duration: "1h" },
-  { id: "autoRank", label: "Auto Rank", icon: "⭐", desc: "Instantly gain +1 rank", duration: "1 use" },
+  { id: "autoRank", label: "Auto Rank", icon: "⭐", desc: "Automatically rank you up for 1 hour, 1 rank every 10 minutes", duration: "1h" },
   { id: "meltValue", label: "Melt Value", icon: "♻️", desc: "+50% scrapyard melt value for 24h", duration: "24h" },
   { id: "meltLimit", label: "Melt Limit", icon: "🔩", desc: "+2 melt slots for 24h", duration: "24h" },
   { id: "gtaRarity", label: "GTA Rarity", icon: "🚗", desc: "Better GTA car drops for 1 hour", duration: "1h" },

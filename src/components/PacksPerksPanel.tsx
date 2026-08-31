@@ -167,14 +167,21 @@ const INSTANT_COOLDOWN_MS = 10 * 60 * 1000;
 export function PerksPanel() {
   const store = useQuery(api.storeSystem.getStoreState);
   const usePerk = useMutation(api.storeSystem.usePerk);
+  const autoRankTick = useMutation(api.storeSystem.autoRankTick);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [, setTick] = useState(0);
 
-  // live 1s tick to keep instant-perk cooldowns counting down
+  // live 1s tick to keep instant-perk cooldowns counting down,
+  // and to lazily apply pending Auto Rank ranks on mount + every 30s.
   // NOTE: must be called before any early return so hook order stays constant.
   useEffect(() => {
-    const t = setInterval(() => setTick((v) => v + 1), 1000);
+    autoRankTick().catch(() => {});
+    const start = Date.now();
+    const t = setInterval(() => {
+      setTick((v) => v + 1);
+      if (Date.now() - start > 30_000) autoRankTick().catch(() => {});
+    }, 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -194,6 +201,7 @@ export function PerksPanel() {
       case "meltValue": return store.meltValueUntil ?? 0;
       case "meltLimit": return store.meltLimitUntil ?? 0;
       case "gtaRarity": return store.gtaRarityUntil ?? 0;
+      case "autoRank": return store.autoRankUntil ?? 0;
       default: return until[id] ?? 0;
     }
   };
@@ -228,12 +236,12 @@ export function PerksPanel() {
     try {
       await usePerk({ perkId: id });
       const def = PERK_DEFS.find((p) => p.id === id)!;
-      const isTimed = !(def.duration === "instant" || id === "jailImmunity" || id === "autoRank" || id === "supplyUnit");
+      const isTimed = !(def.duration === "instant" || id === "jailImmunity" || id === "supplyUnit");
       const stacking = isTimed && fieldFor(id) > now;
       let text = stacking ? `⚡ Extended ${def.label} by ${def.duration}!` : `⚡ Activated ${def.label}!`;
-      if (id === "autoRank") text = `⭐ Auto Rank used! +1 rank (${Math.max(0, (perks[id] ?? 1) - 1)} left)`;
       if (id === "supplyUnit") text = `📦 Supply Unit used! +100 bullets, +25 energy`;
       if (id === "jailImmunity") text = `🛡️ Jail Immunity banked! +1 skip`;
+      if (id === "autoRank") text = stacking ? `⭐ Auto Rank running! +1 rank every 10 min, ${def.duration} (stacked)` : `⭐ Auto Rank started! +1 rank every 10 min for ${def.duration}`;
       setMsg({ ok: true, text });
     }
     catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }
@@ -261,7 +269,7 @@ export function PerksPanel() {
             {PERK_DEFS.map((p) => {
               const stock = perks[p.id] ?? 0;
               const isActive = active(p.id);
-              const instant = p.duration === "instant" || p.id === "jailImmunity" || p.id === "autoRank" || p.id === "supplyUnit";
+              const instant = p.duration === "instant" || p.id === "jailImmunity" || p.id === "supplyUnit";
               return (
                 <tr key={p.id} className="border-b border-slate-800/40">
                   <td className="py-2 pr-2">

@@ -61,6 +61,8 @@ function ensureDefaults(player: any) {
     heistChanceUntil: n(player.heistChanceUntil, 0),
     heistTimerUntil: n(player.heistTimerUntil, 0),
     jailImmunityCount: n(player.jailImmunityCount, 0),
+    autoRankUntil: n(player.autoRankUntil, 0),
+    autoRankAppliedAt: n(player.autoRankAppliedAt, 0),
     objectivesDay: player.objectivesDay ?? "",
     assassinationKills: n(player.assassinationKills, 0),
     assassinationProfit: n(player.assassinationProfit, 0),
@@ -199,6 +201,8 @@ export const getStoreState = query({
       heistChanceUntil: d.heistChanceUntil,
       heistTimerUntil: d.heistTimerUntil,
       jailImmunityCount: d.jailImmunityCount,
+      autoRankUntil: d.autoRankUntil,
+      autoRankAppliedAt: d.autoRankAppliedAt,
       objectivesDay: d.objectivesDay,
       objectives: CATEGORY_OBJECTIVES.map((def) => {
         const claimedList: number[] = (d.objectivesClaimed[def.categoryId] ?? []);
@@ -534,6 +538,9 @@ export const recordCrime = mutation({
     const player = await getCurrentUser(ctx);
     if (!player) return { success: true };
 
+    // Accrue any pending Auto Rank ranks while the 1h window is active.
+    try { await processAutoRank(ctx); } catch {};
+
     // Daily objectives: reset progress & claims every day at midnight (local server day).
     const today = todayStr();
     let progress = { ...((player.objectiveProgress as any) || {}) };
@@ -723,27 +730,69 @@ export const usePerk = mutation({
         patch.bullets = n(player.bullets, 0) + 100;
         patch.energy = Math.min(100, n((player as any).energy, 100) + 25);
         break;
+      // Auto Rank is now a timed perk: it grants the player +1 rank every
+      // 10 minutes throughout the active 1-hour window instead of instantly.
+      // The actual XP/ranks are applied lazily via processAutoRank (called on
+      // every action tick and via the autoRankTick mutation below).
       case "autoRank": {
-        const xpUpd: any = await addXpAndCheckLevel(ctx, player, 2000);
-        if (typeof xpUpd.level === "number" && xpUpd.level > (player.level ?? 1)) {
-          patch.level = xpUpd.level;
-          patch.experience = xpUpd.experience;
-          patch.highestLevel = xpUpd.highestLevel;
-          patch.energy = 100;
-          if (xpUpd.attack !== undefined) patch.attack = xpUpd.attack;
-          if (xpUpd.defense !== undefined) patch.defense = xpUpd.defense;
-          if (xpUpd.maxLife !== undefined) patch.maxLife = xpUpd.maxLife;
-          if (xpUpd.life !== undefined) patch.life = xpUpd.life;
-          if (xpUpd.skillPoints !== undefined) patch.skillPoints = xpUpd.skillPoints;
-        } else {
-          patch.experience = xpUpd.experience ?? player.experience;
-        }
+        const prevUntil = Math.max(d.autoRankUntil, now);
+        patch.autoRankUntil = prevUntil + 3600000;
+        patch.autoRankAppliedAt = Math.max(d.autoRankAppliedAt, d.autoRankUntil > now ? d.autoRankAppliedAt : now);
         break;
       }
       default: throw new Error("Unknown perk");
     }
     await ctx.db.patch(player._id, patch);
     return { success: true, perkId: args.perkId };
+  },
+});
+
+// Auto Rank accrual — every 10 minutes of active window = +1 rank.
+const AUTO_RANK_MINUTES_PER_RANK = 10;
+const AUTO_RANK_MS = AUTO_RANK_MINUTES_PER_RANK * 60 * 1000;
+
+// Apply any elapsed Auto Rank ranks inside the active window. Idempotent &
+// lazy: safe to call on every action or tick; it only advances the
+// autoRankAppliedAt timestamp by whole 10-minute blocks that have elapsed.
+async function processAutoRank(ctx: any) {
+  const player = await getCurrentUser(ctx);
+  if (!player) return { ranks: 0 };
+  const until = n(player.autoRankUntil, 0);
+  const now = Date.now();
+  if (until <= now) return { ranks: 0 };
+  // Earliest accrual start: window activation. Anything after now isn't due yet.
+  const start = n(player.autoRankAppliedAt, 0) || now;
+  const end = Math.min(now, until);
+  if (end <= start) return { ranks: 0 };
+  const elapsed = end - start;
+  const ranksToGrant = Math.floor(elapsed / AUTO_RANK_MS);
+  if (ranksToGrant < 1) return { ranks: 0 };
+  // Grant ranks in a single batch so the O(1) level-up math stays fast.
+  const xpAmt = Math.min(ranksToGrant, 24) * 2000;
+  const xpUpd: any = await addXpAndCheckLevel(ctx, player, xpAmt);
+  const patch: any = {
+    autoRankAppliedAt: start + ranksToGrant * AUTO_RANK_MS,
+    experience: xpUpd.experience,
+  };
+  if (typeof xpUpd.level === "number" && xpUpd.level > (player.level ?? 1)) {
+    patch.level = xpUpd.level;
+    patch.highestLevel = Math.max(player.highestLevel ?? 0, xpUpd.level);
+    if (xpUpd.attack !== undefined) patch.attack = xpUpd.attack;
+    if (xpUpd.defense !== undefined) patch.defense = xpUpd.defense;
+    if (xpUpd.maxLife !== undefined) patch.maxLife = xpUpd.maxLife;
+    if (xpUpd.life !== undefined) patch.life = xpUpd.life;
+    if (xpUpd.skillPoints !== undefined) patch.skillPoints = xpUpd.skillPoints;
+  }
+  await ctx.db.patch(player._id, patch);
+  const levelsGained = Math.max(0, (xpUpd.level ?? player.level ?? 1) - (player.level ?? 1));
+  return { ranks: levelsGained, applied: ranksToGrant, until };
+}
+
+// Called by the client periodically to apply pending Auto Rank ranks.
+export const autoRankTick = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await processAutoRank(ctx);
   },
 });
 
