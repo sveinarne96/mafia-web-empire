@@ -774,7 +774,6 @@ export default function Dashboard() {
               [
                 // ═══ CORE ═══
                 { icon: "🏠", label: "HQ", page: "headquarters", c: ["amber","217,119,6"], isCrime: false },
-                { icon: "🏦", label: "Bank", page: "bank", c: ["green","34,197,94"], isCrime: false },
                 // ═══ CRIME CATEGORIES ═══
                 { icon: "🔪", label: "Street", page: "crime_street", c: ["emerald","34,197,94"], isCrime: true, count: 20 },
                 { icon: "💰", label: "Robbery", page: "crime_robbery", c: ["red","239,68,68"], isCrime: true, count: 30 },
@@ -795,10 +794,10 @@ export default function Dashboard() {
               const [color, rgb] = tab.c;
               return (
                 <React.Fragment key={tab.page}>
-                  {/* Divider after Bank */}
+                  {/* Divider after HQ, before crimes */}
                   {idx === 1 && <div className="w-px h-4 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent mx-0.5" />}
                   {/* Divider after Underground, before GTA */}
-                  {idx === 8 && <div className="w-px h-4 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent mx-0.5" />}
+                  {idx === 7 && <div className="w-px h-4 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent mx-0.5" />}
                   <button onClick={() => setPage(tab.page)}
                     className={`relative px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all duration-200 border ${
                       isActive ? `text-${color}-400 border-${color}-500/40 shadow-md shadow-${color}-500/15 scale-[1.03]` : "text-slate-500 hover:text-slate-300 hover:bg-white/5 border-transparent"
