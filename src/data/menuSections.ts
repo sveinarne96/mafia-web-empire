@@ -5,7 +5,7 @@ import {
   Swords,
   HelpCircle,
   Settings,
-  Home, Skull, Wallet, Package, Users, Brain, Building2, EyeOff, Crown, Zap, Clock, ShoppingBag, User,
+  Home, Skull, Wallet, Package, Users, Brain, Building2, EyeOff, Crown, Zap, Clock, ShoppingBag, User, Gift,
 } from "lucide-react";
 
 export const LEFT_MENU_SECTIONS = [
@@ -25,6 +25,9 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Murder", page: "murder", icon: "💀" },
     { label: "Garage", page: "garage", icon: "🚗" },
     { label: "Items", page: "my_items", icon: "🎒" },
+  ]},
+  { title: "Promo Codes", icon: Gift, items: [
+    { label: "Promo Codes", page: "promo_codes", icon: "🎟️" },
   ]},
   { title: "Economy", icon: Wallet, items: [
     { label: "Stock Market", page: "stock_market", icon: "📈" },
