@@ -142,6 +142,7 @@ import {
 import { CarDealerPage } from "@/components/CarDealerPage";
 import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
 import { ObjectivesPage, PointStorePage, CoinStorePage, ObjectivesPanel } from "@/components/StorePages";
+import { InventoryPage } from "@/components/InventoryPage";
 
 
 // ===== RANK SYSTEM =====
@@ -565,6 +566,7 @@ export default function Dashboard() {
       case "crime_underground": return <CriminalOperationsPage category="underground" />;
 
       case "car_theft": return <CarDealerPage />;
+      case "inventory": return <InventoryPage />;
       case "objectives": return <ObjectivesPage />;
       case "point_store": return <PointStorePage />;
       case "coin_store": return <CoinStorePage />;

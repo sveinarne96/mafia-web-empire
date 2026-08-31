@@ -44,8 +44,9 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Crafting", page: "crafting", icon: "🔧" },
   ]},
   { title: "Assets", icon: Package, items: [
+    { label: "Inventory", page: "inventory", icon: "🎒" },
     { label: "Garage", page: "garage", icon: "🚗" },
-    { label: "My Items", page: "my_items", icon: "🎒" },
+    { label: "My Items", page: "my_items", icon: "📦" },
     { label: "Black Market", page: "black_market", icon: "🖤" },
     { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
   ]},
