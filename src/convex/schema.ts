@@ -910,6 +910,7 @@ const schema = defineSchema({
     createdAt: v.number(),
     active: v.boolean(),
     claimed: v.number(),
+    perks: v.optional(v.any()),
   }).index("by_code", ["code"]),
 }, {
   schemaValidation: false,

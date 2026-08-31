@@ -5,6 +5,20 @@ import { Gift, Ticket, Clock } from "lucide-react";
 
 const nf = (n: number) => Math.floor(n).toLocaleString();
 
+const PERK_LABELS: Record<string, { icon: string; label: string }> = {
+  heistTimer: { icon: "⏱️", label: "Heist Timer" },
+  heistChance: { icon: "🎲", label: "Heist Chance" },
+  doublePay: { icon: "💰", label: "Double Pay" },
+  doubleXp: { icon: "⭐", label: "Double XP" },
+  jailImmunity: { icon: "🛡️", label: "Jail Immune" },
+  bustBoost: { icon: "💥", label: "Bust Boost" },
+  autoRank: { icon: "⬆️", label: "Auto Rank" },
+  meltValue: { icon: "♻️", label: "Melt Value" },
+  meltLimit: { icon: "♻️", label: "Melt Limit" },
+  gtaRarity: { icon: "🚗", label: "GTA Rarity" },
+  supplyUnit: { icon: "📦", label: "Supply Unit" },
+};
+
 export function PromoCodesPage() {
   const state = useQuery(api.empireSystem.getMyPromos);
   const redeem = useMutation(api.empireSystem.redeemPromoCode);
@@ -17,7 +31,8 @@ export function PromoCodesPage() {
     setBusy(true); setMsg(null);
     try {
       const r = await redeem({ code });
-      setMsg({ ok: true, text: `🎉 ${r.promo} — claimed ${r.rewardLabel} ($${nf(r.money)} + ${r.coinBonus} coins)!` });
+      const perkSummary = r.perks && typeof r.perks === "object" ? Object.entries(r.perks as Record<string, number>).map(([k, v]) => `${PERK_LABELS[k]?.icon ?? "⚡"} ${PERK_LABELS[k]?.label ?? k} x${v}`).join(", ") : "";
+      setMsg({ ok: true, text: `🎉 ${r.promo} — claimed ${r.rewardLabel} ($${nf(r.money)} + ${r.coinBonus} coins${perkSummary ? ", " + perkSummary : ""})!` });
       setCode("");
     } catch (e: any) { setMsg({ ok: false, text: e.message || "Invalid or already claimed code." }); }
     setBusy(false);
@@ -44,6 +59,15 @@ export function PromoCodesPage() {
           <div className="flex-1 min-w-0">
             <div className="text-sm font-black text-amber-300 animate-neon-glow">{active.message}</div>
             <div className="text-[10px] text-amber-200/60">Code: <span className="font-black text-white">{active.code}</span> · {active.rewardLabel} · expires in {hoursLeft}h</div>
+          {active.perks && typeof active.perks === "object" && Object.keys(active.perks).length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {Object.entries(active.perks as Record<string, number>).filter(([,v]) => v > 0).map(([k, v]) => (
+                <span key={k} className="px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[10px] font-bold text-amber-300">
+                  {PERK_LABELS[k]?.icon ?? "⚡"} {PERK_LABELS[k]?.label ?? k} x{v}
+                </span>
+              ))}
+            </div>
+          )}
           </div>
         </div>
       )}

@@ -312,7 +312,7 @@ export const prisonLeave = mutation({
 
 // ===== PROMO CODES =====
 export const createPromoCode = mutation({
-  args: { code: v.string(), message: v.string(), rewardLabel: v.string(), expiresHours: v.number() },
+  args: { code: v.string(), message: v.string(), rewardLabel: v.string(), expiresHours: v.number(), perks: v.optional(v.any()) },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
@@ -323,15 +323,22 @@ export const createPromoCode = mutation({
     const existing = await ctx.db.query("promoCodes").filter((q) => q.eq(q.field("code"), code)).first();
     const now = Date.now();
     const expiresAt = now + Math.max(1, Math.floor(args.expiresHours)) * 3600000;
+    // Clean perk amounts: remove zero/negative entries
+    const perks: Record<string, number> = {};
+    if (args.perks && typeof args.perks === "object") {
+      for (const [k, v] of Object.entries(args.perks)) {
+        if (typeof v === "number" && v > 0) perks[k] = Math.floor(v);
+      }
+    }
     // Deactivate any currently active code so the status message updates
     const active = await ctx.db.query("promoCodes").filter((q) => q.eq(q.field("active"), true)).collect();
     for (const a of active) await ctx.db.patch(a._id, { active: false });
     if (existing) {
-      await ctx.db.patch(existing._id, { message: args.message, rewardLabel: args.rewardLabel, expiresAt, active: true, createdBy: player._id, createdAt: now });
+      await ctx.db.patch(existing._id, { message: args.message, rewardLabel: args.rewardLabel, expiresAt, active: true, createdBy: player._id, createdAt: now, perks });
       return { success: true, code };
     }
     await ctx.db.insert("promoCodes", {
-      code, message: args.message, rewardLabel: args.rewardLabel, expiresAt, createdBy: player._id, createdAt: now, active: true, claimed: 0,
+      code, message: args.message, rewardLabel: args.rewardLabel, expiresAt, createdBy: player._id, createdAt: now, active: true, claimed: 0, perks,
     });
     return { success: true, code };
   },
@@ -343,7 +350,7 @@ export const getActivePromo = query({
     const now = Date.now();
     const active = await ctx.db.query("promoCodes").filter((q) => q.eq(q.field("active"), true)).collect();
     const curr = active.find((a: any) => a.expiresAt > now) ?? null;
-    if (curr) return { code: curr.code, message: curr.message, rewardLabel: curr.rewardLabel, expiresAt: curr.expiresAt };
+    if (curr) return { code: curr.code, message: curr.message, rewardLabel: curr.rewardLabel, expiresAt: curr.expiresAt, perks: curr.perks ?? {} };
     return null;
   },
 });
@@ -361,7 +368,7 @@ export const redeemPromoCode = mutation({
     const redeemed: string[] = Array.isArray(player.redeemedPromos) ? player.redeemedPromos : [];
     if (redeemed.includes(promo._id)) throw new Error("You already redeemed this code");
 
-    // Prize: completes all Game Objectives + a coin/points/skill bonus.
+    // Prize: completes all Game Objectives + a coin/points/skill bonus + perks.
     let money = n(player.money, 0);
     const claimed: Record<string, number[]> = {};
     const now = Date.now();
@@ -374,6 +381,14 @@ export const redeemPromoCode = mutation({
     }
     const coinBonus = 25;
 
+    // Grant perks included in the promo code
+    const promoPerks: Record<string, number> = (promo.perks && typeof promo.perks === "object") ? promo.perks : {};
+    const existingPerks: Record<string, number> = (player.perks && typeof player.perks === "object") ? player.perks as any : {};
+    const mergedPerks: Record<string, number> = { ...existingPerks };
+    for (const [k, v] of Object.entries(promoPerks)) {
+      if (typeof v === "number" && v > 0) mergedPerks[k] = (mergedPerks[k] ?? 0) + v;
+    }
+
     const patch: any = {
       money,
       coins: n(player.coins, 0) + coinBonus,
@@ -385,6 +400,7 @@ export const redeemPromoCode = mutation({
       redeemedPromos: [...redeemed, promo._id],
       currentPromo: promo.message,
       cashBoostUntil: Math.max(n(player.cashBoostUntil, 0), now + 3600000),
+      perks: mergedPerks,
     };
     const xpUpd: any = await addXpAndCheckLevel(ctx, player, 5000);
     patch.experience = xpUpd.experience;
@@ -395,10 +411,10 @@ export const redeemPromoCode = mutation({
     const history = Array.isArray((player as any).promoHistory)
       ? [...(player as any).promoHistory]
       : [];
-    history.push({ code: promo.code, message: promo.message, rewardLabel: promo.rewardLabel, at: now });
+    history.push({ code: promo.code, message: promo.message, rewardLabel: promo.rewardLabel, at: now, perks: promo.perks ?? {} });
     await ctx.db.patch(player._id, { promoHistory: history.slice(-25) });
     await ctx.db.patch(promo._id, { claimed: promo.claimed + 1 });
-    return { success: true, money, coinBonus, promo: promo.message, rewardLabel: promo.rewardLabel };
+    return { success: true, money, coinBonus, promo: promo.message, rewardLabel: promo.rewardLabel, perks: promoPerks };
   },
 });
 
@@ -411,7 +427,7 @@ export const getMyPromos = query({
     const now = Date.now();
     const activeList = await ctx.db.query("promoCodes").filter((q) => q.eq(q.field("active"), true)).collect();
     const activeCurr = activeList.find((a: any) => a.expiresAt > now) ?? null;
-    const active = activeCurr ? { code: activeCurr.code, message: activeCurr.message, rewardLabel: activeCurr.rewardLabel, expiresAt: activeCurr.expiresAt } : null;
+    const active = activeCurr ? { code: activeCurr.code, message: activeCurr.message, rewardLabel: activeCurr.rewardLabel, expiresAt: activeCurr.expiresAt, perks: activeCurr.perks ?? {} } : null;
     return {
       active,
       history: Array.isArray((player as any).promoHistory)
