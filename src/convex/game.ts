@@ -293,7 +293,6 @@ export const commitCrime = mutation({
     const storedEnergy = typeof (player as any).energy === "number" && Number.isFinite((player as any).energy) ? (player as any).energy : 100;
     const lastEnergyRegen = typeof (player as any).lastEnergyRegen === "number" ? (player as any).lastEnergyRegen : Date.now();
     const regeneratedEnergy = Math.min(100, storedEnergy + Math.floor(Math.max(0, Date.now() - lastEnergyRegen) / 60000) * 5);
-    if (regeneratedEnergy < 5) throw new Error("Recover at least 5 energy before acting again.");
     let moneyEarned = 0, pointsEarned = 0, damageTaken = 0;
     // 50/50 chance for success or fail
     const success = Math.random() < 0.95;
@@ -572,8 +571,30 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const storedEnergy = typeof rawEnergy === "number" && Number.isFinite(rawEnergy) ? rawEnergy : 100;
   const regenStartedAt = typeof (player as any).lastEnergyRegen === "number" ? (player as any).lastEnergyRegen : Date.now();
   const regeneratedEnergy = Math.min(100, storedEnergy + Math.floor(Math.max(0, Date.now() - regenStartedAt) / 60000) * 5);
-  if (regeneratedEnergy < 5) throw new Error("Recover at least 5 energy before acting again.");
   const energyCost = Math.max(5, RESOURCE_COSTS[args.crimeId]?.energy ?? 5);
-  if (regeneratedEnergy < energyCost) throw new Error(`Need ${energyCost} energy for this operation.`); const categoryId = args.crimeId.split('_').slice(0, -1).join('_') || args.crimeId; const completed: Record<string, string[]> = { ...(player as any).crimeCompleted || {} }; const crimeList = completed[categoryId] || []; const alreadyDone = crimeList.includes(args.crimeId); const newCompleted = alreadyDone ? completed : { ...completed, [categoryId]: [...crimeList, args.crimeId] }; const allDone = !alreadyDone && crimeList.length >= 19; const cashBoostOn = Date.now() < (player.cashBoostUntil ?? 0) ? 3 : 1; const moneyEarned = succeeded ? Math.floor((args.reward * cashBoostOn) + Math.random() * args.reward * 0.2) : -Math.floor(Math.random() * 500 + 100); const lvlMult = 1 + Math.floor((player.level ?? 1) / 10) * 0.25; const xpEarned = succeeded ? Math.floor(args.xp * lvlMult * (Date.now() < (player.xpBoostUntil ?? 0) ? 3 : 1) * (Date.now() < ((player as any).energyDrinkUntil ?? 0) ? 1.25 : 1)) : Math.floor(args.xp * 0.2); const lifeDamage = succeeded ? 0 : Math.floor(Math.random() * 20 + 5); const newLife = Math.max(0, (player.life ?? 100) - lifeDamage); const xpUpdate = await addXpAndCheckLevel(ctx, player, xpEarned); const levelUpNow = Object.prototype.hasOwnProperty.call(xpUpdate, "level") && (xpUpdate as any).level > (player.level ?? 1); const arrested = !succeeded && Math.random() < 0.10; const pointsLevelMult = 1 + Math.min(2.0, ((player.level ?? 1) * 0.04)); const pointsEarned = succeeded ? Math.floor((Math.floor(Math.random() * 151) + 50) * pointsLevelMult) * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1) : 0; const cooldowns = allDone ? { ...(player.crimeCooldowns || {}), [categoryId || ""]: Date.now() + 90000 } : (player.crimeCooldowns || {}); const _now = Date.now(); const _oldTs: number[] = Array.isArray((player as any).actionTimestamps) ? (player as any).actionTimestamps : []; const _newTs = [..._oldTs, _now].filter((t: number) => _now - t < 3600000).slice(-1000);
-await ctx.db.patch(player._id, {money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : Math.max(0, regeneratedEnergy - energyCost), inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, lastEnergyRegen: _now, actionTimestamps: _newTs } as any); await ctx.db.insert("crimes", { userId: player._id, type: args.crimeId, target: "environment", success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "Arrested!", read: false, timestamp: Date.now() }); return { success: succeeded, moneyEarned, xpEarned, pointsEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow }; } });
+  const effectiveEnergy = Math.max(0, regeneratedEnergy - energyCost);
+  const _now = Date.now();
+  const riskRoll = Math.random() * 100;
+  const arrested = succeeded && riskRoll < (100 - args.risk);
+  const lifeDamage = succeeded ? Math.floor(Math.random() * 20) + 5 : Math.floor(Math.random() * 40) + 10;
+  const newLife = Math.max(0, (player.life ?? 100) - lifeDamage);
+  const moneyEarned = succeeded ? Math.floor(args.reward * (1 + 0.1)) : 0;
+  const xpEarned = succeeded ? args.xp : Math.floor(args.xp * 0.3);
+  const pointsEarned = succeeded ? Math.floor(args.xp * 0.1) : 0;
+  const xpUpdate = await addXpAndCheckLevel(ctx, player, xpEarned);
+  const levelUpNow = (player as any).levelUpPending === true || ((player.experience ?? 0) + xpEarned >= 2000);
+  const oldCooldowns: Record<string, number> = ((player as any).crimeCooldowns ?? {}) as Record<string, number>;
+  const cooldowns: Record<string, number> = { ...oldCooldowns, [args.crimeId]: _now + 5000 };
+  const categoryId = args.crimeId.split('_')[0];
+  const oldCompleted: Record<string, string[]> = ((player as any).crimeCompleted ?? {}) as Record<string, string[]>;
+  const categoryCompleted: string[] = (oldCompleted[categoryId || ''] ?? []).concat(succeeded ? [args.crimeId] : []);
+  const allDone = categoryCompleted.length >= 5;
+  const newCompleted: Record<string, string[]> = { ...oldCompleted, [categoryId || '']: categoryCompleted };
+  const existingTs: number[] = ((player as any).actionTimestamps ?? []) as number[];
+  const _newTs = [...existingTs.filter((t: number) => t > _now - 3600000), _now];
+  await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : effectiveEnergy, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, lastEnergyRegen: _now, actionTimestamps: _newTs } as any);
+  await ctx.db.insert('crimes', { userId: player._id, type: args.crimeId, target: 'environment', success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() });
+  if (arrested) await ctx.db.insert('notifications', { userId: player._id, type: 'prison', message: 'Arrested!', read: false, timestamp: Date.now() });
+  return { success: succeeded, moneyEarned, xpEarned, pointsEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow };
+} });
  
