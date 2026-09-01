@@ -241,7 +241,7 @@ export function PerksPanel() {
       let text = stacking ? `⚡ Extended ${def.label} by ${def.duration}!` : `⚡ Activated ${def.label}!`;
       if (id === "supplyUnit") text = `📦 Supply Unit used! +100 bullets, +25 energy`;
       if (id === "jailImmunity") text = `🛡️ Jail Immunity banked! +1 skip`;
-      if (id === "autoRank") text = stacking ? `⭐ Auto Rank running! +1 rank every ~1s, ${def.duration} (stacked)` : `⭐ Auto Rank started! +1 rank every ~1s for ${def.duration}`;
+      if (id === "autoRank") text = stacking ? `⭐ Auto Rank running! 5 ranks/min, ${def.duration} (stacked)` : `⭐ Auto Rank started! 5 ranks/min for ${def.duration}`;
       setMsg({ ok: true, text });
     }
     catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }

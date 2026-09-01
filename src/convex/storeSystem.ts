@@ -760,7 +760,7 @@ export const usePerk = mutation({
 });
 
 // Auto Rank accrual — ~3500 ranks per hour (≈1 rank every 1.03 s).
-const AUTO_RANK_MS = Math.round(3600000 / 3500); // ~1029 ms
+const AUTO_RANK_MS = 60000 / 5; // 5 ranks per minute (1 rank every 12s)
 
 // Apply any elapsed Auto Rank ranks inside the active window. Idempotent &
 // lazy: safe to call on every action or tick; it only advances the
