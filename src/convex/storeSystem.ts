@@ -794,6 +794,16 @@ export async function processAutoRank(ctx: any) {
     if (xpUpd.life !== undefined) patch.life = xpUpd.life;
     if (xpUpd.skillPoints !== undefined) patch.skillPoints = xpUpd.skillPoints;
   }
+  // Add actionTimestamps so auto rank counts toward XP Volume multiplier
+  const existingTs: number[] = Array.isArray((player as any).actionTimestamps)
+    ? (player as any).actionTimestamps.filter((t: unknown): t is number => typeof t === "number" && Number.isFinite(t))
+    : [];
+  const nowTs = Date.now();
+  const newTs = [...existingTs.filter((t: number) => t > nowTs - 3600000)];
+  // Add one timestamp per rank granted (batched so we don't blow array size)
+  const tsToAdd = Math.min(ranksToGrant, 50);
+  for (let i = 0; i < tsToAdd; i++) newTs.push(nowTs - (tsToAdd - 1 - i) * 1000);
+  patch.actionTimestamps = newTs;
   await ctx.db.patch(player._id, patch);
   const levelsGained = Math.max(0, (xpUpd.level ?? player.level ?? 1) - (player.level ?? 1));
   return { ranks: levelsGained, applied: ranksToGrant, until };
