@@ -458,115 +458,388 @@ function StatisticsPage() {
 }
 
 function AirportPage() {
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [traveling, setTraveling] = useState(false);
-  const [destination, setDestination] = useState<string | null>(null);
+  const player = useQuery(api.game.getPlayer);
+  const changeLocation = useMutation(api.game.changeLocation);
+  const [view, setView] = useState<"map" | "flight" | "destination">("map");
+  const [selectedDest, setSelectedDest] = useState<string | null>(null);
+  const [flightProgress, setFlightProgress] = useState(0);
+  const [flightFrom, setFlightFrom] = useState("");
+  const [flightTo, setFlightTo] = useState("");
+  const [cooldownEnd, setCooldownEnd] = useState<number>(() => {
+    try { return parseInt(localStorage.getItem("airport_cooldown") || "0", 10); } catch { return 0; }
+  });
+  const [adminOverride, setAdminOverride] = useState(false);
+  const flightTimerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
-  const cities = [
-    { name: "Small Town", risk: "Low", color: "from-emerald-500/20 to-emerald-600/10", border: "border-emerald-500/30", text: "text-emerald-400", cost: 500, xp: 10, unlocks: "Level 1" },
-    { name: "Suburbia", risk: "Low", color: "from-green-500/20 to-green-600/10", border: "border-green-500/30", text: "text-green-400", cost: 1000, xp: 15, unlocks: "Level 1" },
-    { name: "Midwest City", risk: "Low", color: "from-teal-500/20 to-teal-600/10", border: "border-teal-500/30", text: "text-teal-400", cost: 2000, xp: 20, unlocks: "Level 1" },
-    { name: "Dallas", risk: "Medium", color: "from-yellow-500/20 to-amber-600/10", border: "border-yellow-500/30", text: "text-yellow-400", cost: 5000, xp: 30, unlocks: "Level 5" },
-    { name: "Chicago", risk: "Medium", color: "from-amber-500/20 to-orange-600/10", border: "border-amber-500/30", text: "text-amber-400", cost: 8000, xp: 40, unlocks: "Level 5" },
-    { name: "Los Angeles", risk: "Medium", color: "from-orange-500/20 to-red-600/10", border: "border-orange-500/30", text: "text-orange-400", cost: 12000, xp: 50, unlocks: "Level 10" },
-    { name: "Miami", risk: "High", color: "from-red-500/20 to-rose-600/10", border: "border-red-500/30", text: "text-red-400", cost: 20000, xp: 75, unlocks: "Level 10" },
-    { name: "New York", risk: "High", color: "from-rose-500/20 to-pink-600/10", border: "border-rose-500/30", text: "text-rose-400", cost: 35000, xp: 100, unlocks: "Level 15" },
-    { name: "Las Vegas", risk: "High", color: "from-pink-500/20 to-purple-600/10", border: "border-pink-500/30", text: "text-pink-400", cost: 50000, xp: 125, unlocks: "Level 20" },
-    { name: "London", risk: "Very High", color: "from-purple-500/20 to-violet-600/10", border: "border-purple-500/30", text: "text-purple-400", cost: 75000, xp: 150, unlocks: "Level 25" },
-    { name: "Tokyo", risk: "Very High", color: "from-violet-500/20 to-indigo-600/10", border: "border-violet-500/30", text: "text-violet-400", cost: 100000, xp: 175, unlocks: "Level 30" },
-    { name: "Dubai", risk: "Extreme", color: "from-indigo-500/20 to-blue-600/10", border: "border-indigo-500/30", text: "text-indigo-400", cost: 150000, xp: 200, unlocks: "Level 35" },
-    { name: "Berlin", risk: "Extreme", color: "from-blue-500/20 to-cyan-600/10", border: "border-blue-500/30", text: "text-blue-400", cost: 200000, xp: 225, unlocks: "Level 40" },
-    { name: "Sydney", risk: "Extreme", color: "from-cyan-500/20 to-sky-600/10", border: "border-cyan-500/30", text: "text-cyan-400", cost: 250000, xp: 250, unlocks: "Level 45" },
-    { name: "Shanghai", risk: "Extreme", color: "from-sky-500/20 to-blue-700/10", border: "border-sky-500/30", text: "text-sky-400", cost: 300000, xp: 275, unlocks: "Level 50" },
-    { name: "Mogadishu", risk: "Death Row", color: "from-gray-500/20 to-red-900/10", border: "border-gray-500/30", text: "text-gray-300", cost: 500000, xp: 500, unlocks: "Level 75" },
+  const FLIGHT_DURATION = 5 * 60 * 1000; // 5 minutes
+  const COOLDOWN_DURATION = 15 * 60 * 1000; // 15 minutes
+  const RESET_COST = 25; // points
+
+  const now = Date.now();
+  const cooldownRemaining = Math.max(0, cooldownEnd - now);
+  const isOnCooldown = cooldownRemaining > 0 && !adminOverride;
+
+  // Countdown ticker for cooldown display
+  const [cooldownTick, setCooldownTick] = useState(0);
+  useEffect(() => {
+    if (!isOnCooldown) return;
+    const t = setInterval(() => setCooldownTick(v => v + 1), 1000);
+    return () => clearInterval(t);
+  }, [isOnCooldown]);
+
+  // World cities with real-world approximate coordinates (x%, y% on world map)
+  const worldCities = [
+    { name: "New York", x: 25, y: 32, risk: "High", cost: 35000, xp: 100, unlocks: 15, icon: "🗽", continent: "NA" },
+    { name: "Los Angeles", x: 12, y: 36, risk: "Medium", cost: 12000, xp: 50, unlocks: 10, icon: "🌴", continent: "NA" },
+    { name: "Chicago", x: 20, y: 30, risk: "Medium", cost: 8000, xp: 40, unlocks: 5, icon: "🏙️", continent: "NA" },
+    { name: "Miami", x: 23, y: 40, risk: "High", cost: 20000, xp: 75, unlocks: 10, icon: "🏖️", continent: "NA" },
+    { name: "Las Vegas", x: 14, y: 34, risk: "High", cost: 50000, xp: 125, unlocks: 20, icon: "🎰", continent: "NA" },
+    { name: "Dallas", x: 19, y: 36, risk: "Medium", cost: 5000, xp: 30, unlocks: 5, icon: "🤠", continent: "NA" },
+    { name: "Toronto", x: 23, y: 28, risk: "Medium", cost: 10000, xp: 45, unlocks: 8, icon: "🍁", continent: "NA" },
+    { name: "Mexico City", x: 18, y: 42, risk: "High", cost: 15000, xp: 60, unlocks: 8, icon: "🌮", continent: "SA" },
+    { name: "São Paulo", x: 32, y: 62, risk: "Very High", cost: 45000, xp: 110, unlocks: 18, icon: "🇧🇷", continent: "SA" },
+    { name: "Buenos Aires", x: 29, y: 70, risk: "High", cost: 30000, xp: 85, unlocks: 15, icon: "🇦🇷", continent: "SA" },
+    { name: "London", x: 47, y: 24, risk: "Very High", cost: 75000, xp: 150, unlocks: 25, icon: "🇬🇧", continent: "EU" },
+    { name: "Paris", x: 48, y: 27, risk: "Very High", cost: 65000, xp: 140, unlocks: 22, icon: "🇫🇷", continent: "EU" },
+    { name: "Berlin", x: 51, y: 24, risk: "Extreme", cost: 200000, xp: 225, unlocks: 40, icon: "🇩🇪", continent: "EU" },
+    { name: "Moscow", x: 58, y: 20, risk: "Extreme", cost: 175000, xp: 200, unlocks: 35, icon: "🇷🇺", continent: "EU" },
+    { name: "Rome", x: 50, y: 30, risk: "High", cost: 55000, xp: 130, unlocks: 20, icon: "🇮🇹", continent: "EU" },
+    { name: "Istanbul", x: 55, y: 31, risk: "High", cost: 40000, xp: 100, unlocks: 15, icon: "🇹🇷", continent: "EU" },
+    { name: "Dubai", x: 60, y: 38, risk: "Extreme", cost: 150000, xp: 200, unlocks: 35, icon: "🕌", continent: "ME" },
+    { name: "Cairo", x: 55, y: 38, risk: "High", cost: 25000, xp: 70, unlocks: 12, icon: "🇪🇬", continent: "AF" },
+    { name: "Mogadishu", x: 59, y: 47, risk: "Death Row", cost: 500000, xp: 500, unlocks: 75, icon: "💀", continent: "AF" },
+    { name: "Lagos", x: 47, y: 46, risk: "Very High", cost: 60000, xp: 130, unlocks: 22, icon: "🇳🇬", continent: "AF" },
+    { name: "Tokyo", x: 85, y: 30, risk: "Very High", cost: 100000, xp: 175, unlocks: 30, icon: "🗼", continent: "AS" },
+    { name: "Shanghai", x: 79, y: 32, risk: "Extreme", cost: 300000, xp: 275, unlocks: 50, icon: "🇨🇳", continent: "AS" },
+    { name: "Hong Kong", x: 80, y: 38, risk: "Very High", cost: 90000, xp: 160, unlocks: 28, icon: "🇭🇰", continent: "AS" },
+    { name: "Bangkok", x: 77, y: 42, risk: "High", cost: 35000, xp: 90, unlocks: 14, icon: "🇹🇭", continent: "AS" },
+    { name: "Mumbai", x: 68, y: 40, risk: "High", cost: 30000, xp: 80, unlocks: 12, icon: "🇮🇳", continent: "AS" },
+    { name: "Seoul", x: 83, y: 28, risk: "High", cost: 45000, xp: 110, unlocks: 18, icon: "🇰🇷", continent: "AS" },
+    { name: "Sydney", x: 86, y: 64, risk: "Extreme", cost: 250000, xp: 250, unlocks: 45, icon: "🦘", continent: "OC" },
+    { name: "Auckland", x: 92, y: 68, risk: "High", cost: 50000, xp: 120, unlocks: 20, icon: "🇳🇿", continent: "OC" },
   ];
 
   const riskColors: Record<string, string> = {
-    "Low": "bg-emerald-500/20 text-emerald-400",
-    "Medium": "bg-yellow-500/20 text-yellow-400",
-    "High": "bg-red-500/20 text-red-400",
-    "Very High": "bg-purple-500/20 text-purple-400",
-    "Extreme": "bg-indigo-500/20 text-indigo-400",
-    "Death Row": "bg-gray-500/20 text-gray-300",
+    "Low": "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+    "Medium": "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
+    "High": "bg-red-500/20 text-red-400 border-red-500/30",
+    "Very High": "bg-purple-500/20 text-purple-400 border-purple-500/30",
+    "Extreme": "bg-indigo-500/20 text-indigo-400 border-indigo-500/30",
+    "Death Row": "bg-gray-500/20 text-gray-300 border-gray-500/30",
   };
 
-  const handleTravel = (city: string) => {
-    setTraveling(true);
-    setDestination(city);
-    setTimeout(() => {
-      setTraveling(false);
-      setSelectedCity(city);
-    }, 2000);
+  const currentCity = player?.location ?? "New York";
+
+  const formatCooldown = (ms: number) => {
+    if (ms <= 0) return "Ready";
+    const m = Math.floor(ms / 60000);
+    const s = Math.floor((ms % 60000) / 1000);
+    return `${m}m ${s}s`;
   };
 
-  if (traveling) {
-    return (
-      <div className="animate-fade-in flex flex-col items-center justify-center h-64 space-y-6">
-        <div className="relative">
-          <div className="text-6xl animate-bounce">✈️</div>
-          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-12 h-2 bg-black/30 rounded-full blur-sm animate-pulse" />
-        </div>
-        <div className="text-lg font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent animate-pulse">Flying to {destination}...</div>
-        <div className="flex gap-1">
-          {[0,1,2,3,4].map(i => (
-            <div key={i} className="w-2 h-2 rounded-full bg-primary animate-ping" style={{ animationDelay: `${i * 0.2}s` }} />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  const handleSelectCity = (cityName: string) => {
+    if (isOnCooldown) return;
+    setSelectedDest(cityName);
+    setView("destination");
+  };
 
-  if (selectedCity) {
-    const city = cities.find(c => c.name === selectedCity)!;
+  const handleFly = async () => {
+    if (!selectedDest || isOnCooldown) return;
+    setFlightFrom(currentCity);
+    setFlightTo(selectedDest);
+    setFlightProgress(0);
+    setView("flight");
+
+    // 5-minute flight animation
+    const startTime = Date.now();
+    flightTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, (elapsed / FLIGHT_DURATION) * 100);
+      setFlightProgress(pct);
+      if (pct >= 100) {
+        if (flightTimerRef.current) clearInterval(flightTimerRef.current);
+      }
+    }, 100);
+
+    // After 5 minutes, complete the flight
+    setTimeout(async () => {
+      if (flightTimerRef.current) clearInterval(flightTimerRef.current);
+      setFlightProgress(100);
+      try {
+        await changeLocation({ location: selectedDest });
+      } catch { /* already handled */ }
+      // Set 15min cooldown
+      const newCooldownEnd = Date.now() + COOLDOWN_DURATION;
+      setCooldownEnd(newCooldownEnd);
+      try { localStorage.setItem("airport_cooldown", String(newCooldownEnd)); } catch {}
+      setView("map");
+      setSelectedDest(null);
+    }, FLIGHT_DURATION);
+  };
+
+  const handleResetCooldown = async () => {
+    if ((player?.points ?? 0) < RESET_COST) return;
+    setCooldownEnd(0);
+    setAdminOverride(false);
+    try { localStorage.removeItem("airport_cooldown"); } catch {}
+    // Deduct points via a mutation if available, for now just reset client-side
+  };
+
+  const handleForceReset = () => {
+    setCooldownEnd(0);
+    setAdminOverride(true);
+    try { localStorage.removeItem("airport_cooldown"); } catch {}
+  };
+
+  if (!player) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading...</div>;
+
+  // ═══ FLIGHT ANIMATION VIEW ═══
+  if (view === "flight") {
+    const fromCity = worldCities.find(c => c.name === flightFrom);
+    const toCity = worldCities.find(c => c.name === flightTo);
+    const fx = fromCity?.x ?? 25;
+    const fy = fromCity?.y ?? 32;
+    const tx = toCity?.x ?? 50;
+    const ty = toCity?.y ?? 30;
+    const planeX = fx + (tx - fx) * (flightProgress / 100);
+    const planeY = fy + (ty - fy) * (flightProgress / 100) - Math.sin((flightProgress / 100) * Math.PI) * 8;
+    const elapsed = Math.floor((flightProgress / 100) * FLIGHT_DURATION);
+    const remaining = FLIGHT_DURATION - elapsed;
+    const rMin = Math.floor(remaining / 60000);
+    const rSec = Math.floor((remaining % 60000) / 1000);
+    const flightPhase = flightProgress < 10 ? "Taking off" : flightProgress < 30 ? "Climbing" : flightProgress < 70 ? "Cruising at 35,000ft" : flightProgress < 90 ? "Descending" : "Approaching";
+
     return (
       <div className="animate-fade-in space-y-4">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSelectedCity(null)} className="px-3 py-1 bg-secondary rounded-lg text-xs hover:bg-secondary/80 transition">← Back</button>
-          <div className="flex-1"><h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">{selectedCity}</h2></div>
-          <span className={`px-3 py-1 rounded-full text-xs font-bold ${riskColors[city.risk]}`}>{city.risk} Risk</span>
+        <div className="text-center">
+          <div className="text-sm font-bold text-cyan-300">✈️ Flight in Progress</div>
+          <div className="text-[10px] text-muted-foreground">{flightFrom} → {flightTo}</div>
         </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">Travel Cost</div><div className="text-lg font-bold text-yellow-400">${city.cost.toLocaleString()}</div></div>
-          <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">XP Reward</div><div className="text-lg font-bold text-purple-400">+{city.xp} XP</div></div>
-          <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">Risk Level</div><div className="text-lg font-bold text-red-400">{city.risk}</div></div>
-        </div>
-        <div className="space-y-3">
-          <div className="mafia-card rounded-xl p-4">
-            <div className="text-sm font-bold mb-2">🏙️ City Overview</div>
-            <div className="text-xs text-muted-foreground">{selectedCity} is a {city.risk.toLowerCase()} risk destination with crime opportunities ranging from petty theft to organized crime. Higher risk means higher rewards but more chance of getting caught.</div>
+        {/* Flight map with animated plane */}
+        <div className="relative rounded-xl overflow-hidden border border-cyan-500/20" style={{ background: "linear-gradient(135deg, #0a1628, #0d1f3c, #0a1628)", height: 260 }}>
+          {/* Ocean/grid pattern */}
+          <svg viewBox="0 0 100 80" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <defs>
+              <pattern id="flightGrid" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(100,200,255,0.05)" strokeWidth="0.1" /></pattern>
+            </defs>
+            <rect width="100" height="80" fill="url(#flightGrid)" />
+            {/* Flight path (curved) */}
+            <path d={`M ${fx} ${fy} Q ${(fx+tx)/2} ${Math.min(fy,ty) - 8} ${tx} ${ty}`} fill="none" stroke="rgba(100,200,255,0.3)" strokeWidth="0.3" strokeDasharray="1,1" />
+            {/* Traveled path */}
+            <path d={`M ${fx} ${fy} Q ${(fx+tx)/2} ${Math.min(fy,ty) - 8} ${tx} ${ty}`} fill="none" stroke="rgba(0,200,255,0.6)" strokeWidth="0.4" strokeDasharray="2,1" strokeDashoffset={100 - flightProgress} />
+            {/* From dot */}
+            <circle cx={fx} cy={fy} r="1" fill="#22c55e" />
+            {/* To dot */}
+            <circle cx={tx} cy={ty} r="1" fill="#f59e0b" />
+            {/* Plane */}
+            <text x={planeX} y={planeY} textAnchor="middle" dominantBaseline="middle" fontSize="3" className="drop-shadow-lg">✈️</text>
+          </svg>
+          {/* HUD overlay */}
+          <div className="absolute top-3 left-3 space-y-1">
+            <div className="text-[9px] text-cyan-300 font-mono bg-black/50 px-2 py-0.5 rounded">{flightPhase}</div>
+            <div className="text-[9px] text-green-400 font-mono bg-black/50 px-2 py-0.5 rounded">ALT: {Math.floor(35000 * Math.min(1, flightProgress < 30 ? flightProgress/30 : flightProgress > 90 ? (100-flightProgress)/10 : 1))} ft</div>
+            <div className="text-[9px] text-amber-400 font-mono bg-black/50 px-2 py-0.5 rounded">SPD: {flightProgress < 10 ? Math.floor(flightProgress * 40) : flightProgress > 90 ? Math.floor((100 - flightProgress) * 40) : 560} mph</div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">🔪</div><div className="text-xs font-bold">Street Crime</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 0.5)} XP</div></div>
-            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">💰</div><div className="text-xs font-bold">Robbery</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 0.8)} XP</div></div>
-            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">🏠</div><div className="text-xs font-bold">Burglary</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 0.6)} XP</div></div>
-            <div className="mafia-card rounded-xl p-3 text-center hover:border-primary/30 transition cursor-pointer"><div className="text-lg">🕵️</div><div className="text-xs font-bold">Organized Crime</div><div className="text-[10px] text-muted-foreground">+{Math.floor(city.xp * 1.2)} XP</div></div>
+          <div className="absolute top-3 right-3 text-[9px] text-slate-300 font-mono bg-black/50 px-2 py-0.5 rounded">
+            ETA {rMin}m {rSec}s
+          </div>
+          <div className="absolute bottom-3 left-3 right-3">
+            <div className="flex justify-between text-[8px] text-slate-400 mb-1"><span>{flightFrom}</span><span>{flightTo}</span></div>
+            <div className="w-full h-2 bg-black/50 rounded-full overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${flightProgress}%`, background: "linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6)" }} />
+            </div>
           </div>
         </div>
+        <div className="text-center text-[10px] text-muted-foreground">Your plane is {flightProgress < 30 ? "gaining altitude" : flightProgress < 70 ? "cruising over the ocean" : "beginning its descent"}. Sit tight...</div>
       </div>
     );
   }
+
+  // ═══ DESTINATION DETAIL VIEW ═══
+  if (view === "destination" && selectedDest) {
+    const city = worldCities.find(c => c.name === selectedDest)!;
+    const fromCity = worldCities.find(c => c.name === currentCity);
+    const dist = fromCity && city ? Math.sqrt(Math.pow(fromCity.x - city.x, 2) + Math.pow(fromCity.y - city.y, 2)) : 30;
+    const estimatedMin = Math.max(1, Math.round(dist * 0.12));
+    const canFly = !isOnCooldown && (player.money ?? 0) >= city.cost && player.level >= city.unlocks;
+
+    return (
+      <div className="animate-fade-in space-y-4">
+        <button onClick={() => setView("map")} className="px-3 py-1.5 bg-secondary rounded-lg text-xs hover:bg-secondary/80 transition">← Back to World Map</button>
+        <div className="flex items-center gap-3">
+          <span className="text-4xl">{city.icon}</span>
+          <div>
+            <h2 className="text-2xl font-bold text-white">{selectedDest}</h2>
+            <div className="text-[10px] text-muted-foreground">{city.continent} · {Math.round(dist * 150)}km from {currentCity}</div>
+          </div>
+          <span className={`ml-auto px-3 py-1 rounded-full text-[10px] font-bold border ${riskColors[city.risk]}`}>{city.risk} RISK</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground uppercase">Cost</div><div className="text-lg font-black text-yellow-400">${city.cost.toLocaleString()}</div></div>
+          <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground uppercase">XP</div><div className="text-lg font-black text-purple-400">+{city.xp}</div></div>
+          <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground uppercase">Unlocks</div><div className="text-lg font-black text-cyan-400">Lv.{city.unlocks}</div></div>
+          <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground uppercase">Flight Time</div><div className="text-lg font-black text-blue-400">~{estimatedMin}min</div></div>
+        </div>
+        <div className="mafia-card rounded-xl p-4 border border-cyan-500/20">
+          <div className="text-sm font-bold text-cyan-300 mb-1">✈️ Flight Details</div>
+          <div className="text-[10px] text-muted-foreground space-y-1">
+            <div>• Flight time: ~5 minutes (realistic)</div>
+            <div>• After landing, 15-minute cooldown before next flight</div>
+            <div>• Admin can override cooldown for testing</div>
+            <div>• Cost: ${city.cost.toLocaleString()} deducted on takeoff</div>
+            {city.unlocks > (player.level ?? 1) && <div className="text-red-400">• Requires Level {city.unlocks} (you are Level {player.level ?? 1})</div>}
+          </div>
+        </div>
+        <button onClick={handleFly} disabled={!canFly}
+          className="w-full py-3 rounded-xl text-sm font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500">
+          {isOnCooldown ? `⏱️ Cooldown: ${formatCooldown(cooldownRemaining)}` : (player.money ?? 0) < city.cost ? "💸 Not enough money" : player.level < city.unlocks ? `🔒 Level ${city.unlocks} required` : `✈️ Fly to ${selectedDest} — $${city.cost.toLocaleString()}`}
+        </button>
+      </div>
+    );
+  }
+
+  // ═══ WORLD MAP VIEW ═══
+  const currentCityObj = worldCities.find(c => c.name === currentCity) || worldCities[0];
 
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><Plane className="size-7 text-cyan-400" /><h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">Airport</h2></div>
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-muted-foreground">Select a destination:</span>
-        <span className="text-xs text-cyan-400">Click to travel to a city</span>
-      </div>
-      <div className="space-y-2">
-        {cities.map((city, i) => (
-          <div key={city.name} onClick={() => handleTravel(city.name)} className={`bg-gradient-to-r ${city.color} border ${city.border} rounded-xl p-4 flex items-center gap-4 hover:scale-[1.01] transition-all cursor-pointer group`}>
-            <span className="text-2xl group-hover:scale-110 transition-transform">✈️</span>
-            <div className="flex-1">
-              <div className="font-bold">{city.name}</div>
-              <div className="text-[10px] text-muted-foreground">{city.unlocks} · {city.xp} XP</div>
-            </div>
-            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${riskColors[city.risk]}`}>{city.risk}</span>
-            <div className="text-right">
-              <div className="text-sm font-bold text-yellow-400">${city.cost.toLocaleString()}</div>
-            </div>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Plane className="size-7 text-cyan-400" />
+          <div>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">Airport</h2>
+            <div className="text-[10px] text-muted-foreground">World Travel System · Fly between {worldCities.length} cities</div>
           </div>
-        ))}
+        </div>
+        <div className="text-right">
+          <div className="text-[10px] text-muted-foreground">Current Location</div>
+          <div className="text-sm font-bold text-cyan-300">{currentCityObj.icon} {currentCity}</div>
+        </div>
+      </div>
+
+      {/* Status Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground">💰 Cash</div><div className="text-sm font-black text-green-400">${(player.money ?? 0).toLocaleString()}</div></div>
+        <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground">⭐ Points</div><div className="text-sm font-black text-amber-400">{(player.points ?? 0).toLocaleString()}</div></div>
+        <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground">⏱️ Cooldown</div><div className={`text-sm font-black ${isOnCooldown ? "text-red-400" : "text-green-400"}`}>{isOnCooldown ? formatCooldown(cooldownRemaining) : "Ready"}</div></div>
+        <div className="mafia-card rounded-xl p-3 text-center border border-slate-700/30"><div className="text-[10px] text-muted-foreground">📍 Cities</div><div className="text-sm font-black text-cyan-400">{worldCities.length}</div></div>
+      </div>
+
+      {/* Cooldown Controls */}
+      <div className="mafia-card rounded-xl p-3 border border-slate-700/30">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold">⏱️ Flight Cooldown</span>
+            {isOnCooldown && <span className="text-[10px] text-red-400">Next flight in {formatCooldown(cooldownRemaining)}</span>}
+            {!isOnCooldown && <span className="text-[10px] text-green-400">Ready to fly!</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={handleResetCooldown} disabled={isOnCooldown || (player.points ?? 0) < RESET_COST}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 disabled:opacity-40">
+              🔄 Reset Cooldown ({RESET_COST} pts)
+            </button>
+            <button onClick={handleForceReset}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-bold bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30">
+              🛡️ Admin Override
+            </button>
+          </div>
+        </div>
+        {adminOverride && <div className="text-[9px] text-red-400 mt-1">⚠️ Admin override active — cooldown bypassed</div>}
+      </div>
+
+      {/* World Map */}
+      <div className="relative rounded-xl overflow-hidden border border-cyan-500/20" style={{ background: "linear-gradient(135deg, #050d1a, #0a1628, #061020)", aspectRatio: "2/1" }}>
+        {/* Grid lines */}
+        <svg viewBox="0 0 100 50" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <pattern id="mapGrid" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse">
+              <path d="M 5 0 L 0 0 0 5" fill="none" stroke="rgba(100,200,255,0.04)" strokeWidth="0.1" />
+            </pattern>
+          </defs>
+          <rect width="100" height="50" fill="url(#mapGrid)" />
+          {/* Simplified continent outlines */}
+          {/* North America */}
+          <path d="M 8,15 Q 12,12 18,14 Q 24,10 28,15 Q 30,20 28,25 Q 24,30 20,35 Q 16,38 12,36 Q 8,32 6,25 Q 6,20 8,15" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.15)" strokeWidth="0.2" />
+          {/* South America */}
+          <path d="M 24,38 Q 28,36 32,40 Q 34,48 32,55 Q 30,62 28,65 Q 26,68 24,65 Q 22,58 22,50 Q 22,42 24,38" fill="rgba(34,197,94,0.06)" stroke="rgba(34,197,94,0.12)" strokeWidth="0.2" />
+          {/* Europe */}
+          <path d="M 44,12 Q 48,10 54,12 Q 58,14 56,18 Q 52,20 48,22 Q 44,20 42,16 Z" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.15)" strokeWidth="0.2" />
+          {/* Africa */}
+          <path d="M 44,28 Q 48,26 54,28 Q 58,32 60,40 Q 60,50 56,56 Q 50,60 46,56 Q 42,48 42,38 Q 42,32 44,28" fill="rgba(34,197,94,0.06)" stroke="rgba(34,197,94,0.12)" strokeWidth="0.2" />
+          {/* Asia */}
+          <path d="M 58,10 Q 68,8 78,12 Q 85,16 88,20 Q 90,28 86,32 Q 80,36 72,38 Q 64,36 60,30 Q 56,22 58,10" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.15)" strokeWidth="0.2" />
+          {/* Australia */}
+          <path d="M 80,52 Q 86,50 92,54 Q 94,58 90,62 Q 84,64 80,60 Q 78,56 80,52" fill="rgba(34,197,94,0.06)" stroke="rgba(34,197,94,0.12)" strokeWidth="0.2" />
+          {/* Current location pulsing ring */}
+          <circle cx={currentCityObj.x} cy={currentCityObj.y / 2} r="3" fill="none" stroke="rgba(0,200,255,0.4)" strokeWidth="0.15">
+            <animate attributeName="r" values="2;5;2" dur="2s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.6;0;0.6" dur="2s" repeatCount="indefinite" />
+          </circle>
+        </svg>
+        {/* City dots */}
+        {worldCities.map((city) => {
+          const isCurrent = city.name === currentCity;
+          const canAfford = (player.money ?? 0) >= city.cost;
+          const meetsLevel = (player.level ?? 1) >= city.unlocks;
+          const locked = !meetsLevel;
+          return (
+            <button key={city.name}
+              onClick={() => handleSelectCity(city.name)}
+              disabled={locked && !isCurrent}
+              className={`absolute group transition-all ${locked && !isCurrent ? "opacity-30 cursor-not-allowed" : "hover:scale-125 cursor-pointer"}`}
+              style={{ left: `${city.x}%`, top: `${city.y}%`, transform: "translate(-50%, -50%)" }}>
+              <div className={`relative flex flex-col items-center ${isCurrent ? "" : ""}`}>
+                <div className={`w-2.5 h-2.5 rounded-full border-2 ${isCurrent ? "bg-cyan-400 border-cyan-300 shadow-lg shadow-cyan-400/50" : locked ? "bg-slate-600 border-slate-500" : canAfford ? "bg-green-400 border-green-300" : "bg-amber-400 border-amber-300"}`} />
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-center">
+                  <div className={`text-[7px] font-bold ${isCurrent ? "text-cyan-300" : "text-slate-300"}`}>{city.icon} {city.name}</div>
+                </div>
+                {/* Tooltip */}
+                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 hidden group-hover:block z-20 w-36">
+                  <div className="bg-slate-900/95 border border-slate-700/50 rounded-lg p-2 text-left shadow-xl">
+                    <div className="text-[9px] font-bold text-white">{city.icon} {city.name}</div>
+                    <div className="text-[8px] text-muted-foreground">${city.cost.toLocaleString()} · +{city.xp} XP</div>
+                    <div className="text-[8px]">Lv.{city.unlocks} · <span className={city.risk === "Death Row" ? "text-red-400" : city.risk === "Extreme" ? "text-purple-400" : "text-yellow-400"}>{city.risk}</span></div>
+                    {isCurrent && <div className="text-[8px] text-cyan-400 font-bold mt-0.5">📍 You are here</div>}
+                    {locked && !isCurrent && <div className="text-[8px] text-red-400 mt-0.5">🔒 Level {city.unlocks} req</div>}
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+        {/* Map legend */}
+        <div className="absolute bottom-2 left-2 bg-black/50 rounded-lg px-2 py-1 flex items-center gap-3">
+          <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-cyan-400" /><span className="text-[7px] text-slate-400">Current</span></div>
+          <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-green-400" /><span className="text-[7px] text-slate-400">Affordable</span></div>
+          <div className="flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-amber-400" /><span className="text-[7px] text-slate-400">Locked</span></div>
+        </div>
+      </div>
+
+      {/* City List */}
+      <div className="text-xs font-bold text-muted-foreground">🏙️ All Destinations ({worldCities.length} cities)</div>
+      <div className="space-y-1.5 max-h-96 overflow-y-auto">
+        {worldCities.sort((a, b) => a.cost - b.cost).map((city) => {
+          const isCurrent = city.name === currentCity;
+          const meetsLevel = (player.level ?? 1) >= city.unlocks;
+          const canAfford = (player.money ?? 0) >= city.cost;
+          return (
+            <div key={city.name}
+              onClick={() => !isCurrent && handleSelectCity(city.name)}
+              className={`mafia-card rounded-lg p-2.5 flex items-center gap-3 border transition-all ${isCurrent ? "border-cyan-500/30 bg-cyan-500/5" : "border-slate-700/20 hover:border-cyan-500/20 cursor-pointer"}`}>
+              <span className="text-lg">{city.icon}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-bold truncate">{city.name}</div>
+                <div className="text-[9px] text-muted-foreground">Lv.{city.unlocks} · +{city.xp} XP</div>
+              </div>
+              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold border ${riskColors[city.risk]}`}>{city.risk}</span>
+              <div className="text-right">
+                <div className={`text-[10px] font-bold ${canAfford ? "text-yellow-400" : "text-red-400"}`}>${city.cost.toLocaleString()}</div>
+                {isCurrent && <div className="text-[8px] text-cyan-400">📍 Here</div>}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
