@@ -144,6 +144,8 @@ import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
 import { ObjectivesPage, PointStorePage, CoinStorePage, ObjectivesPanel } from "@/components/StorePages";
 import { InventoryPage } from "@/components/InventoryPage";
 import { PromoCodesPage } from "@/components/PromoCodesPage";
+import { DrugTradePage } from "@/components/DrugTradePage";
+import { QsMarketPage } from "@/components/QsMarketPage";
 import { RecordKillsPage, RecordCrimesPage, RecordGtaPage, RecordPointsPage, RecordBulletsPage, RecordBustsPage, RecordStockPage, RecordBettingPage, RecordAssassinationPage, RecordPacksPage, RecordHeistsPage, RecordSupplyPage, RecordCasinoPage } from "@/components/GameRecords";
 import { CasinosPage, CasinoBlackjackPage, CasinoDicePage, CasinoRoulettePage, CasinoRacetrackPage, CasinoVideoPokerPage, CasinoScratchcardsPage } from "@/components/CasinoPages";
 import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
@@ -1068,6 +1070,8 @@ export default function Dashboard() {
       case "community": return <CommunityPage />;
       case "reports": return <GenericStub title="Reports" icon="📢" />;
       case "promo_codes": return <PromoCodesPage />;
+      case "qs_market": return <QsMarketPage />;
+      case "drug_trade": return <DrugTradePage />;
       case "admin_panel": return <AdminPanel />;
       case "become_admin": return <BecomeAdminPage />;
       case "casinos": return <CasinosPage />;

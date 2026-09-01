@@ -15,6 +15,7 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Points Shop", page: "points", icon: "🏆" },
     { label: "Hospital", page: "hospital", icon: "🏥" },
     { label: "Promo Codes", page: "promo_codes", icon: "🎟️" },
+    { label: "Q's Market", page: "qs_market", icon: "🏪" },
   ]},
   { title: "Crime", icon: Skull, items: [
     { label: "Crimes Hub", page: "crimes", icon: "🔪" },
@@ -26,6 +27,7 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Murder", page: "murder", icon: "💀" },
     { label: "Garage", page: "garage", icon: "🚗" },
     { label: "Items", page: "my_items", icon: "🎒" },
+    { label: "Drug Trade", page: "drug_trade", icon: "💊" },
   ]},
   { title: "Casino", icon: Zap, items: [
     { label: "Casinos Overview", page: "casinos", icon: "🎰" },
