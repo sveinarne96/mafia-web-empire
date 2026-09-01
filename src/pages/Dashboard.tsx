@@ -189,7 +189,8 @@ type GamePage = string;
 // ===== MISSING PAGE STUBS =====
 function HeadquartersPage() {
   const player = useQuery(api.game.getPlayer);
-  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  if (player === undefined) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+  if (!player) return <div className="text-center py-8 text-muted-foreground"><div className="text-3xl mb-2">🎮</div><div className="text-sm font-bold mb-1">Welcome to Shadow Empire</div><div className="text-xs">Setting up your headquarters...</div></div>;
   const xpNeeded = 2000;
   const xpPercent = Math.min(100, ((player.experience ?? 0) / xpNeeded) * 100);
   const lifePercent = Math.min(100, ((player.life ?? 0) / (player.maxLife ?? 100)) * 100);
