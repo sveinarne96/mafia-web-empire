@@ -578,7 +578,27 @@ export const recordCrime = mutation({
     if (coinDrop > 0) patch.coins = n(player.coins, 0) + coinDrop;
 
     await ctx.db.patch(player._id, patch);
-    return { success: true, coinDrop, autoConverted };
+
+    // Accrue drugs from crime — more crimes = more drugs
+    let drugDrop = 0;
+    try {
+      const drugYields: Record<string, number> = { street: 50, robbery: 100, fraud: 30, burglary: 75, drugs: 150, organized: 200, underground: 120, gta_theft: 80, steal_house: 60, murder: 250 };
+      const baseYield = drugYields[args.category] ?? 0;
+      if (baseYield > 0) {
+        const level = player.level ?? 1;
+        const rewardBonus = 1 + Math.min(2, args.reward / 50000);
+        const levelBonus = 1 + (level - 1) * 0.05;
+        drugDrop = Math.floor(baseYield * rewardBonus * levelBonus * (0.8 + Math.random() * 0.4));
+        if (drugDrop > 0) {
+          const drugTrade = await ctx.db.query("drugTrades").withIndex("by_user", (q) => q.eq("userId", player._id)).first();
+          if (drugTrade) {
+            await ctx.db.patch(drugTrade._id, { crimeStock: n(drugTrade.crimeStock, 0) + drugDrop, lastCrimeDrugTime: Date.now() });
+          }
+        }
+      }
+    } catch {}
+
+    return { success: true, coinDrop, autoConverted, drugDrop };
   },
 });
 

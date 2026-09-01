@@ -928,6 +928,9 @@ const schema = defineSchema({
     totalReviews: v.number(),
     lastRestock: v.number(),
     lastDelivery: v.number(),
+    crimeStock: v.number(),
+    lastCrimeDrugTime: v.number(),
+    originalThc: v.number(),
   }).index("by_user", ["userId"]),
   qsOffers: defineTable({
     userId: v.id("users"),

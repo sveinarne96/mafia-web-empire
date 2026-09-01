@@ -19,7 +19,7 @@ export function DrugTradePage() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (trade) { setThcVal(trade.thcContent); setBudgetVal(trade.marketingBudget); } }, [trade]);
+  useEffect(() => { if (trade) { setThcVal(trade.originalThc); setBudgetVal(trade.marketingBudget); } }, [trade]);
 
   if (trade === undefined) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading drug trade...</div>;
   if (!trade) {
@@ -29,7 +29,7 @@ export function DrugTradePage() {
         <div className="mafia-card rounded-xl p-6 text-center">
           <div className="text-5xl mb-3">🌿</div>
           <div className="text-lg font-bold mb-2">Start Your Drug Empire</div>
-          <div className="text-xs text-muted-foreground mb-4">Buy stock, set prices, deliver to customers.</div>
+          <div className="text-xs text-muted-foreground mb-4">Commit crimes to earn drugs. Sell them for profit. Deliver within 5 days or lose THC quality.</div>
           <button onClick={async () => { setLoading(true); try { await initTrade(); } catch (e: any) { setMsg(e.message); } setLoading(false); }}
             disabled={loading} className="px-6 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 disabled:opacity-50">🌿 Initialize Drug Trade</button>
           {msg && <div className="text-xs text-red-400 mt-2">{msg}</div>}
@@ -38,47 +38,64 @@ export function DrugTradePage() {
     );
   }
 
-  const stockPct = Math.min(100, (trade.cannabisStock / trade.maxStock) * 100);
-  const rating = trade.customerRating;
+  const stockPct = Math.min(100, (trade.totalStock / trade.maxStock) * 100);
+  const thcPct = Math.min(100, trade.thcContent);
 
   const handleBuy = async () => { setLoading(true); setMsg(""); try { const r = await buyStock({ quantity: buyQty }); setMsg(`Bought ${buyQty.toLocaleString()}g for $${r.cost.toLocaleString()}`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
-  const handleDeliver = async () => { setLoading(true); setMsg(""); try { const r = await deliverDrug({ quantity: deliverQty }); setMsg(`Delivered ${r.delivered.toLocaleString()}g — +$${r.revenue.toLocaleString()}`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
+  const handleDeliver = async () => { setLoading(true); setMsg(""); try { const r = await deliverDrug({ quantity: deliverQty }); setMsg(`Delivered ${r.delivered.toLocaleString()}g — +$${r.revenue.toLocaleString()} (THC: ${r.thcUsed}%)`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
   const handleThc = async () => { setLoading(true); setMsg(""); try { const r = await setThc({ thc: thcVal }); setMsg(`THC ${r.thc}% — price $${r.pricePerGram}/g`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
   const handleBudget = async () => { setLoading(true); setMsg(""); try { await setBudget({ amount: budgetVal }); setMsg(`Budget $${budgetVal.toLocaleString()}`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
 
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><span className="text-3xl">💊</span><h2 className="text-2xl font-bold">Drug Trade</h2></div>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3"><span className="text-3xl">💊</span><h2 className="text-2xl font-bold">Drug Trade</h2></div>
+        {trade.thcDegrading && (
+          <div className="px-3 py-1.5 rounded-xl bg-red-500/15 border border-red-500/30 text-[10px] font-bold text-red-400 animate-pulse">
+            ⚠️ THC DEGRADING — Deliver now!
+          </div>
+        )}
+      </div>
 
+      {/* Status Panel */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="mafia-card rounded-xl p-4 border border-green-500/20">
-          <div className="text-[10px] text-muted-foreground uppercase">Cannabis in stock</div>
-          <div className="text-lg font-black text-green-400">{trade.cannabisStock.toLocaleString()}g</div>
+          <div className="text-[10px] text-muted-foreground uppercase">Total stock</div>
+          <div className="text-lg font-black text-green-400">{trade.totalStock.toLocaleString()}g</div>
           <div className="w-full h-2 bg-slate-800 rounded-full mt-2"><div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${stockPct}%` }} /></div>
-          <div className="text-[9px] text-muted-foreground mt-1">{stockPct.toFixed(0)}% of {trade.maxStock.toLocaleString()}g</div>
+          <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
+            <span>🌿 Bought: {trade.cannabisStock.toLocaleString()}g</span>
+            <span>🔪 Crime: {trade.crimeStock.toLocaleString()}g</span>
+          </div>
         </div>
-        <div className="mafia-card rounded-xl p-4 border border-blue-500/20">
+        <div className={`mafia-card rounded-xl p-4 border ${trade.thcDegrading ? "border-red-500/30 bg-red-950/10" : "border-blue-500/20"}`}>
           <div className="text-[10px] text-muted-foreground uppercase">THC content</div>
-          <div className="text-lg font-black text-blue-400">{trade.thcContent}%</div>
-          <div className="text-[9px] text-muted-foreground mt-1">Affects price</div>
+          <div className={`text-lg font-black ${trade.thcDegrading ? "text-red-400" : "text-blue-400"}`}>{trade.thcContent}%</div>
+          {trade.thcDegrading ? (
+            <div className="text-[9px] text-red-400 mt-1 animate-pulse">⚠️ Lost quality — deliver ASAP</div>
+          ) : (
+            <div className="text-[9px] text-muted-foreground mt-1">⏱️ {trade.daysUntilDegradation}d until degradation</div>
+          )}
+          <div className="w-full h-1.5 bg-slate-800 rounded-full mt-1.5"><div className={`h-full rounded-full transition-all ${trade.thcDegrading ? "bg-red-500" : "bg-blue-500"}`} style={{ width: `${thcPct}%` }} /></div>
         </div>
         <div className="mafia-card rounded-xl p-4 border border-yellow-500/20">
           <div className="text-[10px] text-muted-foreground uppercase">Shipment value</div>
-          <div className="text-lg font-black text-yellow-400">${(trade.cannabisStock * trade.pricePerGram).toLocaleString()}</div>
-          <div className="text-[9px] text-muted-foreground mt-1">${trade.pricePerGram}/g</div>
+          <div className="text-lg font-black text-yellow-400">${(trade.totalStock * trade.pricePerGram).toLocaleString()}</div>
+          <div className="text-[9px] text-muted-foreground mt-1">${trade.pricePerGram}/g · {trade.daysSinceDelivery}d since delivery</div>
         </div>
         <div className="mafia-card rounded-xl p-4 border border-purple-500/20">
           <div className="text-[10px] text-muted-foreground uppercase">Customer reviews</div>
-          <div className="text-lg font-black text-purple-400">{"⭐".repeat(Math.floor(rating))}{rating >= 0.5 ? "" : ""} ({rating.toFixed(2)})</div>
+          <div className="text-lg font-black text-purple-400">{"⭐".repeat(Math.min(5, Math.floor(trade.customerRating)))} ({trade.customerRating.toFixed(2)})</div>
           <div className="text-[9px] text-muted-foreground mt-1">{trade.totalReviews} reviews</div>
         </div>
       </div>
 
+      {/* Delivery + Demand */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="mafia-card rounded-xl p-4 border border-emerald-500/20">
+        <div className={`mafia-card rounded-xl p-4 border ${trade.thcDegrading ? "border-red-500/20" : "border-emerald-500/20"}`}>
           <div className="text-[10px] text-muted-foreground uppercase mb-1">Ready for delivery</div>
-          <div className="text-xl font-black text-emerald-400">{trade.cannabisStock.toLocaleString()}g</div>
-          <div className="text-[9px] text-muted-foreground">{stockPct.toFixed(0)}%</div>
+          <div className="text-xl font-black text-emerald-400">{trade.totalStock.toLocaleString()}g</div>
+          <div className="text-[9px] text-muted-foreground">{stockPct.toFixed(0)}% capacity</div>
         </div>
         <div className="mafia-card rounded-xl p-4 border border-red-500/20">
           <div className="text-[10px] text-muted-foreground uppercase mb-1">Demand</div>
@@ -87,6 +104,7 @@ export function DrugTradePage() {
         </div>
       </div>
 
+      {/* Tabs */}
       <div className="flex gap-1 bg-slate-900/50 rounded-lg p-1">
         {(["stock", "deliver", "marketing", "contracts"] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 text-xs font-semibold rounded-md capitalize transition-all ${tab === t ? "bg-green-600 text-white" : "text-muted-foreground hover:text-white"}`}>{t}</button>
@@ -94,15 +112,27 @@ export function DrugTradePage() {
       </div>
 
       {tab === "stock" && (
-        <div className="mafia-card rounded-xl p-4 space-y-4 border border-slate-700/30">
-          <div className="text-sm font-bold">📦 Buy Stock</div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1"><label className="text-[10px] text-muted-foreground">Quantity (grams)</label>
-              <input type="number" value={buyQty} onChange={(e) => setBuyQty(Number(e.target.value))} className="w-full bg-slate-900/60 border border-slate-700/40 rounded-lg px-3 py-2 text-sm mt-1" /></div>
-            <div className="text-right"><div className="text-[10px] text-muted-foreground">Cost</div><div className="text-sm font-bold text-yellow-400">${(buyQty * 100).toLocaleString()}</div></div>
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
+            <div className="text-sm font-bold mb-2">🔪 Crime-Sourced Stock</div>
+            <div className="text-xs text-muted-foreground mb-2">Every crime you commit adds drugs to your inventory. Higher level + higher reward = more drugs per crime.</div>
+            <div className="grid grid-cols-2 gap-2 text-[10px]">
+              <div className="bg-slate-900/30 rounded-lg p-2">Crime stock: <span className="text-green-400 font-bold">{trade.crimeStock.toLocaleString()}g</span></div>
+              <div className="bg-slate-900/30 rounded-lg p-2">Bought stock: <span className="text-blue-400 font-bold">{trade.cannabisStock.toLocaleString()}g</span></div>
+            </div>
           </div>
-          <button onClick={handleBuy} disabled={loading} className="w-full px-4 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 disabled:opacity-50">🌿 Buy {buyQty.toLocaleString()}g</button>
-          <div className="border-t border-slate-700/30 pt-3">
+          <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
+            <div className="text-sm font-bold mb-2">📦 Buy Stock (with cash)</div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1"><label className="text-[10px] text-muted-foreground">Quantity (grams)</label>
+                <input type="number" value={buyQty} onChange={(e) => setBuyQty(Number(e.target.value))} className="w-full bg-slate-900/60 border border-slate-700/40 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div className="text-right"><div className="text-[10px] text-muted-foreground">Cost</div><div className="text-sm font-bold text-yellow-400">${(buyQty * trade.pricePerGram).toLocaleString()}</div></div>
+            </div>
+            <button onClick={handleBuy} disabled={loading} className="w-full px-4 py-3 bg-green-600 text-white rounded-xl font-bold text-sm hover:bg-green-700 disabled:opacity-50 mt-2">
+              💰 Buy {buyQty.toLocaleString()}g · ${(buyQty * trade.pricePerGram).toLocaleString()}
+            </button>
+          </div>
+          <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
             <div className="text-sm font-bold mb-2">🧪 THC Content</div>
             <input type="range" min={5} max={90} value={thcVal} onChange={(e) => setThcVal(Number(e.target.value))} className="w-full" />
             <div className="flex justify-between text-[10px] text-muted-foreground"><span>5%</span><span className="text-blue-400 font-bold">{thcVal}%</span><span>90%</span></div>
@@ -112,17 +142,29 @@ export function DrugTradePage() {
       )}
 
       {tab === "deliver" && (
-        <div className="mafia-card rounded-xl p-4 space-y-4 border border-slate-700/30">
-          <div className="text-sm font-bold">🚚 Deliver</div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1"><label className="text-[10px] text-muted-foreground">Quantity</label>
-              <input type="number" value={deliverQty} onChange={(e) => setDeliverQty(Number(e.target.value))} className="w-full bg-slate-900/60 border border-slate-700/40 rounded-lg px-3 py-2 text-sm mt-1" /></div>
-            <div className="text-right"><div className="text-[10px] text-muted-foreground">Revenue</div><div className="text-sm font-bold text-green-400">${(deliverQty * trade.pricePerGram).toLocaleString()}</div></div>
+        <div className="space-y-3">
+          {trade.thcDegrading && (
+            <div className="mafia-card rounded-xl p-3 border border-red-500/30 bg-red-950/20">
+              <div className="text-xs font-bold text-red-400">⚠️ THC DEGRADING</div>
+              <div className="text-[10px] text-red-300/70 mt-1">Your product lost quality from sitting too long. Deliver now to sell at current THC level ({trade.thcContent}%). Each day past 5 days reduces THC by 2%.</div>
+            </div>
+          )}
+          <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
+            <div className="text-sm font-bold mb-2">🚚 Deliver</div>
+            <div className="text-[10px] text-muted-foreground mb-2">Higher THC = higher price per gram. Crime stock is used first.</div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1"><label className="text-[10px] text-muted-foreground">Quantity</label>
+                <input type="number" value={deliverQty} onChange={(e) => setDeliverQty(Number(e.target.value))} className="w-full bg-slate-900/60 border border-slate-700/40 rounded-lg px-3 py-2 text-sm mt-1" /></div>
+              <div className="text-right"><div className="text-[10px] text-muted-foreground">Revenue</div><div className="text-sm font-bold text-green-400">${Math.floor(deliverQty * trade.pricePerGram * (1 + (trade.thcContent - 20) * 0.01)).toLocaleString()}</div></div>
+            </div>
+            <button onClick={handleDeliver} disabled={loading || trade.totalStock < deliverQty} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50 mt-2">
+              🚚 Deliver {deliverQty.toLocaleString()}g · THC: {trade.thcContent}%
+            </button>
           </div>
-          <button onClick={handleDeliver} disabled={loading || trade.cannabisStock < deliverQty} className="w-full px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50">🚚 Deliver {deliverQty.toLocaleString()}g</button>
-          <div className="grid grid-cols-2 gap-2 text-[10px]">
-            <div className="bg-slate-900/30 rounded-lg p-2">Delivered: <span className="text-green-400 font-bold">{trade.totalDelivered.toLocaleString()}g</span></div>
-            <div className="bg-slate-900/30 rounded-lg p-2">Revenue: <span className="text-green-400 font-bold">${trade.totalRevenue.toLocaleString()}</span></div>
+          <div className="grid grid-cols-3 gap-2 text-[10px]">
+            <div className="mafia-card rounded-lg p-2 text-center"><div className="text-muted-foreground">Delivered</div><div className="text-green-400 font-bold">{trade.totalDelivered.toLocaleString()}g</div></div>
+            <div className="mafia-card rounded-lg p-2 text-center"><div className="text-muted-foreground">Revenue</div><div className="text-green-400 font-bold">${trade.totalRevenue.toLocaleString()}</div></div>
+            <div className="mafia-card rounded-lg p-2 text-center"><div className="text-muted-foreground">Days since</div><div className={`font-bold ${trade.daysSinceDelivery > 5 ? "text-red-400" : "text-amber-400"}`}>{trade.daysSinceDelivery}d</div></div>
           </div>
         </div>
       )}
