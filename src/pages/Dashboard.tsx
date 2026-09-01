@@ -144,6 +144,9 @@ import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
 import { ObjectivesPage, PointStorePage, CoinStorePage, ObjectivesPanel } from "@/components/StorePages";
 import { InventoryPage } from "@/components/InventoryPage";
 import { PromoCodesPage } from "@/components/PromoCodesPage";
+import { RecordKillsPage, RecordCrimesPage, RecordGtaPage, RecordPointsPage, RecordBulletsPage, RecordBustsPage, RecordStockPage, RecordBettingPage, RecordAssassinationPage, RecordPacksPage, RecordHeistsPage, RecordSupplyPage, RecordCasinoPage } from "@/components/GameRecords";
+import { CasinosPage, CasinoBlackjackPage, CasinoDicePage, CasinoRoulettePage, CasinoRacetrackPage, CasinoVideoPokerPage, CasinoScratchcardsPage } from "@/components/CasinoPages";
+import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
 
 
 // ===== RANK SYSTEM =====
@@ -189,26 +192,140 @@ function HeadquartersPage() {
   if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
   const xpNeeded = 2000;
   const xpPercent = Math.min(100, ((player.experience ?? 0) / xpNeeded) * 100);
+  const lifePercent = Math.min(100, ((player.life ?? 0) / (player.maxLife ?? 100)) * 100);
+  const energy = Math.min(100, Math.max(0, ((player as any).energy ?? 100)));
+  const perks = ((player as any).perks ?? {}) as Record<string, number>;
+  const perkEntries = Object.entries(perks).filter(([, v]) => v > 0);
+
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3"><Home className="size-7 text-primary" /><h2 className="text-2xl font-bold">Headquarters</h2></div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl mb-1">💰</div><div className="text-xs text-muted-foreground">Cash</div><div className="text-lg font-bold text-green-400">${(player.money ?? 0).toLocaleString()}</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl mb-1">🏦</div><div className="text-xs text-muted-foreground">Bank</div><div className="text-lg font-bold text-blue-400">${(player.bank ?? 0).toLocaleString()}</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl mb-1">⭐</div><div className="text-xs text-muted-foreground">Level</div><div className="text-lg font-bold text-yellow-400">{player.level ?? 1}</div></div>
-        <div className="mafia-card rounded-xl p-4 text-center"><div className="text-2xl mb-1">❤️</div><div className="text-xs text-muted-foreground">Life</div><div className="text-lg font-bold text-red-400">{player.life ?? 0}/{player.maxLife ?? 100}</div></div>
+      {/* Hero Banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20" style={{ background: 'linear-gradient(135deg, rgba(20,10,5,0.9), rgba(40,20,10,0.8), rgba(20,10,5,0.9))' }}>
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-transparent to-red-500/5" />
+        <div className="relative p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="size-14 rounded-2xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 border border-amber-500/30 flex items-center justify-center">
+              <Home className="size-7 text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-amber-300">Headquarters</h2>
+              <div className="text-[10px] text-amber-400/60">Shadow Empire Command Center</div>
+            </div>
+            <div className="ml-auto px-3 py-1.5 rounded-xl bg-green-500/10 border border-green-500/30">
+              <div className="text-[9px] text-green-400 font-bold">🟢 ONLINE</div>
+            </div>
+          </div>
+          {/* Player Identity Row */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <div className="text-xl font-black text-amber-200">{player.nickname || player.username || "Shadow Agent"}</div>
+              <div className="text-xs text-amber-400/70">Level {player.level ?? 1} · {getRank(player.level ?? 1)}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] text-amber-400/60">LOCATION</div>
+              <div className="text-xs font-bold text-amber-300">📍 {player.location ?? "New York"}</div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="mafia-card rounded-xl p-4">
-        <div className="text-sm font-bold mb-2">Experience</div>
-        <div className="w-full h-3 bg-slate-800 rounded-full"><div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" style={{ width: `${xpPercent}%` }} /></div>
-        <div className="text-xs text-muted-foreground mt-1">{player.experience ?? 0} / {xpNeeded} XP</div>
+
+      {/* Core Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="mafia-card rounded-xl p-4 border border-green-500/20">
+          <div className="flex items-center gap-2 mb-1"><span className="text-lg">💰</span><span className="text-[10px] text-muted-foreground uppercase">Cash</span></div>
+          <div className="text-lg font-black text-green-400">${(player.money ?? 0).toLocaleString()}</div>
+        </div>
+        <div className="mafia-card rounded-xl p-4 border border-blue-500/20">
+          <div className="flex items-center gap-2 mb-1"><span className="text-lg">🏦</span><span className="text-[10px] text-muted-foreground uppercase">Bank</span></div>
+          <div className="text-lg font-black text-blue-400">${(player.bank ?? 0).toLocaleString()}</div>
+        </div>
+        <div className="mafia-card rounded-xl p-4 border border-yellow-500/20">
+          <div className="flex items-center gap-2 mb-1"><span className="text-lg">🏆</span><span className="text-[10px] text-muted-foreground uppercase">Points</span></div>
+          <div className="text-lg font-black text-yellow-400">{(player.points ?? 0).toLocaleString()}</div>
+        </div>
+        <div className="mafia-card rounded-xl p-4 border border-cyan-500/20">
+          <div className="flex items-center gap-2 mb-1"><span className="text-lg">🪙</span><span className="text-[10px] text-muted-foreground uppercase">Coins</span></div>
+          <div className="text-lg font-black text-cyan-400">{(player.coins ?? 0).toLocaleString()}</div>
+        </div>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">⚔️ ATK</div><div className="text-lg font-bold text-orange-400">{player.attack ?? 0}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🛡️ DEF</div><div className="text-lg font-bold text-blue-400">{player.defense ?? 0}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🏆 Points</div><div className="text-lg font-bold text-yellow-400">{(player.points ?? 0).toLocaleString()}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🪙 Coins</div><div className="text-lg font-bold text-amber-300">{(player.coins ?? 0).toLocaleString()}</div></div>
+
+      {/* Life & XP Bars */}
+      <div className="mafia-card rounded-xl p-4 space-y-3 border border-slate-700/30">
+        <div>
+          <div className="flex justify-between text-[10px] mb-1"><span className="text-red-400 font-bold">❤️ Life</span><span className="text-muted-foreground">{player.life ?? 0} / {player.maxLife ?? 100}</span></div>
+          <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${lifePercent}%`, background: lifePercent > 50 ? 'linear-gradient(90deg, #ef4444, #f97316)' : lifePercent > 25 ? 'linear-gradient(90deg, #f97316, #eab308)' : 'linear-gradient(90deg, #dc2626, #991b1b)' }} />
+          </div>
+        </div>
+        <div>
+          <div className="flex justify-between text-[10px] mb-1"><span className="text-blue-400 font-bold">⭐ Experience</span><span className="text-muted-foreground">{player.experience ?? 0} / {xpNeeded} XP</span></div>
+          <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500" style={{ width: `${xpPercent}%` }} />
+          </div>
+          <div className="text-[9px] text-muted-foreground mt-0.5">{xpPercent.toFixed(1)}% to next rank</div>
+        </div>
+        <div>
+          <div className="flex justify-between text-[10px] mb-1"><span className="text-orange-400 font-bold">⚡ Energy</span><span className="text-muted-foreground">{energy} / 100</span></div>
+          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-500" style={{ width: `${energy}%` }} />
+          </div>
+        </div>
       </div>
+
+      {/* Combat Stats */}
+      <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
+        <div className="text-sm font-bold mb-3">⚔️ Combat Stats</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="text-center p-3 bg-slate-900/50 rounded-xl">
+            <div className="text-[10px] text-orange-400">⚔️ Attack</div>
+            <div className="text-xl font-black text-orange-400">{player.attack ?? 0}</div>
+          </div>
+          <div className="text-center p-3 bg-slate-900/50 rounded-xl">
+            <div className="text-[10px] text-blue-400">🛡️ Defense</div>
+            <div className="text-xl font-black text-blue-400">{player.defense ?? 0}</div>
+          </div>
+          <div className="text-center p-3 bg-slate-900/50 rounded-xl">
+            <div className="text-[10px] text-red-400">💀 Kills</div>
+            <div className="text-xl font-black text-red-400">{(player as any).totalKills ?? 0}</div>
+          </div>
+          <div className="text-center p-3 bg-slate-900/50 rounded-xl">
+            <div className="text-[10px] text-purple-400">🔪 Crimes</div>
+            <div className="text-xl font-black text-purple-400">{(player as any).totalCrimes ?? 0}</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Active Perks */}
+      {perkEntries.length > 0 && (
+        <div className="mafia-card rounded-xl p-4 border border-purple-500/20">
+          <div className="text-sm font-bold mb-2">⚡ Active Perks</div>
+          <div className="flex flex-wrap gap-1.5">
+            {perkEntries.map(([key, count]) => (
+              <span key={key} className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 border border-purple-500/30 text-purple-300">
+                {key}: {count}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
+        <div className="text-sm font-bold mb-3">🎮 Quick Actions</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[
+            { icon: "🔪", label: "Street Crime", color: "from-emerald-500/20 to-emerald-600/10 border-emerald-500/30" },
+            { icon: "💰", label: "Robbery", color: "from-red-500/20 to-red-600/10 border-red-500/30" },
+            { icon: "🎰", label: "Casino", color: "from-amber-500/20 to-amber-600/10 border-amber-500/30" },
+            { icon: "🛒", label: "Coin Store", color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30" },
+          ].map((action) => (
+            <div key={action.label} className={`bg-gradient-to-r ${action.color} border rounded-xl p-3 text-center cursor-pointer hover:scale-[1.02] transition-all`}>\n              <div className="text-2xl mb-1">{action.icon}</div>
+              <div className="text-[10px] font-bold text-slate-300">{action.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <ObjectivesPanel />
       <RanksPanel />
       <PacksOverviewPanel />
@@ -667,6 +784,32 @@ export default function Dashboard() {
       case "promo_codes": return <PromoCodesPage />;
       case "admin_panel": return <AdminPanel />;
       case "become_admin": return <BecomeAdminPage />;
+      case "casinos": return <CasinosPage />;
+      case "casino_blackjack": return <CasinoBlackjackPage />;
+      case "casino_dice": return <CasinoDicePage />;
+      case "casino_roulette": return <CasinoRoulettePage />;
+      case "casino_racetrack": return <CasinoRacetrackPage />;
+      case "casino_videopoker": return <CasinoVideoPokerPage />;
+      case "casino_scratchcards": return <CasinoScratchcardsPage />;
+      case "betting_lms": return <BettingLmsPage />;
+      case "betting_champions": return <BettingChampionsPage />;
+      case "betting_sports": return <BettingSportsPage />;
+      case "betting_multidice": return <BettingMultiDicePage />;
+      case "betting_poker": return <BettingPokerNightPage />;
+      case "betting_mpblackjack": return <BettingMpBlackjackPage />;
+      case "record_kills": return <RecordKillsPage />;
+      case "record_crimes": return <RecordCrimesPage />;
+      case "record_gta": return <RecordGtaPage />;
+      case "record_points": return <RecordPointsPage />;
+      case "record_bullets": return <RecordBulletsPage />;
+      case "record_busts": return <RecordBustsPage />;
+      case "record_stock": return <RecordStockPage />;
+      case "record_betting": return <RecordBettingPage />;
+      case "record_assassination": return <RecordAssassinationPage />;
+      case "record_packs": return <RecordPacksPage />;
+      case "record_heists": return <RecordHeistsPage />;
+      case "record_supply": return <RecordSupplyPage />;
+      case "record_casino": return <RecordCasinoPage />;
       case "online_players": return <OnlineList />;
       case "poker_texas": return <PokerTexasPage />;
       case "craps": return <CrapsPage />;

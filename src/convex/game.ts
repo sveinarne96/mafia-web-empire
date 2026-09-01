@@ -276,6 +276,7 @@ export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number
     updates.maxLife = (player.maxLife ?? 100) + 75 * levels;
     updates.life = updates.maxLife;
     updates.skillPoints = (player.skillPoints ?? 0) + levels;
+    updates.energy = 100;
   }
   if (leveled) {
     return { experience: remaining, level: lvl, levelUpPending: false, highestLevel: Math.max(player.highestLevel ?? 0, lvl), ...updates };

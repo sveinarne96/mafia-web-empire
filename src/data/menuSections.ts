@@ -5,7 +5,7 @@ import {
   Swords,
   HelpCircle,
   Settings,
-  Home, Skull, Wallet, Package, Users, Brain, Building2, EyeOff, Crown, Zap, Clock, ShoppingBag, User, Gift,
+  Home, Skull, Wallet, Package, Users, Brain, Building2, EyeOff, Crown, Zap, Clock, ShoppingBag, User, Gift, Trophy,
 } from "lucide-react";
 
 export const LEFT_MENU_SECTIONS = [
@@ -14,6 +14,7 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Bank Account", page: "bank", icon: "🏦" },
     { label: "Points Shop", page: "points", icon: "🏆" },
     { label: "Hospital", page: "hospital", icon: "🏥" },
+    { label: "Promo Codes", page: "promo_codes", icon: "🎟️" },
   ]},
   { title: "Crime", icon: Skull, items: [
     { label: "Crimes Hub", page: "crimes", icon: "🔪" },
@@ -26,8 +27,22 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Garage", page: "garage", icon: "🚗" },
     { label: "Items", page: "my_items", icon: "🎒" },
   ]},
-  { title: "Promo Codes", icon: Gift, items: [
-    { label: "Promo Codes", page: "promo_codes", icon: "🎟️" },
+  { title: "Casino", icon: Zap, items: [
+    { label: "Casinos Overview", page: "casinos", icon: "🎰" },
+    { label: "Blackjack", page: "casino_blackjack", icon: "🃏" },
+    { label: "Dice Game", page: "casino_dice", icon: "🎲" },
+    { label: "Roulette", page: "casino_roulette", icon: "🎡" },
+    { label: "Racetrack", page: "casino_racetrack", icon: "🏇" },
+    { label: "Video Poker", page: "casino_videopoker", icon: "🂡" },
+    { label: "Scratchcards", page: "casino_scratchcards", icon: "🎫" },
+  ]},
+  { title: "Betting Shop", icon: Swords, items: [
+    { label: "Last Man Standing", page: "betting_lms", icon: "🏆" },
+    { label: "Champions League", page: "betting_champions", icon: "⚽" },
+    { label: "Sports Betting", page: "betting_sports", icon: "🏈" },
+    { label: "MultiDice", page: "betting_multidice", icon: "🎲" },
+    { label: "Poker Night", page: "betting_poker", icon: "🂡" },
+    { label: "Multiplayer Blackjack", page: "betting_mpblackjack", icon: "🃏" },
   ]},
   { title: "Economy", icon: Wallet, items: [
     { label: "Stock Market", page: "stock_market", icon: "📈" },
@@ -52,10 +67,6 @@ export const LEFT_MENU_SECTIONS = [
     { label: "My Items", page: "my_items", icon: "📦" },
     { label: "Black Market", page: "black_market", icon: "🖤" },
     { label: "Bodyguards", page: "bodyguards", icon: "🛡️" },
-  ]},
-  { title: "Combat", icon: Swords, items: [
-    { label: "Arena", page: "arena", icon: "🏟️" },
-    { label: "Fight Club", page: "fight_club", icon: "🥊" },
   ]},
   { title: "Social", icon: Users, items: [
     { label: "Crew System", page: "crew_system", icon: "🤝" },
@@ -157,6 +168,21 @@ export const RIGHT_MENU_SECTIONS = [
     { label: "Trade Chat", page: "trade_chat", icon: "💹" },
     { label: "Looking for Group", page: "lfg", icon: "👥" },
   ]},
+  { title: "Game Records", icon: Trophy, items: [
+    { label: "Total Kills", page: "record_kills", icon: "💀" },
+    { label: "Total Crimes", page: "record_crimes", icon: "🔪" },
+    { label: "Total GTA's", page: "record_gta", icon: "🚗" },
+    { label: "Points Spent", page: "record_points", icon: "🏆" },
+    { label: "Bullets Melted", page: "record_bullets", icon: "💀" },
+    { label: "Successful Busts", page: "record_busts", icon: "🚔" },
+    { label: "Stock Profit", page: "record_stock", icon: "📈" },
+    { label: "Betting Profit", page: "record_betting", icon: "🎰" },
+    { label: "Assassination Kills", page: "record_assassination", icon: "🎯" },
+    { label: "Packs Opened", page: "record_packs", icon: "📦" },
+    { label: "Total Heists", page: "record_heists", icon: "💰" },
+    { label: "Supply Run Profit", page: "record_supply", icon: "📦" },
+    { label: "Casino Wins", page: "record_casino", icon: "🎰" },
+  ]},
   { title: "Quick Info", icon: Globe, items: [
     { label: "Airport", page: "airport", icon: "✈️" },
     { label: "Weather", page: "weather", icon: "🌤️" },
@@ -189,6 +215,6 @@ export const RIGHT_MENU_SECTIONS = [
     { label: "My Profile", page: "my_profile", icon: "👤" },
     { label: "Admin", page: "admin_panel", icon: "⚙️" },
     { label: "Become Admin", page: "become_admin", icon: "🔑" },
-    { label: "Online Players", page: "online_players", icon: "👥" },
+    { label: "Online Users", page: "online_players", icon: "👥" },
   ]},
 ];
