@@ -40,13 +40,13 @@ export function DrugTradePage() {
   if (!trade) {
     return (
       <div className="animate-fade-in space-y-4">
-        <div className="flex items-center gap-3"><span className="text-3xl">🌿</span><h2 className="text-2xl font-bold">Greenhouse</h2></div>
+        <div className="flex items-center gap-3"><span className="text-3xl">❄️</span><h2 className="text-2xl font-bold">Greenhouse</h2></div>
         <div className="mafia-card rounded-xl p-6 text-center">
           <div className="text-5xl mb-3">🌱</div>
-          <div className="text-lg font-bold mb-2">Start Your Greenhouse</div>
-          <div className="text-xs text-muted-foreground mb-4">Plant strains, grow drugs, sell for profit. Commit crimes to earn free drugs. Deliver within 5 days or lose THC quality.</div>
+          <div className="text-lg font-bold mb-2">Start Your Cocaine Empire</div>
+          <div className="text-xs text-muted-foreground mb-4">Commit crimes to earn cocaine. Build search & marketing to earn more. Deliver within 5 days or lose THC quality.</div>
           <button onClick={async () => { setLoading(true); try { await initTrade(); } catch (e: any) { setMsg(e.message); } setLoading(false); }}
-            disabled={loading} className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50">🌱 Initialize Greenhouse</button>
+            disabled={loading} className="px-6 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm hover:bg-emerald-700 disabled:opacity-50">❄️ Initialize Cocaine Trade</button>
           {msg && <div className="text-xs text-red-400 mt-2">{msg}</div>}
         </div>
       </div>
@@ -75,7 +75,7 @@ export function DrugTradePage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <span className="text-3xl">🌿</span>
+          <span className="text-3xl">❄️</span>
           <div>
             <h2 className="text-2xl font-bold">Greenhouse</h2>
             <div className="text-[10px] text-muted-foreground">{trade.tier?.icon} {trade.tier?.name} · {trade.drugEmoji} {trade.drugType}</div>
@@ -281,7 +281,7 @@ export function DrugTradePage() {
       {tab === "deliver" && (
         <div className="space-y-3">
           <div className="mafia-card rounded-xl p-4 border border-emerald-500/20">
-            <div className="text-xs font-bold mb-3">🚚 Deliver Drugs for Cash</div>
+            <div className="text-xs font-bold mb-3">🚚 Deliver Cocaine for Cash</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
               <div className="bg-slate-800/30 rounded-lg p-2 text-center">
                 <div className="text-[9px] text-muted-foreground">Available</div>
@@ -329,7 +329,7 @@ export function DrugTradePage() {
               <button onClick={async () => { setLoading(true); try { const r = await setThc({ thc: thcVal }); doMsg(`THC set to ${r.thc}%`); } catch (e: any) { doErr(e); } }}
                 disabled={loading} className="px-3 py-1 bg-blue-600 text-white rounded-lg text-[10px] font-bold hover:bg-blue-700 disabled:opacity-50">Set</button>
             </div>
-            <div className="text-[9px] text-muted-foreground mt-1">Higher THC = higher price per gram. Max THC depends on your greenhouse tier.</div>
+            <div className="text-[9px] text-muted-foreground mt-1">Each delivery raises your THC by +2% — higher THC = higher price. If you don't deliver in 5 days, THC degrades 3%/day.</div>
           </div>
         </div>
       )}
@@ -380,7 +380,7 @@ export function DrugTradePage() {
       {tab === "contracts" && (
         <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
           <div className="text-xs font-bold mb-2">📋 Bulk Contracts</div>
-          <div className="text-[9px] text-muted-foreground mb-3">Accept bulk orders for 1.5× the normal price. Requires enough stock.</div>
+          <div className="text-[9px] text-muted-foreground mb-3">Accept bulk cocaine orders for 1.5× the normal price. Requires enough stock.</div>
           {(!trade.contracts || trade.contracts.length === 0) ? (
             <div className="text-center py-6 text-muted-foreground text-xs">No contracts available right now</div>
           ) : (

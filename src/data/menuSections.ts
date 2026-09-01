@@ -27,7 +27,7 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Murder", page: "murder", icon: "💀" },
     { label: "Garage", page: "garage", icon: "🚗" },
     { label: "Items", page: "my_items", icon: "🎒" },
-    { label: "Greenhouse", page: "drug_trade", icon: "🌿" },
+    { label: "Cocaine", page: "drug_trade", icon: "❄️" },
   ]},
   { title: "Casino", icon: Zap, items: [
     { label: "Casinos Overview", page: "casinos", icon: "🎰" },

@@ -80,17 +80,17 @@ const MARKETING_CHANNELS = [
 
 // ===== CRIME DRUG YIELDS =====
 const CRIME_DRUG_YIELDS: Record<string, { drug: string; baseYield: number; emoji: string }> = {
-  street: { drug: "cannabis", baseYield: 50, emoji: "🌿" },
-  robbery: { drug: "cannabis", baseYield: 100, emoji: "🌿" },
-  fraud: { drug: "mdma", baseYield: 30, emoji: "💊" },
-  burglary: { drug: "cannabis", baseYield: 75, emoji: "🌿" },
+  street: { drug: "cocaine", baseYield: 50, emoji: "❄️" },
+  robbery: { drug: "cocaine", baseYield: 100, emoji: "❄️" },
+  fraud: { drug: "cocaine", baseYield: 80, emoji: "❄️" },
+  burglary: { drug: "cocaine", baseYield: 75, emoji: "❄️" },
   drugs: { drug: "cocaine", baseYield: 150, emoji: "❄️" },
-  organized: { drug: "meth", baseYield: 200, emoji: "🧪" },
-  underground: { drug: "heroin", baseYield: 120, emoji: "💉" },
-  gta_theft: { drug: "cannabis", baseYield: 80, emoji: "🌿" },
-  steal_house: { drug: "cannabis", baseYield: 60, emoji: "🌿" },
+  organized: { drug: "cocaine", baseYield: 200, emoji: "❄️" },
+  underground: { drug: "cocaine", baseYield: 120, emoji: "❄️" },
+  gta_theft: { drug: "cocaine", baseYield: 80, emoji: "❄️" },
+  steal_house: { drug: "cocaine", baseYield: 60, emoji: "❄️" },
   murder: { drug: "cocaine", baseYield: 250, emoji: "❄️" },
-  heist: { drug: "meth", baseYield: 300, emoji: "🧪" },
+  heist: { drug: "cocaine", baseYield: 300, emoji: "❄️" },
 };
 
 // ===== HELPER: calculate degraded THC =====
@@ -99,7 +99,7 @@ function calculateDegradedThc(originalThc: number, lastDelivery: number, now: nu
   const elapsed = now - lastDelivery;
   if (elapsed <= THC_GRACE_PERIOD_MS) return originalThc;
   const daysOverdue = Math.floor((elapsed - THC_GRACE_PERIOD_MS) / (24 * 3600000));
-  const degradation = daysOverdue * 0.02;
+  const degradation = daysOverdue * 0.03;
   return Math.max(1, Math.floor(originalThc * (1 - degradation)));
 }
 
@@ -252,7 +252,7 @@ export const initDrugTrade = mutation({
       totalDelivered: 0, totalRevenue: 0, marketingBudget: 0, marketingChannels: [],
       activeCampaigns: [], contracts: [], customerRating: 1.0, totalReviews: 0,
       lastRestock: Date.now(), lastDelivery: Date.now(), crimeStock: 0,
-      lastCrimeDrugTime: 0, originalThc: 30, drugType: "cannabis",
+      lastCrimeDrugTime: 0, originalThc: 30, drugType: "cocaine",
       ...( { greenhouseTier: "basic", upgrades: {}, growingSlots: [], workers: [] } as any ),
     });
     return { success: true };
@@ -372,7 +372,7 @@ export const harvestPlant = mutation({
       growingSlots: updatedSlots,
       crimeStock: n(trade.crimeStock, 0) + slot.yield,
       originalThc: Math.max(n(trade.originalThc, 30), slot.thc),
-      drugType: "cannabis",
+      drugType: "cocaine",
     } as any);
     return { success: true, yield: slot.yield, thc: slot.thc };
   },
@@ -404,7 +404,7 @@ export const harvestAll = mutation({
       growingSlots: updatedSlots,
       crimeStock: n(trade.crimeStock, 0) + totalYield,
       originalThc: maxThc,
-      drugType: "cannabis",
+      drugType: "cocaine",
     } as any);
     return { success: true, harvested: ready.length, totalYield, thc: maxThc };
   },
@@ -476,7 +476,7 @@ export const autoHarvest = mutation({
       workers: updatedWorkers,
       crimeStock: n(trade.crimeStock, 0) + totalYield,
       originalThc: maxThc,
-      drugType: "cannabis",
+      drugType: "cocaine",
     } as any);
     return { success: true, harvested, totalYield };
   },
@@ -559,7 +559,7 @@ export const deliver = mutation({
       totalDelivered: n(trade.totalDelivered, 0) + delivered,
       totalRevenue: n(trade.totalRevenue, 0) + revenue,
       customerRating: rating, totalReviews: n(trade.totalReviews, 0) + 1,
-      lastDelivery: now, thcContent: currentThc, originalThc: currentThc,
+      lastDelivery: now, thcContent: currentThc, originalThc: Math.min(99, Math.floor(currentThc * 1.02) + 1),
     });
     await ctx.db.patch(userId, { money: n(player.money, 0) + revenue });
     return { success: true, delivered, revenue, demand: newDemand, rating, thcUsed: currentThc, pricePerGram, searchBonus: totalSearchBonus };
@@ -602,7 +602,7 @@ export const deliverAll = mutation({
       totalDelivered: n(trade.totalDelivered, 0) + delivered,
       totalRevenue: n(trade.totalRevenue, 0) + revenue,
       customerRating: rating, totalReviews: n(trade.totalReviews, 0) + 1,
-      lastDelivery: now, thcContent: currentThc, originalThc: currentThc,
+      lastDelivery: now, thcContent: currentThc, originalThc: Math.min(99, Math.floor(currentThc * 1.02) + 1),
     });
     await ctx.db.patch(userId, { money: n(player.money, 0) + revenue });
     return { success: true, delivered, revenue, demand: newDemand, rating, thcUsed: currentThc, pricePerGram, searchBonus: totalSearchBonus };
