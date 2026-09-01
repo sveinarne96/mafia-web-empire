@@ -919,6 +919,18 @@ export default function Dashboard() {
 
   const xpPercent = Math.min(100, ((player?.experience ?? 0) / xpNeeded) * 100);
 
+  // Show loading while Convex query resolves — don't flash registration form on refresh
+  if (player === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-3">
+          <div className="text-5xl animate-pulse">🎮</div>
+          <div className="text-sm font-bold text-muted-foreground">Loading Shadow Empire...</div>
+        </div>
+      </div>
+    );
+  }
+
   // Registration
   if (!isRegistered) {
     return (
