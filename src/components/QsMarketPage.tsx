@@ -2,13 +2,55 @@ import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
-const DRUG_NAMES: Record<string, { name: string; icon: string }> = {
-  cannabis: { name: "Cannabis", icon: "🌿" },
-  cocaine: { name: "Cocaine", icon: "❄️" },
-  meth: { name: "Methamphetamine", icon: "🧪" },
-  mdma: { name: "MDMA", icon: "💊" },
-  heroin: { name: "Heroin", icon: "💉" },
+const OFFER_ICONS: Record<string, string> = {
+  cannabis: "🌿", cocaine: "❄️", meth: "🧪", mdma: "💊", heroin: "💉",
 };
+const RARITY_BORDER: Record<string, string> = {
+  common: "border-slate-600/30 bg-slate-900/30", rare: "border-blue-500/30 bg-blue-950/20", epic: "border-purple-500/30 bg-purple-950/20", legendary: "border-amber-500/30 bg-amber-950/20",
+};
+const RARITY_TEXT: Record<string, string> = {
+  common: "text-slate-400", rare: "text-blue-400", epic: "text-purple-400", legendary: "text-amber-400",
+};
+const TYPE_BADGES: Record<string, { label: string; icon: string; color: string }> = {
+  drug: { label: "Drug Deal", icon: "💊", color: "bg-green-500/20 text-green-400 border-green-500/30" },
+  car: { label: "Vehicle", icon: "🚗", color: "bg-blue-500/20 text-blue-400 border-blue-500/30" },
+  item: { label: "Gear", icon: "⚔️", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  pack: { label: "Pack", icon: "📦", color: "bg-amber-500/20 text-amber-400 border-amber-500/30" },
+};
+
+function OfferCard({ offer, onAccept, loading }: { offer: any; onAccept: () => void; loading: boolean }) {
+  const badge = TYPE_BADGES[offer.type] ?? TYPE_BADGES.drug;
+  const rarityBorder = RARITY_BORDER[offer.rarity] ?? "border-slate-600/30 bg-slate-900/30";
+  const rarityText = RARITY_TEXT[offer.rarity] ?? "text-slate-400";
+  const icon = OFFER_ICONS[offer.drug] ?? (offer.type === "car" ? "🚗" : offer.type === "pack" ? "📦" : "⚔️");
+  return (
+    <div className={`rounded-xl p-4 border ${rarityBorder} transition-all hover:scale-[1.01]`}>
+      <div className="flex items-start gap-3">
+        <div className="text-3xl mt-1">{icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${badge.color}`}>{badge.icon} {badge.label}</span>
+            {offer.rarity !== "common" && <span className={`text-[9px] font-bold uppercase ${rarityText}`}>{offer.rarity}</span>}
+          </div>
+          <div className="text-sm font-bold text-white truncate">{offer.name || offer.drug}</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">
+            {offer.type === "drug" && `${offer.quantity.toLocaleString()}g${offer.thcContent > 0 ? ` · THC ${offer.thcContent}%` : ""}`}
+            {offer.type === "car" && "Speed · Storage · Armored available"}
+            {offer.type === "item" && "Attack · Defense gear"}
+            {offer.type === "pack" && `${offer.quantity}x ${offer.rarity} pack${offer.quantity > 1 ? "s" : ""}`}
+          </div>
+          <div className="flex items-center justify-between mt-3">
+            <div className="text-sm font-black text-green-400">${offer.price.toLocaleString()}</div>
+            <button onClick={onAccept} disabled={loading}
+              className="px-4 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 disabled:opacity-50 transition-all">
+              Buy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function QsMarketPage() {
   const offers = useQuery(api.drugSystem.getQsOffers);
@@ -16,120 +58,80 @@ export function QsMarketPage() {
   const acceptOffer = useMutation(api.drugSystem.acceptQsOffer);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState("all");
   const [nextRefresh, setNextRefresh] = useState("");
 
-  // Generate offers if none exist today
+  useEffect(() => { if (offers && offers.offers.length === 0) generateOffers({}).catch(() => {}); }, [offers]);
   useEffect(() => {
-    if (offers && offers.offers.length === 0) {
-      generateOffers({}).catch(() => {});
-    }
-  }, [offers]);
-
-  // Countdown to midnight
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const diff = midnight.getTime() - now.getTime();
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setNextRefresh(`${h}h ${m}m ${s}s`);
-    };
-    update();
-    const iv = setInterval(update, 1000);
-    return () => clearInterval(iv);
+    const update = () => { const now = new Date(); const mid = new Date(now); mid.setHours(24, 0, 0, 0); const d = mid.getTime() - now.getTime(); setNextRefresh(`${Math.floor(d / 3600000)}h ${Math.floor((d % 3600000) / 60000)}m ${Math.floor((d % 60000) / 1000)}s`); };
+    update(); const iv = setInterval(update, 1000); return () => clearInterval(iv);
   }, []);
 
   if (offers === undefined) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading Q's Market...</div>;
   if (!offers) return <div className="py-10 text-center text-muted-foreground">Sign in to access Q's Market.</div>;
 
   const activeOffers = offers.offers.filter((o) => !o.accepted && o.expiresAt > Date.now());
+  const acceptedOffers = offers.offers.filter((o) => o.accepted);
+  const filtered = filter === "all" ? activeOffers : activeOffers.filter((o) => o.type === filter);
+  const typeCounts: Record<string, number> = {};
+  activeOffers.forEach((o) => { typeCounts[o.type] = (typeCounts[o.type] ?? 0) + 1; });
 
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-3"><span className="text-3xl">🏪</span><h2 className="text-2xl font-bold">Q's Market</h2></div>
-        <div className="text-right">
-          <div className="text-[9px] text-muted-foreground">Next refresh</div>
-          <div className="text-xs font-bold text-amber-400">🔄 {nextRefresh}</div>
+        <div className="flex items-center gap-3">
+          <div className="px-3 py-1 rounded-xl bg-slate-900/50 border border-slate-700/30 text-[10px]">
+            <span className="text-muted-foreground">Offers: </span><span className="text-white font-bold">{activeOffers.length}</span>
+          </div>
+          <div className="text-right">
+            <div className="text-[9px] text-muted-foreground">Refreshes in</div>
+            <div className="text-xs font-bold text-amber-400">🔄 {nextRefresh}</div>
+          </div>
         </div>
       </div>
 
       <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg">📦</span>
-          <div className="text-sm font-bold text-amber-300">Q has new offers for you every day.</div>
-        </div>
-        <div className="text-[10px] text-muted-foreground">Accept deals to stock your drug trade. Offers refresh at midnight. Each deal includes a discount compared to market price.</div>
+        <div className="text-sm font-bold text-amber-300 mb-1">📦 Q has new offers for you every day.</div>
+        <div className="text-[10px] text-muted-foreground">Deals refresh at midnight. Higher level = better deals on rarer vehicles, gear, packs, and drugs.</div>
       </div>
 
-      {activeOffers.length === 0 ? (
+      <div className="flex gap-1 bg-slate-900/50 rounded-lg p-1 flex-wrap">
+        {(["all", "drug", "car", "item", "pack"] as const).map((f) => (
+          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-[10px] font-semibold rounded-md capitalize transition-all ${filter === f ? "bg-green-600 text-white" : "text-muted-foreground hover:text-white"}`}>
+            {f === "all" ? `All (${activeOffers.length})` : f === "drug" ? `💊 Drugs (${typeCounts[f] ?? 0})` : f === "car" ? `🚗 Cars (${typeCounts[f] ?? 0})` : f === "item" ? `⚔️ Gear (${typeCounts[f] ?? 0})` : `📦 Packs (${typeCounts[f] ?? 0})`}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="mafia-card rounded-xl p-6 text-center border border-slate-700/30">
           <div className="text-3xl mb-2">💤</div>
           <div className="text-sm font-bold">No offers right now</div>
-          <div className="text-[10px] text-muted-foreground mt-1">Come back after midnight for new deals!</div>
+          <div className="text-[10px] text-muted-foreground mt-1">Come back after midnight!</div>
         </div>
       ) : (
-        <div className="space-y-2">
-          {activeOffers.map((offer) => {
-            const drug = DRUG_NAMES[offer.drug] ?? { name: offer.drug, icon: "💊" };
-            const savings = Math.floor(offer.price * 0.3);
-            const typeLabel = offer.type === "contract" ? "📋 Bulk Contract" : "🛒 Quick Buy";
-            const typeColor = offer.type === "contract" ? "border-purple-500/30 bg-purple-950/20" : "border-green-500/30 bg-green-950/20";
-            return (
-              <div key={offer.offerId} className={`mafia-card rounded-xl p-4 border ${typeColor}`}>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xl">{drug.icon}</span>
-                      <div>
-                        <div className="text-sm font-bold">{drug.name} — {offer.quantity.toLocaleString()}g</div>
-                        <div className="text-[10px] text-muted-foreground">{typeLabel}</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 mt-2 text-[10px]">
-                      <div className="bg-slate-900/30 rounded-lg p-1.5 text-center">
-                        <div className="text-muted-foreground">Price</div>
-                        <div className="font-bold text-yellow-400">${offer.price.toLocaleString()}</div>
-                      </div>
-                      <div className="bg-slate-900/30 rounded-lg p-1.5 text-center">
-                        <div className="text-muted-foreground">Per gram</div>
-                        <div className="font-bold text-green-400">${Math.ceil(offer.price / offer.quantity)}/g</div>
-                      </div>
-                      <div className="bg-slate-900/30 rounded-lg p-1.5 text-center">
-                        <div className="text-muted-foreground">You save</div>
-                        <div className="font-bold text-cyan-400">${savings.toLocaleString()}</div>
-                      </div>
-                    </div>
-                    {offer.thcContent > 0 && <div className="text-[9px] text-blue-400 mt-1">THC: {offer.thcContent}%</div>}
-                  </div>
-                  <button onClick={async () => { setLoading(true); setMsg(""); try { const r = await acceptOffer({ offerId: offer.offerId }); setMsg(`Accepted ${r.quantity.toLocaleString()}g of ${r.drug} for $${r.cost.toLocaleString()}`); } catch (e: any) { setMsg(e.message); } setLoading(false); }}
-                    disabled={loading} className="ml-3 px-4 py-2 bg-green-600 text-white rounded-xl text-xs font-bold hover:bg-green-700 disabled:opacity-50 shrink-0">
-                    Buy
-                  </button>
-                </div>
-              </div>
-            );
-          })}
+        <div className="grid gap-2 sm:grid-cols-2">
+          {filtered.map((offer) => (
+            <OfferCard key={offer.offerId} offer={offer} loading={loading} onAccept={async () => {
+              setLoading(true); setMsg("");
+              try { await acceptOffer({ offerId: offer.offerId }); setMsg("✅ Purchased!"); } catch (e: any) { setMsg(e.message); }
+              setLoading(false);
+            }} />
+          ))}
         </div>
       )}
 
-      {/* History */}
-      {offers.offers.some((o) => o.accepted) && (
+      {acceptedOffers.length > 0 && (
         <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
-          <div className="text-sm font-bold mb-2">✅ Today's Accepted</div>
+          <div className="text-sm font-bold mb-2">✅ Today's Purchases ({acceptedOffers.length})</div>
           <div className="space-y-1">
-            {offers.offers.filter((o) => o.accepted).map((o) => {
-              const drug = DRUG_NAMES[o.drug] ?? { name: o.drug, icon: "💊" };
-              return (
-                <div key={o.offerId} className="flex items-center justify-between text-[10px] py-1">
-                  <span>{drug.icon} {o.quantity.toLocaleString()}g of {drug.name}</span>
-                  <span className="text-green-400 font-bold">${o.price.toLocaleString()}</span>
-                </div>
-              );
-            })}
+            {acceptedOffers.map((o) => (
+              <div key={o.offerId} className="flex items-center justify-between text-[10px] py-1">
+                <span>{OFFER_ICONS[o.drug] ?? "📦"} {o.drug} ×{o.quantity}</span>
+                <span className="text-green-400 font-bold">${o.price.toLocaleString()}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
