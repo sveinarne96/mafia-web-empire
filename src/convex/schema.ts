@@ -931,6 +931,7 @@ const schema = defineSchema({
     crimeStock: v.number(),
     lastCrimeDrugTime: v.number(),
     originalThc: v.number(),
+    drugType: v.optional(v.string()),
   }).index("by_user", ["userId"]),
   qsOffers: defineTable({
     userId: v.id("users"),

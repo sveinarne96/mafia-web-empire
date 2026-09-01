@@ -25,7 +25,7 @@ export function DrugTradePage() {
   if (!trade) {
     return (
       <div className="animate-fade-in space-y-4">
-        <div className="flex items-center gap-3"><span className="text-3xl">💊</span><h2 className="text-2xl font-bold">Drug Trade</h2></div>
+        <div className="flex items-center gap-3"><span className="text-3xl">💊</span><h2 className="text-2xl font-bold">Drugs</h2></div>
         <div className="mafia-card rounded-xl p-6 text-center">
           <div className="text-5xl mb-3">🌿</div>
           <div className="text-lg font-bold mb-2">Start Your Drug Empire</div>
@@ -43,13 +43,13 @@ export function DrugTradePage() {
 
   const handleBuy = async () => { setLoading(true); setMsg(""); try { const r = await buyStock({ quantity: buyQty }); setMsg(`Bought ${buyQty.toLocaleString()}g for $${r.cost.toLocaleString()}`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
   const handleDeliver = async () => { setLoading(true); setMsg(""); try { const r = await deliverDrug({ quantity: deliverQty }); setMsg(`Delivered ${r.delivered.toLocaleString()}g — +$${r.revenue.toLocaleString()} (THC: ${r.thcUsed}%)`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
-  const handleThc = async () => { setLoading(true); setMsg(""); try { const r = await setThc({ thc: thcVal }); setMsg(`THC ${r.thc}% — price $${r.pricePerGram}/g`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
+  const handleThc = async () => { setLoading(true); setMsg(""); try { const r = await setThc({ thc: thcVal }); setMsg(`THC set to ${r.thc}%`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
   const handleBudget = async () => { setLoading(true); setMsg(""); try { await setBudget({ amount: budgetVal }); setMsg(`Budget $${budgetVal.toLocaleString()}`); } catch (e: any) { setMsg(e.message); } setLoading(false); };
 
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3"><span className="text-3xl">💊</span><h2 className="text-2xl font-bold">Drug Trade</h2></div>
+        <div className="flex items-center gap-3"><span className="text-3xl">💊</span><h2 className="text-2xl font-bold">Drugs</h2></div>
         {trade.thcDegrading && (
           <div className="px-3 py-1.5 rounded-xl bg-red-500/15 border border-red-500/30 text-[10px] font-bold text-red-400 animate-pulse">
             ⚠️ THC DEGRADING — Deliver now!
@@ -64,7 +64,7 @@ export function DrugTradePage() {
           <div className="text-lg font-black text-green-400">{trade.totalStock.toLocaleString()}g</div>
           <div className="w-full h-2 bg-slate-800 rounded-full mt-2"><div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${stockPct}%` }} /></div>
           <div className="flex justify-between text-[9px] text-muted-foreground mt-1">
-            <span>🌿 Bought: {trade.cannabisStock.toLocaleString()}g</span>
+            <span>🌿 Bought: {trade.boughtStock.toLocaleString()}g</span>
             <span>🔪 Crime: {trade.crimeStock.toLocaleString()}g</span>
           </div>
         </div>
@@ -118,7 +118,7 @@ export function DrugTradePage() {
             <div className="text-xs text-muted-foreground mb-2">Every crime you commit adds drugs to your inventory. Higher level + higher reward = more drugs per crime.</div>
             <div className="grid grid-cols-2 gap-2 text-[10px]">
               <div className="bg-slate-900/30 rounded-lg p-2">Crime stock: <span className="text-green-400 font-bold">{trade.crimeStock.toLocaleString()}g</span></div>
-              <div className="bg-slate-900/30 rounded-lg p-2">Bought stock: <span className="text-blue-400 font-bold">{trade.cannabisStock.toLocaleString()}g</span></div>
+              <div className="bg-slate-900/30 rounded-lg p-2">Bought stock: <span className="text-blue-400 font-bold">{trade.boughtStock.toLocaleString()}g</span></div>
             </div>
           </div>
           <div className="mafia-card rounded-xl p-4 border border-slate-700/30">
