@@ -917,6 +917,7 @@ export default function Dashboard() {
             <span className="flex items-center gap-1 text-orange-400">⚔️ {player?.attack ?? 0}</span>
             <span className="flex items-center gap-1 text-blue-400">🛡️ {player?.defense ?? 0}</span>
             <span className="flex items-center gap-1 text-red-400">💀 {(player as any)?.kills ?? 0}</span>
+            <span className="flex items-center gap-1 text-orange-400"><span className="animate-float" style={{ animationDelay: '1.2s' }}>💀</span> {(player as any)?.bullets ?? 0}</span>
           </div>
           <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
           <div className="flex items-center gap-1.5">
