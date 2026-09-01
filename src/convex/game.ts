@@ -601,8 +601,8 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const existingTs: number[] = ((player as any).actionTimestamps ?? []) as number[];
   const _newTs = [...existingTs.filter((t: number) => t > _now - 3600000), _now];
   await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : effectiveEnergy, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, lastEnergyRegen: _now, actionTimestamps: _newTs } as any);
-  await ctx.db.insert('crimes', { userId: player._id, type: args.crimeId, target: 'environment', success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() });
-  if (arrested) await ctx.db.insert('notifications', { userId: player._id, type: 'prison', message: 'Arrested!', read: false, timestamp: Date.now() });
+  try { await ctx.db.insert('crimes', { userId: player._id, type: args.crimeId, target: 'environment', success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); } catch (_logErr) { /* log must never cancel the crime */ }
+  try { if (arrested) await ctx.db.insert('notifications', { userId: player._id, type: 'prison', message: 'Arrested!', read: false, timestamp: Date.now() }); } catch (_notifErr) { /* notification must never cancel the crime */ }
   return { success: succeeded, moneyEarned, xpEarned, pointsEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow };
 } });
  
