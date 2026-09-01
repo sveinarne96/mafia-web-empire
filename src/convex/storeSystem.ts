@@ -804,6 +804,12 @@ export async function processAutoRank(ctx: any) {
   const tsToAdd = Math.min(ranksToGrant, 50);
   for (let i = 0; i < tsToAdd; i++) newTs.push(nowTs - (tsToAdd - 1 - i) * 1000);
   patch.actionTimestamps = newTs;
+  // Increment total actions & objective progress so Game Objectives Overview counts auto rank
+  patch.totalActions = ((player.totalActions as any) ?? 0) + ranksToGrant;
+  const op = { ...(((player as any).objectiveProgress) || {}) };
+  op["street"] = ((op["street"] as number) ?? 0) + ranksToGrant;
+  patch.objectiveProgress = op;
+  patch.seasonXp = ((player.seasonXp as any) ?? 0) + Math.floor(xpAmt / 100);
   await ctx.db.patch(player._id, patch);
   const levelsGained = Math.max(0, (xpUpd.level ?? player.level ?? 1) - (player.level ?? 1));
   return { ranks: levelsGained, applied: ranksToGrant, until };
