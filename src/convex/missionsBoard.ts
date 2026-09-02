@@ -73,6 +73,10 @@ function actionValue(player: any, action: string): number {
 
 const BASE_CHANCE: Record<number, number> = { 1: 0.92, 2: 0.85, 3: 0.78, 4: 0.70, 5: 0.60 };
 
+/** Started-but-unclaimed missions expire after this long so a stale start from a
+ *  previous wave/session can never permanently block the same mission key. */
+const MISSION_START_TTL = 12 * 60 * 60 * 1000;
+
 export const getBoard = query({
   args: {},
   handler: async (ctx) => {
@@ -161,7 +165,6 @@ export const startMission = mutation({
     if (task === 0 && n(player.level, 1) < district.lockLevel) {
       throw new Error(`🔒 ${district.name} unlocks at level ${district.lockLevel}`);
     }
-    if (n((player as any).empireSoldAt, 0) > 0) throw new Error("Your empire was sold — mission progress cleared");
 
     const now = Date.now();
     const energy = n((player as any).energy, 100);
@@ -171,7 +174,16 @@ export const startMission = mutation({
     const cdUntil = n(cooldowns[key], 0);
     if (cdUntil > now) throw new Error(`Mission cooling down — ${Math.ceil((cdUntil - now) / 1000)}s remaining`);
     const started = startedMap(player);
-    if (started[key]) throw new Error("Mission already started — go do the actions, then come back to claim");
+    const startedAt = n(started[key], 0);
+    if (startedAt > 0) {
+      // Stale start from an older session/wave: mission keys repeat every wave and
+      // abandoned starts were never cleared, which permanently blocked re-taking a
+      // mission. Expire anything older than the TTL so the board never locks up.
+      if (now - startedAt < MISSION_START_TTL) {
+        throw new Error("Mission already started — go do the actions, then come back to claim");
+      }
+      delete started[key];
+    }
 
     const actions = actionsMap(player);
     const baseline = actionValue(player, type.action);
@@ -216,6 +228,15 @@ export const claimMission = mutation({
     const started = startedMap(player);
     const startedAt = n(started[key], 0);
     if (!startedAt) throw new Error("Press START first — take the mission, then do the actions in-game");
+    const now = Date.now();
+    // Expired starts (older session/wave) must not be claimable for free actions
+    // done long ago — clear them and require a fresh START.
+    if (now - startedAt >= MISSION_START_TTL) {
+      const expired = { ...started };
+      delete expired[key];
+      await ctx.db.patch(player._id, { missionStarted: expired } as any);
+      throw new Error("That mission expired — press START to take it again");
+    }
 
     const actions = actionsMap(player);
     const baseline = n(actions[key], 0);
@@ -225,7 +246,6 @@ export const claimMission = mutation({
       throw new Error(`Not done yet — ${delta}/${type.required} ${type.label.toLowerCase()} since you started. ${type.where}`);
     }
 
-    const now = Date.now();
     const district = DISTRICTS[di];
     // Wave-scaled rewards: every auto-generated wave pays +60% more
     const wave = Math.max(0, Math.floor(n((player as any).missionWave, 0)));
@@ -308,7 +328,7 @@ export const claimMission = mutation({
 
     // ── District conquest bonus loot: scrap + rare car keys + cash ──
     let conquestSummary: any = undefined;
-    if (distinctAfter >= 3 && distinctBefore < 3 && n((player as any).empireSoldAt, 0) === 0) {
+    if (distinctAfter >= 3 && distinctBefore < 3) {
       const loot = conquestLoot(di);
       const scrapsBase = patch.scraps ?? player.scraps;
       const scraps = scrapsBase && typeof scrapsBase === "object" ? { ...scrapsBase } : { common: 0, rare: 0, epic: 0 };

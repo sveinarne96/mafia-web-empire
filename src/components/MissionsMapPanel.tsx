@@ -423,7 +423,10 @@ export function MissionsMapPanel() {
                   const locked = level < m.lockLevel && !m.done;
                   const noEnergy = energy < m.typeDef.energy;
                   const isSel = selType === m.type;
-                  const isStarted = !!started[m.key];
+                  // A stale start (previous wave/session, older than 12h) is expired
+                  // server-side — show START again instead of a dead CLAIM button.
+                  const startedAt = started[m.key];
+                  const isStarted = !!startedAt && (board.serverNow ?? Date.now()) - startedAt < 12 * 60 * 60 * 1000;
                   const base = board?.actions?.[m.key] ?? 0;
                   const current = actionValues[m.typeDef.action] ?? 0;
                   const delta = Math.max(0, current - base);
@@ -482,7 +485,8 @@ export function MissionsMapPanel() {
             const cdLeft = (cooldowns[m.key] ?? 0) - now;
             const onCd = cdLeft > 0;
             const locked = level < m.lockLevel && !m.done;
-            const isStarted = !!started[m.key];
+            const startedAt = started[m.key];
+            const isStarted = !!startedAt && (board.serverNow ?? Date.now()) - startedAt < 12 * 60 * 60 * 1000;
             const base = board?.actions?.[m.key] ?? 0;
             const current = actionValues[m.typeDef.action] ?? 0;
             const delta = Math.max(0, current - base);
