@@ -197,6 +197,8 @@ const schema = defineSchema({
     lastEmpirePayout: v.optional(v.number()),
     empireSoldAt: v.optional(v.number()),
     missionBoard: v.optional(v.any()),
+    missionWave: v.optional(v.number()),
+    missionWavesCleared: v.optional(v.number()),
     missionActions: v.optional(v.any()),
     missionStarted: v.optional(v.any()),
     missionCooldowns: v.optional(v.any()),
