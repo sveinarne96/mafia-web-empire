@@ -47,6 +47,7 @@ export function MissionsMapPanel() {
   const startMission = useMutation(api.missionsBoard.startMission);
   const claimMission = useMutation(api.missionsBoard.claimMission);
   const abandonMission = useMutation(api.missionsBoard.abandonMission);
+  const generateNextWave = useMutation(api.missionsBoard.generateNextWave);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [selected, setSelected] = useState<string | null>(null);   // district name
@@ -71,8 +72,12 @@ export function MissionsMapPanel() {
   const actionValues = (board?.actionValues ?? {}) as Record<string, number>;
   const level = board?.level ?? 1;
   const energy = board?.energy ?? 100;
+  const wave = board?.wave ?? 0;
+  const wavesCleared = board?.wavesCleared ?? 0;
+  const allDone = board?.allDone ?? false;
 
-  const allMissions = useMemo(() => buildMissions(progress, level), [progress, level]);
+  const allMissions = useMemo(() => buildMissions(progress, level, wave), [progress, level, wave]);
+  const waveMult = Math.pow(1.6, wave);
 
   const matchesFilter = (m: { type: string; typeDef: { currency: string; label: string }; name: string; district: string }) => {
     if (typeFilter !== "all" && m.type !== typeFilter) return false;
@@ -139,6 +144,17 @@ export function MissionsMapPanel() {
     setBusy(null);
   };
 
+  const generate = async () => {
+    setBusy("__wave__"); setMsg(null);
+    try {
+      const r = await generateNextWave({});
+      setMsg({ ok: true, text: `🌊 WAVE ${r.wave} GENERATED! Fresh contracts deployed across all 30 districts — rewards are now ${(Math.pow(1.6, r.wave) * 100 - 100).toFixed(0)}% higher!` });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e.message || "Failed to generate wave" });
+    }
+    setBusy(null);
+  };
+
   const pinDots = (done: number, total: number) => {
     const dots: string[] = [];
     for (let i = 0; i < 3; i++) dots.push(i < done ? "●" : "○");
@@ -152,7 +168,7 @@ export function MissionsMapPanel() {
         <span className="text-lg">🗺️</span>
         <span className="text-sm font-black tracking-wide text-cyan-300">SHADOW CITY OPERATIONS MAP</span>
         <span className="hidden text-[9px] font-bold uppercase tracking-widest text-cyan-400/50 md:inline">
-          {allMissions.filter((m) => !m.done).length} active missions · {MISSION_TYPES.length} types × {DISTRICTS.length} districts
+          {allMissions.filter((m) => !m.done).length} active missions · {MISSION_TYPES.length} types × {DISTRICTS.length} districts · Wave {wave + 1}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
           <div className="relative">
@@ -192,6 +208,26 @@ export function MissionsMapPanel() {
             <button onClick={() => { setTypeFilter("all"); setRewardFilter("all"); setSearch(""); }} className="flex items-center gap-0.5 rounded px-2 py-0.5 text-[9px] font-bold text-rose-400 hover:text-rose-300"><X className="size-2.5" /> Clear</button>
           )}
         </div>
+      </div>
+
+      {/* ── WAVE BANNER — 24/7 auto-generation ── */}
+      <div className={`flex flex-wrap items-center gap-2 border-b px-4 py-2 ${allDone ? "border-amber-400/40 bg-gradient-to-r from-amber-950/50 via-slate-950/60 to-amber-950/40" : "border-slate-800/60 bg-slate-950/40"}`}>
+        <span className="text-sm">🌊</span>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 text-[10px] font-black">
+            <span className="text-cyan-300">WAVE {wave + 1}</span>
+            <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-amber-300">×{waveMult.toFixed(1)} rewards</span>
+            {wavesCleared > 0 && <span className="text-slate-500">· {wavesCleared} wave{wavesCleared === 1 ? "" : "s"} cleared</span>}
+            {allDone && <span className="animate-pulse text-amber-300">· MAP CLEARED — NEXT WAVE READY!</span>}
+          </div>
+          <div className="text-[9px] text-slate-500">{allDone ? "The city never sleeps: new contracts are auto-generated 24/7 the instant the board is cleared." : `${MISSION_TYPES.length} mission types × ${DISTRICTS.length} districts = ${MISSION_TYPES.length * DISTRICTS.length} contracts · clears itself 24/7, rewards +60% every wave`}</div>
+        </div>
+        {allDone && (
+          <button disabled={busy === "__wave__"} onClick={generate}
+            className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 text-[10px] font-black text-black hover:brightness-110 disabled:opacity-50">
+            {busy === "__wave__" ? "GENERATING…" : "🌊 GENERATE WAVE"}
+          </button>
+        )}
       </div>
 
       {/* ── Tabs + player stats ── */}
@@ -278,7 +314,7 @@ export function MissionsMapPanel() {
                 <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                   <div className="rounded-2xl border border-cyan-400/20 bg-black/70 px-6 py-4 text-center backdrop-blur">
                     <div className="text-base font-black text-cyan-300">Welcome to Strategy</div>
-                    <div className="mt-1 text-[10px] text-cyan-100/60">160 missions live — click any pin to start</div>
+                    <div className="mt-1 text-[10px] text-cyan-100/60">{MISSION_TYPES.length * DISTRICTS.length} contracts live on Wave {wave + 1} — click any pin to start</div>
                   </div>
                 </div>
               )}

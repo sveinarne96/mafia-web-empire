@@ -68,6 +68,7 @@ export interface DistrictDef {
 }
 
 export const DISTRICTS: DistrictDef[] = [
+  // ── Wave 1 — the classic 10 (levels 1-30) ──
   { name: "Little Italy",       x: 26, y: 66, lockLevel: 1,  hazard: 0.04, tagline: "Old-family turf, tight-knit and watchful",  police: "Low" },
   { name: "Chinatown",          x: 50, y: 76, lockLevel: 4,  hazard: 0.05, tagline: "Dragon gates, hidden fortunes",             police: "Low" },
   { name: "Industrial Docks",   x: 12, y: 84, lockLevel: 7,  hazard: 0.08, tagline: "Rust, cranes and unmanifested cargo",       police: "Medium" },
@@ -78,18 +79,39 @@ export const DISTRICTS: DistrictDef[] = [
   { name: "Old Town",           x: 62, y: 60, lockLevel: 22, hazard: 0.09, tagline: "Cobblestones, ghosts, old money vaults",    police: "Medium" },
   { name: "Financial Quarter",  x: 40, y: 18, lockLevel: 26, hazard: 0.12, tagline: "Money moves at the speed of light here",    police: "Extreme" },
   { name: "Nightlife Row",      x: 88, y: 52, lockLevel: 30, hazard: 0.11, tagline: "Clubs, VIPs and zero witnesses",            police: "High" },
+  // ── Wave 1 expansion — 20 new districts (levels 33-96) ──
+  { name: "Chinatown Back Alleys", x: 54, y: 82, lockLevel: 33, hazard: 0.12, tagline: "Opium dens behind paper lanterns",      police: "Medium" },
+  { name: "Fisherman's Wharf",     x: 16, y: 74, lockLevel: 36, hazard: 0.11, tagline: "Salt air, smuggling boats, quiet piers", police: "Low" },
+  { name: "Neon Market",           x: 58, y: 70, lockLevel: 39, hazard: 0.13, tagline: "Everything is for sale after midnight", police: "Medium" },
+  { name: "Casino Quarter",        x: 84, y: 22, lockLevel: 42, hazard: 0.14, tagline: "Where the house edge funds empires",  police: "High" },
+  { name: "Red Light District",    x: 34, y: 58, lockLevel: 45, hazard: 0.13, tagline: "Velvet ropes and whispered deals",    police: "Medium" },
+  { name: "Steel Mill Row",        x: 8,  y: 66, lockLevel: 48, hazard: 0.15, tagline: "Furnaces never cool, debts never sleep", police: "Medium" },
+  { name: "Rail Yards",            x: 18, y: 52, lockLevel: 51, hazard: 0.14, tagline: "Boxcars of contraband roll at 3am",  police: "Medium" },
+  { name: "Docks Authority",       x: 6,  y: 90, lockLevel: 54, hazard: 0.16, tagline: "Customs stamps can be bought here",   police: "High" },
+  { name: "Seaside Heights",       x: 68, y: 90, lockLevel: 57, hazard: 0.13, tagline: "Boardwalk cash, ocean-breeze alibis", police: "Low" },
+  { name: "Uptown Heights",        x: 30, y: 22, lockLevel: 60, hazard: 0.15, tagline: "Penthouse vaults above the smog",     police: "High" },
+  { name: "Museum Mile",           x: 36, y: 10, lockLevel: 63, hazard: 0.17, tagline: "Masterpieces behind one-inch glass",  police: "Extreme" },
+  { name: "Embassy Row",           x: 47, y: 8,  lockLevel: 66, hazard: 0.16, tagline: "Diplomatic bags never get searched",  police: "Extreme" },
+  { name: "Judicial Plaza",        x: 52, y: 22, lockLevel: 69, hazard: 0.17, tagline: "Where verdicts are pre-ordered",      police: "Extreme" },
+  { name: "Broadcast Hill",        x: 70, y: 12, lockLevel: 72, hazard: 0.15, tagline: "Control the signal, control the city", police: "High" },
+  { name: "Stadium District",      x: 64, y: 34, lockLevel: 75, hazard: 0.16, tagline: "80,000 witnesses who saw nothing",    police: "High" },
+  { name: "University Slopes",     x: 26, y: 44, lockLevel: 78, hazard: 0.14, tagline: "Bright minds, dirty money, cheap labs", police: "Low" },
+  { name: "Botanic Quarter",       x: 30, y: 74, lockLevel: 81, hazard: 0.15, tagline: "Greenhouses of a very special crop",  police: "Low" },
+  { name: "The Underpass",         x: 42, y: 66, lockLevel: 84, hazard: 0.18, tagline: "The city's veins — everything flows through", police: "Medium" },
+  { name: "Highland Terrace",      x: 16, y: 16, lockLevel: 87, hazard: 0.17, tagline: "Old families, new fortunes, high walls", police: "High" },
+  { name: "Shadow Port",           x: 92, y: 70, lockLevel: 90, hazard: 0.20, tagline: "No man's land — the final frontier",  police: "Death Row" },
 ];
 
 export const DISTRICT_MAP: Record<string, DistrictDef> = Object.fromEntries(
   DISTRICTS.map((d) => [d.name, d]),
 );
 
-/** Deterministic mission name per (district, type, task) so board matches server. */
-export function missionName(district: string, typeId: string, task: number): string {
+/** Deterministic mission name per (district, type, task) so board matches server.
+ *  `wave` rotates the name pools so regenerated contracts never feel repeated. */
+export function missionName(district: string, typeId: string, task: number, wave = 0): string {
   const t = MISSION_TYPE_MAP[typeId];
-  const d = DISTRICT_MAP[district];
-  const a = hashStr(district + typeId) % TARGET_NOUNS[typeId].length;
-  const b = hashStr(district + typeId + task) % TARGET_PREFIX.length;
+  const a = (hashStr(district + typeId + wave) % TARGET_NOUNS[typeId].length);
+  const b = (hashStr(district + typeId + task + wave) % TARGET_PREFIX.length);
   return `${TARGET_PREFIX[b]} ${TARGET_NOUNS[typeId][a]}`;
 }
 
@@ -119,7 +141,10 @@ const TARGET_NOUNS: Record<string, string[]> = {
   racing:     ["Pink Slip Race", "Canyon Run", "Drag Strip Duel", "Street Circuit", "Touge Challenge"],
 };
 
-/** One mission = (district, type). progress = which of its 3 tasks is next. */
+/** One mission = (district, type). progress = which of its 3 tasks is next.
+ *  `wave` (starting at 0) is the auto-generation cycle: every time the player
+ *  clears the whole board, a new wave rolls out with richer rewards and new
+ *  mission names — the map NEVER runs dry. */
 export interface MissionInstance {
   key: string;             // `${districtIndex}:${typeId}`
   district: string;
@@ -134,8 +159,15 @@ export interface MissionInstance {
   name: string;
 }
 
-/** Builds the flat mission list across all districts & types. */
-export function buildMissions(progress: Record<string, number>, level: number): MissionInstance[] {
+/** Reward multiplier per wave: +60% each wave, compounding. Wave 5 ≈ 10.5x. */
+export function waveMultiplier(wave: number): number {
+  return Math.pow(1.6, Math.max(0, wave));
+}
+
+/** Builds the flat mission list across all districts & types.
+ *  `wave` scales rewards & rotates names; `allDone` is informational for the UI. */
+export function buildMissions(progress: Record<string, number>, level: number, wave = 0): MissionInstance[] {
+  const mult = waveMultiplier(wave);
   const out: MissionInstance[] = [];
   DISTRICTS.forEach((d, di) => {
     for (const t of MISSION_TYPES) {
@@ -151,8 +183,8 @@ export function buildMissions(progress: Record<string, number>, level: number): 
         done: p >= 3,
         lockLevel: d.lockLevel,
         locked: level < d.lockLevel && p < 3,
-        reward: t.rewards[Math.min(2, p)],
-        name: missionName(d.name, t.id, p),
+        reward: Math.floor(t.rewards[Math.min(2, p)] * mult),
+        name: missionName(d.name, t.id, p, wave),
       });
     }
   });

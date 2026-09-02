@@ -693,6 +693,27 @@ function AirportPage() {
     { name: "Seoul", x: 83, y: 28, risk: "High", cost: 45000, xp: 110, unlocks: 18, icon: "🇰🇷", continent: "AS" },
     { name: "Sydney", x: 86, y: 64, risk: "Extreme", cost: 250000, xp: 250, unlocks: 45, icon: "🦘", continent: "OC" },
     { name: "Auckland", x: 92, y: 68, risk: "High", cost: 50000, xp: 120, unlocks: 20, icon: "🇳🇿", continent: "OC" },
+    // ── 20 new destinations ──
+    { name: "Amsterdam", x: 48, y: 22, risk: "Very High", cost: 80000, xp: 155, unlocks: 26, icon: "🚲", continent: "EU" },
+    { name: "Madrid", x: 44, y: 32, risk: "High", cost: 50000, xp: 120, unlocks: 20, icon: "💃", continent: "EU" },
+    { name: "Vienna", x: 52, y: 25, risk: "High", cost: 60000, xp: 128, unlocks: 22, icon: "🎻", continent: "EU" },
+    { name: "Zurich", x: 49, y: 26, risk: "Extreme", cost: 180000, xp: 210, unlocks: 38, icon: "🏦", continent: "EU" },
+    { name: "Stockholm", x: 52, y: 17, risk: "High", cost: 70000, xp: 135, unlocks: 24, icon: "🛳️", continent: "EU" },
+    { name: "Athens", x: 54, y: 33, risk: "High", cost: 45000, xp: 105, unlocks: 18, icon: "🏛️", continent: "EU" },
+    { name: "Warsaw", x: 53, y: 21, risk: "Medium", cost: 35000, xp: 92, unlocks: 15, icon: "🦅", continent: "EU" },
+    { name: "Dublin", x: 45, y: 21, risk: "High", cost: 55000, xp: 122, unlocks: 21, icon: "🍺", continent: "EU" },
+    { name: "Rio de Janeiro", x: 33, y: 60, risk: "Very High", cost: 55000, xp: 125, unlocks: 22, icon: "🏖️", continent: "SA" },
+    { name: "Bogotá", x: 25, y: 48, risk: "Very High", cost: 65000, xp: 132, unlocks: 24, icon: "🌺", continent: "SA" },
+    { name: "Lima", x: 26, y: 56, risk: "High", cost: 40000, xp: 98, unlocks: 16, icon: "🏔️", continent: "SA" },
+    { name: "Casablanca", x: 46, y: 34, risk: "High", cost: 30000, xp: 85, unlocks: 14, icon: "🕌", continent: "AF" },
+    { name: "Nairobi", x: 58, y: 48, risk: "Very High", cost: 45000, xp: 108, unlocks: 18, icon: "🦁", continent: "AF" },
+    { name: "Johannesburg", x: 56, y: 55, risk: "Very High", cost: 70000, xp: 138, unlocks: 25, icon: "💎", continent: "AF" },
+    { name: "Singapore", x: 77, y: 45, risk: "Extreme", cost: 220000, xp: 240, unlocks: 42, icon: "🦁", continent: "AS" },
+    { name: "Jakarta", x: 79, y: 48, risk: "Very High", cost: 85000, xp: 150, unlocks: 27, icon: "🌴", continent: "AS" },
+    { name: "Manila", x: 81, y: 41, risk: "Very High", cost: 75000, xp: 140, unlocks: 26, icon: "⛴️", continent: "AS" },
+    { name: "Kyiv", x: 55, y: 22, risk: "High", cost: 50000, xp: 115, unlocks: 20, icon: "🌻", continent: "EU" },
+    { name: "Toronto Islands", x: 24, y: 27, risk: "Medium", cost: 15000, xp: 55, unlocks: 9, icon: "🛶", continent: "NA" },
+    { name: "Honolulu", x: 8, y: 44, risk: "High", cost: 95000, xp: 160, unlocks: 28, icon: "🌺", continent: "OC" },
   ];
 
   const riskColors: Record<string, string> = {

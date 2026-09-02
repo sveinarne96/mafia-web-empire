@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
-import { MISSION_TYPE_MAP, DISTRICTS } from "../data/missionsCatalog";
+import { MISSION_TYPE_MAP, DISTRICTS, buildMissions, waveMultiplier } from "../data/missionsCatalog";
 import { DISTRICT_CASH } from "../data/empire";
 
 const n = (val: any, d: number) => (typeof val === "number" && Number.isFinite(val) ? val : d);
@@ -77,14 +77,22 @@ export const getBoard = query({
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
     if (!player) return null;
-    const progress = boardMap(player);
-    const started = startedMap(player);
-    const actions = actionsMap(player);
-    const cooldowns = cooldownMap(player);
-    const legacy = legacyEmpireProgress(player);
-    const now = Date.now();
+  const progress = boardMap(player);
+  const started = startedMap(player);
+  const actions = actionsMap(player);
+  const cooldowns = cooldownMap(player);
+  const legacy = legacyEmpireProgress(player);
+  const now = Date.now();
+  const wave = Math.max(0, Math.floor(n((player as any).missionWave, 0)));
+  const wavesCleared = Math.max(0, Math.floor(n((player as any).missionWavesCleared, 0)));
 
-    const districtsCompleted = DISTRICTS.reduce((s, _, i) => s + (conquestCount(progress, legacy, i) >= 3 ? 1 : 0), 0);
+  // Auto-generation: when every mission on the current board is complete, a new
+  // wave is generated 24/7 — rewards scale +60% and names rotate. The player
+  // (or the hourly Auto Rank pulse) can also trigger it manually via generateNextWave.
+  const missionList = buildMissions(progress, n(player.level, 1), wave);
+  const allDone = missionList.length > 0 && missionList.every((m) => m.done);
+
+  const districtsCompleted = DISTRICTS.reduce((s, _, i) => s + (conquestCount(progress, legacy, i) >= 3 ? 1 : 0), 0);
     const conquestPerDistrict = DISTRICTS.map((_, i) => conquestCount(progress, legacy, i));
     const cashPerDay = Array.from({ length: districtsCompleted }, (_, i) => DISTRICT_CASH[i] ?? 15_000).reduce((a, b) => a + b, 0);
     const totalTasks = Object.values(progress).reduce((s: number, v: any) => s + n(v, 0), 0);
@@ -101,6 +109,9 @@ export const getBoard = query({
       started,
       actions,
       cooldowns,
+      wave,
+      wavesCleared,
+      allDone,
       actionValues: Object.fromEntries(
         Object.values(MISSION_TYPE_MAP).map((t) => [t.action, actionValue(player, t.action)]),
       ),
@@ -214,18 +225,28 @@ export const claimMission = mutation({
 
     const now = Date.now();
     const district = DISTRICTS[di];
-    const reward = type.rewards[Math.min(2, task)];
+    // Wave-scaled rewards: every auto-generated wave pays +60% more
+    const wave = Math.max(0, Math.floor(n((player as any).missionWave, 0)));
+    const reward = Math.floor(type.rewards[Math.min(2, task)] * waveMultiplier(wave));
     const cashBoost = now < n(player.cashBoostUntil, 0) ? 2 : 1;
     const newProgress = { ...progress, [key]: task + 1 };
     const newStarted = { ...started };
     delete newStarted[key];
 
+    // 24/7 auto-generation: the instant the full board is cleared, the next
+    // wave rolls out — fresh contract names, +60% rewards. It never stops.
+    const boardCleared = buildMissions(newProgress, n(player.level, 1), wave).every((m) => m.done);
+
     const patch: any = {
-      missionBoard: newProgress,
+      missionBoard: boardCleared ? {} : newProgress,
       missionStarted: newStarted,
       missionCompleted: n((player as any).missionCompleted, 0) + 1,
       missionProfit: n((player as any).missionProfit, 0) + reward,
     };
+    if (boardCleared) {
+      patch.missionWave = wave + 1;
+      patch.missionWavesCleared = Math.max(0, Math.floor(n((player as any).missionWavesCleared, 0))) + 1;
+    }
 
     switch (type.currency) {
       case "cash":
@@ -290,6 +311,7 @@ export const claimMission = mutation({
       task: task + 1,
       missionDone: task + 1 >= 3,
       conquered: distinctAfter >= 3 && distinctBefore < 3,
+      waveAdvanced: boardCleared ? wave + 1 : undefined,
       delta,
       xp,
       levelUp: xpUpd.level !== undefined ? xpUpd.level : undefined,
@@ -309,6 +331,29 @@ export const abandonMission = mutation({
     delete newStarted[args.key];
     await ctx.db.patch(player._id, { missionStarted: newStarted } as any);
     return { success: true };
+  },
+});
+
+// ═══════════ AUTO-GENERATION — roll out the next wave on demand ═══════════
+// The board also self-advances the moment its final mission is claimed (24/7),
+// this mutation is the manual trigger shown on the map banner.
+export const generateNextWave = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const progress = boardMap(player);
+    const wave = Math.max(0, Math.floor(n((player as any).missionWave, 0)));
+    const list = buildMissions(progress, n(player.level, 1), wave);
+    const remaining = list.filter((m) => !m.done).length;
+    if (remaining > 0) throw new Error(`Not yet — ${remaining} missions still open. The next wave generates automatically 24/7 the moment the map is cleared.`);
+    const nextWave = wave + 1;
+    await ctx.db.patch(player._id, {
+      missionWave: nextWave,
+      missionWavesCleared: Math.max(0, Math.floor(n((player as any).missionWavesCleared, 0))) + 1,
+      missionBoard: {},
+    } as any);
+    return { success: true, wave: nextWave };
   },
 });
 
