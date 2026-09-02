@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -51,13 +51,15 @@ import { OnlineList } from "@/components/OnlineList";
 import { PlayerProfilePage } from "@/components/PlayerProfile";
 import { BecomeAdminPage } from "@/components/BecomeAdmin";
 import { UpdatesPage } from "@/components/UpdatesPage";
-import { SeasonPassPage } from "@/components/SeasonPass";
+// Heavy leaf pages are lazy-loaded into their own chunks — keeps the main
+// bundle small and the platform build under its memory cap.
+const SeasonPassPage = lazy(() => import("@/components/SeasonPass").then((m) => ({ default: m.SeasonPassPage })));
 import { LogoDropdown } from "@/components/LogoDropdown";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
 import { PacksOverviewPanel, PerksPanel } from "@/components/PacksPerksPanel";
 import { RanksPanel } from "@/components/RanksPanel";
-import { HeistPage } from "@/components/HeistPage";
+const HeistPage = lazy(() => import("@/components/HeistPage").then((m) => ({ default: m.HeistPage })));
 import { PromoBanner } from "@/components/PromoBanner";
 import { WantedStatusPage } from "@/components/GameEnhanced";
 import {
@@ -78,13 +80,13 @@ import {
   OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage,
   LegacyPage, ForumSearchPage,
 } from "@/components/GamePages";
-import { FullMissionsPage } from "@/components/FullMissionsPage";
-import { GamblingOverviewPage } from "@/components/GamblingPages";
-import { CombatOverviewPage } from "@/components/CombatPages";
+const FullMissionsPage = lazy(() => import("@/components/FullMissionsPage").then((m) => ({ default: m.FullMissionsPage })));
+const GamblingOverviewPage = lazy(() => import("@/components/GamblingPages").then((m) => ({ default: m.GamblingOverviewPage })));
+const CombatOverviewPage = lazy(() => import("@/components/CombatPages").then((m) => ({ default: m.CombatOverviewPage })));
 // HubPages inlined below - no external import needed
 import { WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
 import { SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
-import { PrisonPage } from "@/components/PrisonPage";
+const PrisonPage = lazy(() => import("@/components/PrisonPage").then((m) => ({ default: m.PrisonPage })));
 import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
 import { FactionWarfarePage, AdvancedCraftingPage } from "@/components/SystemFaction";
 import { PetSystemPage, DayNightPage } from "@/components/SystemPetDayNight";
@@ -147,7 +149,14 @@ import { PromoCodesPage } from "@/components/PromoCodesPage";
 import { DrugTradePage } from "@/components/DrugTradePage";
 import { QsMarketPage } from "@/components/QsMarketPage";
 import { RecordKillsPage, RecordCrimesPage, RecordGtaPage, RecordPointsPage, RecordBulletsPage, RecordBustsPage, RecordStockPage, RecordBettingPage, RecordAssassinationPage, RecordPacksPage, RecordHeistsPage, RecordSupplyPage, RecordCasinoPage } from "@/components/GameRecords";
-import { CasinosPage, CasinoBlackjackPage, CasinoDicePage, CasinoRoulettePage, CasinoRacetrackPage, CasinoVideoPokerPage, CasinoScratchcardsPage } from "@/components/CasinoPages";
+const casinoLazy = () => import("@/components/CasinoPages");
+const CasinosPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinosPage })));
+const CasinoBlackjackPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoBlackjackPage })));
+const CasinoDicePage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoDicePage })));
+const CasinoRoulettePage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoRoulettePage })));
+const CasinoRacetrackPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoRacetrackPage })));
+const CasinoVideoPokerPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoVideoPokerPage })));
+const CasinoScratchcardsPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoScratchcardsPage })));
 import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
 
 
@@ -1469,7 +1478,14 @@ export default function Dashboard() {
 
           <div className="p-4 md:p-6 animate-page-enter" key={activePage}>
             <ErrorBoundary>
-              {renderPage()}
+              <Suspense fallback={
+                <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
+                  <div className="text-4xl animate-pulse">🎮</div>
+                  <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Loading Shadow Empire…</div>
+                </div>
+              }>
+                {renderPage()}
+              </Suspense>
             </ErrorBoundary>
           </div>
         </main>

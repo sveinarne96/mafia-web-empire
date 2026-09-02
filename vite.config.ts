@@ -22,42 +22,25 @@ export default defineConfig({
     // Optimize chunk splitting
     rollupOptions: {
       output: {
-        // Manual chunk splitting for better caching and lazy loading
-        manualChunks: {
-          // Vendor chunks for large libraries
-          'react-vendor': ['react', 'react-dom', 'react-router'],
-          'convex-vendor': ['convex'],
-          // Large UI library chunks
-          'radix-ui': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip',
-          ],
-          // Heavy optional libraries - separate chunks for better lazy loading
-          'framer-motion': ['framer-motion'],
-          'charts': ['recharts'],
-          'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+        // Manual chunk splitting for better caching AND lower peak build memory
+        // (each package gets its own chunk so no single JS file blows up minify/RSS).
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return undefined;
+          const pkgPath = id.split("node_modules/")[1] ?? "";
+          const pkgName = pkgPath.startsWith("@")
+            ? pkgPath.split("/").slice(0, 2).join("/")
+            : pkgPath.split("/")[0];
+          if (pkgName.startsWith("@radix-ui/")) return "radix-ui";
+          if (pkgName.startsWith("@convex-dev/")) return "convex-vendor";
+          if (pkgName.startsWith("react-router")) return "react-vendor";
+          if (["react", "react-dom"].includes(pkgName)) return "react-vendor";
+          if (["react-hook-form", "zod"].includes(pkgName) || pkgName === "@hookform") return "forms";
+          if (pkgName === "recharts" || pkgName === "d3" || pkgName.startsWith("d3-")) return "charts";
+          if (pkgName === "framer-motion") return "framer-motion";
+          if (pkgName.startsWith("date-fns")) return "dates";
+          if (pkgName === "lucide-react") return "lucide";
+          if (pkgName === "convex") return "convex-vendor";
+          return pkgName.replace(/[^a-zA-Z0-9_-]/g, "_") || undefined;
         },
         // Optimize chunk size
         chunkFileNames: 'assets/[name]-[hash].js',
