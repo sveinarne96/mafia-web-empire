@@ -1,153 +1,192 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
-import { Minus, Plus, Map as MapIcon, List, X } from "lucide-react";
-import { EMPIRE_DISTRICTS, DISTRICT_CASH } from "@/data/empire";
+import { Minus, Plus, Map as MapIcon, List, X, Search, Trophy, Zap } from "lucide-react";
+import {
+  MISSION_TYPES, MISSION_TYPE_MAP, DISTRICTS, buildMissions,
+  type MissionTypeId,
+} from "@/data/missionsCatalog";
+import { DISTRICT_CASH } from "@/data/empire";
 
 // ═══════════════════════════════════════════════════════════════
-// MISSIONS MAP — interactive city map with districts & task types
+// MISSIONS — full remake. Every mission type × district has its own
+// live pin on the city map. Filters highlight matching missions.
 // ═══════════════════════════════════════════════════════════════
 
-const DISTRICT_POS: Record<string, { x: number; y: number }> = {
-  "Little Italy": { x: 28, y: 62 },
-  "Chinatown": { x: 52, y: 74 },
-  "Industrial Docks": { x: 14, y: 86 },
-  "Downtown Core": { x: 46, y: 44 },
-  "Harbor Point": { x: 74, y: 82 },
-  "The Strip": { x: 78, y: 26 },
-  "Garment District": { x: 24, y: 30 },
-  "Old Town": { x: 62, y: 58 },
-  "Financial Quarter": { x: 40, y: 18 },
-  "Nightlife Row": { x: 88, y: 52 },
-};
+const nf = (v: number) => Math.floor(v).toLocaleString();
+function rewardLabel(currency: string, amount: number): string {
+  switch (currency) {
+    case "cash": return `$${nf(amount)}`;
+    case "points": return `${nf(amount)} pts`;
+    case "bullets": return `${nf(amount)} 💀`;
+    case "coins": return `${nf(amount)} 🪙`;
+    case "scrap": return `${nf(amount)} ⚙️`;
+    case "xp": return `${nf(amount)} XP`;
+    default: return nf(amount);
+  }
+}
+function fmtClock(ms: number): string {
+  if (ms <= 0) return "Ready";
+  const s = Math.ceil(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}m ${s % 60}s`;
+  return `${Math.floor(m / 60)}h ${m % 60}m`;
+}
 
-const TASK_TYPES = [
-  { id: "crime", label: "Commit Crimes", icon: "🔪", color: "#ef4444", desc: "Run street-level crimes in the district" },
-  { id: "heist", label: "Commit Heists", icon: "🎯", color: "#a855f7", desc: "Pull high-value heists with your crew" },
-  { id: "melt", label: "Melt Bullets", icon: "🔥", color: "#f97316", desc: "Melt bullets for XP and rewards" },
-  { id: "buybullets", label: "Buy Bullets", icon: "🔫", color: "#eab308", desc: "Stock up on ammo from the dealer" },
-  { id: "gta", label: "Steal Cars", icon: "🚗", color: "#22d3ee", desc: "Boost vehicles off the street" },
-  { id: "rarecar", label: "Steal Rare Cars", icon: "💎", color: "#38bdf8", desc: "Hunt legendary rides" },
-  { id: "repair", label: "Repair Rare Cars", icon: "🔧", color: "#34d399", desc: "Restore wrecks to showroom state" },
-  { id: "bank", label: "Earn Bank Interest", icon: "🏦", color: "#4ade80", desc: "Let your bank balance work for you" },
-  { id: "casino", label: "Casino Grind", icon: "🎰", color: "#fbbf24", desc: "Play the tables in the district" },
-  { id: "smuggle", label: "Run Supplies", icon: "📦", color: "#f472b6", desc: "Move contraband between cities" },
-  { id: "assassin", label: "Contract Kills", icon: "💀", color: "#f43f5e", desc: "Take out marked targets" },
-  { id: "empire", label: "Empire Expansion", icon: "👑", color: "#fbbf24", desc: "Buy property and extend influence" },
+const CURRENCY_FILTERS: [string, string][] = [
+  ["all", "All rewards"], ["cash", "💵 Cash"], ["points", "⭐ Points"],
+  ["bullets", "💀 Bullets"], ["coins", "🪙 Coins"], ["xp", "⚡ XP"], ["scrap", "⚙️ Scraps"],
 ];
 
-const TYPE_FILTERS = TASK_TYPES.map((t) => t.id);
-
-// Deterministic per-district task mix (3 tasks per district)
-function districtTasks(districtIdx: number, progress: number) {
-  const seed = districtIdx * 7 + progress;
-  const a = (seed * 9301 + 49297) % 233280;
-  const t1 = TASK_TYPES[Math.floor((a / 233280) * TASK_TYPES.length)];
-  const b = (seed * 4243 + 12345) % 233280;
-  const t2 = TASK_TYPES[(TASK_TYPES.indexOf(t1) + 1 + Math.floor((b / 233280) * (TASK_TYPES.length - 1))) % TASK_TYPES.length];
-  return [t1, t2, TASK_TYPES[(TASK_TYPES.indexOf(t2) + 3) % TASK_TYPES.length]];
-}
-
-function fmt(n: number) {
-  return "$" + Math.floor(n).toLocaleString();
-}
+type Tab = "active" | "completed";
 
 export function MissionsMapPanel() {
-  const empire = useQuery(api.empireSystem.getEmpire);
-  const player = useQuery(api.game.getPlayer);
-  const doTask = useMutation(api.empireSystem.completeDistrictTask);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const board = useQuery(api.missionsBoard.getBoard);
+  const runMission = useMutation(api.missionsBoard.runMission);
   const [busy, setBusy] = useState<string | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);   // district name
+  const [selType, setSelType] = useState<MissionTypeId | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [view, setView] = useState<"map" | "list">("map");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [rewardFilter, setRewardFilter] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState<"active" | "completed">("active");
+  const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<Tab>("active");
+  const [now, setNow] = useState(Date.now());
 
-  const progress = (empire?.progress ?? {}) as Record<string, number>;
-  const districtsCompleted = empire?.districtsCompleted ?? 0;
-  const level = player?.level ?? 1;
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
-  const highlighted = useMemo(() => {
-    if (typeFilter === "all") return null;
-    return EMPIRE_DISTRICTS.filter((_, i) => districtTasks(i, progress[EMPIRE_DISTRICTS[i]] ?? 0).some((t) => t.id === typeFilter));
-  }, [typeFilter, progress]);
+  const progress = (board?.progress ?? {}) as Record<string, number>;
+  const cooldowns = (board?.cooldowns ?? {}) as Record<string, number>;
+  const level = board?.level ?? 1;
+  const energy = board?.energy ?? 100;
 
-  const run = async (district: string) => {
-    setBusy(district); setMsg(null);
+  const allMissions = useMemo(() => buildMissions(progress, level), [progress, level]);
+
+  const matchesFilter = (m: { type: string; typeDef: { currency: string; label: string }; name: string; district: string }) => {
+    if (typeFilter !== "all" && m.type !== typeFilter) return false;
+    if (rewardFilter !== "all" && m.typeDef.currency !== rewardFilter) return false;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      if (!m.name.toLowerCase().includes(q) && !m.district.toLowerCase().includes(q) && !m.typeDef.label.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  };
+
+  const visibleMissions = allMissions.filter((m) => (tab === "completed" ? m.done : !m.done));
+  const listMissions = visibleMissions.filter(matchesFilter);
+
+  const districtStatus = useMemo(() => {
+    return DISTRICTS.map((d, i) => {
+      const inDistrict = allMissions.filter((m) => m.districtIdx === i);
+      const doneCount = inDistrict.filter((m) => m.done).length;
+      const conquered = inDistrict.length > 0 && doneCount >= 3 && d.lockLevel <= level;
+      return { ...d, idx: i, missions: inDistrict, doneCount, conquered };
+    });
+  }, [allMissions, level]);
+
+  if (!board) {
+    return <div className="mafia-card animate-pulse rounded-2xl p-8 text-center text-muted-foreground">Loading mission board…</div>;
+  }
+
+  const sel = districtStatus.find((d) => d.name === selected) ?? null;
+  const selMissions = sel ? sel.missions.filter(matchesFilter) : [];
+
+  const run = async (key: string) => {
+    setBusy(key); setMsg(null);
     try {
-      const r = await doTask({ district });
-      setMsg({ ok: true, text: r.conquered ? `🏆 ${district} CONQUERED! It now pays daily empire income!` : `✔ Task ${r.task}/3 complete in ${district} · +${fmt(r.reward)}` });
+      const r = await runMission({ key });
+      if (!r.won) {
+        setMsg({ ok: false, text: `💀 Mission failed — ${r.chance}% chance. Your crew got out clean but empty-handed.` });
+      } else if (r.conquered) {
+        setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! All empire income online!` });
+      } else if (r.missionDone) {
+        setMsg({ ok: true, text: `✅ Mission complete in ${r.district}! +${rewardLabel(r.currency, r.reward)}` });
+      } else {
+        setMsg({ ok: true, text: `✔ Task ${r.task}/3 done — ${r.typeLabel} · +${rewardLabel(r.currency, r.reward)} · +${nf(r.xp)} XP` });
+      }
+      if (r.levelUp) setMsg({ ok: true, text: `⭐ LEVEL UP! You are now level ${r.levelUp}!` });
     } catch (e: any) {
-      setMsg({ ok: false, text: e.message || "Task failed" });
+      setMsg({ ok: false, text: e.message || "Mission failed" });
     }
     setBusy(null);
   };
 
-  if (!empire) return <div className="animate-pulse py-8 text-center text-muted-foreground">Loading mission map…</div>;
-
-  const selIdx = selected ? EMPIRE_DISTRICTS.indexOf(selected) : -1;
-  const selTasks = selIdx >= 0 ? districtTasks(selIdx, progress[selected!] ?? 0) : [];
-  const selProg = selIdx >= 0 ? (progress[selected!] ?? 0) : 0;
-
-  const visibleDistricts = EMPIRE_DISTRICTS.filter((d) => {
-    if (activeTab === "completed") return (progress[d] ?? 0) >= 3;
-    return true;
-  });
+  const pinDots = (done: number, total: number) => {
+    const dots: string[] = [];
+    for (let i = 0; i < 3; i++) dots.push(i < done ? "●" : "○");
+    return dots.join("");
+  };
 
   return (
-    <div className="mafia-card rounded-2xl border border-cyan-500/20 overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex items-center gap-2 flex-wrap px-4 py-3 border-b border-cyan-500/15 bg-gradient-to-r from-cyan-950/30 via-slate-950/40 to-cyan-950/30">
+    <div className="mafia-card space-y-0 overflow-hidden rounded-2xl border border-cyan-500/20">
+      {/* ── Header ── */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-cyan-500/15 bg-gradient-to-r from-cyan-950/40 via-slate-950/60 to-fuchsia-950/30 px-4 py-3">
         <span className="text-lg">🗺️</span>
-        <span className="text-sm font-black text-cyan-300 tracking-wide">MISSIONS MAP</span>
-        <span className="text-[9px] text-cyan-400/60 font-bold uppercase tracking-widest hidden md:inline">Strategy · Shadow City</span>
+        <span className="text-sm font-black tracking-wide text-cyan-300">SHADOW CITY OPERATIONS MAP</span>
+        <span className="hidden text-[9px] font-bold uppercase tracking-widest text-cyan-400/50 md:inline">
+          {allMissions.filter((m) => !m.done).length} active missions · {MISSION_TYPES.length} types × {DISTRICTS.length} districts
+        </span>
         <div className="ml-auto flex items-center gap-1.5">
-          <button onClick={() => setView("map")} className={`px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 ${view === "map" ? "bg-cyan-500/25 text-cyan-300 border border-cyan-400/40" : "text-slate-400 hover:text-white"}`}><MapIcon className="size-3" /> Map</button>
-          <button onClick={() => setView("list")} className={`px-2.5 py-1 rounded-lg text-[10px] font-black flex items-center gap-1 ${view === "list" ? "bg-cyan-500/25 text-cyan-300 border border-cyan-400/40" : "text-slate-400 hover:text-white"}`}><List className="size-3" /> List</button>
-          <div className="w-px h-4 bg-slate-700/60 mx-1" />
-          <button onClick={() => setZoom((z) => Math.max(0.7, z - 0.15))} className="p-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:text-white"><Minus className="size-3" /></button>
-          <span className="text-[9px] font-mono text-slate-500 w-8 text-center">{Math.round(zoom * 100)}%</span>
-          <button onClick={() => setZoom((z) => Math.min(2.2, z + 0.15))} className="p-1.5 rounded-lg bg-slate-800/60 border border-slate-700/50 text-slate-300 hover:text-white"><Plus className="size-3" /></button>
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 size-3 -translate-y-1/2 text-slate-500" />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search missions…"
+              className="w-36 rounded-lg border border-slate-700/50 bg-slate-900/60 py-1 pl-7 pr-2 text-[10px] text-slate-300 placeholder:text-slate-600 focus:border-cyan-500/40 focus:outline-none md:w-48" />
+          </div>
+          <button onClick={() => setView("map")} className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-black ${view === "map" ? "border border-cyan-400/40 bg-cyan-500/25 text-cyan-300" : "text-slate-400 hover:text-white"}`}><MapIcon className="size-3" /> Map</button>
+          <button onClick={() => setView("list")} className={`flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-black ${view === "list" ? "border border-cyan-400/40 bg-cyan-500/25 text-cyan-300" : "text-slate-400 hover:text-white"}`}><List className="size-3" /> List</button>
+          <div className="mx-1 h-4 w-px bg-slate-700/60" />
+          <button onClick={() => setZoom((z) => Math.max(0.7, Math.round((z - 0.15) * 100) / 100))} className="rounded-lg border border-slate-700/50 bg-slate-800/60 p-1.5 text-slate-300 hover:text-white"><Minus className="size-3" /></button>
+          <span className="w-9 text-center font-mono text-[9px] text-slate-500">{Math.round(zoom * 100)}%</span>
+          <button onClick={() => setZoom((z) => Math.min(2, Math.round((z + 0.15) * 100) / 100))} className="rounded-lg border border-slate-700/50 bg-slate-800/60 p-1.5 text-slate-300 hover:text-white"><Plus className="size-3" /></button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="px-4 py-2.5 border-b border-cyan-500/10 bg-slate-950/40 space-y-2">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Mission type:</span>
-          <button onClick={() => setTypeFilter("all")} className={`px-2 py-0.5 rounded text-[9px] font-bold ${typeFilter === "all" ? "bg-cyan-500/25 text-cyan-300" : "text-slate-500 hover:text-slate-300"}`}>All types</button>
-          {TASK_TYPES.slice(0, 8).map((t) => (
+      {/* ── Filters ── */}
+      <div className="space-y-2 border-b border-cyan-500/10 bg-slate-950/50 px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Type:</span>
+          <button onClick={() => setTypeFilter("all")} className={`rounded px-2 py-0.5 text-[9px] font-bold ${typeFilter === "all" ? "bg-cyan-500/25 text-cyan-300" : "text-slate-500 hover:text-slate-300"}`}>All</button>
+          {MISSION_TYPES.map((t) => (
             <button key={t.id} onClick={() => setTypeFilter(typeFilter === t.id ? "all" : t.id)}
-              className={`px-2 py-0.5 rounded text-[9px] font-bold transition-all ${typeFilter === t.id ? "text-white scale-105" : "text-slate-500 hover:text-slate-300"}`}
-              style={typeFilter === t.id ? { background: `${t.color}30`, border: `1px solid ${t.color}80` } : {}}>
-              {t.icon} {t.label.replace("Commit ", "").replace("Earn ", "").replace("Steal ", "")}
+              className={`rounded px-2 py-0.5 text-[9px] font-bold transition-all ${typeFilter === t.id ? "scale-105 text-white" : "text-slate-500 hover:text-slate-300"}`}
+              style={typeFilter === t.id ? { background: `${t.color}30`, border: `1px solid ${t.color}90`, boxShadow: `0 0 8px ${t.color}40` } : {}}>
+              {t.icon} {t.label}
             </button>
           ))}
-          {(typeFilter !== "all" || rewardFilter !== "all") && (
-            <button onClick={() => { setTypeFilter("all"); setRewardFilter("all"); }} className="px-2 py-0.5 rounded text-[9px] font-bold text-rose-400 hover:text-rose-300 flex items-center gap-0.5"><X className="size-2.5" /> Clear</button>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Reward:</span>
+          {CURRENCY_FILTERS.map(([id, label]) => (
+            <button key={id} onClick={() => setRewardFilter(id)}
+              className={`rounded px-2 py-0.5 text-[9px] font-bold ${rewardFilter === id ? "border border-amber-400/40 bg-amber-500/25 text-amber-300" : "text-slate-500 hover:text-slate-300"}`}>{label}</button>
+          ))}
+          {(typeFilter !== "all" || rewardFilter !== "all" || search) && (
+            <button onClick={() => { setTypeFilter("all"); setRewardFilter("all"); setSearch(""); }} className="flex items-center gap-0.5 rounded px-2 py-0.5 text-[9px] font-bold text-rose-400 hover:text-rose-300"><X className="size-2.5" /> Clear</button>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Reward:</span>
-          {[["all", "All rewards"], ["cash", "💵 Cash"], ["points", "⭐ Points"], ["bullets", "💀 Bullets"], ["xp", "⚡ XP"]].map(([id, label]) => (
-            <button key={id} onClick={() => setRewardFilter(id)} className={`px-2 py-0.5 rounded text-[9px] font-bold ${rewardFilter === id ? "bg-amber-500/25 text-amber-300 border border-amber-400/40" : "text-slate-500 hover:text-slate-300"}`}>{label}</button>
-          ))}
+      </div>
+
+      {/* ── Tabs + player stats ── */}
+      <div className="flex flex-wrap items-center gap-3 border-b border-slate-800/60 px-4 py-2">
+        <button onClick={() => setTab("active")} className={`rounded-t-lg border-x border-t px-3 py-1 text-[10px] font-black ${tab === "active" ? "border-cyan-400/30 bg-cyan-500/20 text-cyan-300" : "text-slate-500"}`}>Active</button>
+        <button onClick={() => setTab("completed")} className={`rounded-t-lg border-x border-t px-3 py-1 text-[10px] font-black ${tab === "completed" ? "border-green-400/30 bg-green-500/20 text-green-300" : "text-slate-500"}`}>Completed ({allMissions.filter((m) => m.done).length})</button>
+        <div className="ml-auto flex items-center gap-2 text-[10px]">
+          <span className="flex items-center gap-1 rounded-lg border border-cyan-500/30 bg-cyan-950/30 px-2 py-1 font-bold text-cyan-300"><Zap className="size-3" /> {Math.floor(energy)} energy</span>
+          <span className="flex items-center gap-1 rounded-lg border border-amber-500/30 bg-amber-950/30 px-2 py-1 font-bold text-amber-300"><Trophy className="size-3" /> {board.stats.completed} done</span>
+          <span className="rounded-lg border border-slate-700/50 bg-slate-900/50 px-2 py-1 font-bold text-slate-400">Lv.{level}</span>
         </div>
       </div>
 
-      {/* Active / completed tabs */}
-      <div className="flex gap-1 px-4 pt-2.5">
-        <button onClick={() => setActiveTab("active")} className={`px-3 py-1 rounded-t-lg text-[10px] font-black ${activeTab === "active" ? "bg-cyan-500/20 text-cyan-300 border-t border-x border-cyan-400/30" : "text-slate-500"}`}>Active</button>
-        <button onClick={() => setActiveTab("completed")} className={`px-3 py-1 rounded-t-lg text-[10px] font-black ${activeTab === "completed" ? "bg-green-500/20 text-green-300 border-t border-x border-green-400/30" : "text-slate-500"}`}>Completed ({districtsCompleted})</button>
-      </div>
-
-      {/* MAP VIEW */}
       {view === "map" && (
-        <div className="relative overflow-hidden" style={{ height: 420 }}>
+        <div className="relative overflow-hidden" style={{ height: 480 }}>
           <div
             className="absolute inset-0 cursor-grab active:cursor-grabbing"
             onMouseDown={(e) => {
@@ -157,157 +196,180 @@ export function MissionsMapPanel() {
               window.addEventListener("mousemove", move); window.addEventListener("mouseup", up);
             }}
           >
-            <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "center center", width: "100%", height: "100%", transition: "transform 0.15s" }}
-              className="relative bg-gradient-to-br from-[#071018] via-[#0a1628] to-[#05080f]">
-              {/* city grid */}
+            <div style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`, transformOrigin: "center center", transition: "transform 0.15s" }} className="relative size-full bg-gradient-to-br from-[#071018] via-[#0a1628] to-[#05080f]">
+              {/* grid + roads */}
               <svg className="absolute inset-0 size-full" preserveAspectRatio="none">
-                {Array.from({ length: 12 }, (_, i) => (
-                  <line key={`h${i}`} x1="0" y1={`${(i + 1) * 8.3}%`} x2="100%" y2={`${(i + 1) * 8.3}%`} stroke="rgba(34,211,238,0.06)" strokeWidth="1" />
-                ))}
-                {Array.from({ length: 14 }, (_, i) => (
-                  <line key={`v${i}`} x1={`${(i + 1) * 7.1}%`} y1="0" x2={`${(i + 1) * 7.1}%`} y2="100%" stroke="rgba(34,211,238,0.06)" strokeWidth="1" />
-                ))}
-                {/* roads between districts */}
-                {EMPIRE_DISTRICTS.map((d, i) => {
-                  const next = EMPIRE_DISTRICTS[(i + 1) % EMPIRE_DISTRICTS.length];
-                  const a = DISTRICT_POS[d], b = DISTRICT_POS[next];
-                  if (!a || !b) return null;
-                  return <line key={`r${i}`} x1={`${a.x}%`} y1={`${a.y}%`} x2={`${b.x}%`} y2={`${b.y}%`} stroke="rgba(251,191,36,0.1)" strokeWidth="2" strokeDasharray="6 4" />;
+                {Array.from({ length: 12 }, (_, i) => <line key={`h${i}`} x1="0" y1={`${(i + 1) * 8.3}%`} x2="100%" y2={`${(i + 1) * 8.3}%`} stroke="rgba(34,211,238,0.05)" />)}
+                {Array.from({ length: 14 }, (_, i) => <line key={`v${i}`} x1={`${(i + 1) * 7.1}%`} y1="0" x2={`${(i + 1) * 7.1}%`} y2="100%" stroke="rgba(34,211,238,0.05)" />)}
+                {districtStatus.map((d, i) => {
+                  const next = districtStatus[(i + 1) % districtStatus.length];
+                  return <line key={`r${i}`} x1={`${d.x}%`} y1={`${d.y}%`} x2={`${next.x}%`} y2={`${next.y}%`} stroke="rgba(251,191,36,0.08)" strokeWidth="2" strokeDasharray="6 5" />;
                 })}
               </svg>
 
-              {/* district pins */}
-              {visibleDistricts.map((d) => {
-                const pos = DISTRICT_POS[d];
-                if (!pos) return null;
-                const prog = progress[d] ?? 0;
-                const conquered = prog >= 3;
-                const idx = EMPIRE_DISTRICTS.indexOf(d);
-                const tasks = districtTasks(idx, prog);
-                const isHl = highlighted === null || highlighted.includes(d);
-                const isSel = selected === d;
-                const lockLevel = 5 + idx * 3;
-                const locked = level < lockLevel && !conquered;
+              {/* district labels */}
+              {districtStatus.map((d) => (
+                <div key={d.name} className="absolute -translate-x-1/2 whitespace-nowrap rounded bg-slate-950/70 px-1.5 py-0.5 text-[8px] font-black tracking-wider text-slate-400"
+                  style={{ left: `${d.x}%`, top: `${d.y - 9.5}%` }}>
+                  {d.name.toUpperCase()} <span className={d.conquered ? "text-green-400" : "text-slate-600"}>{d.conquered ? "🏆" : `🔒Lv.${d.lockLevel}`}</span>
+                </div>
+              ))}
+
+              {/* ── EVERY MISSION IS A PIN (2 rings of 8) ── */}
+              {visibleMissions.map((m) => {
+                const d = DISTRICTS[m.districtIdx];
+                const ti = MISSION_TYPES.findIndex((t) => t.id === m.type);
+                const ring = ti < 8 ? 0 : 1;
+                const angle = ((ti % 8) / 8) * Math.PI * 2 + (ring ? Math.PI / 8 : 0);
+                const orbit = ring === 0 ? 2.6 : 4.4;
+                const px = d.x + Math.cos(angle) * orbit;
+                const py = d.y + Math.sin(angle) * orbit * 0.85;
+                const isHl = matchesFilter(m);
+                const isSel = selected === m.district && selType === m.type;
+                const cdLeft = (cooldowns[m.key] ?? 0) - now;
+                const onCd = cdLeft > 0;
                 return (
-                  <motion.button
-                    key={d}
-                    whileHover={{ scale: 1.15 }}
-                    onClick={() => setSelected(isSel ? null : d)}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-                    style={{ left: `${pos.x}%`, top: `${pos.y}%`, opacity: isHl ? 1 : 0.25 }}
-                  >
-                    <div className={`relative flex flex-col items-center ${isSel ? "z-30" : ""}`}>
-                      {conquered && <span className="absolute -top-1 -right-1 text-xs">🏆</span>}
-                      {locked && <span className="absolute -top-1 -right-1 text-xs">🔒</span>}
-                      <div className={`size-9 rounded-full border-2 flex items-center justify-center text-sm transition-all ${
-                        conquered ? "bg-green-500/30 border-green-400 shadow-[0_0_14px_rgba(74,222,128,0.5)]"
-                        : locked ? "bg-slate-800/80 border-slate-600"
-                        : prog > 0 ? "bg-amber-500/25 border-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.4)]"
-                        : "bg-cyan-500/20 border-cyan-400/60 shadow-[0_0_10px_rgba(34,211,238,0.3)]"
-                      }`}>
-                        {conquered ? "✅" : locked ? "—" : tasks[prog]?.icon ?? "🏙️"}
+                  <button key={m.key}
+                    onClick={() => { setSelected(m.district); setSelType(m.type); }}
+                    className="absolute z-10 -translate-x-1/2 -translate-y-1/2"
+                    style={{ left: `${px}%`, top: `${py}%`, opacity: isHl ? 1 : 0.22 }}
+                    title={`${m.name} — ${m.district}`}>
+                    <motion.div whileHover={{ scale: 1.25 }} className="relative flex flex-col items-center">
+                      {isSel && <span className="absolute -inset-1.5 animate-ping rounded-full border-2" style={{ borderColor: m.typeDef.color }} />}
+                      <div className={`flex size-6 items-center justify-center rounded-full border text-[11px] leading-none transition-all ${m.done ? "border-green-400 bg-green-500/30 shadow-[0_0_10px_rgba(74,222,128,0.6)]" : onCd ? "border-slate-600 bg-slate-800/90 opacity-70" : "border-slate-500/60 bg-slate-900/90 hover:scale-110"}`}
+                        style={!m.done && !onCd ? { borderColor: `${m.typeDef.color}aa`, boxShadow: isHl ? `0 0 9px ${m.typeDef.color}80` : undefined } : {}}>
+                        {m.done ? "✓" : m.typeDef.icon}
                       </div>
-                      <div className={`mt-1 px-1.5 py-0.5 rounded text-[8px] font-black whitespace-nowrap ${
-                        isSel ? "bg-cyan-400 text-black" : conquered ? "bg-green-900/80 text-green-300" : "bg-slate-900/85 text-slate-300"
-                      }`}>{d}</div>
-                    </div>
-                  </motion.button>
+                    </motion.div>
+                  </button>
                 );
               })}
 
-              {/* Welcome overlay when nothing selected */}
+              {/* legend */}
+              <div className="absolute bottom-2 left-2 flex max-w-[60%] flex-wrap gap-x-2 gap-y-0.5 rounded-lg bg-black/50 p-1.5 backdrop-blur">
+                {MISSION_TYPES.map((t) => (
+                  <span key={t.id} className="flex items-center gap-1 text-[7.5px] font-bold text-slate-400">
+                    <span className="inline-block size-1.5 rounded-full" style={{ background: t.color }} />{t.label}
+                  </span>
+                ))}
+              </div>
+
               {!selected && (
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                  <div className="rounded-2xl bg-black/70 backdrop-blur px-6 py-4 border border-cyan-400/20 text-center">
+                <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                  <div className="rounded-2xl border border-cyan-400/20 bg-black/70 px-6 py-4 text-center backdrop-blur">
                     <div className="text-base font-black text-cyan-300">Welcome to Strategy</div>
-                    <div className="text-[10px] text-cyan-100/60 mt-1">Select a district on the map to start a mission</div>
+                    <div className="mt-1 text-[10px] text-cyan-100/60">160 missions live — click any pin to start</div>
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Selection panel */}
-          {selected && selIdx >= 0 && (
+          {/* ── Selection panel ── */}
+          {sel && (
             <motion.div initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
-              className="absolute right-2 top-2 bottom-2 w-72 rounded-xl bg-slate-950/95 border border-cyan-400/30 p-4 overflow-y-auto z-20 backdrop-blur">
-              <div className="flex items-center justify-between mb-2">
-                <div className="text-sm font-black text-white">🏙️ {selected}</div>
-                <button onClick={() => setSelected(null)} className="text-slate-500 hover:text-white"><X className="size-4" /></button>
+              className="absolute bottom-2 right-2 top-2 z-20 w-80 overflow-y-auto rounded-xl border border-cyan-400/30 bg-slate-950/95 p-4 backdrop-blur">
+              <div className="mb-2 flex items-start justify-between">
+                <div>
+                  <div className="text-sm font-black text-white">🏙️ {sel.name}</div>
+                  <div className="text-[9px] text-slate-500">{sel.tagline} · Police: {sel.police}</div>
+                </div>
+                <button onClick={() => { setSelected(null); setSelType(null); }} className="text-slate-500 hover:text-white"><X className="size-4" /></button>
               </div>
-              <div className="text-[10px] text-slate-400 mb-3">
-                Daily income when conquered: <span className="text-green-400 font-bold">{fmt(DISTRICT_CASH[selIdx] ?? 15000)}/day</span>
-                {selProg >= 3 && <span className="text-green-400 font-bold"> · ✅ CONQUERED</span>}
+              <div className="mb-3 flex items-center gap-2 text-[10px]">
+                <span className="rounded bg-green-950/40 px-1.5 py-0.5 font-bold text-green-400">✓ {sel.doneCount}/16 missions done</span>
+                {sel.conquered ? <span className="rounded bg-amber-950/40 px-1.5 py-0.5 font-bold text-amber-300">🏆 District conquered</span> : <span className="text-slate-500">Conquer: finish 3 different mission types</span>}
+                <span className="ml-auto text-slate-500">{nf(DISTRICT_CASH[sel.idx] ?? 15000)}/day</span>
               </div>
-              {selProg < 3 ? (
-                <>
-                  <div className="text-[9px] font-black uppercase tracking-widest text-slate-500 mb-1.5">Task {selProg + 1} of 3</div>
-                  {selTasks.slice(selProg).map((t) => (
-                    <div key={t.id} className="rounded-lg border border-slate-700/50 bg-slate-900/50 p-2.5 mb-1.5">
+              <div className="space-y-1.5">
+                {selMissions.map((m) => {
+                  const cdLeft = (cooldowns[m.key] ?? 0) - now;
+                  const onCd = cdLeft > 0;
+                  const locked = level < m.lockLevel && !m.done;
+                  const noEnergy = energy < m.typeDef.energy;
+                  const isSel = selType === m.type;
+                  return (
+                    <div key={m.key} className={`rounded-lg border p-2.5 transition-all ${isSel ? "border-cyan-400/50 bg-cyan-950/20" : m.done ? "border-green-500/30 bg-green-950/10" : "border-slate-700/50 bg-slate-900/50"}`}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{t.icon}</span>
-                        <div>
-                          <div className="text-[11px] font-bold text-white">{t.label}</div>
-                          <div className="text-[9px] text-slate-500">{t.desc}</div>
+                        <span className="text-lg">{m.done ? "✅" : m.typeDef.icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-[11px] font-bold text-white">{m.name}</div>
+                          <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
+                            <span style={{ color: m.typeDef.color }}>{m.typeDef.label}</span>
+                            <span>·</span>
+                            <span className={m.done ? "text-green-400" : "text-amber-400"}>+{rewardLabel(m.typeDef.currency, m.reward)}</span>
+                            <span>·</span>
+                            <span>{m.typeDef.energy}⚡</span>
+                          </div>
                         </div>
+                        <button disabled={m.done || busy === m.key || locked || onCd || noEnergy}
+                          onClick={() => run(m.key)}
+                          className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:cursor-not-allowed disabled:opacity-40 ${
+                            m.done ? "bg-green-900/40 text-green-400" : "bg-gradient-to-r from-cyan-500 to-blue-500 text-black hover:brightness-110"}`}>
+                          {m.done ? "DONE" : locked ? `🔒Lv${m.lockLevel}` : onCd ? fmtClock(cdLeft) : noEnergy ? "NO ⚡" : busy === m.key ? "…" : "RUN"}
+                        </button>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-800">
+                          <div className="h-full rounded-full" style={{ width: `${(m.progress / 3) * 100}%`, background: m.typeDef.color }} />
+                        </div>
+                        <span className="text-[8px] font-bold text-slate-500">{m.progress}/3 {pinDots(m.progress, 3)}</span>
                       </div>
                     </div>
-                  ))}
-                  <button disabled={busy === selected || level < (5 + selIdx * 3)}
-                    onClick={() => run(selected!)}
-                    className="mt-2 w-full px-3 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-black text-xs font-black hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed">
-                    {level < (5 + selIdx * 3) ? `🔒 Requires Lv.${5 + selIdx * 3}` : busy === selected ? "Working…" : `Execute Task ${selProg + 1} — ${selTasks[selProg]?.label}`}
-                  </button>
-                  <div className="text-[9px] text-slate-500 mt-1.5 text-center">Costs 15 energy · +250 XP per task</div>
-                </>
-              ) : (
-                <div className="rounded-lg bg-green-950/30 border border-green-500/30 p-3 text-center">
-                  <div className="text-2xl mb-1">🏆</div>
-                  <div className="text-xs font-black text-green-400">District Conquered</div>
-                  <div className="text-[10px] text-green-300/70 mt-0.5">This district pays daily empire income</div>
-                </div>
-              )}
+                  );
+                })}
+                {selMissions.length === 0 && <div className="py-6 text-center text-[10px] text-slate-500">No missions match your filters in this district.</div>}
+              </div>
             </motion.div>
           )}
         </div>
       )}
 
-      {/* LIST VIEW */}
+      {/* ── LIST VIEW ── */}
       {view === "list" && (
-        <div className="p-4 grid gap-2 md:grid-cols-2">
-          {visibleDistricts.map((d) => {
-            const idx = EMPIRE_DISTRICTS.indexOf(d);
-            const prog = progress[d] ?? 0;
-            const tasks = districtTasks(idx, prog);
-            const conquered = prog >= 3;
-            const lockLevel = 5 + idx * 3;
+        <div className="grid max-h-[560px] gap-2 overflow-y-auto p-4 md:grid-cols-2 xl:grid-cols-3">
+          {listMissions.map((m) => {
+            const cdLeft = (cooldowns[m.key] ?? 0) - now;
+            const onCd = cdLeft > 0;
+            const locked = level < m.lockLevel && !m.done;
             return (
-              <div key={d} className={`rounded-xl border p-3 ${conquered ? "border-green-500/40 bg-green-950/20" : (highlighted === null || highlighted.includes(d)) ? "border-slate-700/50 bg-slate-900/40" : "border-slate-800/30 bg-slate-900/20 opacity-40"}`}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <div className="text-xs font-black text-white">{conquered ? "🏆" : "🏙️"} {d}</div>
-                  <div className="text-[9px] text-slate-500">{fmt(DISTRICT_CASH[idx] ?? 15000)}/day</div>
-                </div>
-                <div className="flex items-center gap-1 mb-2">
-                  {tasks.map((t, i) => (
-                    <span key={i} className={`px-1.5 py-0.5 rounded text-[8px] font-bold ${i < prog ? "bg-green-500/20 text-green-400 line-through" : "bg-slate-800/80 text-slate-400"}`}>{t.icon} {t.label}</span>
-                  ))}
-                </div>
+              <div key={m.key} className={`rounded-xl border p-3 ${m.done ? "border-green-500/30 bg-green-950/10" : "border-slate-700/50 bg-slate-900/40"}`}>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-cyan-500 to-green-500 rounded-full" style={{ width: `${(prog / 3) * 100}%` }} />
+                  <span className="text-lg">{m.typeDef.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[11px] font-black text-white">{m.name}</div>
+                    <div className="text-[9px] text-slate-500">{m.district} · <span style={{ color: m.typeDef.color }}>{m.typeDef.label}</span></div>
                   </div>
-                  <button disabled={conquered || busy === d || level < lockLevel} onClick={() => run(d)}
-                    className="px-2.5 py-1 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 text-black text-[9px] font-black disabled:opacity-40">
-                    {conquered ? "✅" : level < lockLevel ? `Lv.${lockLevel}` : busy === d ? "…" : "GO"}
+                  <button disabled={m.done || busy === m.key || locked || onCd || energy < m.typeDef.energy}
+                    onClick={() => run(m.key)}
+                    className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:opacity-40 ${m.done ? "bg-green-900/40 text-green-400" : "bg-gradient-to-r from-cyan-500 to-blue-500 text-black"}`}>
+                    {m.done ? "✅" : locked ? `🔒Lv${m.lockLevel}` : onCd ? fmtClock(cdLeft) : "RUN"}
                   </button>
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-[9px] text-slate-500">
+                  <span className="font-bold text-amber-400">+{rewardLabel(m.typeDef.currency, m.reward)}</span>
+                  <span>· {m.typeDef.energy}⚡</span>
+                  <span>· {m.typeDef.cooldownMin}m cd</span>
+                  <span className="ml-auto">{m.progress}/3</span>
+                </div>
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-800">
+                  <div className="h-full rounded-full" style={{ width: `${(m.progress / 3) * 100}%`, background: m.typeDef.color }} />
                 </div>
               </div>
             );
           })}
+          {listMissions.length === 0 && <div className="col-span-full py-8 text-center text-xs text-slate-500">No missions match — clear your filters.</div>}
         </div>
       )}
 
-      {msg && <div className={`mx-4 mb-3 rounded-xl px-3 py-2 text-xs font-bold border ${msg.ok ? "bg-green-950/30 border-green-500/30 text-green-400" : "bg-rose-950/30 border-rose-500/30 text-rose-400"}`}>{msg.ok ? "✅ " : "⚠️ "}{msg.text}</div>}
+      {msg && (
+        <div className={`mx-4 mb-3 rounded-xl border px-3 py-2 text-xs font-bold ${msg.ok ? "border-green-500/30 bg-green-950/30 text-green-400" : "border-rose-500/30 bg-rose-950/30 text-rose-400"}`}>
+          {msg.text}
+        </div>
+      )}
     </div>
   );
 }
+
+// Re-export type for consumers
+export type { MissionTypeId };
