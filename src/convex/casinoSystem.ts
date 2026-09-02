@@ -163,10 +163,13 @@ export const settleCasinoRound = mutation({
       }
       await ctx.db.patch(casino._id, patch);
       await ctx.db.insert("casinoRounds", { userId, gameId: args.gameId, wager, payout, net, currency: "cash", timestamp: Date.now() });
+      // Mission-board counter: every settled casino round counts
+      await ctx.db.patch(userId, { casinoRounds: n(player.casinoRounds, 0) + 1 } as any);
       return { bank: patch.casinoBank, seized, newOwner: seized ? (player.nickname ?? player.username) : undefined };
     }
     // No casino row (e.g. betting-shop style games) — still record the round
     await ctx.db.insert("casinoRounds", { userId, gameId: args.gameId, wager, payout, net, currency: "cash", timestamp: Date.now() });
+    await ctx.db.patch(userId, { casinoRounds: n(player.casinoRounds, 0) + 1 } as any);
     return { bank: null, seized: false };
   },
 });
@@ -190,6 +193,7 @@ export const settleCoinRound = mutation({
       await ctx.db.patch(casino._id, { casinoBank: n(casino.casinoBank) + Math.floor(wager * 0.2) });
     }
     await ctx.db.insert("casinoRounds", { userId, gameId: args.gameId, wager, payout, net, currency: "coins", timestamp: Date.now() });
+    await ctx.db.patch(userId, { casinoRounds: n(player.casinoRounds, 0) + 1 } as any);
     return { coins: n(player.coins) + payout };
   },
 });

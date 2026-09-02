@@ -1098,7 +1098,7 @@ export const buyBullets = mutation({
     const pricePer = 17_250;
     const cost = amount * pricePer;
     if (n(player.money, 0) < cost) throw new Error("Not enough money!");
-    await ctx.db.patch(player._id, { money: n(player.money, 0) - cost, bullets: n(player.bullets, 0) + amount });
+    await ctx.db.patch(player._id, { money: n(player.money, 0) - cost, bullets: n(player.bullets, 0) + amount, bulletsBought: n((player as any).bulletsBought, 0) + amount } as any);
     return { success: true, amount, cost };
   },
 });

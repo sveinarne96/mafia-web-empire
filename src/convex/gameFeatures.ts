@@ -479,7 +479,7 @@ export const buyProperty = mutation({
     if (prop.ownerId) throw new Error("Already owned!");
     if (player.money < prop.price) throw new Error("Not enough money!");
     await ctx.db.patch(args.propertyId, { ownerId: player._id });
-    await ctx.db.patch(player._id, { money: player.money - prop.price });
+    await ctx.db.patch(player._id, { money: player.money - prop.price, propertiesBought: ((player as any).propertiesBought ?? 0) + 1 } as any);
     return { bought: prop.name };
   },
 });
@@ -990,7 +990,7 @@ export const finishStreetRace = mutation({
     const winnerId = race.participants[winnerIdx];
     await ctx.db.patch(args.raceId, { status: "finished", winnerId });
     const winner = await ctx.db.get(winnerId);
-    if (winner) await ctx.db.patch(winnerId, { money: winner.money + race.prizePool });
+    if (winner) await ctx.db.patch(winnerId, { money: winner.money + race.prizePool, racesWon: ((winner as any).racesWon ?? 0) + 1 } as any);
     return { winnerId, prizePool: race.prizePool };
   },
 });

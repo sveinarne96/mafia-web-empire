@@ -77,7 +77,7 @@ export const depositInterest = mutation({
     if (!player) throw new Error("Not authenticated");
     const amount = Math.max(1, Math.floor(args.amount));
     if (n(player.money, 0) < amount) throw new Error("Not enough cash");
-    await ctx.db.patch(player._id, { money: n(player.money, 0) - amount, interestBank: n(player.interestBank, 0) + amount });
+    await ctx.db.patch(player._id, { money: n(player.money, 0) - amount, interestBank: n(player.interestBank, 0) + amount, interestCollections: n((player as any).interestCollections, 0) + 1 } as any);
     return { success: true, amount };
   },
 });
@@ -438,7 +438,7 @@ export const sellSupplies = mutation({
     sp.day = day;
     ws.supply = sp;
     ws.supplyStats = sp;
-    await ctx.db.patch(player._id, { money: n(player.money, 0) + revenue, worldState: ws });
+    await ctx.db.patch(player._id, { money: n(player.money, 0) + revenue, worldState: ws, supplyRuns: n((player as any).supplyRuns, 0) + 1 } as any);
     return { success: true, qty, revenue };
   },
 });
@@ -473,7 +473,7 @@ export const buyProperty = mutation({
     if (n(player.money, 0) < loc) throw new Error(`Need $${loc.toLocaleString()}`);
     est.owned.push({ location: args.location, upgrades: 0, constructStart: Date.now() });
     ws.estate = est;
-    await ctx.db.patch(player._id, { money: n(player.money, 0) - loc, worldState: ws });
+    await ctx.db.patch(player._id, { money: n(player.money, 0) - loc, worldState: ws, propertiesBought: n((player as any).propertiesBought, 0) + 1 } as any);
     return { success: true, location: args.location, cost: loc };
   },
 });
