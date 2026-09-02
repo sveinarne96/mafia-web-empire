@@ -367,29 +367,202 @@ function BankPage() {
   );
 }
 
+const HOSPITAL_CONDITIONS: Record<string, string> = {
+  ambulance: "🚑", helicopter: "🚁", medivac: "🛩️", walk_in: "🚶",
+};
+
+function HospitalLiveDispatch({ dispatch }: { dispatch: any[] }) {
+  if (!dispatch || dispatch.length === 0) return null;
+  return (
+    <div className="relative overflow-hidden rounded-xl border border-red-500/30 bg-gradient-to-r from-red-950/40 via-slate-950/60 to-red-950/40 p-4">
+      <div className="absolute inset-0 opacity-20 animate-shimmer pointer-events-none"
+        style={{ background: "linear-gradient(90deg, transparent 30%, rgba(239,68,68,0.25) 50%, transparent 70%)" }} />
+      <div className="relative flex items-center gap-2 mb-2">
+        <span className="text-[9px] font-black uppercase tracking-[0.25em] text-red-400 animate-pulse">🔴 Live Emergency Dispatch</span>
+      </div>
+      <div className="relative space-y-1.5">
+        {dispatch.map((v: any, i: number) => {
+          const eta = Math.max(0, Math.round((45_000 - (Date.now() - v.admittedAt)) / 1000));
+          return (
+            <div key={v._id ?? i} className="flex items-center gap-2 text-[10px]">
+              <span className="text-base animate-float" style={{ animationDelay: `${i * 0.3}s` }}>{HOSPITAL_CONDITIONS[v.emergencyType] ?? "🚑"}</span>
+              <span className="text-red-300 font-bold">{v.conditionIcon} {v.condition}</span>
+              <span className="text-slate-500">— {v.playerName}</span>
+              <span className="ml-auto font-mono text-amber-400">{eta}s ETA</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function HospitalSkyScene({ severity, admittedAt }: { severity: string; admittedAt: number }) {
+  const elapsed = Date.now() - admittedAt;
+  const progress = Math.min(1, elapsed / 45_000);
+  const vehicle = severity === "critical" ? "🛩️" : severity === "serious" ? "🚁" : "🚑";
+  return (
+    <div className="relative h-28 overflow-hidden rounded-xl border border-slate-700/40 bg-gradient-to-b from-[#0b1026] via-[#0d1b3a] to-[#05070f]">
+      {[...Array(14)].map((_, i) => (
+        <div key={i} className="absolute rounded-full bg-white/70 animate-pulse"
+          style={{ width: 2, height: 2, left: `${(i * 37) % 100}%`, top: `${(i * 23) % 60}%`, animationDelay: `${i * 0.2}s` }} />
+      ))}
+      <div className="absolute bottom-0 left-0 right-0 h-8 bg-slate-900/80 border-t border-slate-700/40" />
+      <div className="absolute bottom-6 left-4 text-lg">🏥</div>
+      <div className="absolute bottom-6 right-6 text-lg">🏘️</div>
+      <motion.div
+        animate={{ x: ["-12%", "112%"] }}
+        transition={{ repeat: Infinity, duration: Math.max(6, 45 - progress * 39), ease: "linear" }}
+        className="absolute top-6 text-3xl drop-shadow-[0_0_12px_rgba(239,68,68,0.7)]"
+      >{vehicle}</motion.div>
+      <div className="absolute top-1 right-2 text-[9px] font-black uppercase tracking-widest text-red-400">
+        {severity === "critical" ? "🚨 Code Red" : severity === "serious" ? "⚠️ Urgent" : "Routine"}
+      </div>
+      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[9px] text-slate-500 font-mono">
+        inbound patient · triage in progress
+      </div>
+    </div>
+  );
+}
+
 function HospitalPage() {
   const player = useQuery(api.game.getPlayer);
-  const healAtHospital = useMutation(api.game.healAtHospital);
+  const hospitalData = useQuery(api.hospitalSystem.getHospitalData);
+  const admit = useMutation(api.hospitalSystem.admitToHospital);
+  const payInvoice = useMutation(api.hospitalSystem.payInvoice);
+  const walkIn = useMutation(api.hospitalSystem.walkInTreatment);
+  const [msg, setMsg] = useState<{ text: string; good: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [, forceTick] = useState(0);
+
+  useEffect(() => { const iv = setInterval(() => forceTick((t) => t + 1), 1000); return () => clearInterval(iv); }, []);
+
+  if (player === undefined || hospitalData === undefined) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading hospital…</div>;
+  if (!player) return <div className="text-center py-8 text-muted-foreground">Sign in to visit the hospital.</div>;
+
+  const life = player.life ?? 0;
+  const maxLife = player.maxLife ?? 100;
+  const deficit = maxLife - life;
+  const deficitPct = Math.round((deficit / maxLife) * 100);
+  const activeVisit = (hospitalData as any)?.activeVisit;
+  const dispatch = (hospitalData as any)?.liveDispatch ?? [];
+  const history = (hospitalData as any)?.history ?? [];
+  const hasInsurance = !!(player as any).insuranceActive;
+
   const treatments = [
-    { name: "Basic Bandage", price: 100, heal: 20, icon: "🩹" },
-    { name: "First Aid Kit", price: 500, heal: 50, icon: "🏥" },
-    { name: "Full Treatment", price: 2000, heal: 100, icon: "💊" },
+    { id: "triage" as const, name: "ER Triage & Stitches", icon: "🩹", desc: "Patched up in the emergency room · heals 25% of missing health", cost: 5_000, color: "from-emerald-600/30 to-emerald-900/20 border-emerald-500/30" },
+    { id: "surgery" as const, name: "Emergency Surgery", icon: "🏥", desc: "Theatre, anesthetist, the works · heals 60% of missing health", cost: 45_000, color: "from-sky-600/30 to-sky-900/20 border-sky-500/30" },
+    { id: "full_recovery" as const, name: "Full Recovery Program", icon: "💉", desc: "Private ward, IV drips, top specialists · full heal", cost: 150_000, color: "from-fuchsia-600/30 to-fuchsia-900/20 border-fuchsia-500/30" },
   ];
-  if (!player) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
+
+  const run = async (fn: () => Promise<any>) => {
+    setBusy(true); setMsg(null);
+    try { const r = await fn(); setMsg({ text: r?.message ?? "✅ Treatment complete — you feel better already.", good: true }); }
+    catch (e: any) { setMsg({ text: e.message, good: false }); }
+    setBusy(false);
+  };
+
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><HeartPulse className="size-7 text-primary" /><h2 className="text-2xl font-bold">Hospital</h2></div>
-      <div className="mafia-card rounded-xl p-4 text-center"><div className="text-xs text-muted-foreground">❤️ Health</div><div className="text-xl font-bold text-red-400">{player.life ?? 0} / {player.maxLife ?? 100}</div></div>
-      <div className="space-y-2">
+      <div className="flex items-center gap-3 flex-wrap">
+        <HeartPulse className="size-7 text-red-400" />
+        <h2 className="text-2xl font-black tracking-tight">Shadow General Hospital</h2>
+        {hasInsurance && <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-[9px] font-black">🛡️ INSURED · 85% COVERED</span>}
+      </div>
+
+      {/* Patient status */}
+      <div className="mafia-card rounded-xl p-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-bold text-slate-300">❤️ Patient Vitals</span>
+          <span className={`text-xs font-black ${life / maxLife > 0.5 ? "text-emerald-400" : life / maxLife > 0.25 ? "text-amber-400" : "text-red-400"}`}>{life.toLocaleString()} / {maxLife.toLocaleString()} HP</span>
+        </div>
+        <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden border border-slate-700/40">
+          <motion.div animate={{ width: `${(life / maxLife) * 100}%` }} transition={{ duration: 0.6 }}
+            className={`h-full rounded-full ${life / maxLife > 0.5 ? "bg-gradient-to-r from-emerald-500 to-emerald-400" : life / maxLife > 0.25 ? "bg-gradient-to-r from-amber-500 to-amber-400" : "bg-gradient-to-r from-red-600 to-red-400 animate-pulse"}`}
+            style={{ boxShadow: "0 0 12px rgba(239,68,68,0.5)" }} />
+        </div>
+        {deficit > 0 && <div className="text-[10px] text-red-400 mt-1.5">⚠️ {deficit.toLocaleString()} HP missing ({deficitPct}% trauma) — treatment recommended</div>}
+      </div>
+
+      {/* Emergency admission */}
+      {deficit >= maxLife * 0.15 && !activeVisit && (
+        <button onClick={async () => { try { await admit({ lifePercent: (life / maxLife) * 100 }); setMsg({ text: "🚨 Emergency services dispatched! Vehicle en route…", good: true }); } catch (e: any) { setMsg({ text: e.message, good: false }); } }}
+          className="relative w-full rounded-xl border-2 border-red-500/50 bg-gradient-to-r from-red-950/60 via-red-900/40 to-red-950/60 px-4 py-4 text-left overflow-hidden group hover:border-red-400 transition-all">
+          <div className="absolute inset-0 animate-shimmer opacity-30 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 30%, rgba(239,68,68,0.3) 50%, transparent 70%)" }} />
+          <div className="relative flex items-center gap-3">
+            <span className="text-3xl animate-float">🚨</span>
+            <div className="flex-1">
+              <div className="text-sm font-black text-red-300">CALL AN AMBULANCE — 911</div>
+              <div className="text-[10px] text-red-400/80">Critical condition detected. Dispatch ground ambulance, air-ambulance helicopter or medivac jet. You'll receive a realistic invoice.</div>
+            </div>
+            <span className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-[10px] font-black group-hover:bg-red-500">DISPATCH</span>
+          </div>
+        </button>
+      )}
+
+      {/* Active admission */}
+      {activeVisit && (
+        <div className="space-y-3">
+          <HospitalSkyScene severity={activeVisit.severity} admittedAt={activeVisit.admittedAt} />
+          <div className="mafia-card rounded-xl p-4 border border-red-500/30 space-y-3">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl animate-float">{HOSPITAL_CONDITIONS[activeVisit.emergencyType] ?? "🚑"}</span>
+              <div className="flex-1">
+                <div className="text-sm font-black text-white">{activeVisit.conditionIcon} {activeVisit.condition}</div>
+                <div className="text-[10px] text-muted-foreground">{activeVisit.severity === "critical" ? "Code Red — medivac" : activeVisit.severity === "serious" ? "Urgent — air ambulance" : "Standard — ground ambulance"} · admitted {Math.floor((Date.now() - activeVisit.admittedAt) / 60000)} min ago</div>
+              </div>
+            </div>
+            <div className="rounded-lg bg-slate-900/60 border border-slate-700/40 p-3 space-y-2">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-slate-400 uppercase tracking-widest font-bold">Invoice #{String(activeVisit._id ?? "000000").slice(-6)}</span>
+                <span className="text-red-300 font-black">${(activeVisit.invoice ?? 0).toLocaleString()}</span>
+              </div>
+              <div className="text-[9px] text-slate-500">Includes {HOSPITAL_CONDITIONS[activeVisit.emergencyType] === "🛩️" ? "medivac jet" : HOSPITAL_CONDITIONS[activeVisit.emergencyType] === "🚁" ? "air ambulance" : "ground ambulance"} transport, surgeons, anaesthesia & ward care.</div>
+              <div className="grid grid-cols-2 gap-2">
+                <button disabled={busy} onClick={() => run(async () => { const r: any = await payInvoice({ visitId: activeVisit._id, paymentMethod: "cash" }); return { message: `✅ Discharged! Paid $${r.cost.toLocaleString()} · healed ${r.healed} HP` }; })}
+                  className="px-3 py-2 bg-gradient-to-r from-emerald-600 to-green-500 text-white rounded-lg text-[10px] font-black disabled:opacity-40">💵 PAY CASH</button>
+                <button disabled={busy || !hasInsurance} onClick={() => run(async () => { const r: any = await payInvoice({ visitId: activeVisit._id, paymentMethod: "insurance" }); return { message: `✅ Insurance covered 85% — you paid $${r.cost.toLocaleString()} · healed ${r.healed} HP` }; })}
+                  className="px-3 py-2 bg-gradient-to-r from-sky-600 to-blue-500 text-white rounded-lg text-[10px] font-black disabled:opacity-40" title={hasInsurance ? "Insurance covers 85%" : "Requires health insurance"}>🛡️ USE INSURANCE</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Walk-in treatments */}
+      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">🚶 Walk-in Treatments</div>
+      <div className="grid gap-2 md:grid-cols-3">
         {treatments.map(t => (
-          <div key={t.name} className="mafia-card rounded-xl p-4 flex items-center gap-4">
-            <span className="text-3xl">{t.icon}</span>
-            <div className="flex-1"><div className="font-bold">{t.name}</div><div className="text-xs text-green-400">+{t.heal} HP</div></div>
-            <button onClick={async () => { try { await healAtHospital({ speed: t.heal > 30 ? "premium" : "standard" }); } catch {} }} disabled={(player.money ?? 0) < t.price || player.life >= player.maxLife}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold disabled:opacity-40">${t.price.toLocaleString()}</button>
+          <div key={t.id} className={`mafia-card rounded-xl p-4 bg-gradient-to-br border ${t.color}`}>
+            <div className="text-3xl mb-1">{t.icon}</div>
+            <div className="text-sm font-black text-white">{t.name}</div>
+            <div className="text-[10px] text-slate-400 mt-0.5 mb-2 min-h-8">{t.desc}</div>
+            <button disabled={busy || (player.money ?? 0) < t.cost || life >= maxLife} onClick={() => run(async () => { const r: any = await walkIn({ tier: t.id }); return { message: `✅ ${t.name} done — healed ${r.healed} HP for $${r.cost.toLocaleString()}` }; })}
+              className="w-full px-3 py-2 bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-lg text-[10px] font-black disabled:opacity-30 transition-all">
+              ${t.cost.toLocaleString()}{hasInsurance && <span className="text-emerald-300"> · $15%</span>}
+            </button>
           </div>
         ))}
       </div>
+
+      <HospitalLiveDispatch dispatch={dispatch} />
+
+      {/* History */}
+      {history.length > 0 && (
+        <div className="mafia-card rounded-xl p-4">
+          <div className="text-xs font-black text-slate-300 uppercase tracking-widest mb-2">📋 Medical Records</div>
+          <div className="space-y-1">
+            {history.map((v: any) => (
+              <div key={v._id} className="flex items-center justify-between text-[10px] py-1 border-b border-slate-700/20 last:border-0">
+                <span>{v.conditionIcon} {v.condition} <span className="text-slate-500">· {new Date(v.admittedAt).toLocaleDateString()}</span></span>
+                <span className="text-emerald-400 font-bold">${(v.invoice ?? 0).toLocaleString()} ✓</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {msg && <div className={`rounded-xl px-4 py-2.5 text-xs font-bold text-center border ${msg.good ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-300" : "bg-rose-500/15 border-rose-400/40 text-rose-300"}`}>{msg.text}</div>}
     </div>
   );
 }

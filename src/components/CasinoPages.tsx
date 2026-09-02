@@ -109,74 +109,167 @@ const CASINO_GAMES = [
   { name: "Poker", icon: "🂡", desc: "Texas Hold'em — bluff your way to victory", owner: "Potter", maxBet: "$1,000" },
 ];
 
+const GAME_ID_MAP: Record<string, string> = {
+  Dice: "dice", Roulette: "roulette", Blackjack: "blackjack", Racetrack: "racetrack", Poker: "videopoker",
+};
+
+function CasinoRow({ casino, player, refresh, isMine }: { casino: any; player: any; refresh: () => void; isMine: boolean }) {
+  const purchase = useMutation(api.casinoSystem.purchaseCasino);
+  const deposit = useMutation(api.casinoSystem.depositCasinoBank);
+  const withdraw = useMutation(api.casinoSystem.withdrawCasinoBank);
+  const setBuyBack = useMutation(api.casinoSystem.setBuyBackPrice);
+  const buyBack = useMutation(api.casinoSystem.buyBackCasino);
+  const [amt, setAmt] = useState(1_000_000);
+  const [buyPrice, setBuyPrice] = useState(casino.boughtBackPrice ?? casino.purchasePrice ?? 10_000_000);
+  const [msg, setMsg] = useState("");
+  const userId = (player as any)?._id;
+  const wasMine = casino.lostByUserId === userId;
+
+  const act = async (fn: () => Promise<any>) => {
+    try { await fn(); setMsg(""); refresh(); } catch (e: any) { setMsg(e.message); }
+  };
+
+  const danger = isMine && (casino.casinoBank ?? 0) <= (casino.purchasePrice ?? 0) * 0.05;
+
+  return (
+    <div className={`rounded-xl p-4 border transition-all ${
+      isMine ? "border-amber-500/50 bg-gradient-to-br from-amber-950/30 to-slate-950/50 shadow-[0_0_16px_rgba(251,191,36,0.15)]"
+      : wasMine ? "border-rose-500/40 bg-gradient-to-br from-rose-950/30 to-slate-950/50"
+      : casino.ownerId ? "border-slate-700/30 bg-slate-950/40"
+      : "border-emerald-600/30 bg-emerald-950/20"}`}>
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-3xl">{casino.icon}</span>
+        <div className="flex-1 min-w-[140px]">
+          <div className="text-sm font-black text-white">{casino.name}</div>
+          <div className="text-[10px] text-muted-foreground">
+            {casino.ownerId
+              ? (isMine ? <span className="text-amber-300 font-bold">👑 You own this</span> : <span>Owner: <span className="text-green-400 font-bold">{casino.ownerName}</span></span>)
+              : <span className="text-emerald-400 font-bold">Available for purchase</span>}
+          </div>
+        </div>
+        <div className="text-right">
+          <div className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">Casino Bank</div>
+          <div className={`text-sm font-black ${(casino.casinoBank ?? 0) > 0 ? "text-amber-300" : "text-red-400 animate-pulse"}`}>${(casino.casinoBank ?? 0).toLocaleString()}</div>
+        </div>
+      </div>
+
+      {isMine && danger && (
+        <div className="mt-2 rounded-lg bg-red-500/10 border border-red-500/40 px-3 py-2 text-[10px] font-bold text-red-300 animate-pulse">
+          🚨 BANK CRITICAL — fund your casino bank NOW or the next big winner drains it to $0 and takes the whole casino!
+        </div>
+      )}
+
+      {isMine && (
+        <div className="mt-3 space-y-2">
+          <div className="flex gap-2 flex-wrap items-center">
+            <input type="number" value={amt} min={1} onChange={(e) => setAmt(Math.max(1, Math.floor(Number(e.target.value) || 0)))}
+              className="w-40 px-2 py-1.5 rounded-lg bg-slate-900/70 border border-slate-700/50 text-xs text-white focus:outline-none focus:border-amber-400/50" />
+            <button onClick={() => act(() => deposit({ casinoId: casino._id, amount: amt }))} disabled={(player?.money ?? 0) < amt}
+              className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-black hover:bg-emerald-500 disabled:opacity-40">💰 Deposit</button>
+            <button onClick={() => act(() => withdraw({ casinoId: casino._id, amount: amt }))}
+              className="px-3 py-1.5 rounded-lg bg-sky-600 text-white text-[10px] font-black hover:bg-sky-500">🏧 Withdraw</button>
+            <button onClick={() => act(() => setBuyBack({ casinoId: casino._id, price: buyPrice }))}
+              className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-[10px] font-black hover:bg-violet-500" title="If this casino is ever drained and taken, this is the price YOU can buy it back at">🎯 Set Buy-back: ${buyPrice.toLocaleString()}</button>
+          </div>
+          <input type="range" min={1_000_000} max={500_000_000} step={1_000_000} value={buyPrice} onChange={(e) => setBuyPrice(Number(e.target.value))} className="w-full" />
+          <div className="text-[9px] text-slate-500">House edge accrues to your casino bank on every bet placed here. Total revenue: <span className="text-emerald-400 font-bold">${(casino.totalRevenue ?? 0).toLocaleString()}</span> · players served: {casino.playersServed ?? 0}</div>
+        </div>
+      )}
+
+      {!isMine && !casino.ownerId && (
+        <button onClick={() => act(() => purchase({ casinoId: casino._id }))} disabled={(player?.money ?? 0) < (casino.purchasePrice ?? 0)}
+          className="mt-3 w-full px-3 py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-green-500 text-white text-xs font-black hover:brightness-110 disabled:opacity-40">
+          🎰 Buy Casino — ${(casino.purchasePrice ?? 0).toLocaleString()}
+        </button>
+      )}
+
+      {wasMine && !isMine && casino.ownerId && (
+        <button onClick={() => act(() => buyBack({ casinoId: casino._id }))} disabled={(player?.money ?? 0) < (casino.boughtBackPrice ?? casino.purchasePrice ?? 0)}
+          className="mt-3 w-full px-3 py-2 rounded-lg bg-gradient-to-r from-rose-600 to-red-500 text-white text-xs font-black hover:brightness-110 disabled:opacity-40">
+          🔁 Buy Back from {casino.ownerName} — ${((casino.boughtBackPrice ?? casino.purchasePrice) ?? 0).toLocaleString()}
+        </button>
+      )}
+
+      {msg && <div className="mt-2 text-[10px] text-rose-400 font-bold">{msg}</div>}
+    </div>
+  );
+}
+
 export function CasinosPage() {
   const player = useQuery(api.game.getPlayer);
+  const allCasinos = useQuery(api.casinoSystem.getAllCasinos);
+  const events = useQuery(api.casinoSystem.getCasinoEvents);
+  const seedCity = useMutation(api.casinoSystem.seedCityCasinos);
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [, setTick] = useState(0);
 
-  if (!player) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading...</div>;
+  useEffect(() => { const iv = setInterval(() => setTick((t) => t + 1), 2000); return () => clearInterval(iv); }, []);
+  useEffect(() => { if (selectedCity && allCasinos && !allCasinos.some((c: any) => c.city === selectedCity)) seedCity({ city: selectedCity }).catch(() => {}); }, [selectedCity, allCasinos, seedCity]);
+
+  if (player === undefined || allCasinos === undefined) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading casinos...</div>;
+  if (!player) return <div className="py-10 text-center text-muted-foreground">Sign in to access casinos.</div>;
+
+  const userId = (player as any)._id;
+  const cityCasinos = selectedCity ? allCasinos.filter((c: any) => c.city === selectedCity) : [];
+  const myCount = allCasinos.filter((c: any) => c.ownerId === userId).length;
 
   return (
     <div className="animate-fade-in space-y-6">
-      <PageHeader icon="🎰" title="Casinos" sub="Every city has casinos — own them, play them, or lose them. Keep your casino bank funded or lose the property." />
+      <PageHeader icon="🎰" title="Casinos" sub="Every city has casinos — own them, play them, or lose them. If a winner drains your casino bank to $0, THEY take your casino. Set your buy-back price in advance." />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatPill icon="💰" label="Cash" value={`$${(player.money ?? 0).toLocaleString()}`} color="text-green-400" />
         <StatPill icon="🏦" label="Bank" value={`$${(player.bank ?? 0).toLocaleString()}`} color="text-blue-400" />
-        <StatPill icon="🎰" label="Casino Bank" value={`$${((player as any).casinoBank ?? 0).toLocaleString()}`} color="text-amber-400" />
-        <StatPill icon="📍" label="Location" value={player.location ?? "Unknown"} color="text-purple-400" />
+        <StatPill icon="🪙" label="IG Coins" value={((player as any).coins ?? 0).toLocaleString()} color="text-amber-400" />
+        <StatPill icon="🎰" label="My Casinos" value={String(myCount)} color="text-purple-400" />
       </div>
 
-      {/* Casino Bank Warning */}
-      <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-lg">💰</span>
-          <span className="text-sm font-bold text-amber-300">Casino Bank Account</span>
+      {/* Takeover feed */}
+      {events && events.length > 0 && (
+        <div className="rounded-xl border border-rose-500/30 bg-rose-950/20 p-4">
+          <div className="text-[9px] font-black uppercase tracking-[0.25em] text-rose-400 mb-2">💀 Casino Takeover Feed</div>
+          <div className="space-y-1">
+            {events.slice(0, 5).map((e: any) => (
+              <div key={e._id} className="text-[10px] text-slate-300">
+                <span className="text-rose-400 font-bold">{e.type === "seized" ? "💀 SEIZED" : e.type === "bought_back" ? "🔁 BOUGHT BACK" : "🛒 PURCHASED"}</span> — {e.message}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="text-[10px] text-muted-foreground mb-2">Casinos require a minimum balance to operate. If your casino bank drops to $0, the property is seized and sold at auction.</div>
-        <div className="bg-amber-950/30 rounded-lg p-2 text-xs text-amber-300 border border-amber-500/20">
-          ⚠️ Keep your casino bank funded — if it hits $0, you lose the casino!
-        </div>
-      </div>
+      )}
 
       {!selectedCity ? (
         <div className="space-y-3">
-          <div className="text-sm font-bold text-amber-300">🏙️ Select a City</div>
+          <div className="text-sm font-bold text-amber-300">🏙️ Select a City — every city has its own casinos</div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {CITIES.map((city) => (
-              <div key={city.name} onClick={() => setSelectedCity(city.name)}
-                className="bg-gradient-to-br from-slate-900/80 to-slate-950/80 border border-slate-700/30 rounded-xl p-4 cursor-pointer hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 transition-all">
-                <div className="text-3xl mb-2">{city.icon}</div>
-                <div className="text-sm font-bold text-white">{city.name}</div>
-                <div className="text-[10px] text-muted-foreground mt-1">Casino cost: ${city.cost.toLocaleString()}</div>
-                <div className="text-[9px] text-amber-400/60 mt-0.5">5 games available</div>
-              </div>
-            ))}
+            {CITIES.map((city) => {
+              const cityCount = allCasinos.filter((c: any) => c.city === city.name).length;
+              const mine = allCasinos.filter((c: any) => c.city === city.name && c.ownerId === userId).length;
+              return (
+                <div key={city.name} onClick={() => setSelectedCity(city.name)}
+                  className="bg-gradient-to-br from-slate-900/80 to-slate-950/80 border border-slate-700/30 rounded-xl p-4 cursor-pointer hover:border-amber-500/40 hover:shadow-lg hover:shadow-amber-500/10 transition-all">
+                  <div className="text-3xl mb-2">{city.icon}</div>
+                  <div className="text-sm font-bold text-white">{city.name}</div>
+                  <div className="text-[10px] text-muted-foreground mt-1">{cityCount > 0 ? `${cityCount} casinos` : "Unexplored"}</div>
+                  {mine > 0 && <div className="text-[9px] text-amber-400 font-bold mt-0.5">👑 You own {mine} here</div>}
+                </div>
+              );
+            })}
           </div>
         </div>
       ) : (
         <div className="space-y-3">
           <button onClick={() => setSelectedCity(null)} className="px-3 py-1.5 bg-secondary rounded-lg text-xs hover:bg-secondary/80 transition">← Back to Cities</button>
           <div className="text-sm font-bold text-amber-300">🎰 Casinos in {selectedCity}</div>
-          <div className="text-[10px] text-muted-foreground mb-2">Purchase, manage, and play at casinos. If no owner, purchase it to start earning revenue.</div>
-
-          {/* Casino Properties Table */}
-          <div className="mafia-card rounded-xl overflow-hidden border border-slate-700/30">
-            <div className="grid grid-cols-5 gap-0 text-[9px] font-bold text-muted-foreground uppercase bg-slate-900/50 px-4 py-2 border-b border-slate-700/30">
-              <span>Casino</span><span>Owner</span><span>Wealth</span><span>Max Bet</span><span>Buyback</span>
+          {cityCasinos.length === 0 ? (
+            <div className="text-[10px] text-muted-foreground animate-pulse">Opening the casino floor for {selectedCity}…</div>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {cityCasinos.map((c: any) => (
+                <CasinoRow key={c._id} casino={c} player={player} isMine={c.ownerId === userId} refresh={() => setTick((t) => t + 1)} />
+              ))}
             </div>
-            {CASINO_GAMES.map((game) => (
-              <div key={game.name} className="grid grid-cols-5 gap-0 items-center px-4 py-3 border-b border-slate-800/30 hover:bg-slate-800/20 transition">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{game.icon}</span>
-                  <span className="text-xs font-bold text-white">{game.name}</span>
-                </div>
-                <span className={`text-[10px] font-bold ${game.owner ? "text-green-400" : "text-muted-foreground"}`}>{game.owner ?? "No owner"}</span>
-                <span className="text-[10px] text-muted-foreground">{game.owner ? "Billionaire" : "—"}</span>
-                <span className="text-[10px] text-amber-400">{game.maxBet}</span>
-                <span className="text-[10px] text-muted-foreground">—</span>
-              </div>
-            ))}
-          </div>
+          )}
         </div>
       )}
     </div>
@@ -422,14 +515,21 @@ export function CasinoBlackjackPage() {
 
 export function CasinoDicePage() {
   const player = useQuery(api.game.getPlayer);
+  const playDice = useMutation(api.casinoSystem.playCasinoDice);
+  const myCasinos = useQuery(api.casinoSystem.getMyCasinos);
   const [stake, setStake] = useState(10000);
   const [sides, setSides] = useState(6);
   const [chosen, setChosen] = useState(3);
   const [rolling, setRolling] = useState(false);
   const [result, setResult] = useState<{ roll: number; won: boolean } | null>(null);
+  const [seizedMsg, setSeizedMsg] = useState<string | null>(null);
   const [stats, setStats] = useState({ played: 0, won: 0, lost: 0, profit: 0, biggest: 0 });
   const [history, setHistory] = useState<{ roll: number; won: boolean; amount: number }[]>([]);
   const rollAnimRef = useRef<HTMLDivElement>(null);
+
+  const city = (player as any)?.location ?? "New York";
+  // Use YOUR casino if you own one here, else any owned one, else "house"
+  const houseCasino = (myCasinos ?? []).find((c: any) => c.city === city && c.gameId === "dice");
 
   const winChance = (1 / sides) * 100;
   const payout = sides; // multiplier
@@ -438,6 +538,7 @@ export function CasinoDicePage() {
     if ((player?.money ?? 0) < stake || rolling || stake < 1000) return;
     setRolling(true);
     setResult(null);
+    setSeizedMsg(null);
 
     // Animate dice roll
     if (rollAnimRef.current) {
@@ -446,17 +547,21 @@ export function CasinoDicePage() {
 
     await new Promise(r => setTimeout(r, 800));
 
-    const r = Math.floor(Math.random() * sides) + 1;
-    const won = r === chosen;
-    const winnings = won ? stake * payout - stake : -stake;
-
-    setResult({ roll: r, won });
-    setStats(s => ({
-      ...s, played: s.played + 1, profit: s.profit + winnings,
-      won: s.won + (won ? 1 : 0), lost: s.lost + (won ? 0 : 1),
-      biggest: Math.max(s.biggest, winnings),
-    }));
-    setHistory(h => [{ roll: r, won, amount: winnings }, ...h].slice(0, 20));
+    try {
+      const r = await playDice({ city, wager: stake, sides, chosen });
+      setResult({ roll: r.roll, won: r.won });
+      const winnings = r.net;
+      if (r.seized) setSeizedMsg(`💀 CASINO SEIZED! You drained the bank to $0 and took over ${r.newOwner === (player.nickname ?? player.username) ? "YOUR new casino" : "the casino"}!`);
+      setStats(s => ({
+        ...s, played: s.played + 1, profit: s.profit + winnings,
+        won: s.won + (r.won ? 1 : 0), lost: s.lost + (r.won ? 0 : 1),
+        biggest: Math.max(s.biggest, winnings),
+      }));
+      setHistory(h => [{ roll: r.roll, won: r.won, amount: winnings }, ...h].slice(0, 20));
+    } catch (e: any) {
+      setResult({ roll: 0, won: false });
+      setSeizedMsg(e.message);
+    }
     setRolling(false);
     if (rollAnimRef.current) rollAnimRef.current.classList.remove("animate-dice-roll");
   };
@@ -558,10 +663,15 @@ export function CasinoDicePage() {
             <div className="text-xs font-bold mb-1">ℹ️ Information</div>
             <div className="text-[10px] text-muted-foreground space-y-0.5">
               <div><strong>Maxbet:</strong> Unlimited</div>
-              <div><strong>Buyback:</strong> —</div>
               <div><strong>House Edge:</strong> ~5%</div>
+              <div><strong>The House:</strong> {houseCasino ? <span className="text-amber-300">👑 YOUR casino in {city}</span> : <span>Another player's or unowned — wins are paid from the casino bank</span>}</div>
             </div>
           </div>
+          {seizedMsg && (
+            <div className={`rounded-xl px-3 py-2.5 text-xs font-black border ${seizedMsg.includes("SEIZED") ? "bg-amber-500/15 border-amber-400/50 text-amber-300 animate-pulse" : "bg-rose-500/15 border-rose-400/40 text-rose-300"}`}>
+              {seizedMsg}
+            </div>
+          )}
         </div>
       </div>
     </div>

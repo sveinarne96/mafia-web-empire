@@ -944,7 +944,61 @@ const schema = defineSchema({
     expiresAt: v.number(),
     accepted: v.boolean(),
     day: v.string(),
+    rarity: v.optional(v.string()),
+    name: v.optional(v.string()),
   }).index("by_user", ["userId"]).index("by_user_day", ["userId", "day"]),
+
+  // ═══════════ CASINO OWNERSHIP ═══════════
+  casinos: defineTable({
+    gameId: v.string(), // blackjack | dice | roulette | racetrack | videopoker
+    name: v.string(),
+    icon: v.string(),
+    ownerId: v.optional(v.id("users")),
+    ownerName: v.optional(v.string()),
+    city: v.string(),
+    purchasePrice: v.number(),
+    casinoBank: v.number(),
+    totalRevenue: v.number(),
+    playersServed: v.number(),
+    lostByUserId: v.optional(v.id("users")),
+    lostByName: v.optional(v.string()),
+    lostAt: v.optional(v.number()),
+    boughtBackPrice: v.optional(v.number()),
+    seized: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_game", ["gameId"]),
+
+  casinoRounds: defineTable({
+    userId: v.id("users"),
+    gameId: v.string(),
+    wager: v.number(),
+    payout: v.number(),
+    net: v.number(), // payout - wager (negative = player lost -> casino bank gained)
+    currency: v.string(), // "cash" | "coins"
+    timestamp: v.number(),
+  }).index("by_game", ["gameId"]),
+
+  casinoEvents: defineTable({
+    gameId: v.string(),
+    casinoName: v.string(),
+    type: v.string(), // "seized" | "bought_back" | "purchased"
+    message: v.string(),
+    timestamp: v.number(),
+  }).index("by_time", ["timestamp"]),
+
+  // ═══════════ HOSPITAL ═══════════
+  hospitalVisits: defineTable({
+    userId: v.id("users"),
+    playerName: v.string(),
+    condition: v.string(),
+    conditionIcon: v.string(),
+    severity: v.string(), // critical | serious | moderate
+    emergencyType: v.string(), // ambulance | helicopter | medivac
+    admittedAt: v.number(),
+    dischargedAt: v.optional(v.number()),
+    invoice: v.number(),
+    paid: v.boolean(),
+  }).index("by_user", ["userId"]).index("by_active", ["paid"]),
 }, {
   schemaValidation: false,
 });

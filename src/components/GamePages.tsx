@@ -103,18 +103,37 @@ export function PointsShopPage() {
   };
 
   return (
-    <div className="animate-fade-in space-y-5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3"><Trophy className="size-7 text-yellow-400" /><h2 className="text-2xl font-bold">Points Shop</h2></div>
-        <div className="text-right">
-          <div className="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 rounded-full text-sm font-bold text-yellow-400">⭐ {(player.points ?? 0).toLocaleString()} Points</div>
-          {rankBoostActive && <div className="text-[9px] text-green-400 mt-1">🚀 Rank Boost Active: {rankBoostRemaining}h left</div>}
+    <div className="animate-fade-in space-y-5 relative">
+      {/* Ambient glow backdrop */}
+      <div className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2 size-[420px] rounded-full bg-yellow-500/8 blur-3xl -z-10" />
+
+      {/* Hero banner */}
+      <div className="relative overflow-hidden rounded-2xl border border-yellow-500/30 bg-gradient-to-br from-yellow-950/40 via-slate-950/60 to-amber-950/30 p-6">
+        <div className="absolute inset-0 animate-shimmer opacity-25 pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 30%, rgba(251,191,36,0.18) 50%, transparent 70%)" }} />
+        <div className="relative flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <motion.div animate={{ rotate: [0, 8, -8, 0], scale: [1, 1.06, 1] }} transition={{ repeat: Infinity, duration: 4 }} className="text-5xl drop-shadow-[0_0_18px_rgba(251,191,36,0.6)]">🏆</motion.div>
+            <div>
+              <h2 className="text-3xl font-black tracking-tight">
+                <span className="bg-gradient-to-r from-yellow-300 via-amber-400 to-yellow-200 bg-clip-text text-transparent" style={{ textShadow: "0 0 24px rgba(251,191,36,0.25)" }}>POINTS SHOP</span>
+              </h2>
+              <div className="text-[10px] uppercase tracking-[0.3em] text-amber-400/70 font-bold mt-0.5">Exclusive gear · Boosts · Power</div>
+            </div>
+          </div>
+          <div className="text-right">
+            <motion.div animate={{ scale: [1, 1.03, 1] }} transition={{ repeat: Infinity, duration: 2.6 }}
+              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border-2 border-yellow-400/50 shadow-[0_0_24px_rgba(251,191,36,0.25)]">
+              <div className="text-[9px] uppercase tracking-widest text-amber-400/80 font-black">Your Balance</div>
+              <div className="text-2xl font-black text-yellow-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">⭐ {(player.points ?? 0).toLocaleString()}</div>
+            </motion.div>
+            {rankBoostActive && <div className="text-[9px] text-green-400 mt-1.5 font-bold">🚀 Rank Boost Active: {rankBoostRemaining}h left</div>}
+          </div>
         </div>
       </div>
 
-      <div className="flex gap-1 bg-background/50 rounded-lg p-1 overflow-x-auto">
+      <div className="flex gap-1.5 bg-background/50 rounded-xl p-1.5 overflow-x-auto border border-yellow-500/15">
         {[...categories, { id: "gear", name: "🗡️ Gear", icon: "🗡️", color: "text-indigo-400", count: 0 }, { id: "prestige", name: "👑 Prestige", icon: "👑", color: "text-amber-400", count: 0 }].map(t => (
-          <button key={t.id} onClick={() => setTab(t.id)} className={`px-2 py-1.5 text-[9px] font-semibold rounded-md transition-colors whitespace-nowrap ${tab === t.id ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" : "text-muted-foreground hover:text-foreground"}`}>
+          <button key={t.id} onClick={() => setTab(t.id)} className={`px-3 py-2 text-[10px] font-black rounded-lg transition-all whitespace-nowrap tracking-wide ${tab === t.id ? "bg-gradient-to-r from-yellow-500/30 to-amber-500/30 text-yellow-300 border border-yellow-400/50 shadow-[0_0_12px_rgba(251,191,36,0.2)]" : "text-muted-foreground hover:text-yellow-200 hover:bg-yellow-500/5 border border-transparent"}`}>
             {t.name}
           </button>
         ))}
@@ -123,51 +142,53 @@ export function PointsShopPage() {
       {tab === "boosters" && (
         <div className="space-y-2">
           {/* Rank Boosters */}
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1">🚀 Rank Boosters</div>
-          {[
-            { id: "rank_small", name: "Small Rank Booster", icon: "🚀", cost: 90, desc: "+50% XP for 4 hours", tier: "small" as const },
-            { id: "rank_standard", name: "Standard Rank Booster", icon: "🚀", cost: 200, desc: "+50% XP for 10 hours", tier: "standard" as const },
-            { id: "rank_mega", name: "Mega Rank Booster", icon: "🚀", cost: 500, desc: "+50% XP for 24 hours", tier: "mega" as const },
-          ].map(b => (
-            <div key={b.id} className="mafia-card rounded-xl p-3 flex items-center justify-between hover:border-yellow-500/30 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="text-xl">{b.icon}</div>
-                <div>
-                  <div className="font-bold text-xs">{b.name}</div>
-                  <div className="text-[9px] text-muted-foreground">{b.desc}</div>
-                  {rankBoostActive && <div className="text-[8px] text-orange-400">⚠️ Active!</div>}
+          <div className="text-[10px] text-amber-400/80 uppercase tracking-[0.25em] font-black px-1">🚀 Rank Boosters</div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {[
+              { id: "rank_small", name: "Small Rank Booster", icon: "🚀", cost: 90, desc: "+50% XP for 4 hours", tier: "small" as const },
+              { id: "rank_standard", name: "Standard Rank Booster", icon: "🚀", cost: 200, desc: "+50% XP for 10 hours", tier: "standard" as const },
+              { id: "rank_mega", name: "Mega Rank Booster", icon: "🚀", cost: 500, desc: "+50% XP for 24 hours", tier: "mega" as const },
+            ].map(b => (
+              <div key={b.id} className={`mafia-card rounded-xl p-4 border transition-all hover:border-yellow-500/50 hover:shadow-[0_0_16px_rgba(251,191,36,0.15)] ${b.tier === "mega" ? "border-amber-500/50 bg-gradient-to-br from-amber-950/25 to-slate-950/40" : ""}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <motion.span animate={{ y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: 2.2 }} className="text-2xl">{b.icon}</motion.span>
+                  <div className="text-xs font-black text-white">{b.name}</div>
                 </div>
+                <div className="text-[10px] text-muted-foreground min-h-8">{b.desc}</div>
+                {rankBoostActive && <div className="text-[8px] text-orange-400 font-bold">⚠️ Already active</div>}
+                <button onClick={() => doBuyBooster(b.tier)} disabled={(player.points ?? 0) < b.cost || rankBoostActive}
+                  className="mt-2 w-full px-3 py-2 bg-gradient-to-r from-yellow-600 to-amber-500 text-black text-[10px] font-black uppercase tracking-wider rounded-lg hover:brightness-110 disabled:opacity-40 transition-all">
+                  {b.cost.toLocaleString()} pts
+                </button>
               </div>
-              <button onClick={() => doBuyBooster(b.tier)} disabled={(player.points ?? 0) < b.cost || rankBoostActive}
-                className="px-3 py-1.5 bg-yellow-600 text-white text-[10px] font-bold rounded-lg hover:bg-yellow-700 disabled:opacity-40">
-                {b.cost} pts
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
 
           {/* Power Boosts */}
-          <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold px-1 mt-3">⚡ Power Boosts</div>
-          {[
-            { id: "xp_surge", name: "XP Surge", icon: "⚡", cost: 300, desc: "3x XP for 6 hours" },
-            { id: "cash_storm", name: "Cash Storm", icon: "💰", cost: 300, desc: "3x Cash for 6 hours" },
-            { id: "points_multiplier", name: "Points Multiplier", icon: "🎯", cost: 250, desc: "3x Points for 6 hours" },
-            { id: "energy_surge", name: "Energy Surge", icon: "🥤", cost: 200, desc: "+25% XP for 12 hours" },
-            { id: "god_mode", name: "God Mode", icon: "👑", cost: 1500, desc: "3x XP + 3x Cash + Energy for 24H", special: true },
-          ].map(b => (
-            <div key={b.id} className={`mafia-card rounded-xl p-3 flex items-center justify-between transition-all ${(b as any).special ? "border-amber-500/40 bg-gradient-to-r from-amber-950/20 to-yellow-950/10" : "hover:border-primary/30"}`}>
-              <div className="flex items-center gap-3">
-                <div className="text-xl">{b.icon}</div>
-                <div>
-                  <div className="font-bold text-xs">{b.name}</div>
-                  <div className="text-[9px] text-muted-foreground">{b.desc}</div>
+          <div className="text-[10px] text-amber-400/80 uppercase tracking-[0.25em] font-black px-1 mt-4">⚡ Power Boosts</div>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {[
+              { id: "xp_surge", name: "XP Surge", icon: "⚡", cost: 300, desc: "3x XP for 6 hours" },
+              { id: "cash_storm", name: "Cash Storm", icon: "💰", cost: 300, desc: "3x Cash for 6 hours" },
+              { id: "points_multiplier", name: "Points Multiplier", icon: "🎯", cost: 250, desc: "3x Points for 6 hours" },
+              { id: "energy_surge", name: "Energy Surge", icon: "🥤", cost: 200, desc: "+25% XP for 12 hours" },
+              { id: "god_mode", name: "God Mode", icon: "👑", cost: 1500, desc: "3x XP + 3x Cash + Energy for 24H", special: true },
+            ].map(b => (
+              <div key={b.id} className={`mafia-card rounded-xl p-4 border transition-all ${(b as any).special ? "border-amber-500/60 bg-gradient-to-br from-amber-950/30 to-yellow-950/15 shadow-[0_0_20px_rgba(251,191,36,0.2)]" : "hover:border-primary/40"}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <motion.span animate={(b as any).special ? { rotate: [0, 10, -10, 0] } : { y: [0, -3, 0] }} transition={{ repeat: Infinity, duration: (b as any).special ? 3 : 2.2 }} className="text-2xl">{b.icon}</motion.span>
+                  <div>
+                    <div className={`text-xs font-black ${(b as any).special ? "text-amber-300" : "text-white"}`}>{b.name}{(b as any).special && <span className="ml-1.5 text-[8px] px-1.5 py-0.5 rounded-full bg-amber-500 text-black align-middle">BEST VALUE</span>}</div>
+                    <div className="text-[10px] text-muted-foreground">{b.desc}</div>
+                  </div>
                 </div>
+                <button onClick={() => doService(b.id)} disabled={(player.points ?? 0) < b.cost || loading}
+                  className={`mt-2 w-full px-3 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg disabled:opacity-40 transition-all ${(b as any).special ? "bg-gradient-to-r from-amber-400 to-yellow-400 text-black hover:brightness-110" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}>
+                  {b.cost.toLocaleString()} pts
+                </button>
               </div>
-              <button onClick={() => doService(b.id)} disabled={(player.points ?? 0) < b.cost || loading}
-                className={`px-3 py-1.5 text-[10px] font-bold rounded-lg disabled:opacity-40 ${(b as any).special ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-black" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}>
-                {b.cost} pts
-              </button>
-            </div>
-          ))}
+            ))}
+          </div>
 
           {rankBoostActive && (
             <div className="mafia-card rounded-xl p-3 bg-gradient-to-r from-yellow-950/20 to-amber-950/20 border border-yellow-500/20">
@@ -178,17 +199,27 @@ export function PointsShopPage() {
       )}
 
       {tab === "items" && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
           {shopItems.map((item, i) => (
-            <motion.button key={i} whileHover={{ scale: 1.02 }} onClick={async () => {
+            <motion.button key={i} whileHover={{ scale: 1.03, y: -2 }} onClick={async () => {
               try { await buyItemWP({ itemName: item.name, price: item.cost, itemId: item.name.replace(/\s+/g, '_').toLowerCase() }); setMsg(`Bought ${item.name}!`); }
               catch (e: unknown) { setMsg(e instanceof Error ? e.message : "Error"); }
             }} disabled={(player.points ?? 0) < item.cost}
-              className={`mafia-card rounded-xl p-4 text-left border ${rarityColors[item.rarity]} disabled:opacity-40 hover:border-primary/50 transition-all`}>
-              <div className="text-xs uppercase font-bold mb-1">{item.rarity}</div>
-              <div className="font-bold text-sm mb-1">{item.name}</div>
-              <div className="text-[10px] text-muted-foreground mb-2">{item.type === "weapon" ? `⚔️ +${item.attack} ATK` : `🛡️ +${item.defense} DEF`}</div>
-              <div className="text-xs font-bold text-primary">{item.cost} Points</div>
+              className={`mafia-card rounded-xl p-4 text-left border-2 relative overflow-hidden ${rarityColors[item.rarity]} disabled:opacity-40 hover:border-primary/50 transition-all group`}
+              style={{ boxShadow: `0 0 12px ${(rarityColors[item.rarity] ?? "").includes("yellow") ? "rgba(251,191,36,0.15)" : "transparent"}` }}>
+              <div className="absolute -top-6 -right-6 size-16 rounded-full bg-current opacity-10 blur-xl group-hover:opacity-25 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[9px] uppercase font-black tracking-widest">{item.rarity}</span>
+                  <span className="text-lg">{item.type === "weapon" ? "⚔️" : "🛡️"}</span>
+                </div>
+                <div className="font-black text-sm mb-1 text-white">{item.name}</div>
+                <div className="text-[10px] text-muted-foreground mb-2">{item.type === "weapon" ? `⚔️ +${item.attack} ATK` : `🛡️ +${item.defense} DEF`}</div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-black text-yellow-300">{item.cost.toLocaleString()}</span>
+                  <span className="text-[9px] text-yellow-400/60 font-bold">pts</span>
+                </div>
+              </div>
             </motion.button>
           ))}
         </div>

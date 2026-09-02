@@ -730,7 +730,7 @@ export const getQsOffers = query({
     if (!userId) return null;
     const today = todayStr();
     const existing = await ctx.db.query("qsOffers").withIndex("by_user_day", (q) => q.eq("userId", userId).eq("day", today)).collect();
-    return { day: today, offers: existing.map((o) => ({ offerId: o.offerId, type: o.type, drug: o.drug, quantity: o.quantity, price: o.price, thcContent: o.thcContent, expiresAt: o.expiresAt, accepted: o.accepted })) };
+    return { day: today, offers: existing.map((o) => ({ offerId: o.offerId, type: o.type, drug: o.drug, quantity: o.quantity, price: o.price, thcContent: o.thcContent, expiresAt: o.expiresAt, accepted: o.accepted, rarity: (o as any).rarity, name: (o as any).name })) };
   },
 });
 
@@ -760,14 +760,15 @@ export const generateQsOffers = mutation({
         userId, offerId: offer.offerId, type: offer.type, drug: offer.itemType,
         quantity: offer.quantity, price: offer.price, thcContent: offer.thcContent,
         expiresAt: offer.expiresAt, accepted: false, day: today,
-      });
+        ...(offer.rarity ? { rarity: offer.rarity, name: offer.name } : {}),
+      } as any);
     }
     return { success: true, count: offers.length };
   },
 });
 
 export const acceptQsOffer = mutation({
-  args: { offerId: v.string() },
+  args: { offerId: v.string(), currency: v.optional(v.union(v.literal("coins"), v.literal("cash"))) },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
@@ -779,7 +780,13 @@ export const acceptQsOffer = mutation({
     if (!match) throw new Error("Offer not found");
     if (match.accepted) throw new Error("Already accepted");
     if (match.expiresAt <= Date.now()) throw new Error("Expired");
-    if (n(player.money, 0) < match.price) throw new Error("Not enough money");
+    // Currency: IG coins are the preferred tender at Q's Market; cash is the fallback.
+    const useCoins = args.currency === "coins" || (args.currency === undefined && n(player.coins, 0) >= match.price);
+    if (useCoins) {
+      if (n(player.coins, 0) < match.price) throw new Error(`Not enough IG coins — need ${match.price.toLocaleString()} 🪙`);
+    } else if (n(player.money, 0) < match.price) {
+      throw new Error(`Not enough cash — need $${match.price.toLocaleString()} (or ${match.price.toLocaleString()} IG coins)`);
+    }
     const offerType = match.type;
     if (offerType === "drug") {
       let trade = await ctx.db.query("drugTrades").withIndex("by_user", (q) => q.eq("userId", userId)).first();
@@ -813,7 +820,11 @@ export const acceptQsOffer = mutation({
       await ctx.db.patch(userId, { packs });
     }
     await ctx.db.patch(match._id, { accepted: true });
-    await ctx.db.patch(userId, { money: n(player.money, 0) - match.price });
-    return { success: true, type: offerType, name: match.drug, quantity: match.quantity, cost: match.price, drug: match.drug };
+    if (useCoins) {
+      await ctx.db.patch(userId, { coins: n(player.coins, 0) - match.price });
+    } else {
+      await ctx.db.patch(userId, { money: n(player.money, 0) - match.price });
+    }
+    return { success: true, type: offerType, name: match.drug, quantity: match.quantity, cost: match.price, drug: match.drug, paidWith: useCoins ? "coins" : "cash" };
   },
 });
