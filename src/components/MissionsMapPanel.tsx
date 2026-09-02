@@ -4,9 +4,10 @@ import { api } from "@/convex/_generated/api";
 import { motion } from "framer-motion";
 import { Minus, Plus, Map as MapIcon, List, X, Search, Trophy, Zap } from "lucide-react";
 import {
-  MISSION_TYPES, MISSION_TYPE_MAP, DISTRICTS, buildMissions,
+  MISSION_TYPES, MISSION_TYPE_MAP, DISTRICTS, buildMissions, conquestLoot,
   type MissionTypeId,
 } from "@/data/missionsCatalog";
+import { CAR_MARKET } from "@/data/carMarket";
 import { DISTRICT_CASH } from "@/data/empire";
 
 // ═══════════════════════════════════════════════════════════════
@@ -48,6 +49,7 @@ export function MissionsMapPanel() {
   const claimMission = useMutation(api.missionsBoard.claimMission);
   const abandonMission = useMutation(api.missionsBoard.abandonMission);
   const generateNextWave = useMutation(api.missionsBoard.generateNextWave);
+  const redeemCarKey = useMutation(api.missionsBoard.redeemCarKey);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [selected, setSelected] = useState<string | null>(null);   // district name
@@ -55,6 +57,7 @@ export function MissionsMapPanel() {
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [view, setView] = useState<"map" | "list">("map");
+  const [showKeys, setShowKeys] = useState(false);
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [rewardFilter, setRewardFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -78,6 +81,9 @@ export function MissionsMapPanel() {
 
   const allMissions = useMemo(() => buildMissions(progress, level, wave), [progress, level, wave]);
   const waveMult = Math.pow(1.6, wave);
+  const n = (v: any, d: number) => (typeof v === "number" && Number.isFinite(v) ? v : d);
+  const keyWallet = board?.carKeys ?? ({} as Record<string, number>);
+  const keyWalletCount = Object.values(keyWallet).reduce((s: number, v: any) => s + n(v, 0), 0) as number;
 
   const matchesFilter = (m: { type: string; typeDef: { currency: string; label: string }; name: string; district: string }) => {
     if (typeFilter !== "all" && m.type !== typeFilter) return false;
@@ -125,7 +131,10 @@ export function MissionsMapPanel() {
       const r = await claimMission({ key });
       if (r.waveAdvanced) {
         setMsg({ ok: true, text: `🌊 BOARD CLEARED! Wave ${r.waveAdvanced} auto-generated 24/7 — fresh contracts, ×${Math.pow(1.6, r.waveAdvanced).toFixed(1)} rewards!` });
-      } else if (r.conquered) setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! Empire income online!` });
+      } else if (r.conquered && r.conquest) {
+        const keyTxt = r.conquest.keys.length > 0 ? ` · 🔑 ${r.conquest.keys.join(" + ")} KEY!` : "";
+        setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! +$${nf(r.conquest.moneyBonus)} · ⚙️ ${r.conquest.scrap.common} common / ${r.conquest.scrap.rare} rare / ${r.conquest.scrap.epic} epic scrap${keyTxt} · Empire income online!` });
+      }
       else if (r.missionDone) setMsg({ ok: true, text: `✅ Mission complete in ${r.district}! +${rewardLabel(r.currency, r.reward)} · +${nf(r.xp)} XP` });
       else setMsg({ ok: true, text: `✔ Task ${r.task}/3 — ${r.typeLabel} · +${rewardLabel(r.currency, r.reward)} · START again for task ${r.task + 1}.` });
       if (r.levelUp) setMsg({ ok: true, text: `⭐ LEVEL UP! You are now level ${r.levelUp}!` });
@@ -157,6 +166,17 @@ export function MissionsMapPanel() {
     setBusy(null);
   };
 
+  const redeem = async (carId: string) => {
+    setBusy(`__key_${carId}`); setMsg(null);
+    try {
+      const r = await redeemCarKey({ carId });
+      setMsg({ ok: true, text: `🔑 ${r.car} delivered to your garage! (${r.remaining} key(s) left)` });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e.message || "Redeem failed" });
+    }
+    setBusy(null);
+  };
+
   const pinDots = (done: number, total: number) => {
     const dots: string[] = [];
     for (let i = 0; i < 3; i++) dots.push(i < done ? "●" : "○");
@@ -173,6 +193,10 @@ export function MissionsMapPanel() {
           {allMissions.filter((m) => !m.done).length} active missions · {MISSION_TYPES.length} types × {DISTRICTS.length} districts · Wave {wave + 1}
         </span>
         <div className="ml-auto flex items-center gap-1.5">
+          <button onClick={() => setShowKeys((v) => !v)}
+            className={`flex items-center gap-1 rounded-lg border px-2 py-1 text-[10px] font-black ${keyWalletCount > 0 ? "border-amber-400/50 bg-amber-500/15 text-amber-300 hover:brightness-125" : "border-slate-700/50 bg-slate-900/50 text-slate-500"}`}>
+            🔑 {keyWalletCount}
+          </button>
           <div className="relative">
             <Search className="absolute left-2 top-1/2 size-3 -translate-y-1/2 text-slate-500" />
             <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search missions…"
@@ -231,6 +255,35 @@ export function MissionsMapPanel() {
           </button>
         )}
       </div>
+
+      {/* ── KEY WALLET — redeem conquest car keys ── */}
+      {showKeys && (
+        <div className="border-b border-amber-400/20 bg-gradient-to-r from-amber-950/30 via-slate-950/60 to-amber-950/20 px-4 py-3">
+          <div className="mb-2 text-[10px] font-black uppercase tracking-widest text-amber-300">🔑 Conquest Key Wallet — redeem keys for premium garage cars</div>
+          {keyWalletCount === 0 ? (
+            <div className="text-[10px] text-slate-500">No keys yet — conquer districts (finish all 3 mission types) to earn rare car keys. Higher-tier districts drop legendary keys.</div>
+          ) : (
+            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {Object.entries(keyWallet).filter(([, c]) => n(c, 0) > 0).map(([carId, count]) => {
+                const car = CAR_MARKET.find((c) => c.id === carId);
+                return (
+                  <div key={carId} className="flex items-center gap-2 rounded-lg border border-amber-400/25 bg-slate-900/60 p-2">
+                    <span className="text-lg">🔑</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[11px] font-bold text-white">×{n(count, 0)} {car?.name ?? carId}</div>
+                      <div className="text-[9px] text-slate-500">{car ? `${car.rarity} · ${car.speed} spd · ${car.storage} cap` : "Unknown car"}</div>
+                    </div>
+                    <button disabled={busy === `__key_${carId}` || !car} onClick={() => redeem(carId)}
+                      className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-1.5 text-[9px] font-black text-black hover:brightness-110 disabled:opacity-40">
+                      {busy === `__key_${carId}` ? "…" : "REDEEM"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Tabs + player stats ── */}
       <div className="flex flex-wrap items-center gap-3 border-b border-slate-800/60 px-4 py-2">
@@ -334,10 +387,22 @@ export function MissionsMapPanel() {
                 </div>
                 <button onClick={() => { setSelected(null); setSelType(null); }} className="text-slate-500 hover:text-white"><X className="size-4" /></button>
               </div>
-              <div className="mb-3 flex items-center gap-2 text-[10px]">
-                <span className="rounded bg-green-950/40 px-1.5 py-0.5 font-bold text-green-400">✓ {sel.doneCount}/16 missions done</span>
-                {sel.conquered ? <span className="rounded bg-amber-950/40 px-1.5 py-0.5 font-bold text-amber-300">🏆 District conquered</span> : <span className="text-slate-500">Conquer: finish 3 different mission types</span>}
-                <span className="ml-auto text-slate-500">{nf(DISTRICT_CASH[sel.idx] ?? 15000)}/day</span>
+              <div className="mb-3 space-y-2">
+                <div className="flex items-center gap-2 text-[10px]">
+                  <span className="rounded bg-green-950/40 px-1.5 py-0.5 font-bold text-green-400">✓ {sel.doneCount}/16 missions done</span>
+                  {sel.conquered ? <span className="rounded bg-amber-950/40 px-1.5 py-0.5 font-bold text-amber-300">🏆 District conquered</span> : <span className="text-slate-500">Conquer: finish 3 different mission types</span>}
+                  <span className="ml-auto text-slate-500">{nf(DISTRICT_CASH[sel.idx] ?? 15000)}/day</span>
+                </div>
+                {!sel.conquered && (
+                  <div className="rounded-lg border border-amber-400/25 bg-amber-950/20 p-2">
+                    <div className="text-[9px] font-black uppercase tracking-wider text-amber-300">🎁 Conquest loot preview</div>
+                    <div className="mt-1 text-[9px] text-slate-400">
+                      +${nf(conquestLoot(sel.idx).moneyBonus)} cash · ⚙️ {conquestLoot(sel.idx).scrap.common} common / {conquestLoot(sel.idx).scrap.rare} rare / {conquestLoot(sel.idx).scrap.epic} epic scrap
+                      {conquestLoot(sel.idx).keys.length > 0 && <> · 🔑 1× <span className="font-bold text-amber-300">{conquestLoot(sel.idx).keys[0].label}</span> ({conquestLoot(sel.idx).keys[0].rarity})</>}
+                    </div>
+                    <div className="mt-0.5 text-[8px] text-slate-500">Paid automatically when this district is conquered.</div>
+                  </div>
+                )}
               </div>
               <div className="space-y-1.5">
                 {selMissions.map((m) => {

@@ -191,6 +191,58 @@ export function buildMissions(progress: Record<string, number>, level: number, w
   return out;
 }
 
+// ═══════════ CONQUEST LOOT — district takeover rewards ═══════════
+// Conquering a district (all 3 mission types done) pays bonus loot on top of
+// the empire income unlock. Low-tier districts pay scrap; higher districts
+// additionally drop rare car keys redeemable for premium garage vehicles.
+export interface ConquestLoot {
+  scrap: { common: number; rare: number; epic: number };
+  keys: Array<{ carId: string; label: string; rarity: string }>;
+  moneyBonus: number;
+}
+
+/** Deterministic per-district loot — same reward every player, every wave. */
+export function conquestLoot(districtIdx: number): ConquestLoot {
+  const lockLevel = DISTRICTS[districtIdx]?.lockLevel ?? 1;
+  const tier = Math.min(4, Math.floor((lockLevel - 1) / 20)); // 0: lv1-20, 1: 21-40, 2: 41-60, 3: 61-80, 4: 81-90
+  const scrap = [
+    { common: 40, rare: 8, epic: 0 },
+    { common: 80, rare: 18, epic: 4 },
+    { common: 120, rare: 30, epic: 10 },
+    { common: 160, rare: 45, epic: 18 },
+    { common: 200, rare: 60, epic: 28 },
+  ][tier];
+  const keysByTier: ConquestLoot["keys"][] = [
+    [], // tier 0: no keys yet — grind up
+    [{ carId: "supra_21", label: "Supra Key", rarity: "rare" }, { carId: "c63_18", label: "C63 AMG Key", rarity: "rare" }],
+    [{ carId: "p911_20", label: "Porsche 911 Key", rarity: "epic" }, { carId: "r8_19", label: "Audi R8 Key", rarity: "epic" }],
+    [{ carId: "mclaren_gt", label: "McLaren GT Key", rarity: "epic" }, { carId: "huracan", label: "Huracán EVO Key", rarity: "legendary" }],
+    [{ carId: "svj", label: "Aventador SVJ Key", rarity: "legendary" }, { carId: "senna", label: "McLaren Senna Key", rarity: "legendary" }],
+  ];
+  // Each conquered district grants ONE key from its tier, rotating by district index
+  const pool = keysByTier[tier];
+  const key = pool.length > 0 ? pool[districtIdx % pool.length] : null;
+  return {
+    scrap,
+    keys: key ? [key] : [],
+    moneyBonus: 25_000 * (tier + 1),
+  };
+}
+
+export const CAR_KEY_MAP: Record<string, string> = Object.fromEntries(
+  keysByTierMaster().flat().map((k) => [k.carId, k.rarity]),
+);
+
+function keysByTierMaster(): ConquestLoot["keys"][] {
+  return [
+    [],
+    [{ carId: "supra_21", label: "Supra Key", rarity: "rare" }, { carId: "c63_18", label: "C63 AMG Key", rarity: "rare" }],
+    [{ carId: "p911_20", label: "Porsche 911 Key", rarity: "epic" }, { carId: "r8_19", label: "Audi R8 Key", rarity: "epic" }],
+    [{ carId: "mclaren_gt", label: "McLaren GT Key", rarity: "epic" }, { carId: "huracan", label: "Huracán EVO Key", rarity: "legendary" }],
+    [{ carId: "svj", label: "Aventador SVJ Key", rarity: "legendary" }, { carId: "senna", label: "McLaren Senna Key", rarity: "legendary" }],
+  ];
+}
+
 /** Per-district conquest income uses the classic DISTRICT_CASH ladder. */
 export function districtCash(idx: number): number {
   return DISTRICT_CASH[idx] ?? 15_000;

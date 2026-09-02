@@ -2,8 +2,9 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
-import { MISSION_TYPE_MAP, DISTRICTS, buildMissions, waveMultiplier } from "../data/missionsCatalog";
+import { MISSION_TYPE_MAP, DISTRICTS, buildMissions, waveMultiplier, conquestLoot } from "../data/missionsCatalog";
 import { DISTRICT_CASH } from "../data/empire";
+import { CAR_MARKET } from "../data/carMarket";
 
 const n = (val: any, d: number) => (typeof val === "number" && Number.isFinite(val) ? val : d);
 
@@ -109,6 +110,7 @@ export const getBoard = query({
       started,
       actions,
       cooldowns,
+      carKeys: player.carKeys && typeof player.carKeys === "object" ? player.carKeys : {},
       wave,
       wavesCleared,
       allDone,
@@ -285,6 +287,27 @@ export const claimMission = mutation({
       patch.empireProgress = { ...legacy, [dName]: next };
     }
 
+    // ── District conquest bonus loot: scrap + rare car keys + cash ──
+    let conquestSummary: any = undefined;
+    if (distinctAfter >= 3 && distinctBefore < 3 && n((player as any).empireSoldAt, 0) === 0) {
+      const loot = conquestLoot(di);
+      const scrapsBase = patch.scraps ?? player.scraps;
+      const scraps = scrapsBase && typeof scrapsBase === "object" ? { ...scrapsBase } : { common: 0, rare: 0, epic: 0 };
+      scraps.common = n(scraps.common, 0) + loot.scrap.common;
+      scraps.rare = n(scraps.rare, 0) + loot.scrap.rare;
+      scraps.epic = n(scraps.epic, 0) + loot.scrap.epic;
+      patch.scraps = scraps;
+      patch.money = n(patch.money ?? n(player.money, 0), 0) + loot.moneyBonus;
+      const keys = player.carKeys && typeof player.carKeys === "object" ? { ...player.carKeys } : {};
+      for (const k of loot.keys) keys[k.carId] = n(keys[k.carId], 0) + 1;
+      patch.carKeys = keys;
+      conquestSummary = {
+        scrap: loot.scrap,
+        moneyBonus: loot.moneyBonus,
+        keys: loot.keys.map((k) => `${k.label} (${k.rarity})`),
+      };
+    }
+
     let xp = 150 + task * 100;
     const xpReward = patch.xpReward;
     if (xpReward) { xp += xpReward; delete patch.xpReward; }
@@ -314,6 +337,7 @@ export const claimMission = mutation({
       waveAdvanced: boardCleared ? wave + 1 : undefined,
       delta,
       xp,
+      conquest: conquestSummary,
       levelUp: xpUpd.level !== undefined ? xpUpd.level : undefined,
     };
   },
@@ -354,6 +378,53 @@ export const generateNextWave = mutation({
       missionBoard: {},
     } as any);
     return { success: true, wave: nextWave };
+  },
+});
+
+// ═══════════ CAR KEYS — redeem conquest keys for premium garage cars ═══════════
+export const getCarKeys = query({
+  args: {},
+  handler: async (ctx) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) return { keys: {} as Record<string, number> };
+    const keys = (player as any).carKeys;
+    return { keys: keys && typeof keys === "object" ? keys : {} };
+  },
+});
+
+export const redeemCarKey = mutation({
+  args: { carId: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    if (player.inPrison) throw new Error("You are in prison!");
+
+    const keys = (player as any).carKeys;
+    const wallet: Record<string, number> = keys && typeof keys === "object" ? { ...keys } : {};
+    const count = n(wallet[args.carId], 0);
+    if (count < 1) throw new Error("No key for this car — conquer districts to earn keys");
+
+    const car = CAR_MARKET.find((c) => c.id === args.carId);
+    if (!car) throw new Error("Unknown car");
+
+    wallet[args.carId] = count - 1;
+    if (wallet[args.carId] === 0) delete wallet[args.carId];
+
+    await ctx.db.insert("vehicles", {
+      userId: player._id, name: car.name, type: car.rarity, speed: car.speed, storage: car.storage,
+      armored: car.armored ?? false, stolen: false, purchasePrice: car.price,
+      rarity: car.rarity, damage: 0, desc: car.desc,
+    } as any);
+    await ctx.db.patch(player._id, { carKeys: wallet } as any);
+
+    try {
+      await ctx.db.insert("notifications", {
+        userId: player._id, type: "system", read: false, timestamp: Date.now(),
+        message: `🔑 Key redeemed: ${car.name} added to your garage!`,
+      } as any);
+    } catch (_e) { /* notification must never cancel the redeem */ }
+
+    return { success: true, car: car.name, rarity: car.rarity, remaining: wallet[args.carId] ?? 0 };
   },
 });
 

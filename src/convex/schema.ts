@@ -172,6 +172,7 @@ const schema = defineSchema({
     scratchCards: v.optional(v.number()),
     packs: v.optional(v.any()),
     scraps: v.optional(v.any()),
+    carKeys: v.optional(v.any()),
     autoConvertScraps: v.optional(v.boolean()),
     perkActiveUntil: v.optional(v.any()),
     meltValueUntil: v.optional(v.number()),
