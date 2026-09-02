@@ -245,9 +245,26 @@ export const claimMission = mutation({
       missionCompleted: n((player as any).missionCompleted, 0) + 1,
       missionProfit: n((player as any).missionProfit, 0) + reward,
     };
+    let waveSuperKey: { carId: string; name: string; rarity: string } | null = null;
     if (boardCleared) {
       patch.missionWave = wave + 1;
       patch.missionWavesCleared = Math.max(0, Math.floor(n((player as any).missionWavesCleared, 0))) + 1;
+      // 🌊 WAVE-CLEAR SUPER KEY: finishing all 30 districts drops a rotating
+      // 1-of-1 exclusive car key — redeemable in the key wallet like any other.
+      const superPool = CAR_MARKET.filter((c) => c.rarity === "exclusive" || c.rarity === "exotic");
+      if (superPool.length > 0) {
+        const pick = superPool[Math.floor(Math.abs(wave + 1) % superPool.length)];
+        const keys = player.carKeys && typeof player.carKeys === "object" ? { ...player.carKeys } : {};
+        keys[pick.id] = n(keys[pick.id], 0) + 1;
+        patch.carKeys = keys;
+        waveSuperKey = { carId: pick.id, name: pick.name, rarity: pick.rarity };
+        try {
+          await ctx.db.insert("notifications", {
+            userId: player._id, type: "system", read: false, timestamp: Date.now(),
+            message: `🌊 Full wave cleared! SUPER KEY earned: ${pick.name} (${pick.rarity}) — redeem it in the missions map key wallet!`,
+          } as any);
+        } catch (_e) { /* notification must never cancel the claim */ }
+      }
     }
 
     switch (type.currency) {
@@ -335,6 +352,7 @@ export const claimMission = mutation({
       missionDone: task + 1 >= 3,
       conquered: distinctAfter >= 3 && distinctBefore < 3,
       waveAdvanced: boardCleared ? wave + 1 : undefined,
+      waveSuperKey,
       delta,
       xp,
       conquest: conquestSummary,
@@ -372,12 +390,22 @@ export const generateNextWave = mutation({
     const remaining = list.filter((m) => !m.done).length;
     if (remaining > 0) throw new Error(`Not yet — ${remaining} missions still open. The next wave generates automatically 24/7 the moment the map is cleared.`);
     const nextWave = wave + 1;
-    await ctx.db.patch(player._id, {
+    const patch: any = {
       missionWave: nextWave,
       missionWavesCleared: Math.max(0, Math.floor(n((player as any).missionWavesCleared, 0))) + 1,
       missionBoard: {},
-    } as any);
-    return { success: true, wave: nextWave };
+    };
+    let waveSuperKey: { carId: string; name: string; rarity: string } | null = null;
+    const superPool = CAR_MARKET.filter((c) => c.rarity === "exclusive" || c.rarity === "exotic");
+    if (superPool.length > 0) {
+      const pick = superPool[Math.floor(Math.abs(nextWave) % superPool.length)];
+      const keys = player.carKeys && typeof player.carKeys === "object" ? { ...player.carKeys } : {};
+      keys[pick.id] = n(keys[pick.id], 0) + 1;
+      patch.carKeys = keys;
+      waveSuperKey = { carId: pick.id, name: pick.name, rarity: pick.rarity };
+    }
+    await ctx.db.patch(player._id, patch);
+    return { success: true, wave: nextWave, waveSuperKey };
   },
 });
 

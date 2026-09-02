@@ -130,7 +130,8 @@ export function MissionsMapPanel() {
     try {
       const r = await claimMission({ key });
       if (r.waveAdvanced) {
-        setMsg({ ok: true, text: `🌊 BOARD CLEARED! Wave ${r.waveAdvanced} auto-generated 24/7 — fresh contracts, ×${Math.pow(1.6, r.waveAdvanced).toFixed(1)} rewards!` });
+        const superTxt = r.waveSuperKey ? ` 🔑🌟 SUPER KEY DROP: ${r.waveSuperKey.name} (${r.waveSuperKey.rarity})! Redeem it in the key wallet!` : "";
+        setMsg({ ok: true, text: `🌊 BOARD CLEARED! Wave ${r.waveAdvanced} auto-generated 24/7 — fresh contracts, ×${Math.pow(1.6, r.waveAdvanced).toFixed(1)} rewards!${superTxt}` });
       } else if (r.conquered && r.conquest) {
         const keyTxt = r.conquest.keys.length > 0 ? ` · 🔑 ${r.conquest.keys.join(" + ")} KEY!` : "";
         setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! +$${nf(r.conquest.moneyBonus)} · ⚙️ ${r.conquest.scrap.common} common / ${r.conquest.scrap.rare} rare / ${r.conquest.scrap.epic} epic scrap${keyTxt} · Empire income online!` });
@@ -318,13 +319,24 @@ export function MissionsMapPanel() {
                 })}
               </svg>
 
-              {/* district labels */}
-              {districtStatus.map((d) => (
-                <div key={d.name} className="absolute -translate-x-1/2 whitespace-nowrap rounded bg-slate-950/70 px-1.5 py-0.5 text-[8px] font-black tracking-wider text-slate-400"
-                  style={{ left: `${d.x}%`, top: `${d.y - 9.5}%` }}>
-                  {d.name.toUpperCase()} <span className={d.conquered ? "text-green-400" : "text-slate-600"}>{d.conquered ? "🏆" : `🔒Lv.${d.lockLevel}`}</span>
-                </div>
-              ))}
+              {/* district labels — loot markers: 🏆 conquered · 🎁 conquest loot in reach · 🔒 locked */}
+              {districtStatus.map((d) => {
+                const lootWarm = !d.conquered && level >= d.lockLevel;
+                const lootHot = lootWarm && d.doneCount >= 2;
+                return (
+                  <div key={d.name} className="absolute -translate-x-1/2 whitespace-nowrap rounded bg-slate-950/70 px-1.5 py-0.5 text-[8px] font-black tracking-wider text-slate-400"
+                    style={{ left: `${d.x}%`, top: `${d.y - 9.5}%` }}>
+                    {d.name.toUpperCase()}{" "}
+                    {d.conquered ? <span className="text-green-400">🏆</span>
+                      : level < d.lockLevel ? <span className="text-slate-600">🔒Lv.{d.lockLevel}</span>
+                      : d.doneCount >= 1 ? (
+                        <span className={`rounded px-1 ${lootHot ? "animate-pulse bg-amber-500/30 text-amber-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]" : "bg-amber-500/15 text-amber-400"}`}>
+                          🎁{d.doneCount}/3
+                        </span>
+                      ) : <span className="text-slate-600">●</span>}
+                  </div>
+                );
+              })}
 
               {/* ── EVERY MISSION IS A PIN (2 rings of 8) ── */}
               {visibleMissions.map((m) => {
