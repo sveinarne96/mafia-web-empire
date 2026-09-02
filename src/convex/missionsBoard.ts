@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
-import { MISSION_TYPE_MAP, DISTRICTS, DISTRICT_MAP } from "../data/missionsCatalog";
+import { MISSION_TYPE_MAP, DISTRICTS } from "../data/missionsCatalog";
 import { DISTRICT_CASH } from "../data/empire";
 
 const n = (val: any, d: number) => (typeof val === "number" && Number.isFinite(val) ? val : d);
@@ -17,30 +17,58 @@ function boardMap(player: any): Record<string, number> {
   const m = (player as any).missionBoard;
   return m && typeof m === "object" ? m : {};
 }
-
+function actionsMap(player: any): Record<string, number> {
+  const m = (player as any).missionActions;
+  return m && typeof m === "object" ? m : {};
+}
+function startedMap(player: any): Record<string, number> {
+  const m = (player as any).missionStarted;
+  return m && typeof m === "object" ? m : {};
+}
 function cooldownMap(player: any): Record<string, number> {
   const m = (player as any).missionCooldowns;
   return m && typeof m === "object" ? m : {};
 }
-
 function legacyEmpireProgress(player: any): Record<string, number> {
   const m = player.empireProgress;
   return m && typeof m === "object" ? m : {};
 }
 
-/** Conquest = 3 distinct mission types completed (>=1 task) in a district.
- *  Kept in lockstep with the legacy empireProgress[district] = 0..3 so
- *  daily empire income, value and sell all keep working. */
+const MISSION_TYPE_LIST = Object.keys(MISSION_TYPE_MAP);
+
+/** conquestCount = max(legacy empireProgress, distinct mission types done). Kept
+ *  in lockstep with legacy empireProgress for daily income, value and selling. */
 function conquestCount(progress: Record<string, number>, legacy: Record<string, number>, districtIdx: number): number {
   const legacyCount = Math.min(3, Math.max(0, Math.floor(legacy[DISTRICTS[districtIdx].name] ?? 0)));
   let distinct = 0;
   for (const t of MISSION_TYPE_LIST) {
-    if (Math.floor(progress[`${districtIdx}:${t}`] ?? 0) >= 1) distinct++;
+    if (Math.floor(progress[`${districtIdx}:${t}`] ?? 0) >= 3) distinct++;
   }
   return Math.max(legacyCount, Math.min(3, distinct));
 }
 
-const MISSION_TYPE_LIST = Object.keys(MISSION_TYPE_MAP);
+/** Live counters on the player row that each mission type's progress derives from. */
+function actionValue(player: any, action: string): number {
+  switch (action) {
+    case "crime":      return n(player.totalCrimes, 0);
+    case "heist":      return n(player.heistsSuccess, 0);
+    case "melt":       return n(player.carsMelted, 0);
+    case "buybullets": return n(player.bulletsBought, 0);
+    case "gta":        return n(player.totalGta, 0);
+    case "rarecar":    return n(player.totalGtaRare, 0);
+    case "repair":     return n(player.carsRepaired, 0);
+    case "interest":   return n(player.interestCollections, 0);
+    case "casino":     return n(player.casinoRounds, 0);
+    case "smuggle":    return n(player.smugglingRuns, 0);
+    case "assassin":   return n(player.assassinationKills, 0);
+    case "property":   return n(player.propertiesBought, 0);
+    case "fraud":      return n(player.counterfeitSkill, 0) + n(player.identityThefts, 0);
+    case "burglary":   return n(player.burglaries, 0);
+    case "supply":     return n(player.supplyRuns, 0);
+    case "race":       return n(player.racesWon, 0);
+    default:           return 0;
+  }
+}
 
 const BASE_CHANCE: Record<number, number> = { 1: 0.92, 2: 0.85, 3: 0.78, 4: 0.70, 5: 0.60 };
 
@@ -50,8 +78,11 @@ export const getBoard = query({
     const player = await getCurrentUser(ctx);
     if (!player) return null;
     const progress = boardMap(player);
+    const started = startedMap(player);
+    const actions = actionsMap(player);
     const cooldowns = cooldownMap(player);
     const legacy = legacyEmpireProgress(player);
+    const now = Date.now();
 
     const districtsCompleted = DISTRICTS.reduce((s, _, i) => s + (conquestCount(progress, legacy, i) >= 3 ? 1 : 0), 0);
     const conquestPerDistrict = DISTRICTS.map((_, i) => conquestCount(progress, legacy, i));
@@ -59,24 +90,25 @@ export const getBoard = query({
     const totalTasks = Object.values(progress).reduce((s: number, v: any) => s + n(v, 0), 0);
     const empireValue = districtsCompleted * 50_000 + totalTasks * 2_000 + n(player.empireValue, 0);
     const lastPayout = n(player.lastEmpirePayout, 0);
-    const nextPayoutIn = lastPayout > 0 ? Math.max(0, lastPayout + 24 * 3600000 - Date.now()) : 0;
+    const nextPayoutIn = lastPayout > 0 ? Math.max(0, lastPayout + 24 * 3600000 - now) : 0;
 
     return {
       level: n(player.level, 1),
       energy: n((player as any).energy, 100),
       maxEnergy: n((player as any).maxEnergy, 100),
       money: n(player.money, 0),
-      points: n(player.points, 0),
-      bullets: n(player.bullets, 0),
-      coins: n(player.coins, 0),
       progress,
+      started,
+      actions,
       cooldowns,
+      actionValues: Object.fromEntries(
+        Object.values(MISSION_TYPE_MAP).map((t) => [t.action, actionValue(player, t.action)]),
+      ),
       stats: {
         attempted: n((player as any).missionAttempted, 0),
         completed: n((player as any).missionCompleted, 0),
         failed: n((player as any).missionFailed, 0),
         profit: n((player as any).missionProfit, 0),
-        typeCounts: (player as any).missionTypeCounts ?? {},
       },
       empire: {
         districtsCompleted,
@@ -89,12 +121,13 @@ export const getBoard = query({
         nextPayoutIn,
         sold: n((player as any).empireSoldAt, 0) > 0,
       },
-      serverNow: Date.now(),
+      serverNow: now,
     };
   },
 });
 
-export const runMission = mutation({
+// ═══════════ START — take the mission and snapshot your counters ═══════════
+export const startMission = mutation({
   args: { key: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
@@ -107,94 +140,133 @@ export const runMission = mutation({
 
     const district = DISTRICTS[di];
     const progress = boardMap(player);
-    const key = `${di}:${typeId}`;
+    const key = args.key;
     const task = Math.min(3, Math.floor(progress[key] ?? 0));
-    if (task >= 3) throw new Error("Mission already completed — it resets when you sell the empire");
+    if (task >= 3) throw new Error("Mission already completed");
 
     // Level lock: new missions require the district level; in-progress ones stay open.
     if (task === 0 && n(player.level, 1) < district.lockLevel) {
       throw new Error(`🔒 ${district.name} unlocks at level ${district.lockLevel}`);
     }
+    if (n((player as any).empireSoldAt, 0) > 0) throw new Error("Your empire was sold — mission progress cleared");
 
     const now = Date.now();
     const energy = n((player as any).energy, 100);
-    if (energy < type.energy) throw new Error(`Need ${type.energy} energy — you have ${Math.floor(energy)}`);
+    if (energy < type.energy) throw new Error(`Need ${type.energy} energy to take this mission — you have ${Math.floor(energy)}`);
 
     const cooldowns = cooldownMap(player);
     const cdUntil = n(cooldowns[key], 0);
-    if (cdUntil > now) {
-      const s = Math.ceil((cdUntil - now) / 1000);
-      throw new Error(`${type.label} cooling down — ${s}s remaining`);
+    if (cdUntil > now) throw new Error(`Mission cooling down — ${Math.ceil((cdUntil - now) / 1000)}s remaining`);
+    const started = startedMap(player);
+    if (started[key]) throw new Error("Mission already started — go do the actions, then come back to claim");
+
+    const actions = actionsMap(player);
+    const baseline = actionValue(player, type.action);
+
+    await ctx.db.patch(player._id, {
+      energy: Math.max(0, energy - type.energy),
+      missionStarted: { ...started, [key]: now },
+      missionActions: { ...actions, [key]: baseline },
+      missionCooldowns: { ...cooldowns, [key]: now + type.cooldownMin * 60_000 },
+      missionAttempted: n((player as any).missionAttempted, 0) + 1,
+    } as any);
+
+    return {
+      success: true,
+      key,
+      mission: `${type.icon} ${type.label}`,
+      district: district.name,
+      action: type.action,
+      required: type.required,
+      baseline,
+      hint: type.where,
+    };
+  },
+});
+
+// ═══════════ CLAIM — server verifies you actually did the actions ═══════════
+export const claimMission = mutation({
+  args: { key: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+
+    const [diStr, typeId] = args.key.split(":");
+    const di = parseInt(diStr, 10);
+    const type = MISSION_TYPE_MAP[typeId];
+    if (isNaN(di) || di < 0 || di >= DISTRICTS.length || !type) throw new Error("Unknown mission");
+
+    const progress = boardMap(player);
+    const key = args.key;
+    const task = Math.min(3, Math.floor(progress[key] ?? 0));
+    if (task >= 3) throw new Error("Mission already completed");
+    const started = startedMap(player);
+    const startedAt = n(started[key], 0);
+    if (!startedAt) throw new Error("Press START first — take the mission, then do the actions in-game");
+
+    const actions = actionsMap(player);
+    const baseline = n(actions[key], 0);
+    const current = actionValue(player, type.action);
+    const delta = current - baseline;
+    if (delta < type.required) {
+      throw new Error(`Not done yet — ${delta}/${type.required} ${type.label.toLowerCase()} since you started. ${type.where}`);
     }
 
-    // Success roll
-    const chance = Math.min(0.95, BASE_CHANCE[type.difficulty] - district.hazard + Math.min(0.15, n(player.level, 1) * 0.003));
-    const won = Math.random() < chance;
+    const now = Date.now();
+    const district = DISTRICTS[di];
+    const reward = type.rewards[Math.min(2, task)];
+    const cashBoost = now < n(player.cashBoostUntil, 0) ? 2 : 1;
+    const newProgress = { ...progress, [key]: task + 1 };
+    const newStarted = { ...started };
+    delete newStarted[key];
 
-    const patch: any = { energy: Math.max(0, energy - type.energy) };
-    const newCooldowns = { ...cooldowns, [key]: now + type.cooldownMin * 60_000 };
-    patch.missionCooldowns = newCooldowns;
-    patch.missionAttempted = n((player as any).missionAttempted, 0) + 1;
+    const patch: any = {
+      missionBoard: newProgress,
+      missionStarted: newStarted,
+      missionCompleted: n((player as any).missionCompleted, 0) + 1,
+      missionProfit: n((player as any).missionProfit, 0) + reward,
+    };
 
-    let xp = 0;
-    let reward = 0;
-    let conquered = false;
-
-    if (won) {
-      reward = type.rewards[Math.min(2, task)];
-      const cashBoost = now < n(player.cashBoostUntil, 0) ? 2 : 1;
-      const newProgress = { ...progress, [key]: task + 1 };
-      patch.missionBoard = newProgress;
-
-      switch (type.currency) {
-        case "cash":
-          patch.money = n(player.money, 0) + Math.floor(reward * cashBoost);
-          patch.missionProfit = n((player as any).missionProfit, 0) + Math.floor(reward * cashBoost);
-          break;
-        case "points":
-          patch.points = n(player.points, 0) + reward;
-          break;
-        case "bullets":
-          patch.bullets = n(player.bullets, 0) + reward;
-          break;
-        case "coins":
-          patch.coins = n(player.coins, 0) + reward;
-          break;
-        case "scrap": {
-          const scraps = player.scraps && typeof player.scraps === "object" ? { ...player.scraps } : { common: 0, rare: 0, epic: 0 };
-          scraps.common = n(scraps.common, 0) + reward;
-          if (task >= 2) scraps.rare = n(scraps.rare, 0) + reward;
-          patch.scraps = scraps;
-          break;
-        }
-        case "xp":
-          xp = reward;
-          break;
+    switch (type.currency) {
+      case "cash":
+        patch.money = n(player.money, 0) + Math.floor(reward * cashBoost);
+        break;
+      case "points":
+        patch.points = n(player.points, 0) + reward;
+        break;
+      case "bullets":
+        patch.bullets = n(player.bullets, 0) + reward;
+        break;
+      case "coins":
+        patch.coins = n(player.coins, 0) + reward;
+        break;
+      case "scrap": {
+        const scraps = player.scraps && typeof player.scraps === "object" ? { ...player.scraps } : { common: 0, rare: 0, epic: 0 };
+        scraps.common = n(scraps.common, 0) + reward;
+        if (task >= 2) scraps.rare = n(scraps.rare, 0) + reward;
+        patch.scraps = scraps;
+        break;
       }
-
-      patch.missionCompleted = n((player as any).missionCompleted, 0) + 1;
-      const tc = { ...((player as any).missionTypeCounts ?? {}) };
-      tc[typeId] = n(tc[typeId], 0) + 1;
-      patch.missionTypeCounts = tc;
-
-      // Empire conquest: first completion of a new mission type in this district
-      const legacy = legacyEmpireProgress(player);
-      const dName = district.name;
-      const legacyCount = Math.min(3, Math.max(0, Math.floor(legacy[dName] ?? 0)));
-      const beforeDistinct = MISSION_TYPE_LIST.filter((t) => Math.floor(progress[`${di}:${t}`] ?? 0) >= 1).length;
-      const afterDistinct = MISSION_TYPE_LIST.filter((t) => Math.floor(newProgress[`${di}:${t}`] ?? 0) >= 1).length;
-      if (legacyCount < 3 && beforeDistinct === 0 && afterDistinct === 1 && n((player as any).empireSoldAt, 0) === 0) {
-        const next = Math.min(3, legacyCount + 1);
-        patch.empireProgress = { ...legacy, [dName]: next };
-        conquered = next >= 3;
-      }
-
-      xp += 150 + task * 100; // baseline XP per successful mission
-    } else {
-      patch.missionFailed = n((player as any).missionFailed, 0) + 1;
-      xp = 40; // consolation XP
+      case "xp":
+        patch.xpReward = reward; // applied below via addXpAndCheckLevel
+        break;
     }
 
+    // Empire conquest: completing a mission that makes this the 1st/2nd/3rd distinct
+    // completed type in the district bumps legacy empireProgress (income + selling).
+    const legacy = legacyEmpireProgress(player);
+    const dName = district.name;
+    const legacyCount = Math.min(3, Math.max(0, Math.floor(legacy[dName] ?? 0)));
+    const distinctBefore = MISSION_TYPE_LIST.filter((t) => Math.floor(progress[`${di}:${t}`] ?? 0) >= 3).length;
+    const distinctAfter = MISSION_TYPE_LIST.filter((t) => Math.floor(newProgress[`${di}:${t}`] ?? 0) >= 3).length;
+    if (legacyCount < 3 && distinctAfter > distinctBefore && n((player as any).empireSoldAt, 0) === 0) {
+      const next = Math.min(3, legacyCount + (distinctAfter - distinctBefore));
+      patch.empireProgress = { ...legacy, [dName]: next };
+    }
+
+    let xp = 150 + task * 100;
+    const xpReward = patch.xpReward;
+    if (xpReward) { xp += xpReward; delete patch.xpReward; }
     const xpUpd: any = await addXpAndCheckLevel(ctx, player, xp);
     patch.experience = xpUpd.experience;
     if (xpUpd.level !== undefined) {
@@ -208,21 +280,35 @@ export const runMission = mutation({
     }
     await ctx.db.patch(player._id, patch);
 
-    const name = `${type.icon} ${type.label}`;
     return {
       success: true,
-      won,
-      chance: Math.round(chance * 100),
-      reward: won ? reward : 0,
+      won: true,
+      reward,
       currency: type.currency,
       district: district.name,
       typeLabel: type.label,
-      task: won ? task + 1 : task,
-      missionDone: won && task + 1 >= 3,
-      conquered,
+      task: task + 1,
+      missionDone: task + 1 >= 3,
+      conquered: distinctAfter >= 3 && distinctBefore < 3,
+      delta,
       xp,
       levelUp: xpUpd.level !== undefined ? xpUpd.level : undefined,
     };
+  },
+});
+
+// ═══════════ ABANDON — drop a started mission (no refund of energy) ═══════════
+export const abandonMission = mutation({
+  args: { key: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const started = startedMap(player);
+    if (!started[args.key]) throw new Error("Mission is not started");
+    const newStarted = { ...started };
+    delete newStarted[args.key];
+    await ctx.db.patch(player._id, { missionStarted: newStarted } as any);
+    return { success: true };
   },
 });
 
@@ -244,10 +330,10 @@ export const sellEmpire = mutation({
     await ctx.db.patch(player._id, {
       points: n(player.points, 0) + value,
       empireProgress: {},
+      missionBoard: {},
+      missionStarted: {},
       empireSoldAt: Date.now(),
-    });
+    } as any);
     return { success: true, points: value, districts: districtsCompleted };
   },
 });
-
-export { DISTRICT_MAP };

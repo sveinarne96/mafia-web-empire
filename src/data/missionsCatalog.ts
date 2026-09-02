@@ -22,27 +22,33 @@ export interface MissionTypeDef {
   rewards: [number, number, number];
   currency: MissionCurrency;
   difficulty: 1 | 2 | 3 | 4 | 5;
-  energy: number;      // energy cost per run
-  cooldownMin: number; // minutes between runs of the same mission
+  energy: number;      // energy cost to START the mission
+  cooldownMin: number; // minutes between starts of the same mission
+  /** Action type the player must grind in-game to earn the mission */
+  action: string;
+  /** Friendly hint of what to do */
+  where: string;
+  /** Times the action must be performed */
+  required: number;
 }
 
 export const MISSION_TYPES: MissionTypeDef[] = [
-  { id: "crime",      label: "Commit Crimes",     icon: "🔪", color: "#ef4444", desc: "Run street-level crimes for quick cash",        rewards: [18_000, 30_000, 55_000],    currency: "cash",    difficulty: 1, energy: 10, cooldownMin: 3 },
-  { id: "heist",      label: "Commit Heists",     icon: "🎯", color: "#a855f7", desc: "High-value scores planned with your crew",      rewards: [120_000, 250_000, 500_000], currency: "cash",    difficulty: 4, energy: 30, cooldownMin: 15 },
-  { id: "melt",       label: "Melt Bullets",      icon: "🔥", color: "#f97316", desc: "Melt down ammo into XP and materials",          rewards: [400, 800, 1_600],           currency: "xp",      difficulty: 1, energy: 5,  cooldownMin: 2 },
-  { id: "buybullets", label: "Buy Bullets",       icon: "🔫", color: "#eab308", desc: "Restock ammo at district dealers",              rewards: [300, 600, 1_200],           currency: "bullets", difficulty: 1, energy: 5,  cooldownMin: 2 },
-  { id: "gta",        label: "Steal Cars",        icon: "🚗", color: "#22d3ee", desc: "Boost vehicles straight off the street",        rewards: [45_000, 90_000, 180_000],   currency: "cash",    difficulty: 2, energy: 15, cooldownMin: 5 },
-  { id: "rarecar",    label: "Steal Rare Cars",   icon: "💎", color: "#38bdf8", desc: "Hunt legendary rides in private garages",       rewards: [200_000, 400_000, 900_000], currency: "cash",    difficulty: 4, energy: 25, cooldownMin: 10 },
-  { id: "repair",     label: "Repair Rare Cars",  icon: "🔧", color: "#34d399", desc: "Restore wrecks to showroom condition",          rewards: [30, 60, 120],               currency: "scrap",   difficulty: 2, energy: 12, cooldownMin: 8 },
-  { id: "bank",       label: "Bank Interest",     icon: "🏦", color: "#4ade80", desc: "Collect interest on stored capital",            rewards: [25_000, 50_000, 100_000],   currency: "cash",    difficulty: 1, energy: 4,  cooldownMin: 10 },
-  { id: "casino",     label: "Casino Grind",      icon: "🎰", color: "#fbbf24", desc: "Work the tables and skim the house",            rewards: [2, 4, 8],                   currency: "coins",   difficulty: 2, energy: 10, cooldownMin: 5 },
-  { id: "smuggle",    label: "Run Contraband",    icon: "🚛", color: "#f472b6", desc: "Move illegal freight across the city",          rewards: [60_000, 120_000, 240_000],  currency: "cash",    difficulty: 3, energy: 18, cooldownMin: 8 },
-  { id: "assassin",   label: "Contract Kills",    icon: "💀", color: "#f43f5e", desc: "Execute marked targets for brokers",            rewards: [150, 300, 600],             currency: "points",  difficulty: 5, energy: 25, cooldownMin: 20 },
-  { id: "empire",     label: "Empire Expansion",  icon: "👑", color: "#ffd700", desc: "Buy property and extend your influence",        rewards: [40_000, 80_000, 160_000],   currency: "cash",    difficulty: 3, energy: 15, cooldownMin: 10 },
-  { id: "fraud",      label: "Fraud Schemes",     icon: "🃏", color: "#fb923c", desc: "Run identity and card scams",                   rewards: [35_000, 70_000, 140_000],   currency: "cash",    difficulty: 2, energy: 12, cooldownMin: 6 },
-  { id: "burglary",   label: "Burglarize Homes",  icon: "🏠", color: "#c084fc", desc: "Silent entries on wealthy houses",              rewards: [28_000, 56_000, 112_000],   currency: "cash",    difficulty: 2, energy: 12, cooldownMin: 6 },
-  { id: "supply",     label: "Supply Runs",       icon: "📦", color: "#2dd4bf", desc: "Deliver supplies between district hubs",        rewards: [3, 6, 12],                  currency: "coins",   difficulty: 2, energy: 10, cooldownMin: 5 },
-  { id: "racing",     label: "Street Racing",     icon: "🏎️", color: "#60a5fa", desc: "Win underground street races",                  rewards: [22_000, 44_000, 88_000],    currency: "cash",    difficulty: 3, energy: 10, cooldownMin: 5 },
+  { id: "crime",      label: "Commit Crimes",     icon: "🔪", color: "#ef4444", desc: "Run street-level crimes for quick cash",        rewards: [18_000, 30_000, 55_000],    currency: "cash",    difficulty: 1, energy: 10, cooldownMin: 3,  action: "crime",      where: "Crime hub → any street crime",        required: 3 },
+  { id: "heist",      label: "Commit Heists",     icon: "🎯", color: "#a855f7", desc: "High-value scores planned with your crew",      rewards: [120_000, 250_000, 500_000], currency: "cash",    difficulty: 4, energy: 30, cooldownMin: 15, action: "heist",      where: "Heist → plan & execute a job",        required: 1 },
+  { id: "melt",       label: "Melt Bullets",      icon: "🔥", color: "#f97316", desc: "Turn stolen cars into bullets in the scrapyard", rewards: [400, 800, 1_600],           currency: "xp",      difficulty: 1, energy: 5,  cooldownMin: 2,  action: "melt",       where: "My Items → melt cars",                required: 1 },
+  { id: "buybullets", label: "Buy Bullets",       icon: "🔫", color: "#eab308", desc: "Restock ammo at the district dealer",           rewards: [300, 600, 1_200],           currency: "bullets", difficulty: 1, energy: 5,  cooldownMin: 2,  action: "buybullets", where: "Points Shop → buy bullets",           required: 1 },
+  { id: "gta",        label: "Steal Cars",        icon: "🚗", color: "#22d3ee", desc: "Boost vehicles straight off the street",        rewards: [45_000, 90_000, 180_000],   currency: "cash",    difficulty: 2, energy: 15, cooldownMin: 5,  action: "gta",        where: "GTA Car Theft → steal any car",       required: 2 },
+  { id: "rarecar",    label: "Steal Rare Cars",   icon: "💎", color: "#38bdf8", desc: "Hunt legendary rides in private garages",       rewards: [200_000, 400_000, 900_000], currency: "cash",    difficulty: 4, energy: 25, cooldownMin: 10, action: "rarecar",    where: "GTA → steal a rare/epic/legendary car", required: 1 },
+  { id: "repair",     label: "Repair Rare Cars",  icon: "🔧", color: "#34d399", desc: "Restore wrecks to showroom condition",          rewards: [30, 60, 120],               currency: "scrap",   difficulty: 2, energy: 12, cooldownMin: 8,  action: "repair",     where: "Garage → repair a damaged car",       required: 1 },
+  { id: "bank",       label: "Bank Interest",     icon: "🏦", color: "#4ade80", desc: "Deposit and let the interest bank pay you",     rewards: [25_000, 50_000, 100_000],   currency: "cash",    difficulty: 1, energy: 4,  cooldownMin: 10, action: "interest",   where: "Bank → Interest Bank deposit/collect", required: 1 },
+  { id: "casino",     label: "Casino Grind",      icon: "🎰", color: "#fbbf24", desc: "Work the tables — every round counts",          rewards: [2, 4, 8],                   currency: "coins",   difficulty: 2, energy: 10, cooldownMin: 5,  action: "casino",     where: "Any casino game → play 5 rounds",     required: 5 },
+  { id: "smuggle",    label: "Run Contraband",    icon: "🚛", color: "#f472b6", desc: "Move illegal freight across the city",          rewards: [60_000, 120_000, 240_000],  currency: "cash",    difficulty: 3, energy: 18, cooldownMin: 8,  action: "smuggle",    where: "Underground → smuggling run",         required: 1 },
+  { id: "assassin",   label: "Contract Kills",    icon: "💀", color: "#f43f5e", desc: "Take a contract and finish the hit",            rewards: [150, 300, 600],             currency: "points",  difficulty: 5, energy: 25, cooldownMin: 20, action: "assassin",   where: "Contract Killings → complete a hit",  required: 1 },
+  { id: "empire",     label: "Empire Expansion",  icon: "👑", color: "#ffd700", desc: "Buy property and extend your influence",        rewards: [40_000, 80_000, 160_000],   currency: "cash",    difficulty: 3, energy: 15, cooldownMin: 10, action: "property",   where: "Company/Realty → buy a property",     required: 1 },
+  { id: "fraud",      label: "Fraud Schemes",     icon: "🃏", color: "#fb923c", desc: "Run identity and counterfeit scams",            rewards: [35_000, 70_000, 140_000],   currency: "cash",    difficulty: 2, energy: 12, cooldownMin: 6,  action: "fraud",      where: "Underground → counterfeiting/ID theft", required: 1 },
+  { id: "burglary",   label: "Burglarize Homes",  icon: "🏠", color: "#c084fc", desc: "Silent entries on wealthy houses",              rewards: [28_000, 56_000, 112_000],   currency: "cash",    difficulty: 2, energy: 12, cooldownMin: 6,  action: "burglary",   where: "Burglarize Houses → any break-in",    required: 2 },
+  { id: "supply",     label: "Supply Runs",       icon: "📦", color: "#2dd4bf", desc: "Deliver supplies between district hubs",        rewards: [3, 6, 12],                  currency: "coins",   difficulty: 2, energy: 10, cooldownMin: 5,  action: "supply",     where: "Supply Running → deliver a unit",     required: 1 },
+  { id: "racing",     label: "Street Racing",     icon: "🏎️", color: "#60a5fa", desc: "Commit street crimes with wheels",              rewards: [22_000, 44_000, 88_000],    currency: "cash",    difficulty: 3, energy: 10, cooldownMin: 5,  action: "race",       where: "Crime hub → any street crime",        required: 2 },
 ];
 
 export const MISSION_TYPE_MAP: Record<string, MissionTypeDef> = Object.fromEntries(

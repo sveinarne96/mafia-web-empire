@@ -44,7 +44,9 @@ type Tab = "active" | "completed";
 
 export function MissionsMapPanel() {
   const board = useQuery(api.missionsBoard.getBoard);
-  const runMission = useMutation(api.missionsBoard.runMission);
+  const startMission = useMutation(api.missionsBoard.startMission);
+  const claimMission = useMutation(api.missionsBoard.claimMission);
+  const abandonMission = useMutation(api.missionsBoard.abandonMission);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [selected, setSelected] = useState<string | null>(null);   // district name
@@ -65,6 +67,8 @@ export function MissionsMapPanel() {
 
   const progress = (board?.progress ?? {}) as Record<string, number>;
   const cooldowns = (board?.cooldowns ?? {}) as Record<string, number>;
+  const started = (board?.started ?? {}) as Record<string, number>;
+  const actionValues = (board?.actionValues ?? {}) as Record<string, number>;
   const level = board?.level ?? 1;
   const energy = board?.energy ?? 100;
 
@@ -99,22 +103,38 @@ export function MissionsMapPanel() {
   const sel = districtStatus.find((d) => d.name === selected) ?? null;
   const selMissions = sel ? sel.missions.filter(matchesFilter) : [];
 
-  const run = async (key: string) => {
+  const start = async (key: string) => {
     setBusy(key); setMsg(null);
     try {
-      const r = await runMission({ key });
-      if (!r.won) {
-        setMsg({ ok: false, text: `💀 Mission failed — ${r.chance}% chance. Your crew got out clean but empty-handed.` });
-      } else if (r.conquered) {
-        setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! All empire income online!` });
-      } else if (r.missionDone) {
-        setMsg({ ok: true, text: `✅ Mission complete in ${r.district}! +${rewardLabel(r.currency, r.reward)}` });
-      } else {
-        setMsg({ ok: true, text: `✔ Task ${r.task}/3 done — ${r.typeLabel} · +${rewardLabel(r.currency, r.reward)} · +${nf(r.xp)} XP` });
-      }
+      const r = await startMission({ key });
+      setMsg({ ok: true, text: `🎯 ${r.mission} accepted in ${r.district}! Do ${r.required}× now: ${r.hint} — then press CLAIM.` });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e.message || "Failed to start" });
+    }
+    setBusy(null);
+  };
+
+  const claim = async (key: string) => {
+    setBusy(key); setMsg(null);
+    try {
+      const r = await claimMission({ key });
+      if (r.conquered) setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! Empire income online!` });
+      else if (r.missionDone) setMsg({ ok: true, text: `✅ Mission complete in ${r.district}! +${rewardLabel(r.currency, r.reward)} · +${nf(r.xp)} XP` });
+      else setMsg({ ok: true, text: `✔ Task ${r.task}/3 — ${r.typeLabel} · +${rewardLabel(r.currency, r.reward)} · START again for task ${r.task + 1}.` });
       if (r.levelUp) setMsg({ ok: true, text: `⭐ LEVEL UP! You are now level ${r.levelUp}!` });
     } catch (e: any) {
-      setMsg({ ok: false, text: e.message || "Mission failed" });
+      setMsg({ ok: false, text: e.message || "Claim failed" });
+    }
+    setBusy(null);
+  };
+
+  const abandon = async (key: string) => {
+    setBusy(key); setMsg(null);
+    try {
+      await abandonMission({ key });
+      setMsg({ ok: true, text: "Mission dropped — energy is not refunded." });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e.message || "Failed" });
     }
     setBusy(null);
   };
@@ -288,10 +308,16 @@ export function MissionsMapPanel() {
                   const locked = level < m.lockLevel && !m.done;
                   const noEnergy = energy < m.typeDef.energy;
                   const isSel = selType === m.type;
+                  const isStarted = !!started[m.key];
+                  const base = board?.actions?.[m.key] ?? 0;
+                  const current = actionValues[m.typeDef.action] ?? 0;
+                  const delta = Math.max(0, current - base);
+                  const ready = isStarted && delta >= m.typeDef.required;
+                  const pct = Math.min(100, Math.round((delta / m.typeDef.required) * 100));
                   return (
-                    <div key={m.key} className={`rounded-lg border p-2.5 transition-all ${isSel ? "border-cyan-400/50 bg-cyan-950/20" : m.done ? "border-green-500/30 bg-green-950/10" : "border-slate-700/50 bg-slate-900/50"}`}>
+                    <div key={m.key} className={`rounded-lg border p-2.5 transition-all ${isSel ? "border-cyan-400/50 bg-cyan-950/20" : m.done ? "border-green-500/30 bg-green-950/10" : isStarted ? "border-amber-500/40 bg-amber-950/10" : "border-slate-700/50 bg-slate-900/50"}`}>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">{m.done ? "✅" : m.typeDef.icon}</span>
+                        <span className="text-lg">{m.done ? "✅" : isStarted ? "🎯" : m.typeDef.icon}</span>
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[11px] font-bold text-white">{m.name}</div>
                           <div className="flex items-center gap-1.5 text-[9px] text-slate-500">
@@ -302,12 +328,21 @@ export function MissionsMapPanel() {
                             <span>{m.typeDef.energy}⚡</span>
                           </div>
                         </div>
-                        <button disabled={m.done || busy === m.key || locked || onCd || noEnergy}
-                          onClick={() => run(m.key)}
-                          className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:cursor-not-allowed disabled:opacity-40 ${
-                            m.done ? "bg-green-900/40 text-green-400" : "bg-gradient-to-r from-cyan-500 to-blue-500 text-black hover:brightness-110"}`}>
-                          {m.done ? "DONE" : locked ? `🔒Lv${m.lockLevel}` : onCd ? fmtClock(cdLeft) : noEnergy ? "NO ⚡" : busy === m.key ? "…" : "RUN"}
-                        </button>
+                        <div className="flex flex-col gap-1">
+                          {!m.done && !isStarted && (
+                            <button disabled={busy === m.key || locked || onCd || noEnergy} onClick={() => start(m.key)}
+                              className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:opacity-40 ${locked || onCd || noEnergy ? "bg-slate-700 text-slate-400" : "bg-gradient-to-r from-cyan-500 to-blue-500 text-black hover:brightness-110"}`}>
+                              {locked ? `🔒Lv${m.lockLevel}` : onCd ? fmtClock(cdLeft) : noEnergy ? "NO ⚡" : busy === m.key ? "…" : "▶ START"}
+                            </button>
+                          )}
+                          {isStarted && !m.done && (
+                            <button disabled={busy === m.key} onClick={() => claim(m.key)}
+                              className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:opacity-40 ${ready ? "bg-green-500 text-black hover:brightness-110" : "bg-slate-700 text-slate-300"}`}>
+                              {ready ? "✓ CLAIM" : `${delta}/${m.typeDef.required}`}
+                            </button>
+                          )}
+                          {m.done && <span className="rounded bg-green-900/40 px-2 py-1 text-[9px] font-black text-green-400">DONE</span>}
+                        </div>
                       </div>
                       <div className="mt-1.5 flex items-center gap-2">
                         <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-800">
@@ -332,24 +367,38 @@ export function MissionsMapPanel() {
             const cdLeft = (cooldowns[m.key] ?? 0) - now;
             const onCd = cdLeft > 0;
             const locked = level < m.lockLevel && !m.done;
+            const isStarted = !!started[m.key];
+            const base = board?.actions?.[m.key] ?? 0;
+            const current = actionValues[m.typeDef.action] ?? 0;
+            const delta = Math.max(0, current - base);
+            const ready = isStarted && delta >= m.typeDef.required;
             return (
-              <div key={m.key} className={`rounded-xl border p-3 ${m.done ? "border-green-500/30 bg-green-950/10" : "border-slate-700/50 bg-slate-900/40"}`}>
+              <div key={m.key} className={`rounded-xl border p-3 ${m.done ? "border-green-500/30 bg-green-950/10" : isStarted ? "border-amber-500/40 bg-amber-950/10" : "border-slate-700/50 bg-slate-900/40"}`}>
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">{m.typeDef.icon}</span>
+                  <span className="text-lg">{m.done ? "✅" : isStarted ? "🎯" : m.typeDef.icon}</span>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[11px] font-black text-white">{m.name}</div>
                     <div className="text-[9px] text-slate-500">{m.district} · <span style={{ color: m.typeDef.color }}>{m.typeDef.label}</span></div>
                   </div>
-                  <button disabled={m.done || busy === m.key || locked || onCd || energy < m.typeDef.energy}
-                    onClick={() => run(m.key)}
-                    className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:opacity-40 ${m.done ? "bg-green-900/40 text-green-400" : "bg-gradient-to-r from-cyan-500 to-blue-500 text-black"}`}>
-                    {m.done ? "✅" : locked ? `🔒Lv${m.lockLevel}` : onCd ? fmtClock(cdLeft) : "RUN"}
-                  </button>
+                  {!m.done && !isStarted && (
+                    <button disabled={busy === m.key || locked || onCd || energy < m.typeDef.energy} onClick={() => start(m.key)}
+                      className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black disabled:opacity-40 ${locked || onCd ? "bg-slate-700 text-slate-400" : "bg-gradient-to-r from-cyan-500 to-blue-500 text-black"}`}>
+                      {locked ? `🔒Lv${m.lockLevel}` : onCd ? fmtClock(cdLeft) : "▶ START"}
+                    </button>
+                  )}
+                  {isStarted && !m.done && (
+                    <button disabled={busy === m.key} onClick={() => claim(m.key)}
+                      className={`rounded-lg px-2.5 py-1.5 text-[9px] font-black ${ready ? "bg-green-500 text-black" : "bg-slate-700 text-slate-300"}`}>
+                      {ready ? "✓ CLAIM" : `${delta}/${m.typeDef.required}`}
+                    </button>
+                  )}
+                  {m.done && <span className="text-[9px] font-black text-green-400">DONE</span>}
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-[9px] text-slate-500">
                   <span className="font-bold text-amber-400">+{rewardLabel(m.typeDef.currency, m.reward)}</span>
                   <span>· {m.typeDef.energy}⚡</span>
                   <span>· {m.typeDef.cooldownMin}m cd</span>
+                  <span>· needs {m.typeDef.required}× {m.typeDef.where}</span>
                   <span className="ml-auto">{m.progress}/3</span>
                 </div>
                 <div className="mt-1 h-1 overflow-hidden rounded-full bg-slate-800">
