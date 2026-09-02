@@ -229,7 +229,9 @@ export const claimMission = mutation({
     const district = DISTRICTS[di];
     // Wave-scaled rewards: every auto-generated wave pays +60% more
     const wave = Math.max(0, Math.floor(n((player as any).missionWave, 0)));
-    const reward = Math.floor(type.rewards[Math.min(2, task)] * waveMultiplier(wave));
+    // Cap the scaled reward so endless 24/7 wave compounding can never overflow
+    // into Infinity (Convex rejects non-finite values with a generic Server Error).
+    const reward = Math.min(Number.MAX_SAFE_INTEGER / 2, Math.floor(type.rewards[Math.min(2, task)] * waveMultiplier(wave)));
     const cashBoost = now < n(player.cashBoostUntil, 0) ? 2 : 1;
     const newProgress = { ...progress, [key]: task + 1 };
     const newStarted = { ...started };
@@ -328,6 +330,7 @@ export const claimMission = mutation({
     let xp = 150 + task * 100;
     const xpReward = patch.xpReward;
     if (xpReward) { xp += xpReward; delete patch.xpReward; }
+    xp = Math.min(10_000_000_000, Math.floor(xp)); // keep XP finite at extreme waves
     const xpUpd: any = await addXpAndCheckLevel(ctx, player, xp);
     patch.experience = xpUpd.experience;
     if (xpUpd.level !== undefined) {

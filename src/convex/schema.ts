@@ -1,6 +1,12 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+// schemaValidation is disabled because the game has evolved for years on top of
+// live players: rows created by earlier versions are missing fields that later
+// became "required", and Convex re-validates the whole document on every patch,
+// which made ALL actions fail for legacy players with a generic Server Error.
+// Field types are still declared (used for TypeScript types + indexes); only the
+// runtime write rejection is relaxed. Game code reads defensively (n()/?? 0).
 const schema = defineSchema({
   users: defineTable({
     name: v.optional(v.string()),
