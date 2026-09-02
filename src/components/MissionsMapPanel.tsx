@@ -123,7 +123,9 @@ export function MissionsMapPanel() {
     setBusy(key); setMsg(null);
     try {
       const r = await claimMission({ key });
-      if (r.conquered) setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! Empire income online!` });
+      if (r.waveAdvanced) {
+        setMsg({ ok: true, text: `🌊 BOARD CLEARED! Wave ${r.waveAdvanced} auto-generated 24/7 — fresh contracts, ×${Math.pow(1.6, r.waveAdvanced).toFixed(1)} rewards!` });
+      } else if (r.conquered) setMsg({ ok: true, text: `🏆 ${r.district} CONQUERED! Empire income online!` });
       else if (r.missionDone) setMsg({ ok: true, text: `✅ Mission complete in ${r.district}! +${rewardLabel(r.currency, r.reward)} · +${nf(r.xp)} XP` });
       else setMsg({ ok: true, text: `✔ Task ${r.task}/3 — ${r.typeLabel} · +${rewardLabel(r.currency, r.reward)} · START again for task ${r.task + 1}.` });
       if (r.levelUp) setMsg({ ok: true, text: `⭐ LEVEL UP! You are now level ${r.levelUp}!` });

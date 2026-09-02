@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
@@ -576,6 +576,18 @@ const MISSION_TEMPLATES: { name: string; desc: string; cat: string; diff: string
   { name: "Shadow Emperor", desc: "Reach the highest rank in the game.", cat: "elite", diff: "legendary", xp: [250,500], cash: [1000000,5000000] },
 ];
 
+/**
+ * Deterministic seeded PRNG — replaces Math.random() in mission generation so
+ * rewards are identical on every render and match what the server pays out.
+ */
+function mulberry32(a: number) {
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 function generateMission(seed: number, cycle: number = 0) {
   const offset = cycle * 255000;
   const effectiveSeed = seed + offset;
@@ -586,8 +598,12 @@ function generateMission(seed: number, cycle: number = 0) {
   const xpMax = tmpl.xp[1] * Math.ceil(variation / 50);
   const cashMin = tmpl.cash[0] * Math.ceil(variation / 30);
   const cashMax = tmpl.cash[1] * Math.ceil(variation / 30);
-  const xpReward = Math.floor(Math.random() * (xpMax - xpMin)) + xpMin;
-  const cashReward = Math.floor(Math.random() * (cashMax - cashMin)) + cashMin;
+  // Deterministic seeded PRNG (mulberry32) — same seed = same reward on every
+  // render and on the server. (Math.random() here made rewards drift between renders.)
+  const xpRand = mulberry32(effectiveSeed * 31 + 1);
+  const cashRand = mulberry32(effectiveSeed * 31 + 7);
+  const xpReward = Math.floor(xpRand() * (xpMax - xpMin)) + xpMin;
+  const cashReward = Math.floor(cashRand() * (cashMax - cashMin)) + cashMin;
   const names = [
     tmpl.name,
     tmpl.name + " II",
@@ -766,39 +782,26 @@ export function MissionsOverviewPage() {
   };
 
   const handleClaimAll = async () => {
-    // Only claim missions that are already finished (in completedIds) but may need reward sync
-    const toClaim = finishedMissions.filter(m => completedIds.has(m.id));
-    if (toClaim.length === 0) { setMsg("No finished missions to claim!"); setTimeout(() => setMsg(""), 3000); return; }
-    setLoading(true);
-    let claimed = 0;
-    let totalCash = 0;
-    let totalXp = 0;
-    try {
-      for (const m of toClaim) {
-        try {
-          await completeMission({ missionId: m.id, reward: m.cashReward, xpReward: m.xpReward });
-          claimed++;
-          totalCash += m.cashReward;
-          totalXp += m.xpReward;
-        } catch { /* skip failed */ }
-      }
-      setMsg(`🎉 Claimed ${claimed} finished missions! +$${totalCash.toLocaleString()} +${totalXp.toLocaleString()} XP`);
-      setTimeout(() => setMsg(""), 4000);
-    } catch (e: any) {
-      setMsg(`❌ Error: ${e?.message || "Failed"}`);
-      setTimeout(() => setMsg(""), 3000);
-    }
-    setLoading(false);
+    // Finished missions are already paid out — Claim All would just re-call the
+    // server and throw "Mission already completed!". This is now a no-op guard.
+    // Payout already happened at completion time — re-claiming would hit the
+    // server's "Mission already completed!" guard. Nothing to do here.
+    setMsg(`✅ All ${finishedMissions.length} finished missions were already paid out when completed.`);
+    setTimeout(() => setMsg(""), 4000);
   };
 
-  // Auto-advance cycle when all missions completed
-  if (completedIds.size >= TOTAL_MISSIONS) {
+  // Auto-advance to the next wave 24/7 — when every mission in the wave is done,
+  // the next wave rolls out automatically (in an effect, never during render).
+  const allWaveDone = completedIds.size >= TOTAL_MISSIONS;
+  useEffect(() => {
+    if (!allWaveDone) return;
     const newCycle = cycle + 1;
-    localStorage.setItem("missionCycle", String(newCycle));
-    // Clear completed IDs for new cycle
-    localStorage.removeItem("completedMissionIds");
+    try {
+      localStorage.setItem("missionCycle", String(newCycle));
+      localStorage.removeItem("completedMissionIds");
+    } catch {}
     setCycle(newCycle);
-  }
+  }, [allWaveDone, cycle]);
 
   const completedCount = completedIds.size;
 
