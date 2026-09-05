@@ -222,14 +222,10 @@ export const crimeCategories: CrimeCategory[] = [
     icon: "🚗",
     description: "Steal vehicles from junk cars to luxury rides.",
     crimes: [
-      { id: "gta_junk_car", name: "Steal Junk Car", description: "Boost a beat-up car from a lot.", reward: 10000, risk: 5, xp: 100, levelRequired: 1 },
       { id: "gta_parked_car", name: "Parked Car Theft", description: "Hotwire a car parked on the street.", reward: 25000, risk: 10, xp: 125, levelRequired: 1 },
-      { id: "gta_delivery_van", name: "Delivery Van Hijack", description: "Intercept an armored courier van mid-route.", reward: 60000, risk: 15, xp: 150, levelRequired: 2 },
       { id: "gta_sports_car", name: "Sports Car Theft", description: "Steal a high-performance sports car.", reward: 150000, risk: 25, xp: 200, levelRequired: 4 },
       { id: "gta_luxury_suv", name: "Luxury SUV Theft", description: "Swipe an expensive SUV from a dealership.", reward: 500000, risk: 30, xp: 250, levelRequired: 6 },
       { id: "gta_supercar", name: "Supercar Heist", description: "Steal an exotic hypercar worth millions.", reward: 1500000, risk: 50, xp: 400, levelRequired: 10 },
-      { id: "gta_armored_truck", name: "Armored Transport Heist", description: "Highjacking a bank-grade armored transport.", reward: 5000000, risk: 65, xp: 600, levelRequired: 15 },
-      { id: "gta_helicopter", name: "Helicopter Theft", description: "Steal a luxury helicopter from a rooftop pad.", reward: 15000000, risk: 80, xp: 800, levelRequired: 20 },
     ],
   },
 
@@ -273,15 +269,11 @@ export const crimeCategories: CrimeCategory[] = [
 ];
 
 // Specific vehicles granted by each GTA Car Theft option (last = most expensive).
-export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; armored?: boolean; price: number }> = {
-  gta_junk_car: { name: "1985 Honda Civic", speed: 45, storage: 15, price: 10000 },
-  gta_parked_car: { name: "2015 Toyota Corolla", speed: 60, storage: 20, price: 25000 },
-  gta_delivery_van: { name: "2020 Cash Transport Van", speed: 55, storage: 50, price: 60000 },
-  gta_sports_car: { name: "2019 BMW M4 Competition", speed: 88, storage: 16, price: 150000 },
-  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 82, storage: 30, price: 500000 },
-  gta_supercar: { name: "2018 Lamborghini Huracán Performante", speed: 116, storage: 12, price: 1500000 },
-  gta_armored_truck: { name: "2022 Armored Bank Transport", speed: 70, storage: 60, armored: true, price: 5000000 },
-  gta_helicopter: { name: "AgustaWestland AW109 Luxury Helicopter", speed: 120, storage: 36, price: 15000000 },
+export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; damage: number; cost: number; armored?: boolean; rarity: string }> = {
+  gta_parked_car: { name: "2015 Toyota Corolla XSE", speed: 60, storage: 20, damage: 0, cost: 25000, rarity: "common" },
+  gta_sports_car: { name: "2019 BMW M4 Competition", speed: 88, storage: 16, damage: 5, cost: 150000, rarity: "rare" },
+  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 82, storage: 30, damage: 0, cost: 500000, rarity: "epic" },
+  gta_supercar: { name: "2018 Lamborghini Huracán Performante", speed: 116, storage: 12, damage: 8, cost: 1500000, rarity: "legendary" },
 };
 
 // Specific loot granted by each Steal-from-House option (last = most expensive).

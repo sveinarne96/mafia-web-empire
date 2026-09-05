@@ -70,7 +70,7 @@ export const applyInterest = mutation({
   },
 });
 
-export const depositSwiss = mutation({
+export const depositInterest = mutation({
   args: { amount: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
@@ -79,7 +79,8 @@ export const depositSwiss = mutation({
     if (n(player.money, 0) < amount) throw new Error("Not enough cash");
     await ctx.db.patch(player._id, { money: n(player.money, 0) - amount, interestBank: n(player.interestBank, 0) + amount } as any);
     return { success: true, amount };
-  },  });
+  },
+});
 
 export const withdrawInterest = mutation({
   args: { amount: v.number() },
@@ -87,8 +88,8 @@ export const withdrawInterest = mutation({
     const player = await getCurrentUser(ctx);
     if (!player) throw new Error("Not authenticated");
     const amount = Math.max(1, Math.floor(args.amount));
-    if (n(player.swissBank, 0) < amount) throw new Error("Not enough in swiss bank");
-    await ctx.db.patch(player._id, { money: n(player.money, 0) + amount, swissBank: n(player.swissBank, 0) - amount });
+    if (n(player.interestBank, 0) < amount) throw new Error("Not enough in interest bank");
+    await ctx.db.patch(player._id, { money: n(player.money, 0) + amount, interestBank: n(player.interestBank, 0) - amount });
     return { success: true, amount };
   },
 });
@@ -100,17 +101,11 @@ export const depositSwiss = mutation({
     if (!player) throw new Error("Not authenticated");
     const amount = Math.max(1, Math.floor(args.amount));
     if (n(player.money, 0) < amount) throw new Error("Not enough cash");
-    const current = n(player.interestBank, 0);
+    const current = n(player.swissBank, 0);
     if (current + amount > SWISS_LIMIT) throw new Error(`Swiss bank limit is $${SWISS_LIMIT.toLocaleString()}`);
-    await ctx.db.patch(player._id, { money: n(player.money, 0) - amount, swissBank: current + amount } as any);
+    const bankStats = { ...(player.bankStats || {}), swissLimit: SWISS_LIMIT };
+    await ctx.db.patch(player._id, { money: n(player.money, 0) - amount, swissBank: current + amount, bankStats } as any);
     return { success: true, swissBank: current + amount, amount };
-  },
-});
-
-export const depositSwiss = mutation({
-    const stats = { ...(player.bankStats || {}), swissLimit: SWISS_LIMIT };
-    await ctx.db.patch(player._id, { money: n(player.money, 0) - amount, swissBank: current + amount, bankStats: stats });
-    return { success: true, amount };
   },
 });
 
