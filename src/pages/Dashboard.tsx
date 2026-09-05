@@ -61,6 +61,7 @@ import { PacksOverviewPanel, PerksPanel } from "@/components/PacksPerksPanel";
 import { RanksPanel } from "@/components/RanksPanel";
 const HeistPage = lazy(() => import("@/components/HeistPage").then((m) => ({ default: m.HeistPage })));
 import { PromoBanner } from "@/components/PromoBanner";
+import { LiveGameBanner } from "@/components/LiveGameBanner";
 import { WantedStatusPage } from "@/components/GameEnhanced";
 import {
   CrimesOverviewPage, CrimeCategoryPage, CrimeEmpirePage, HeistPlanningPage,
@@ -1335,6 +1336,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <LiveGameBanner />
       <PromoBanner />
       <div className="flex flex-1 overflow-hidden">
       {/* Left Sidebar */}

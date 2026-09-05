@@ -1018,6 +1018,36 @@ const schema = defineSchema({
     invoice: v.number(),
     paid: v.boolean(),
   }).index("by_user", ["userId"]).index("by_active", ["paid"]),
+
+  // ═══════════ LIVE GAME CONTROL ═══════════
+  // Single-document config store (key: "main") — every admin-panel/console
+  // change lands here and every connected player's UI + reward math reacts
+  // instantly through reactive Convex queries. No redeploys, no new links.
+  gameConfig: defineTable({
+    key: v.string(),
+    xpMultiplier: v.number(),
+    xpMultiplierUntil: v.number(),
+    cashMultiplier: v.number(),
+    cashMultiplierUntil: v.number(),
+    crimeSuccessBonus: v.number(),
+    energyRegenPerMinute: v.number(),
+    maintenanceMode: v.boolean(),
+    maintenanceMessage: v.string(),
+    ghostMode: v.boolean(),
+    lottoJackpot: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+  }).index("by_key", ["key"]),
+  announcements: defineTable({
+    text: v.string(),
+    emoji: v.string(),
+    color: v.string(),
+    createdBy: v.id("users"),
+    createdByName: v.string(),
+    expiresAt: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_active", ["active"]),
 }, {
   schemaValidation: false,
 });

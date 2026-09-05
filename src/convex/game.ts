@@ -3,6 +3,7 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { RESOURCE_COSTS } from "../data/resourceCosts"; // costs
 import { GTA_LOOT, SH_LOOT } from "../data/crimes"; // specific vehicles/loot per job
+import { getLiveModifiers } from "./gameControl"; // live admin console multipliers
 
 // ===== ENSURE PLAYER HAS ALL REQUIRED FIELDS (read-only defaults, no patch) =====
 function ensurePlayerDefaults(player: any) {
@@ -291,12 +292,14 @@ export const commitCrime = mutation({
     if (!player) throw new Error("Not authenticated");
     if (player.inPrison) throw new Error("You are in prison!");
     if (player.isDead) throw new Error("You are dead!");
+    const liveCfg = await getLiveModifiers(ctx);
+    if (liveCfg.maintenanceMode) throw new Error(liveCfg.maintenanceMessage);
     const storedEnergy = typeof (player as any).energy === "number" && Number.isFinite((player as any).energy) ? (player as any).energy : 100;
     const lastEnergyRegen = typeof (player as any).lastEnergyRegen === "number" ? (player as any).lastEnergyRegen : Date.now();
-    const regeneratedEnergy = Math.min(100, storedEnergy + Math.floor(Math.max(0, Date.now() - lastEnergyRegen) / 60000) * 5);
+    const regeneratedEnergy = Math.min(100, storedEnergy + Math.floor(Math.max(0, Date.now() - lastEnergyRegen) / 60000) * (liveCfg.energyRegenPerMinute ?? 5));
     let moneyEarned = 0, pointsEarned = 0, damageTaken = 0;
-    // 50/50 chance for success or fail
-    const success = Math.random() < 0.95;
+    // Base success chance + any live crime-success bonus from the admin console
+    const success = Math.random() < 0.95 + (liveCfg.crimeSuccessBonus ?? 0);
     // Mission-board action counters for street ops (GTA / burglary)
     const missionCounters: Record<string, number> = success
       ? args.type === "car_theft"
@@ -306,15 +309,15 @@ export const commitCrime = mutation({
           : {}
       : {};
     switch (args.type) {
-      case "car_theft": moneyEarned = success ? Math.floor(Math.random() * 5000) + 500 : 0; pointsEarned = success ? Math.floor(Math.random() * 151) + 50 : 0; damageTaken = success ? 0 : Math.floor(Math.random() * 20) + 5; break;
-      case "burglarize": moneyEarned = success ? Math.floor(Math.random() * 3000) + 200 : 0; pointsEarned = success ? Math.floor(Math.random() * 151) + 50 : 0; damageTaken = success ? 0 : Math.floor(Math.random() * 15) + 5; break;
-      case "rob_player": if (!args.targetId) throw new Error("Target required"); const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found"); moneyEarned = success ? Math.floor((target.money ?? 0) * 0.1) : 0; pointsEarned = success ? Math.floor(Math.random() * 151) + 50 : 0; damageTaken = success ? 0 : Math.floor(Math.random() * 30) + 10; break;
+      case "car_theft": moneyEarned = success ? Math.floor((Math.floor(Math.random() * 5000) + 500) * liveCfg.cashMultiplier) : 0; pointsEarned = success ? Math.floor((Math.floor(Math.random() * 151) + 50) * liveCfg.xpMultiplier) : 0; damageTaken = success ? 0 : Math.floor(Math.random() * 20) + 5; break;
+      case "burglarize": moneyEarned = success ? Math.floor((Math.floor(Math.random() * 3000) + 200) * liveCfg.cashMultiplier) : 0; pointsEarned = success ? Math.floor((Math.floor(Math.random() * 151) + 50) * liveCfg.xpMultiplier) : 0; damageTaken = success ? 0 : Math.floor(Math.random() * 15) + 5; break;
+      case "rob_player": if (!args.targetId) throw new Error("Target required"); const target = await ctx.db.get(args.targetId); if (!target) throw new Error("Target not found"); moneyEarned = success ? Math.floor((target.money ?? 0) * 0.1 * liveCfg.cashMultiplier) : 0; pointsEarned = success ? Math.floor((Math.floor(Math.random() * 151) + 50) * liveCfg.xpMultiplier) : 0; damageTaken = success ? 0 : Math.floor(Math.random() * 30) + 10; break;
     }
         // Arrest is separate from crime success; only 10% of failed attempts lead to arrest.
     const arrested = !success && Math.random() < 0.10;
     await ctx.db.insert("crimes", { userId: player._id, type: args.type, target: args.type === "rob_player" ? (args.targetId ?? "unknown") : "environment", success, moneyEarned, pointsEarned, damageTaken, timestamp: Date.now() });
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-        const xpUpdate = await addXpAndCheckLevel(ctx, player, success ? 75 : 15);
+        const xpUpdate = await addXpAndCheckLevel(ctx, player, Math.floor((success ? 75 : 15) * liveCfg.xpMultiplier));
     await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyEarned : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), energy: Math.max(0, regeneratedEnergy - 5), lastEnergyRegen: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5), actionTimestamps: [...(Array.isArray((player as any).actionTimestamps) ? ((player as any).actionTimestamps as number[]).filter((t: number) => typeof t === "number" && Number.isFinite(t) && Date.now() - t < 3600000).slice(-999) : []), Date.now()] } as any);
     if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "You were arrested during a crime!", read: false, timestamp: Date.now() });
     return { success, moneyEarned, pointsEarned, damageTaken, arrested };
@@ -576,17 +579,19 @@ export const getAllPlayers = query({ args: {}, handler: async (ctx) => await ctx
 export const getPlayerAchievements = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) return []; return await ctx.db.query("playerAchievements").withIndex("by_player", (q) => q.eq("playerId", player._id)).collect(); } });
 export const unlockSkill = mutation({ args: { skillId: v.string(), cost: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if ((player.skillPoints ?? 0) < args.cost) throw new Error("Not enough skill points!"); await ctx.db.patch(player._id, { skillPoints: (player.skillPoints ?? 0) - args.cost }); return { success: true }; } });
 export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if ((player.money ?? 0) < args.amount) throw new Error("Not enough money!"); const receiver = await ctx.db.get(args.receiverId); if (!receiver) throw new Error("Player not found"); await ctx.db.patch(player._id, { money: (player.money ?? 0) - args.amount }); await ctx.db.patch(args.receiverId, { money: (receiver.money ?? 0) + args.amount }); return { success: true }; } });export const commitCategoryCrime = mutation({ args: { crimeId: v.string(), reward: v.number(), risk: v.number(), xp: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!"); if (player.isDead) throw new Error("You are dead!");  if (!Number.isFinite(args.reward) || !Number.isFinite(args.risk) || !Number.isFinite(args.xp)) throw new Error("Invalid operation parameters, please retry.");
+  const liveCfg = await getLiveModifiers(ctx);
+  if (liveCfg.maintenanceMode) throw new Error(liveCfg.maintenanceMessage);
   // Check energy before executing
   const _rawEnergy = (player as any).energy;
   const _storedEnergy = typeof _rawEnergy === "number" && Number.isFinite(_rawEnergy) ? _rawEnergy : 100;
   const _regenStart = typeof (player as any).lastEnergyRegen === "number" ? (player as any).lastEnergyRegen : Date.now();
-  const _regenEnergy = Math.min(100, _storedEnergy + Math.floor(Math.max(0, Date.now() - _regenStart) / 60000) * 5);
+  const _regenEnergy = Math.min(100, _storedEnergy + Math.floor(Math.max(0, Date.now() - _regenStart) / 60000) * (liveCfg.energyRegenPerMinute ?? 5));
   const _energyCost = Math.max(5, RESOURCE_COSTS[args.crimeId]?.energy ?? 5);
-  if (_regenEnergy < _energyCost) throw new Error(`Not enough energy (${Math.floor(_regenEnergy)}/${_energyCost}). Wait for it to regenerate.`); const levelBonus = 1; const succeeded = Math.random() < 0.95; let lootVehicle: string | null = null; let lootItem: string | null = null; const titleCase = (id: string) => id.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); if (succeeded && args.crimeId.startsWith('gta_')) { const spec = GTA_LOOT[args.crimeId]; const speed = spec ? spec.speed : Math.min(120, Math.max(30, Math.round(30 + (args.reward / 40000) * 90))); const storage = spec ? spec.storage : Math.min(60, Math.max(10, Math.round(10 + (args.reward / 40000) * 50))); const armored = spec ? !!spec.armored : args.risk >= 60; lootVehicle = spec ? spec.name : ('Stolen ' + titleCase(args.crimeId.slice(4))); try { await ctx.db.insert('vehicles', { userId: player._id, name: lootVehicle, type: 'stolen', speed, storage, armored, stolen: true, purchasePrice: spec ? spec.price : 0 }); } catch (_lootErr) { /* loot write must never cancel the crime */ } } else if (succeeded && args.crimeId.startsWith('sh_')) { const spec = SH_LOOT[args.crimeId]; const rarity = spec ? spec.rarity : (args.reward >= 20000 ? 'legendary' : args.reward >= 5000 ? 'rare' : args.reward >= 1000 ? 'uncommon' : 'common'); lootItem = spec ? spec.name : (titleCase(args.crimeId.slice(3)) + ' Loot'); try { await ctx.db.insert('inventory', { userId: player._id, itemId: 'loot_' + args.crimeId, name: lootItem, type: 'loot', equipped: false, quantity: 1, attack: spec ? (spec.attack ?? 0) : Math.floor(Math.random() * 5) + 1, defense: spec ? (spec.defense ?? 0) : Math.floor(Math.random() * 5) + 1, rarity, price: spec ? spec.price : args.reward }); } catch (_lootErr2) { /* loot write must never cancel the crime */ } }
+  if (_regenEnergy < _energyCost) throw new Error(`Not enough energy (${Math.floor(_regenEnergy)}/${_energyCost}). Wait for it to regenerate.`); const levelBonus = 1; const succeeded = Math.random() < 0.95 + (liveCfg.crimeSuccessBonus ?? 0); let lootVehicle: string | null = null; let lootItem: string | null = null; const titleCase = (id: string) => id.split('_').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); if (succeeded && args.crimeId.startsWith('gta_')) { const spec = GTA_LOOT[args.crimeId]; const speed = spec ? spec.speed : Math.min(120, Math.max(30, Math.round(30 + (args.reward / 40000) * 90))); const storage = spec ? spec.storage : Math.min(60, Math.max(10, Math.round(10 + (args.reward / 40000) * 50))); const armored = spec ? !!spec.armored : args.risk >= 60; lootVehicle = spec ? spec.name : ('Stolen ' + titleCase(args.crimeId.slice(4))); try { await ctx.db.insert('vehicles', { userId: player._id, name: lootVehicle, type: 'stolen', speed, storage, armored, stolen: true, purchasePrice: spec ? spec.price : 0 }); } catch (_lootErr) { /* loot write must never cancel the crime */ } } else if (succeeded && args.crimeId.startsWith('sh_')) { const spec = SH_LOOT[args.crimeId]; const rarity = spec ? spec.rarity : (args.reward >= 20000 ? 'legendary' : args.reward >= 5000 ? 'rare' : args.reward >= 1000 ? 'uncommon' : 'common'); lootItem = spec ? spec.name : (titleCase(args.crimeId.slice(3)) + ' Loot'); try { await ctx.db.insert('inventory', { userId: player._id, itemId: 'loot_' + args.crimeId, name: lootItem, type: 'loot', equipped: false, quantity: 1, attack: spec ? (spec.attack ?? 0) : Math.floor(Math.random() * 5) + 1, defense: spec ? (spec.defense ?? 0) : Math.floor(Math.random() * 5) + 1, rarity, price: spec ? spec.price : args.reward }); } catch (_lootErr2) { /* loot write must never cancel the crime */ } }
   const rawEnergy = (player as any).energy;
   const storedEnergy = typeof rawEnergy === "number" && Number.isFinite(rawEnergy) ? rawEnergy : 100;
   const regenStartedAt = typeof (player as any).lastEnergyRegen === "number" ? (player as any).lastEnergyRegen : Date.now();
-  const regeneratedEnergy = Math.min(100, storedEnergy + Math.floor(Math.max(0, Date.now() - regenStartedAt) / 60000) * 5);
+  const regeneratedEnergy = Math.min(100, storedEnergy + Math.floor(Math.max(0, Date.now() - regenStartedAt) / 60000) * (liveCfg.energyRegenPerMinute ?? 5));
   const energyCost = Math.max(5, RESOURCE_COSTS[args.crimeId]?.energy ?? 5);
   const effectiveEnergy = Math.max(0, regeneratedEnergy - energyCost);
   const _now = Date.now();
@@ -594,11 +599,11 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const arrested = succeeded && riskRoll < (100 - args.risk);
   const lifeDamage = succeeded ? Math.floor(Math.random() * 20) + 5 : Math.floor(Math.random() * 40) + 10;
   const newLife = Math.max(0, (player.life ?? 100) - lifeDamage);
-  const moneyEarned = succeeded ? Math.floor(args.reward * (1 + 0.1)) : 0;
+  const moneyEarned = succeeded ? Math.floor(args.reward * (1 + 0.1) * liveCfg.cashMultiplier) : 0;
   const _missionGta = succeeded && args.crimeId.startsWith('gta_');
   const missionCounters: Record<string, number> = _missionGta ? { totalGta: ((player as any).totalGta ?? 0) + 1 } : {};
   if (_missionGta && (GTA_LOOT[args.crimeId]?.price ?? args.reward) >= 500000) missionCounters.totalGtaRare = ((player as any).totalGtaRare ?? 0) + 1;
-  const xpEarned = succeeded ? args.xp : Math.floor(args.xp * 0.3);
+  const xpEarned = succeeded ? Math.floor(args.xp * liveCfg.xpMultiplier) : Math.floor(args.xp * 0.3);
   const pointsEarned = succeeded ? Math.floor(args.xp * 0.1) : 0;
   const xpUpdate = await addXpAndCheckLevel(ctx, player, xpEarned);
   const levelUpNow = (player as any).levelUpPending === true || ((player.experience ?? 0) + xpEarned >= 2000);
