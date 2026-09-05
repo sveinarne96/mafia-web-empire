@@ -87,7 +87,7 @@ const FullMissionsPage = lazy(() => import("@/components/FullMissionsPage").then
 const GamblingOverviewPage = lazy(() => import("@/components/GamblingPages").then((m) => ({ default: m.GamblingOverviewPage })));
 const CombatOverviewPage = lazy(() => import("@/components/CombatPages").then((m) => ({ default: m.CombatOverviewPage })));
 // HubPages inlined below - no external import needed
-import { WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
+import { WitnessStatementsPage, WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
 import { SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
 const PrisonPage = lazy(() => import("@/components/PrisonPage").then((m) => ({ default: m.PrisonPage })));
 import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
@@ -162,6 +162,7 @@ const CasinoVideoPokerPage = lazy(() => casinoLazy().then((m) => ({ default: m.C
 const CasinoScratchcardsPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoScratchcardsPage })));
 import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
 import { QuickTradePage } from "@/components/QuickTradePage";
+import { OrganizedCrimeTeamsPage } from "@/components/OrganizedCrimeTeamsPage";
 import { ArmouryPage } from "@/components/ArmouryPage";
 import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
 
@@ -1362,7 +1363,7 @@ export default function Dashboard() {
       case "point_store": return <PointStorePage />;
       case "coin_store": return <CoinStorePage />;
       case "steal_house": return <CriminalOperationsPage category="steal_house" />;
-      case "organized_crime": return <OrganizedCrimePage />;
+      case "organized_crime": return <OrganizedCrimeTeamsPage />;
       case "missions": return <FullMissionsPage />;
       case "murder": return <CriminalOperationsPage category="murder" />;
       case "heist": return <HeistPage />;
@@ -1422,6 +1423,7 @@ export default function Dashboard() {
       case "demolition_derby": return <DemolitionDerbyPage />;
       case "armoury": return <ArmouryPage />;
       case "companies_hub": return <CompaniesHubPage />;
+      case "witness_statements": return <WitnessStatementsPage />;
       case "witness_system": return <WitnessSystemPage />;
       case "forensics_lab": return <ForensicsLabPage />;
       case "court_system": return <CourtSystemPage />;

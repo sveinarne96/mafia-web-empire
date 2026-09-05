@@ -196,6 +196,40 @@ export const commitMurder = mutation({
         timestamp: Date.now(),
       });
 
+      // Witness statement — a coded record of the hit. The killer holds it and
+      // may list it for sale on the witness marketplace.
+      try {
+        const victimName = target.nickname ?? target.username ?? "Unknown";
+        const seed = (player._id + victimName + Date.now()).split("").reduce((a: number, c: string) => a + c.charCodeAt(0), 0);
+        const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        let code = "";
+        let s = seed;
+        for (let i = 0; i < 6; i++) {
+          s = (s * 9301 + 49297) % 233280;
+          code += chars[Math.floor((s / 233280) * chars.length)];
+        }
+        const lines = [
+          "I saw it happen from the fire escape. [KILLER] pulled the trigger and walked away like nothing.",
+          "Streetlight caught [KILLER]'s face clear as day. I can still see it when I close my eyes.",
+          "The shooter was [KILLER]. Tall, calm, and gone before the sirens started.",
+          "I was parked right there. [KILLER] did it — no question, I'd swear it in court.",
+        ];
+        await ctx.db.insert("witnessStatements", {
+          killerId: player._id,
+          killerName: player.nickname ?? player.username ?? "Unknown",
+          victimId: target._id,
+          victimName,
+          code,
+          text: lines[Math.floor(Math.random() * lines.length)],
+          ownerId: player._id,
+          listed: false,
+          price: 0,
+          createdAt: Date.now(),
+        } as any);
+      } catch (_wsErr) {
+        // Statement write must never cancel the murder.
+      }
+
       // Notification to victim
       await ctx.db.insert("notifications", {
         userId: args.targetId,

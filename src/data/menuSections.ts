@@ -112,6 +112,7 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Company Empire", page: "companies_hub", icon: "🏢" },
   ]},
   { title: "Underworld", icon: EyeOff, items: [
+    { label: "Witness Statements", page: "witness_statements", icon: "📜" },
     { label: "Witness System", page: "witness_system", icon: "🔍" },
     { label: "Forensics Lab", page: "forensics_lab", icon: "🔬" },
     { label: "Court System", page: "court_system", icon: "⚖️" },

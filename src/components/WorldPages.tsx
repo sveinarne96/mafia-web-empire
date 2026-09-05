@@ -223,6 +223,7 @@ export function StockMarketPage() {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [sl, setSl] = useState(0);
   const [tp, setTp] = useState(0);
+  const [qSearch, setQSearch] = useState("");
   const [msg, setMsg] = useState<{ t: string; c: string } | null>(null);
 
   if (!st) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
@@ -241,24 +242,36 @@ export function StockMarketPage() {
       </div>
 
       <Card title="Market Ticker" icon={<TrendingUp className="size-4 text-green-400" />}>
+        <div className="mb-2 flex items-center gap-2">
+          <input value={qSearch} onChange={e => setQSearch(e.target.value)} placeholder="Search stocks…"
+            className="w-56 bg-background border border-border rounded-lg px-3 py-1.5 text-xs placeholder:text-muted-foreground outline-none focus:border-green-500/40" />
+          <span className="text-[9px] text-muted-foreground">Updated continuously · prices in points</span>
+        </div>
         <div className="grid grid-cols-5 gap-2 text-[10px] font-bold text-muted-foreground pb-1 border-b border-border">
           <span>Stock</span><span className="text-right">3 Hours</span><span className="text-right">1 Day</span><span className="text-right">3 Days</span><span className="text-right">1 Week</span>
         </div>
         <div className="space-y-1.5 mt-1.5">
-          {st.stocks.slice(0, show).map((s: any) => (
-            <div key={s.id} className="flex items-center gap-2 text-xs bg-muted/20 rounded-lg p-2">
-              <div className="w-36"><span className="font-bold text-foreground">{s.name}</span></div>
-              <div className="hidden sm:block flex-1 overflow-hidden"><span className="font-mono text-green-400">${fmtPts(s.price)}</span></div>
-              {["3h", "1d", "3d", "1w"].map(k => {
-                const c = s.changes[k];
-                return (
-                  <div key={k} className={`flex-1 text-right font-mono ${c >= 0 ? "text-green-400" : "text-red-400"}`}>
-                    {c >= 0 ? "+" : ""}{c.toFixed(2)}%
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+          {st.stocks
+            .filter((s: any) => !qSearch || `${s.name} ${s.symbol}`.toLowerCase().includes(qSearch.toLowerCase()))
+            .slice(0, show).map((s: any) => {
+              const w1 = s.changes?.["1w"] ?? 0;
+              return (
+                <div key={s.id} className="flex items-center gap-2 text-xs bg-muted/20 rounded-lg p-2 hover:bg-muted/40 transition-colors">
+                  <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-sm ${w1 >= 0 ? "bg-green-500/10" : "bg-red-500/10"}`}>{s.symbol?.charAt(0) ?? "₿"}</span>
+                  <div className="w-40 min-w-0"><span className="font-bold text-foreground truncate block">{s.name}</span></div>
+                  <div className="hidden sm:block flex-1 overflow-hidden"><span className="font-mono text-white">${fmtPts(s.price)}</span></div>
+                  {["3h", "1d", "3d", "1w"].map(k => {
+                    const c = s.changes[k];
+                    const up = c >= 0;
+                    return (
+                      <div key={k} className={`flex-1 text-right font-mono ${up ? "text-green-400" : "text-red-400"}`}>
+                        <span className="mr-1 text-[8px]">{up ? "▲" : "▼"}</span>{up ? "+" : ""}{c.toFixed(2)}%
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
         </div>
         {st.stocks.length > show && (
           <button onClick={() => setShow(show + 6)} className="mt-2 text-xs text-primary underline">Show More</button>
@@ -378,67 +391,144 @@ export function RealEstatePage() {
   const buyProp = useMutation(api.worldSystem.buyProperty);
   const upgrade = useMutation(api.worldSystem.upgradeProperty);
   const collect = useMutation(api.worldSystem.collectEstateRent);
+  const sellProp = useMutation(api.worldSystem.sellProperty);
+  const [tab, setTab] = useState<"buy" | "portfolio">("buy");
+  const [confirmSell, setConfirmSell] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ t: string; c: string } | null>(null);
 
   if (!st) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
   const run = async (fn: any, ok: string) => {
     try { await fn(); setMsg({ t: ok, c: "text-green-400" }); } catch (e: any) { setMsg({ t: e.message || "Error", c: "text-red-400" }); }
   };
+  const priceOf = (loc: string) => (st.locations || []).find((l: any) => l.name === loc)?.price ?? 0;
+  const owned: any[] = st.owned ?? [];
+  const portValue = owned.reduce((sum, p) => sum + priceOf(p.location) * (1 + 0.15 * (p.upgrades ?? 0)), 0);
+  const rentOf = (loc: string) => (st.locations || []).find((l: any) => l.name === loc)?.baseRent ?? 0;
+  const dailyIncome = owned.filter((p) => p.constructed).reduce((sum, p) => sum + rentOf(p.location) * (1 + 0.5 * (p.upgrades ?? 0)), 0);
+  const resaleOf = (p: any) => Math.floor(priceOf(p.location) * 0.7 * (1 + 0.15 * (p.upgrades ?? 0)));
+  const estateName = ["Seaside Estate", "High-Rise Penthouse", "Downtown Office Block", "Warehouse District", "Villa District", "Skyline Tower", "Old Town Court", "Industrial Park", "Riverside Lofts", "Boulevard Plaza"];
+  const mood = (n: number) => estateName[n % estateName.length];
 
   return (
     <div className="animate-fade-in space-y-4">
-      <PageHeader icon={<Building2 className="size-7 text-blue-400" />} title="Real Estate" />
-      {msg && <div className={`text-xs font-semibold ${msg.c}`}>{msg.t}</div>}
-      <div className="flex items-center gap-3 flex-wrap">
-        <button onClick={() => run(() => collect({}), "Rent collected")} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-xs font-bold hover:bg-emerald-700 transition">💰 Collect Property Rent</button>
-        <span className="text-[11px] text-muted-foreground">Construction: {st.constructionDays} days · Max upgrades: {st.maxUpgrades}</span>
+      {/* Agency header */}
+      <div className="relative overflow-hidden rounded-2xl border border-blue-500/25 bg-gradient-to-br from-blue-950/40 via-slate-950 to-slate-950 p-5">
+        <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: "radial-gradient(circle at 15% 20%, #3b82f622 0, transparent 45%), radial-gradient(circle at 85% 75%, #0ea5e926 0, transparent 40%)" }} />
+        <div className="relative flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Building2 className="size-9 text-blue-400" />
+            <div>
+              <h1 className="text-2xl font-black tracking-widest text-blue-300">ESTATE AGENCY</h1>
+              <p className="text-[11px] text-slate-400">Property management & high-value flipping. Buy low, build up, sell higher — rent pays while you wait.</p>
+            </div>
+          </div>
+          <div className="flex gap-2 text-center">
+            <div className="rounded-xl border border-slate-700/60 bg-slate-950/60 px-4 py-2">
+              <div className="text-sm font-black text-emerald-400">{fmtMoney(portValue)}</div>
+              <div className="text-[8px] uppercase tracking-wider text-slate-500">Portfolio value</div>
+            </div>
+            <div className="rounded-xl border border-slate-700/60 bg-slate-950/60 px-4 py-2">
+              <div className="text-sm font-black text-green-400">{fmtMoney(dailyIncome)}/day</div>
+              <div className="text-[8px] uppercase tracking-wider text-slate-500">Rental income</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <Card title="Location Offer Key" icon={<Building2 className="size-4 text-blue-400" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
-          {(st.locations || []).map((l: any) => (
-            <div key={l.name} className="bg-muted/20 rounded p-2 border border-border">
-              <span className="font-black text-amber-300">{l.name}</span>
-              <div className="text-muted-foreground">{l.propertyType}</div>
-              <div className="text-[10px] text-purple-300/80">{l.perk}</div>
-              <div className="font-mono text-yellow-400 mt-1">{fmtMoney(l.price)} · rent {fmtMoney(l.baseRent)}/day</div>
-            </div>
+      {msg && <div className={`text-xs font-semibold ${msg.c}`}>{msg.t}</div>}
+
+      {/* Action bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-700/50 bg-slate-900/40 p-3">
+        <div className="flex gap-1 rounded-xl border border-slate-700/60 bg-slate-950/70 p-1">
+          {([["buy", "Buy Properties"], ["portfolio", "My Portfolio"]] as const).map(([id, label]) => (
+            <button key={id} onClick={() => setTab(id)}
+              className={`rounded-lg px-4 py-2 text-[10px] font-black tracking-wide transition-all ${tab === id ? "bg-blue-600 text-white" : "text-slate-400 hover:text-white"}`}>{label}</button>
           ))}
         </div>
-      </Card>
+        <button onClick={() => run(() => collect({}), owned.filter(p => p.constructed).length ? `Rent collected — +${fmtMoney(st.lastRent ?? 0)}` : "Rent collected")}
+          className="rounded-xl bg-emerald-600 px-5 py-2 text-[11px] font-black text-white hover:bg-emerald-500 transition-all">💰 Collect Property Rent</button>
+        <span className="text-[10px] text-slate-500">Construction {st.constructionDays}d · max upgrades {st.maxUpgrades}</span>
+      </div>
 
-      <Card title="Your Property Portfolio" icon={<Package className="size-4 text-emerald-400" />}>
-        {(st.owned && st.owned.length) ? (
-          <div className="space-y-2">
-            {st.owned.map((p: any) => (
-              <div key={p.location} className="flex items-center gap-2 text-xs bg-muted/20 rounded-lg p-2">
-                <span className="font-black flex-1">{p.location}</span>
-                <span className={p.constructed ? "text-green-400" : "text-amber-400"}>{p.constructed ? "✅ Built" : "🚧 Under construction"}</span>
-                <span className="text-muted-foreground">Upgrades: {p.upgrades}/{st.maxUpgrades}</span>
-                <span className="text-green-400 font-mono">{fmtMoney(p.rent)}/day</span>
-                {p.constructed && p.upgrades < st.maxUpgrades && (
-                  <button onClick={() => run(() => upgrade({ location: p.location }), "Upgraded!")} className="px-3 py-1 bg-blue-600 text-white rounded text-[10px] font-bold">Upgrade</button>
+      {tab === "buy" ? (
+        <div className="grid gap-2 md:grid-cols-2">
+          {(st.locations || []).map((l: any, i: number) => {
+            const ownedHere = owned.some((p: any) => p.location === l.name);
+            return (
+              <div key={l.name} className="relative overflow-hidden rounded-2xl border border-slate-700/50 bg-slate-900/40 p-4 hover:border-blue-500/40 transition-colors">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-black text-white">{i % 3 === 0 ? "🏘️ " : i % 3 === 1 ? "🏢 " : "🏡 "}{l.name}</div>
+                    <div className="text-[10px] text-slate-500">{mood(i)} · {l.propertyType}</div>
+                    <div className="mt-1 text-[9px] text-purple-300/80">{l.perk}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-[9px] uppercase text-slate-500">Price</div>
+                    <div className="text-sm font-black text-yellow-400">{fmtMoney(l.price)}</div>
+                    <div className="text-[9px] text-green-400">rent {fmtMoney(l.baseRent)}/day</div>
+                  </div>
+                </div>
+                {ownedHere ? (
+                  <div className="mt-3 rounded-xl border border-green-500/30 bg-green-500/10 px-3 py-2 text-center text-[10px] font-black text-green-400">OWNED — view in portfolio</div>
+                ) : (
+                  <button onClick={() => run(() => buyProp({ location: l.name }), `Bought ${l.name}! Construction starts immediately.`)}
+                    className="mt-3 w-full rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 py-2.5 text-[10px] font-black tracking-wider text-white hover:from-blue-500 hover:to-sky-500 transition-all">BUY — {fmtMoney(l.price)}</button>
                 )}
               </div>
-            ))}
-          </div>
-        ) : <div className="text-[11px] text-muted-foreground">You own no properties yet. Buy a location below.</div>}
-      </Card>
-
-      <Card title="Buy Property" icon={<ArrowDownToLine className="size-4 text-yellow-400" />}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {(st.locations || []).map((l: any) => (
-            <div key={l.name} className="bg-muted/20 rounded p-2 border border-border flex items-center justify-between">
-              <div>
-                <span className="font-black text-amber-300">{l.name}</span>
-                <div className="text-[10px] text-muted-foreground">{l.propertyType}</div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {owned.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-700/60 py-14 text-center">
+              <div className="text-4xl">🏗️</div>
+              <div className="mt-2 text-sm font-bold text-slate-400">Your portfolio is empty</div>
+              <p className="text-[10px] text-slate-600">Buy your first location and start building an empire — land only appreciates with upgrades.</p>
+            </div>
+          ) : owned.map((p: any) => (
+            <div key={p.location} className="rounded-2xl border border-slate-700/50 bg-slate-900/40 p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-black text-white">{p.location}</div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-[9px]">
+                    <span className={`rounded-full px-2 py-0.5 font-bold ${p.constructed ? "bg-green-500/10 text-green-400 border border-green-500/30" : "bg-amber-500/10 text-amber-400 border border-amber-500/30"}`}>
+                      {p.constructed ? "✅ Built" : "🚧 Under construction"}
+                    </span>
+                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-400">Upgrades {p.upgrades}/{st.maxUpgrades}</span>
+                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-slate-400">Resale {fmtMoney(resaleOf(p))}</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[9px] text-slate-500">Rental income</div>
+                  <div className="text-sm font-black text-green-400">+{fmtMoney(rentOf(p.location) * (1 + 0.5 * (p.upgrades ?? 0)))}/day</div>
+                </div>
+                <div className="flex gap-2">
+                  {p.constructed && (p.upgrades ?? 0) < st.maxUpgrades && (
+                    <button onClick={() => run(() => upgrade({ location: p.location }), `Upgraded ${p.location}!`)}
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-[10px] font-black text-white hover:bg-blue-500">UPGRADE</button>
+                  )}
+                  {confirmSell === p.location ? (
+                    <div className="flex gap-1.5">
+                      <button onClick={() => run(() => sellProp({ location: p.location }).then((r: any) => ({ t: `Sold ${p.location} for ${fmtMoney(r.resale)}`, c: "text-green-400" })), `Flipped ${p.location}!`)}
+                        className="rounded-xl bg-emerald-600 px-3 py-2 text-[10px] font-black text-white hover:bg-emerald-500">SELL ${fmtMoney(resaleOf(p))}</button>
+                      <button onClick={() => setConfirmSell(null)} className="rounded-xl bg-slate-800 px-3 py-2 text-[10px] text-slate-300">✕</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setConfirmSell(p.location)}
+                      className="rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-2 text-[10px] font-black text-red-400 hover:bg-red-500/20">FLIP</button>
+                  )}
+                </div>
               </div>
-              <button onClick={() => run(() => buyProp({ location: l.name }), `Bought ${l.name}!`)} className="px-3 py-1 bg-yellow-600 text-white rounded text-[10px] font-bold hover:bg-yellow-700">{fmtMoney(l.price)}</button>
             </div>
           ))}
+          {owned.length > 0 && (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-2.5 text-[10px] text-amber-200/70">
+              💡 Flipping tip: each upgrade adds <b>15%</b> to your resale value and <b>50%</b> to rent. Build, upgrade, then sell high for a tidy profit — construction takes {st.constructionDays} days.
+            </div>
+          )}
         </div>
-        <div className="text-[10px] text-muted-foreground mt-2">Owner: Shadow Empire Estate Agency</div>
-      </Card>
+      )}
     </div>
   );
 }

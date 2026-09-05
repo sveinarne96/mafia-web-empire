@@ -595,6 +595,46 @@ const schema = defineSchema({
     .index("by_active", ["active", "createdAt"])
     .index("by_seller", ["sellerId"]),
 
+  // Organized-crime squads: a host opens a job, up to 3 players fill the crew,
+  // the host starts and the crew splits the take on success.
+  ocTeams: defineTable({
+    hostId: v.id("users"),
+    hostName: v.string(),
+    memberIds: v.array(v.id("users")),
+    names: v.array(v.string()),
+    jobId: v.string(),
+    jobName: v.string(),
+    jobIcon: v.string(),
+    levelReq: v.number(),
+    cost: v.number(),
+    rewardMin: v.number(),
+    rewardMax: v.number(),
+    successBase: v.number(),
+    started: v.boolean(),
+    createdAt: v.number(),
+    startedAt: v.optional(v.number()),
+  })
+    .index("by_created", ["createdAt"]),
+
+  // Witness statements — generated when someone is murdered. The holder can
+  // list theirs for sale; a buyer pays to learn who killed the victim.
+  witnessStatements: defineTable({
+    killerId: v.id("users"),
+    killerName: v.string(),
+    victimId: v.id("users"),
+    victimName: v.string(),
+    code: v.string(),
+    text: v.string(),
+    ownerId: v.id("users"),
+    listed: v.boolean(),
+    price: v.number(),
+    createdAt: v.number(),
+    soldAt: v.optional(v.number()),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_victim", ["victimName"])
+    .index("by_listed", ["listed", "createdAt"]),
+
   smugglingRuns: defineTable({
     runnerId: v.id("users"),
     originCity: v.string(),

@@ -496,6 +496,24 @@ export const upgradeProperty = mutation({
     return { success: true, upgrades: p.upgrades, cost };
   },
 });
+export const sellProperty = mutation({
+  args: { location: v.string() },
+  handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx);
+    if (!player) throw new Error("Not authenticated");
+    const ws = worldState(player);
+    const est = ws.estate || { owned: [] };
+    const idx = est.owned.findIndex((x: any) => x.location === args.location);
+    if (idx === -1) throw new Error("Property not found");
+    const p = est.owned[idx];
+    const resale = Math.floor(ESTATE_PRICES[args.location] * 0.7 * (1 + 0.15 * n(p.upgrades, 0)));
+    est.owned.splice(idx, 1);
+    ws.estate = est;
+    await ctx.db.patch(player._id, { money: n(player.money, 0) + resale, worldState: ws });
+    return { success: true, location: args.location, resale };
+  },
+});
+
 
 // Collects daily rent from constructed properties (lazy, stacks up to 30 days).
 export const collectEstateRent = mutation({
