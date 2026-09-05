@@ -180,6 +180,17 @@ const schema = defineSchema({
     scraps: v.optional(v.any()),
     carKeys: v.optional(v.any()),
     autoConvertScraps: v.optional(v.boolean()),
+    // ═══ SEASON TOKENS / STORE / INVENTORY ═══
+    seasonTokens: v.optional(v.number()),
+    vipTokens: v.optional(v.number()),
+    vipTokensSeason: v.optional(v.string()),
+    seasonStoreBought: v.optional(v.any()), // { season: string, counts: Record<string, number> }
+    seasonInventory: v.optional(v.array(v.any())), // owned cosmetics { id, name, category, acquiredAt }
+    equippedCosmetics: v.optional(v.any()), // { avatar?: string, cards?: string, relic?: string }
+    // ═══ DAILY REWARD MATCH GAME ═══
+    dailyRewardState: v.optional(v.any()), // { board: number[], revealed: number[], matched: number[], chances: number, active: boolean, startedAt: number }
+    dailyRewardLastPlayed: v.optional(v.number()),
+    dailyRewardHistory: v.optional(v.array(v.any())),
     perkActiveUntil: v.optional(v.any()),
     meltValueUntil: v.optional(v.number()),
     meltLimitUntil: v.optional(v.number()),
@@ -1049,6 +1060,12 @@ const schema = defineSchema({
     active: v.boolean(),
     createdAt: v.number(),
   }).index("by_active", ["active"]),
+  // Season-store per-item stock (fresh every season via seasonStoreReset admin action)
+  seasonStoreStock: defineTable({
+    season: v.string(),
+    itemId: v.string(),
+    stock: v.number(),
+  }).index("by_season_item", ["season", "itemId"]).index("by_season", ["season"]),
 }, {
   schemaValidation: false,
 });

@@ -226,7 +226,7 @@ export const getStoreState = query({
   },
 });
 
-function seasonEnd(): number {
+export function seasonEnd(): number {
   // Season ends 25-09-2026 (per the UI spec). Recompute dynamically:
   const now = Date.now();
   const end = new Date("2026-09-25T23:59:59Z").getTime();
@@ -324,6 +324,11 @@ export const purchasePointItem = mutation({
       patch.perks = perks;
     } else if (group === "vip") {
       patch.vipUntil = Math.max(n(player.vipUntil, 0), Date.now()) + 30 * 24 * 60 * 60 * 1000;
+      // VIP store tokens: 3 per season, granted on purchase (season-scoped).
+      const vipKey = `vip-${new Date(seasonEnd()).toISOString().slice(0, 10)}`;
+      const currentTokens = player.vipTokensSeason === vipKey ? n(player.vipTokens, 0) : 0;
+      patch.vipTokens = Math.min(3, currentTokens + 3);
+      patch.vipTokensSeason = vipKey;
     }
 
     await ctx.db.patch(player._id, patch);
@@ -727,6 +732,8 @@ export const usePerk = mutation({
     const perks = { ...d.perks };
     perks[args.perkId] = stock - 1;
     const patch: any = { perks };
+    // Perk Timer Upgrade (season store) doubles every timed perk activation (1h → 2h).
+    const perkHourMs = (d.accountUpgrades?.perkTimer ?? 0) > 0 ? 7200000 : 3600000;
     const perkActiveUntil = { ...(d.perkActiveUntil || {}) };
     if (INSTANT_PERKS.includes(args.perkId)) {
       perkActiveUntil[args.perkId] = now;
@@ -737,12 +744,12 @@ export const usePerk = mutation({
     // lets players burn multiple refills of the same perk at once, so e.g. two
     // Double XP refills gives 2 hours of boost.
     switch (args.perkId) {
-      case "doubleXp": patch.xpBoostUntil = Math.max(n(player.xpBoostUntil, 0), now) + 3600000; break;
-      case "doublePay": patch.cashBoostUntil = Math.max(n(player.cashBoostUntil, 0), now) + 3600000; break;
-      case "heistChance": patch.heistChanceUntil = Math.max(d.heistChanceUntil, now) + 3600000; break;
-      case "heistTimer": patch.heistTimerUntil = Math.max(d.heistTimerUntil, now) + 3600000; break;
-      case "bustBoost": patch.bustBoostUntil = Math.max(d.bustBoostUntil, now) + 3600000; break;
-      case "gtaRarity": patch.gtaRarityUntil = Math.max(d.gtaRarityUntil, now) + 3600000; break;
+      case "doubleXp": patch.xpBoostUntil = Math.max(n(player.xpBoostUntil, 0), now) + perkHourMs; break;
+      case "doublePay": patch.cashBoostUntil = Math.max(n(player.cashBoostUntil, 0), now) + perkHourMs; break;
+      case "heistChance": patch.heistChanceUntil = Math.max(d.heistChanceUntil, now) + perkHourMs; break;
+      case "heistTimer": patch.heistTimerUntil = Math.max(d.heistTimerUntil, now) + perkHourMs; break;
+      case "bustBoost": patch.bustBoostUntil = Math.max(d.bustBoostUntil, now) + perkHourMs; break;
+      case "gtaRarity": patch.gtaRarityUntil = Math.max(d.gtaRarityUntil, now) + perkHourMs; break;
       case "meltValue": patch.meltValueUntil = Math.max(d.meltValueUntil, now) + 24 * 3600000; break;
       case "meltLimit": patch.meltLimitUntil = Math.max(d.meltLimitUntil, now) + 24 * 3600000; break;
       case "jailImmunity": patch.jailImmunityCount = d.jailImmunityCount + 1; break;

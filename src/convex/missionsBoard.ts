@@ -170,10 +170,20 @@ export const startMission = mutation({
     const energy = n((player as any).energy, 100);
     if (energy < type.energy) throw new Error(`Need ${type.energy} energy to take this mission — you have ${Math.floor(energy)}`);
 
+    // Multi Mission Upgrade (season store): 1 → 2 concurrent missions.
+    const missionLimit = ((player as any).accountUpgrades?.multiMission ?? 0) > 0 ? 2 : 1;
+    const startedMapLocal = startedMap(player);
+    const activeStarts = Object.values(startedMapLocal).filter((ts: any) => typeof ts === "number" && now - ts < MISSION_START_TTL).length;
+    if (activeStarts >= missionLimit) {
+      throw new Error(missionLimit === 1
+        ? "You already have an active mission — finish or abandon it first (Multi Mission Upgrade allows 2)"
+        : "Multi Mission limit reached (2) — finish one before starting another");
+    }
+
     const cooldowns = cooldownMap(player);
     const cdUntil = n(cooldowns[key], 0);
     if (cdUntil > now) throw new Error(`Mission cooling down — ${Math.ceil((cdUntil - now) / 1000)}s remaining`);
-    const started = startedMap(player);
+    const started = startedMapLocal;
     const startedAt = n(started[key], 0);
     if (startedAt > 0) {
       // Stale start from an older session/wave: mission keys repeat every wave and

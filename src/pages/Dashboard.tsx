@@ -54,6 +54,8 @@ import { UpdatesPage } from "@/components/UpdatesPage";
 // Heavy leaf pages are lazy-loaded into their own chunks — keeps the main
 // bundle small and the platform build under its memory cap.
 const SeasonPassPage = lazy(() => import("@/components/SeasonPass").then((m) => ({ default: m.SeasonPassPage })));
+const SeasonStorePanel = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({ default: m.SeasonStorePanel })));
+const DailyRewardGame = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({ default: m.DailyRewardGame })));
 import { LogoDropdown } from "@/components/LogoDropdown";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
@@ -199,6 +201,13 @@ type GamePage = string;
 
 
 // ===== MISSING PAGE STUBS =====
+const AVATAR_GRADIENTS: Record<string, string> = {
+  aurora_outline: 'linear-gradient(135deg, #22d3ee, #a855f7, #22d3ee)',
+  inferno_outline: 'linear-gradient(135deg, #f97316, #ef4444, #f97316)',
+  royal_outline: 'linear-gradient(135deg, #facc15, #f59e0b, #facc15)',
+  toxic_outline: 'linear-gradient(135deg, #a3e635, #14b8a6, #a3e635)',
+};
+
 function HeadquartersPage() {
   const player = useQuery(api.game.getPlayer);
   if (player === undefined) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
@@ -241,6 +250,11 @@ function HeadquartersPage() {
           </div>
         </div>
       </div>
+
+      {/* Daily Reward match game */}
+      <Suspense fallback={<div className="mafia-card rounded-xl p-5 animate-pulse text-center text-xs text-muted-foreground">Loading Daily Reward…</div>}>
+        <DailyRewardGame />
+      </Suspense>
 
       {/* Core Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1185,7 +1199,12 @@ export default function Dashboard() {
       case "missions": return <FullMissionsPage />;
       case "murder": return <CriminalOperationsPage category="murder" />;
       case "heist": return <HeistPage />;
-      case "season_progress": return <SeasonPassPage />;
+      case "season_progress": return (
+        <div className="space-y-5">
+          <Suspense fallback={<div className="animate-pulse py-8 text-center text-muted-foreground">Loading Season Store…</div>}><SeasonStorePanel /></Suspense>
+          <Suspense fallback={<div className="animate-pulse py-8 text-center text-muted-foreground">Loading Season Pass…</div>}><SeasonPassPage /></Suspense>
+        </div>
+      );
       case "stock_market": return <StockMarketPage />;
       case "interest_rates": return <InterestRatesPage />;
       case "credit_score": return <CreditScorePage />;
@@ -1219,7 +1238,12 @@ export default function Dashboard() {
       case "titles": return <TitlesPage />;
       case "achievements": return <AchievementsPage />;
       case "leaderboards": return <LeaderboardsPage />;
-      case "season_pass": return <SeasonPassPage />;
+      case "season_pass": return (
+        <div className="space-y-5">
+          <Suspense fallback={<div className="animate-pulse py-8 text-center text-muted-foreground">Loading Season Store…</div>}><SeasonStorePanel /></Suspense>
+          <Suspense fallback={<div className="animate-pulse py-8 text-center text-muted-foreground">Loading Season Pass…</div>}><SeasonPassPage /></Suspense>
+        </div>
+      );
       case "daily_challenges": return <DailyChallengesPage />;
       case "energy_drinks": return <EnergyDrinksPage />;
       case "ghost_mode": return <GhostModePage />;
@@ -1399,7 +1423,12 @@ export default function Dashboard() {
         <div className="flex items-center justify-center px-4 py-2 gap-4 flex-wrap">
           <span className="flex items-center gap-1 text-amber-300"><span className="animate-float" style={{ animationDelay: '1.1s' }}>🪙</span> {igCoins}</span>
           <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-2">
+            <span className="relative inline-flex size-7 items-center justify-center rounded-full p-[2px]" style={{ background: AVATAR_GRADIENTS[(player as any)?.equippedCosmetics?.avatar] ?? 'linear-gradient(135deg, rgba(245,158,11,0.35), rgba(180,83,9,0.25))' }}>
+              <span className="flex size-full items-center justify-center rounded-full bg-black/80 text-[10px] font-black text-amber-300">{(player?.nickname || player?.username || "P").slice(0, 1).toUpperCase()}</span>
+            </span>
             <span className="text-sm font-black animate-neon-glow" style={{ color: '#ffd700' }}>{player?.nickname || player?.username || player?.name || "Player"}</span>
+          </span>
             <RankBadge level={player?.level ?? 1} />
             <span className="text-[10px] text-amber-400/70">Lv.{player?.level ?? 1}</span>
           </div>
