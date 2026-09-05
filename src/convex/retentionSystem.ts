@@ -287,8 +287,24 @@ export const BADGES = [
 export const getBadges = query({
   args: {},
   handler: async (ctx) => {
-    const player = await getPlayer(ctx);
-    return { badges: BADGES.map((b) => ({ ...b, earned: (player as any).badges?.some((x: any) => x.id === b.id) ?? false })), myBadges: (player as any).badges ?? [] };
+    // Never throw on this read-only endpoint: badge data is cosmetic, so the
+    // worst case is an empty board. (Also keep `check` out of the result —
+    // functions are not serializable and Convex rejects the query otherwise.)
+    try {
+      const player = await getPlayer(ctx);
+      const owned = Array.isArray((player as any).badges) ? (player as any).badges : [];
+      return {
+        badges: BADGES.map((b) => ({
+          id: b.id,
+          name: b.name,
+          icon: b.icon,
+          earned: owned.some((x: any) => x && typeof x === "object" && x.id === b.id),
+        })),
+        myBadges: owned,
+      };
+    } catch {
+      return { badges: BADGES.map((b) => ({ id: b.id, name: b.name, icon: b.icon, earned: false })), myBadges: [] };
+    }
   },
 });
 
