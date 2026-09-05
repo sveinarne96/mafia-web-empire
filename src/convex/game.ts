@@ -5,6 +5,56 @@ import { RESOURCE_COSTS } from "../data/resourceCosts"; // costs
 import { GTA_LOOT, SH_LOOT } from "../data/crimes"; // specific vehicles/loot per job
 import { getLiveModifiers } from "./gameControl"; // live admin console multipliers
 
+// ===== SUPER BOOST WEEKEND LOOT HELPERS =====
+// While the weekend boost is live every successful crime can drop extra cash,
+// points, bullets, item packs and scraps on top of the doubled base rewards.
+const _normPacks = (p: any) => {
+  const o = p && typeof p === "object" ? { ...p } : {};
+  return { common: o.common ?? 0, rare: o.rare ?? 0, epic: o.epic ?? 0, legendary: o.legendary ?? 0 };
+};
+const _normScraps = (s2: any) => {
+  const o = s2 && typeof s2 === "object" ? { ...s2 } : {};
+  return { common: o.common ?? 0, rare: o.rare ?? 0, epic: o.epic ?? 0 };
+};
+function rollWeekendLoot(sbActive: boolean, succeeded: boolean, moneyEarned: number, pointsEarned: number, baseReward: number) {
+  if (!sbActive || !succeeded) return { bonusCash: 0, bonusPoints: 0, packs: [] as string[], scraps: [] as string[] };
+  const bonusCash = Math.random() < 0.75 ? Math.max(1, Math.floor(moneyEarned * 0.25)) : 0;
+  const bonusPoints = Math.random() < 0.75 ? Math.max(1, Math.floor((pointsEarned || baseReward * 0.1) * 0.2)) : 0;
+  const packs: string[] = [];
+  const pr = Math.random();
+  if (pr < 0.008) packs.push("legendary");
+  else if (pr < 0.033) packs.push("epic");
+  else if (pr < 0.09) packs.push("rare");
+  else if (pr < 0.2) packs.push("common");
+  const scraps: string[] = [];
+  const sr = Math.random();
+  if (sr < 0.045) scraps.push("epic");
+  else if (sr < 0.15) scraps.push("rare");
+  else if (sr < 0.4) scraps.push("common", ...(Math.random() < 0.5 ? ["common"] : []));
+  return { bonusCash, bonusPoints, packs, scraps };
+}
+async function applyWeekendDrops(ctx: any, player: any, roll: any) {
+  if (!roll.bonusCash && !roll.bonusPoints && roll.packs.length === 0 && roll.scraps.length === 0) return;
+  try {
+    const fresh = await ctx.db.get(player._id);
+    if (!fresh) return;
+    const patch: Record<string, unknown> = {};
+    if (roll.bonusCash) patch.money = (fresh.money ?? 0) + roll.bonusCash;
+    if (roll.bonusPoints) patch.points = (fresh.points ?? 0) + roll.bonusPoints;
+    if (roll.packs.length > 0) {
+      const pp = _normPacks(fresh.packs);
+      roll.packs.forEach((rk: string) => { pp[rk as keyof typeof pp] = (pp[rk as keyof typeof pp] ?? 0) + 1; });
+      patch.packs = pp;
+    }
+    if (roll.scraps.length > 0) {
+      const sp = _normScraps(fresh.scraps);
+      roll.scraps.forEach((sk: string) => { sp[sk as keyof typeof sp] = (sp[sk as keyof typeof sp] ?? 0) + 1; });
+      patch.scraps = sp;
+    }
+    await ctx.db.patch(fresh._id, patch as any);
+  } catch (_sbErr) { /* bonus drop must never cancel the crime */ }
+}
+
 // ===== ENSURE PLAYER HAS ALL REQUIRED FIELDS (read-only defaults, no patch) =====
 function ensurePlayerDefaults(player: any) {
   // NaN-safe helper
@@ -317,14 +367,16 @@ export const commitCrime = mutation({
     const bulletDrop = liveCfg.superBoostActive && success && Math.random() < 0.75
       ? Math.min(10000, Math.max(1, Math.floor(moneyEarned / 25)))
       : 0;
+    const _sbRoll = rollWeekendLoot(liveCfg.superBoostActive, success, moneyEarned, pointsEarned, 0);
         // Arrest is separate from crime success; only 10% of failed attempts lead to arrest.
     const arrested = !success && Math.random() < 0.10;
     await ctx.db.insert("crimes", { userId: player._id, type: args.type, target: args.type === "rob_player" ? (args.targetId ?? "unknown") : "environment", success, moneyEarned, pointsEarned, damageTaken, timestamp: Date.now() });
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
         const xpUpdate = await addXpAndCheckLevel(ctx, player, Math.floor((success ? 75 : 15) * liveCfg.xpMultiplier));
     await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyEarned : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), energy: Math.max(0, regeneratedEnergy - (liveCfg.superBoostActive ? 2 : 5)), bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5), actionTimestamps: [...(Array.isArray((player as any).actionTimestamps) ? ((player as any).actionTimestamps as number[]).filter((t: number) => typeof t === "number" && Number.isFinite(t) && Date.now() - t < 3600000).slice(-999) : []), Date.now()] } as any);
+    await applyWeekendDrops(ctx, player, _sbRoll);
     if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "You were arrested during a crime!", read: false, timestamp: Date.now() });
-    return { success, moneyEarned, pointsEarned, damageTaken, arrested, bulletDrop };
+    return { success, moneyEarned, pointsEarned, damageTaken, arrested, bulletDrop, bonusCash: _sbRoll.bonusCash, bonusPoints: _sbRoll.bonusPoints, packsDropped: _sbRoll.packs, scrapsDropped: _sbRoll.scraps };
   },
 });
 
@@ -629,6 +681,7 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   if (_missionGta && (GTA_LOOT[args.crimeId]?.price ?? args.reward) >= 500000) missionCounters.totalGtaRare = ((player as any).totalGtaRare ?? 0) + 1;
   const xpEarned = succeeded ? Math.floor(args.xp * liveCfg.xpMultiplier) : Math.floor(args.xp * 0.3);
   const pointsEarned = succeeded ? Math.floor(args.xp * 0.1 * liveCfg.pointsMultiplier) : 0;
+  const _sbRoll = rollWeekendLoot(liveCfg.superBoostActive, succeeded, moneyEarned, pointsEarned, args.reward);
   const xpUpdate = await addXpAndCheckLevel(ctx, player, xpEarned);
   const levelUpNow = (player as any).levelUpPending === true || ((player.experience ?? 0) + xpEarned >= 2000);
   const oldCooldowns: Record<string, number> = ((player as any).crimeCooldowns ?? {}) as Record<string, number>;
@@ -643,8 +696,9 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
     : [];
   const _newTs = [...existingTs.filter((t: number) => t > _now - 3600000), _now];
   await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : effectiveEnergy, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: _now, actionTimestamps: _newTs } as any);
+  await applyWeekendDrops(ctx, player, _sbRoll);
   try { await ctx.db.insert('crimes', { userId: player._id, type: args.crimeId, target: 'environment', success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); } catch (_logErr) { /* log must never cancel the crime */ }
   try { if (arrested) await ctx.db.insert('notifications', { userId: player._id, type: 'prison', message: 'Arrested!', read: false, timestamp: Date.now() }); } catch (_notifErr) { /* notification must never cancel the crime */ }
-  return { success: succeeded, moneyEarned, xpEarned, pointsEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow, bulletDrop };
+  return { success: succeeded, moneyEarned, xpEarned, pointsEarned, damageTaken: lifeDamage, arrested, levelUp: levelUpNow, bulletDrop, bonusCash: _sbRoll.bonusCash, bonusPoints: _sbRoll.bonusPoints, packsDropped: _sbRoll.packs, scrapsDropped: _sbRoll.scraps };
 } });
  

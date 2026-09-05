@@ -53,9 +53,9 @@ export function LiveGameBanner() {
   const boosts: { icon: string; label: string; until: number }[] = [];
   if (live.xpMultiplier > 1) boosts.push({ icon: "⚡", label: `XP ×${live.xpMultiplier}`, until: live.xpMultiplierUntil });
   if (live.cashMultiplier > 1) boosts.push({ icon: "💰", label: `Cash ×${live.cashMultiplier}`, until: live.cashMultiplierUntil });
-  // SUPER BOOST — automatic Thursday 00:00 → Monday 00:00 (UTC)
+  // SUPER BOOST WEEKEND — automatic Friday 00:00 → Monday 00:00 (UTC), + admin override ≤ 7 days
   const sb = live.superBoost;
-  if (sb?.active) boosts.push({ icon: "🔥", label: `SUPER BOOST −75% wait & energy · +75% XP/Cash/Points · 75% bullet drops`, until: sb.endsAt });
+  if (sb?.active) boosts.push({ icon: "🔥", label: `SUPER BOOST WEEKEND · ×2 XP/Cash/Points · −75% wait & energy · cash/bullet/point drops + packs & scraps`, until: sb.overrideUntil > 0 && sb.overrideUntil > sb.endsAt ? sb.overrideUntil : sb.endsAt });
 
   const headline = live.headlines?.[0];
 

@@ -1123,6 +1123,7 @@ const schema = defineSchema({
     ghostMode: v.boolean(),
     lottoJackpot: v.number(),
     superBoostEnabled: v.boolean(),
+    superBoostOverrideUntil: v.optional(v.number()),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
   }).index("by_key", ["key"]),

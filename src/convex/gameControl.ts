@@ -27,31 +27,40 @@ export const DEFAULT_CONFIG = {
   maintenanceMessage: "🔧 Server maintenance in progress — back soon!",
   ghostMode: false,
   lottoJackpot: 0,
-  // SUPER BOOST — automatic weekly event: Thursday 00:00 → Monday 00:00 (UTC).
+  // SUPER BOOST WEEKEND — automatic weekly event: Friday 00:00 → Monday 00:00 (UTC).
   // When enabled (default), it activates and deactivates itself on schedule.
+  // Admins can also force-start it from the console for up to 7 days via
+  // superBoostOverrideUntil (see setSuperBoostOverride).
   superBoostEnabled: true,
+  superBoostOverrideUntil: 0,
   updatedAt: 0,
   updatedBy: undefined as string | undefined,
 };
 
-// ===== SUPER BOOST SCHEDULE =====
-// Automatic weekly event window: Thursday 00:00 → Monday 00:00 UTC.
+// ===== SUPER BOOST WEEKEND SCHEDULE =====
+// Automatic weekly event window: Friday 00:00 → Monday 00:00 UTC.
 // Pure function of the clock — no timers, no cron, nothing to maintain.
-export const SUPER_BOOST_XP_CASH = 1.75; // +75% cash & XP
+// An admin override (max 7 days, enforced in setSuperBoostOverride) force-starts
+// the boost immediately and extends the active window up to overrideUntil.
+export const SUPER_BOOST_XP_CASH = 2; // DOUBLE cash & XP while active
 
-export function computeSuperBoost(now: number, enabled: boolean) {
+export function computeSuperBoost(now: number, enabled: boolean, overrideUntil = 0) {
   const d = new Date(now);
-  // days since Thursday (Thu=0, Fri=1, Sat=2, Sun=3, Mon=4, Tue=5, Wed=6)
-  const daysSinceThu = (d.getUTCDay() + 3) % 7;
+  // days since Friday (Fri=0, Sat=1, Sun=2, Mon=3, Tue=4, Wed=5, Thu=6)
+  const daysSinceFri = (d.getUTCDay() + 2) % 7;
   const todayMidnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
-  const start = todayMidnight - daysSinceThu * 86400000; // this window's Thursday 00:00 UTC
-  const end = start + 4 * 86400000; // Monday 00:00 UTC
-  const active = enabled && now >= start && now < end;
+  const start = todayMidnight - daysSinceFri * 86400000; // this window's Friday 00:00 UTC
+  const end = start + 3 * 86400000; // Monday 00:00 UTC
+  const inWindow = enabled && now >= start && now < end;
+  const forced = typeof overrideUntil === "number" && overrideUntil > now;
+  const active = inWindow || forced;
+  const endsAt = forced ? Math.max(end, overrideUntil) : end;
   return {
     enabled,
     active,
     startsAt: start,
-    endsAt: end,
+    endsAt,
+    overrideUntil: forced ? overrideUntil : 0,
     nextStartsAt: now >= start ? start + 7 * 86400000 : start,
   };
 }
@@ -91,8 +100,8 @@ export const getLiveConfig = query({
     const doc = await getConfigDoc(ctx);
     const cfg = { ...DEFAULT_CONFIG, ...(doc ?? {}) };
     const now = Date.now();
-    // SUPER BOOST (auto Thursday→Monday) stacks on top of manual boosts.
-    const sb = computeSuperBoost(now, cfg.superBoostEnabled ?? true);
+    // SUPER BOOST WEEKEND (auto Friday→Monday, + admin override ≤7 days) stacks on manual boosts.
+    const sb = computeSuperBoost(now, cfg.superBoostEnabled ?? true, cfg.superBoostOverrideUntil ?? 0);
     const sbMult = sb.active ? SUPER_BOOST_XP_CASH : 1;
     // Effective multipliers: expire automatically when the deadline passes.
     const xpMultiplier = (now < cfg.xpMultiplierUntil ? cfg.xpMultiplier : 1) * sbMult;
@@ -143,6 +152,7 @@ export async function getLiveModifiers(ctx: any): Promise<{
   pointsMultiplier: number;
   superBoostActive: boolean;
   superBoostEndsAt: number;
+  superBoostOverrideUntil: number;
   crimeSuccessBonus: number;
   energyRegenPerMinute: number;
   maintenanceMode: boolean;
@@ -153,9 +163,9 @@ export async function getLiveModifiers(ctx: any): Promise<{
     const doc = await getConfigDoc(ctx);
     const cfg = { ...DEFAULT_CONFIG, ...(doc ?? {}) };
     const now = Date.now();
-    // SUPER BOOST stacks on manual boosts; points/energy/cooldown/bullet
-    // effects are applied by the game actions themselves via superBoostActive.
-    const sb = computeSuperBoost(now, cfg.superBoostEnabled ?? true);
+    // SUPER BOOST WEEKEND stacks on manual boosts; points/energy/cooldown/bullet
+    // + pack/scrap drop effects are applied by game actions via superBoostActive.
+    const sb = computeSuperBoost(now, cfg.superBoostEnabled ?? true, cfg.superBoostOverrideUntil ?? 0);
     const sbMult = sb.active ? SUPER_BOOST_XP_CASH : 1;
     return {
       cashMultiplier: (now < cfg.cashMultiplierUntil ? cfg.cashMultiplier : 1) * sbMult,
@@ -163,6 +173,7 @@ export async function getLiveModifiers(ctx: any): Promise<{
       pointsMultiplier: sb.active ? SUPER_BOOST_XP_CASH : 1,
       superBoostActive: sb.active,
       superBoostEndsAt: sb.endsAt,
+      superBoostOverrideUntil: sb.overrideUntil,
       crimeSuccessBonus: cfg.crimeSuccessBonus ?? 0,
       energyRegenPerMinute: cfg.energyRegenPerMinute ?? 5,
       maintenanceMode: cfg.maintenanceMode ?? false,
@@ -176,6 +187,7 @@ export async function getLiveModifiers(ctx: any): Promise<{
       pointsMultiplier: 1,
       superBoostActive: false,
       superBoostEndsAt: 0,
+      superBoostOverrideUntil: 0,
       crimeSuccessBonus: 0,
       energyRegenPerMinute: 5,
       maintenanceMode: false,
@@ -243,6 +255,24 @@ export const setSuperBoost = mutation({
     await requireAdmin(ctx);
     await patchConfig(ctx, { superBoostEnabled: args.enabled });
     return { success: true, enabled: args.enabled };
+  },
+});
+
+/**
+ * Admin force-start / cancel of the SUPER BOOST WEEKEND.
+ * hours is capped at 168 (7 days): an override of 0 cancels an active override.
+ * The boost stays on (even outside the automatic Fri→Mon window) until the
+ * override expires — then control returns to the automatic schedule.
+ */
+export const setSuperBoostOverride = mutation({
+  args: { hours: v.number() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    if (!Number.isFinite(args.hours)) throw new Error("Invalid duration");
+    if (args.hours < 0 || args.hours > 168) throw new Error("Max 7 days (168h) for a Super Boost override!");
+    const until = args.hours === 0 ? 0 : Date.now() + args.hours * 3600000;
+    await patchConfig(ctx, { superBoostOverrideUntil: until });
+    return { success: true, overrideUntil: until, hours: args.hours };
   },
 });
 

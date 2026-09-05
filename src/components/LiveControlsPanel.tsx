@@ -66,6 +66,7 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
   const removeAnnouncement = useMutation(api.gameControl.removeAnnouncement);
   const postHeadline = useMutation(api.gameControl.postHeadline);
   const setSuperBoost = useMutation(api.gameControl.setSuperBoost);
+  const setSuperBoostOverride = useMutation(api.gameControl.setSuperBoostOverride);
   const broadcast = useMutation(api.admin.broadcastMessage);
 
   const [busy, setBusy] = useState(false);
@@ -81,6 +82,7 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
   const [maintMsg, setMaintMsg] = useState("");
   const [crimeBonus, setCrimeBonus] = useState(0);
   const [jackpot, setJackpot] = useState("");
+  const [sbHours, setSbHours] = useState(48);
 
   const run = async (fn: () => Promise<unknown>, okText: string) => {
     setBusy(true);
@@ -154,38 +156,46 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
           <div className="text-lg font-black text-primary">{live.announcements.length}</div>
         </div>
         <div className="mafia-card rounded-xl p-3 text-center">
-          <div className="text-[10px] text-muted-foreground">🔥 Super Boost</div>
+          <div className="text-[10px] text-muted-foreground">🔥 Super Boost Weekend</div>
           <div className={`text-lg font-black ${live.superBoost.active ? "text-amber-400 animate-pulse" : live.superBoost.enabled ? "text-muted-foreground" : "text-red-400"}`}>
-            {live.superBoost.active ? "ACTIVE" : live.superBoost.enabled ? "SCHEDULED" : "OFF"}
+            {live.superBoost.active
+              ? live.superBoost.overrideUntil > 0
+                ? "FORCED"
+                : "ACTIVE"
+              : live.superBoost.enabled
+                ? "SCHEDULED"
+                : "OFF"}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Super Boost — automatic weekly event */}
-        <Card title="🔥 Super Boost — automatic weekly event" icon={<Zap className="size-4 text-amber-400" />}>
+        {/* Super Boost Weekend — auto Friday→Monday + admin override ≤ 7 days */}
+        <Card title="🔥 Super Boost Weekend — Fri → Mon (auto)" icon={<Zap className="size-4 text-amber-400" />}>
           <div className={`rounded-lg px-3 py-2 text-xs font-black flex items-center gap-2 border ${live.superBoost.active ? "bg-amber-500/15 text-amber-300 border-amber-500/30" : live.superBoost.enabled ? "bg-white/5 text-muted-foreground border-border/60" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
-            <span>{live.superBoost.active ? "🟢 ACTIVE NOW" : live.superBoost.enabled ? "⏳ SCHEDULED (auto)" : "⛔ DISABLED"}</span>
+            <span>{live.superBoost.active ? (live.superBoost.overrideUntil > 0 ? "🟢 ACTIVE (admin override)" : "🟢 ACTIVE NOW") : live.superBoost.enabled ? "⏳ SCHEDULED (auto)" : "⛔ DISABLED"}</span>
             <span className="ml-auto text-[10px] font-bold opacity-70">
               {live.superBoost.active
-                ? `ends ${fmtLeft(live.superBoost.endsAt)}`
+                ? live.superBoost.overrideUntil > 0 && live.superBoost.overrideUntil > live.superBoost.endsAt
+                  ? `override ends ${fmtLeft(live.superBoost.overrideUntil)}`
+                  : `ends ${fmtLeft(live.superBoost.endsAt)}`
                 : live.superBoost.enabled
-                  ? "next start: Thu 00:00 UTC"
-                  : "manual override"}
+                  ? "next start: Fri 00:00 UTC"
+                  : "schedule off — use override"}
             </span>
           </div>
-          <p className="text-[10px] text-muted-foreground">Turns itself on every <span className="text-amber-300 font-bold">Thursday 00:00 UTC</span> and off every <span className="text-amber-300 font-bold">Monday 00:00 UTC</span> — zero maintenance. Stack with manual boosts below.</p>
+          <p className="text-[10px] text-muted-foreground">Turns itself on every <span className="text-amber-300 font-bold">Friday 00:00 UTC</span> and off every <span className="text-amber-300 font-bold">Monday 00:00 UTC</span> — zero maintenance. Stack with manual boosts below.</p>
           <ul className="text-[10px] text-muted-foreground space-y-1">
+            <li>💥 <span className="text-foreground font-bold">×2 XP</span> + <span className="text-foreground font-bold">×2 cash</span> + <span className="text-foreground font-bold">×2 points</span> on every action</li>
             <li>⏱️ <span className="text-foreground font-bold">75% less waiting time</span> on criminal actions</li>
             <li>⚡ <span className="text-foreground font-bold">75% less energy</span> used per crime</li>
-            <li>💥 <span className="text-foreground font-bold">+75% XP</span> boost</li>
-            <li>💰 <span className="text-foreground font-bold">+75% cash</span> boost</li>
-            <li>🏅 <span className="text-foreground font-bold">+75% points</span> boost</li>
-            <li>🔫 <span className="text-foreground font-bold">75% chance</span> to loot bullets on every criminal action</li>
+            <li>💰🔫🏅 <span className="text-foreground font-bold">75% drop chance</span> for bonus cash, bullets &amp; points per crime</li>
+            <li>📦 <span className="text-foreground font-bold">Pack drops</span>: Common · Rare · Epic · Legendary</li>
+            <li>♻️ <span className="text-foreground font-bold">Scrap drops</span>: Common · Rare · Epic</li>
           </ul>
           <div className="flex gap-2">
             <button disabled={busy || live.superBoost.enabled}
-              onClick={() => run(() => setSuperBoost({ enabled: true }), "Super Boost schedule ENABLED — auto-starts every Thursday 00:00 UTC")}
+              onClick={() => run(() => setSuperBoost({ enabled: true }), "Super Boost schedule ENABLED — auto-starts every Friday 00:00 UTC")}
               className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 disabled:opacity-40">
               🔥 Enable schedule
             </button>
@@ -194,6 +204,38 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
               className="flex-1 px-4 py-2 bg-white/5 text-muted-foreground rounded-lg text-xs font-bold hover:bg-white/10 disabled:opacity-40">
               ⛔ Turn off
             </button>
+          </div>
+
+          <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 space-y-2">
+            <div className="text-[10px] font-bold text-amber-300 flex items-center gap-1">🚀 Force-start right now (max 7 days)</div>
+            <div className="flex gap-1.5 flex-wrap">
+              {[{ l: "6h", v: 6 }, { l: "24h", v: 24 }, { l: "48h", v: 48 }, { l: "3d", v: 72 }, { l: "7d", v: 168 }].map((o) => (
+                <button key={o.l} onClick={() => setSbHours(o.v)}
+                  className={`px-2 py-1 rounded text-[10px] font-black ${sbHours === o.v ? "bg-amber-500 text-black" : "bg-white/5 text-muted-foreground hover:text-foreground"}`}>
+                  {o.l}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="number" min={1} max={168} value={sbHours} onChange={(e) => setSbHours(Math.max(0, Math.min(168, Number(e.target.value) || 0)))}
+                className="w-20 px-2 py-1.5 rounded-lg bg-black/40 border border-white/10 text-xs font-bold text-amber-200" />
+              <span className="text-[10px] text-muted-foreground">hours (max 168 = 7 days)</span>
+            </div>
+            <div className="flex gap-2">
+              <button disabled={busy || sbHours <= 0 || live.superBoost.overrideUntil > 0}
+                onClick={() => run(() => setSuperBoostOverride({ hours: sbHours }), `Super Boost forced ON for ${sbHours}h (max 7 days)`)}
+                className="flex-1 px-3 py-2 bg-amber-600 text-white rounded-lg text-[11px] font-black hover:bg-amber-700 disabled:opacity-40">
+                🚀 Start override ({sbHours}h)
+              </button>
+              <button disabled={busy || live.superBoost.overrideUntil <= 0}
+                onClick={() => run(() => setSuperBoostOverride({ hours: 0 }), "Super Boost override ended — back to the Fri→Mon auto schedule")}
+                className="flex-1 px-3 py-2 bg-white/5 text-red-300 rounded-lg text-[11px] font-black hover:bg-white/10 disabled:opacity-40">
+                ✋ End override
+              </button>
+            </div>
+            {live.superBoost.overrideUntil > 0 && (
+              <div className="text-[10px] text-amber-300 font-bold">⏳ Override live — boost stays on until {fmtLeft(live.superBoost.overrideUntil)}</div>
+            )}
           </div>
         </Card>
 
