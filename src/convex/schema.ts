@@ -1035,6 +1035,7 @@ const schema = defineSchema({
     maintenanceMessage: v.string(),
     ghostMode: v.boolean(),
     lottoJackpot: v.number(),
+    superBoostEnabled: v.boolean(),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
   }).index("by_key", ["key"]),

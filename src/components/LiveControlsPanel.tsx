@@ -65,6 +65,7 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
   const postAnnouncement = useMutation(api.gameControl.postAnnouncement);
   const removeAnnouncement = useMutation(api.gameControl.removeAnnouncement);
   const postHeadline = useMutation(api.gameControl.postHeadline);
+  const setSuperBoost = useMutation(api.gameControl.setSuperBoost);
   const broadcast = useMutation(api.admin.broadcastMessage);
 
   const [busy, setBusy] = useState(false);
@@ -123,7 +124,7 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
       )}
 
       {/* Live status strip */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
         <div className="mafia-card rounded-xl p-3 text-center">
           <div className="text-[10px] text-muted-foreground">⚡ XP Multiplier</div>
           <div className={`text-lg font-black ${live.xpMultiplier > 1 ? "text-cyan-400" : "text-muted-foreground"}`}>
@@ -152,9 +153,50 @@ export function LiveControlsPanel({ onClose }: { onClose: () => void }) {
           <div className="text-[10px] text-muted-foreground">📣 Active Banners</div>
           <div className="text-lg font-black text-primary">{live.announcements.length}</div>
         </div>
+        <div className="mafia-card rounded-xl p-3 text-center">
+          <div className="text-[10px] text-muted-foreground">🔥 Super Boost</div>
+          <div className={`text-lg font-black ${live.superBoost.active ? "text-amber-400 animate-pulse" : live.superBoost.enabled ? "text-muted-foreground" : "text-red-400"}`}>
+            {live.superBoost.active ? "ACTIVE" : live.superBoost.enabled ? "SCHEDULED" : "OFF"}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Super Boost — automatic weekly event */}
+        <Card title="🔥 Super Boost — automatic weekly event" icon={<Zap className="size-4 text-amber-400" />}>
+          <div className={`rounded-lg px-3 py-2 text-xs font-black flex items-center gap-2 border ${live.superBoost.active ? "bg-amber-500/15 text-amber-300 border-amber-500/30" : live.superBoost.enabled ? "bg-white/5 text-muted-foreground border-border/60" : "bg-red-500/10 text-red-400 border-red-500/20"}`}>
+            <span>{live.superBoost.active ? "🟢 ACTIVE NOW" : live.superBoost.enabled ? "⏳ SCHEDULED (auto)" : "⛔ DISABLED"}</span>
+            <span className="ml-auto text-[10px] font-bold opacity-70">
+              {live.superBoost.active
+                ? `ends ${fmtLeft(live.superBoost.endsAt)}`
+                : live.superBoost.enabled
+                  ? "next start: Thu 00:00 UTC"
+                  : "manual override"}
+            </span>
+          </div>
+          <p className="text-[10px] text-muted-foreground">Turns itself on every <span className="text-amber-300 font-bold">Thursday 00:00 UTC</span> and off every <span className="text-amber-300 font-bold">Monday 00:00 UTC</span> — zero maintenance. Stack with manual boosts below.</p>
+          <ul className="text-[10px] text-muted-foreground space-y-1">
+            <li>⏱️ <span className="text-foreground font-bold">75% less waiting time</span> on criminal actions</li>
+            <li>⚡ <span className="text-foreground font-bold">75% less energy</span> used per crime</li>
+            <li>💥 <span className="text-foreground font-bold">+75% XP</span> boost</li>
+            <li>💰 <span className="text-foreground font-bold">+75% cash</span> boost</li>
+            <li>🏅 <span className="text-foreground font-bold">+75% points</span> boost</li>
+            <li>🔫 <span className="text-foreground font-bold">75% chance</span> to loot bullets on every criminal action</li>
+          </ul>
+          <div className="flex gap-2">
+            <button disabled={busy || live.superBoost.enabled}
+              onClick={() => run(() => setSuperBoost({ enabled: true }), "Super Boost schedule ENABLED — auto-starts every Thursday 00:00 UTC")}
+              className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-xs font-bold hover:bg-amber-700 disabled:opacity-40">
+              🔥 Enable schedule
+            </button>
+            <button disabled={busy || !live.superBoost.enabled}
+              onClick={() => run(() => setSuperBoost({ enabled: false }), "Super Boost turned OFF — players see no boost")}
+              className="flex-1 px-4 py-2 bg-white/5 text-muted-foreground rounded-lg text-xs font-bold hover:bg-white/10 disabled:opacity-40">
+              ⛔ Turn off
+            </button>
+          </div>
+        </Card>
+
         {/* XP / Cash boosts */}
         <Card title="⚡ Global Boosts (XP & Cash)" icon={<Zap className="size-4 text-cyan-400" />}>
           <div className="text-[10px] text-muted-foreground">XP Multiplier — every crime/action reward scales live</div>

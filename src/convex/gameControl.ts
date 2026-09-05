@@ -27,9 +27,34 @@ export const DEFAULT_CONFIG = {
   maintenanceMessage: "🔧 Server maintenance in progress — back soon!",
   ghostMode: false,
   lottoJackpot: 0,
+  // SUPER BOOST — automatic weekly event: Thursday 00:00 → Monday 00:00 (UTC).
+  // When enabled (default), it activates and deactivates itself on schedule.
+  superBoostEnabled: true,
   updatedAt: 0,
   updatedBy: undefined as string | undefined,
 };
+
+// ===== SUPER BOOST SCHEDULE =====
+// Automatic weekly event window: Thursday 00:00 → Monday 00:00 UTC.
+// Pure function of the clock — no timers, no cron, nothing to maintain.
+export const SUPER_BOOST_XP_CASH = 1.75; // +75% cash & XP
+
+export function computeSuperBoost(now: number, enabled: boolean) {
+  const d = new Date(now);
+  // days since Thursday (Thu=0, Fri=1, Sat=2, Sun=3, Mon=4, Tue=5, Wed=6)
+  const daysSinceThu = (d.getUTCDay() + 3) % 7;
+  const todayMidnight = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  const start = todayMidnight - daysSinceThu * 86400000; // this window's Thursday 00:00 UTC
+  const end = start + 4 * 86400000; // Monday 00:00 UTC
+  const active = enabled && now >= start && now < end;
+  return {
+    enabled,
+    active,
+    startsAt: start,
+    endsAt: end,
+    nextStartsAt: now >= start ? start + 7 * 86400000 : start,
+  };
+}
 
 async function requireAdmin(ctx: any) {
   const userId = await getAuthUserId(ctx);
@@ -66,9 +91,12 @@ export const getLiveConfig = query({
     const doc = await getConfigDoc(ctx);
     const cfg = { ...DEFAULT_CONFIG, ...(doc ?? {}) };
     const now = Date.now();
+    // SUPER BOOST (auto Thursday→Monday) stacks on top of manual boosts.
+    const sb = computeSuperBoost(now, cfg.superBoostEnabled ?? true);
+    const sbMult = sb.active ? SUPER_BOOST_XP_CASH : 1;
     // Effective multipliers: expire automatically when the deadline passes.
-    const xpMultiplier = now < cfg.xpMultiplierUntil ? cfg.xpMultiplier : 1;
-    const cashMultiplier = now < cfg.cashMultiplierUntil ? cfg.cashMultiplier : 1;
+    const xpMultiplier = (now < cfg.xpMultiplierUntil ? cfg.xpMultiplier : 1) * sbMult;
+    const cashMultiplier = (now < cfg.cashMultiplierUntil ? cfg.cashMultiplier : 1) * sbMult;
     const activeAnnouncements = await ctx.db
       .query("announcements")
       .filter((q: any) => q.eq(q.field("active"), true))
@@ -96,6 +124,7 @@ export const getLiveConfig = query({
       maintenanceMessage: cfg.maintenanceMessage ?? DEFAULT_CONFIG.maintenanceMessage,
       ghostMode: cfg.ghostMode ?? false,
       lottoJackpot: cfg.lottoJackpot ?? 0,
+      superBoost: sb,
       announcements: visible,
       headlines: headlines.map((h: any) => ({ title: h.title, playerName: h.playerName ?? "", crimeType: h.crimeType ?? "", timestamp: h.timestamp })),
     };
@@ -111,6 +140,9 @@ export const getLiveConfig = query({
 export async function getLiveModifiers(ctx: any): Promise<{
   cashMultiplier: number;
   xpMultiplier: number;
+  pointsMultiplier: number;
+  superBoostActive: boolean;
+  superBoostEndsAt: number;
   crimeSuccessBonus: number;
   energyRegenPerMinute: number;
   maintenanceMode: boolean;
@@ -121,9 +153,16 @@ export async function getLiveModifiers(ctx: any): Promise<{
     const doc = await getConfigDoc(ctx);
     const cfg = { ...DEFAULT_CONFIG, ...(doc ?? {}) };
     const now = Date.now();
+    // SUPER BOOST stacks on manual boosts; points/energy/cooldown/bullet
+    // effects are applied by the game actions themselves via superBoostActive.
+    const sb = computeSuperBoost(now, cfg.superBoostEnabled ?? true);
+    const sbMult = sb.active ? SUPER_BOOST_XP_CASH : 1;
     return {
-      cashMultiplier: now < cfg.cashMultiplierUntil ? cfg.cashMultiplier : 1,
-      xpMultiplier: now < cfg.xpMultiplierUntil ? cfg.xpMultiplier : 1,
+      cashMultiplier: (now < cfg.cashMultiplierUntil ? cfg.cashMultiplier : 1) * sbMult,
+      xpMultiplier: (now < cfg.xpMultiplierUntil ? cfg.xpMultiplier : 1) * sbMult,
+      pointsMultiplier: sb.active ? SUPER_BOOST_XP_CASH : 1,
+      superBoostActive: sb.active,
+      superBoostEndsAt: sb.endsAt,
       crimeSuccessBonus: cfg.crimeSuccessBonus ?? 0,
       energyRegenPerMinute: cfg.energyRegenPerMinute ?? 5,
       maintenanceMode: cfg.maintenanceMode ?? false,
@@ -134,6 +173,9 @@ export async function getLiveModifiers(ctx: any): Promise<{
     return {
       cashMultiplier: 1,
       xpMultiplier: 1,
+      pointsMultiplier: 1,
+      superBoostActive: false,
+      superBoostEndsAt: 0,
       crimeSuccessBonus: 0,
       energyRegenPerMinute: 5,
       maintenanceMode: false,
@@ -192,6 +234,15 @@ export const updateConfig = mutation({
     }
     await patchConfig(ctx, patch);
     return { success: true, ...patch };
+  },
+});
+
+export const setSuperBoost = mutation({
+  args: { enabled: v.boolean() },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+    await patchConfig(ctx, { superBoostEnabled: args.enabled });
+    return { success: true, enabled: args.enabled };
   },
 });
 
