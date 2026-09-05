@@ -712,50 +712,75 @@ export function MissionsOverviewPage() {
     try { return parseInt(localStorage.getItem("missionCycle") || "0", 10); } catch { return 0; }
   });
 
-  // Generate missions client-side for display — uses cycle for unlimited regeneration
-  const allMissions = useMemo(() => {
-    return Array.from({ length: TOTAL_MISSIONS }, (_, i) => generateMission(i, cycle));
-  }, [cycle]);
+  // Mission generation is lazy: a cheap counting pass over the whole wave
+  // (no mission objects allocated), then a pass that materializes only the
+  // window around the current page. Building all 255,000 mission objects on
+  // every cycle/filter change used to freeze the page.
+  const missionId = (seed: number) => (cycle > 0 ? `mission_c${cycle}_${seed}` : `mission_${seed}`);
 
-  // Filter missions
-  const filteredMissions = useMemo(() => {
-    let missions = allMissions;
-    if (catFilter !== "all") missions = missions.filter(m => m.category === catFilter);
-    if (diffFilter !== "all") missions = missions.filter(m => m.difficulty === diffFilter);
-    if (search) {
-      const q = search.toLowerCase();
-      missions = missions.filter(m => m.name.toLowerCase().includes(q) || m.description.toLowerCase().includes(q));
-    }
-    return missions;
-  }, [allMissions, catFilter, diffFilter, search]);
+  // Bumped after each completion so the lists refresh immediately
+  const [refresh, setRefresh] = useState(0);
 
   const totalCompletedAllTime = useMemo(() => {
     try {
       const ids: string[] = JSON.parse(localStorage.getItem("completedMissionIds") || "[]");
       return ids.length;
     } catch { return 0; }
-  }, [tab, cycle]);
+  }, [tab, cycle, refresh]);
 
   const completedIds = useMemo(() => {
     try {
       const ids: string[] = JSON.parse(localStorage.getItem("completedMissionIds") || "[]");
       return new Set(ids);
     } catch { return new Set<string>(); }
-  }, [tab, cycle]);
+  }, [tab, cycle, refresh]);
 
-  const activeMissions = useMemo(() =>
-    filteredMissions.filter(m => !completedIds.has(m.id)),
-    [filteredMissions, completedIds]
-  );
+  // Lazy wave stats: count matches cheaply, then materialize only the page window.
+  const missionStats = useMemo(() => {
+    const completed = completedIds;
+    const q = search.trim().toLowerCase();
+    // Pass 1 — count matches across the wave without allocating mission objects.
+    // While searching, counts come from a capped window (past ~20k seeds is
+    // beyond any reachable page anyway).
+    let activeCount = 0;
+    let finishedCount = 0;
+    const scanLimit = q ? 20000 : TOTAL_MISSIONS;
+    for (let seed = 0; seed < scanLimit; seed++) {
+      const tmpl = MISSION_TEMPLATES[seed % MISSION_TEMPLATES.length];
+      if (catFilter !== "all" && tmpl.cat !== catFilter) continue;
+      if (diffFilter !== "all" && tmpl.diff !== diffFilter) continue;
+      const done = completed.has(missionId(seed));
+      if (q) {
+        const m = generateMission(seed, cycle);
+        if (!m.name.toLowerCase().includes(q) && !m.description.toLowerCase().includes(q)) continue;
+      }
+      if (done) finishedCount++; else activeCount++;
+    }
+    // Pass 2 — materialize only the window around the current page
+    const needed = (page + 2) * PAGE_SIZE;
+    const matches: ReturnType<typeof generateMission>[] = [];
+    for (let seed = 0; seed < TOTAL_MISSIONS && matches.length < needed; seed++) {
+      const tmpl = MISSION_TEMPLATES[seed % MISSION_TEMPLATES.length];
+      if (catFilter !== "all" && tmpl.cat !== catFilter) continue;
+      if (diffFilter !== "all" && tmpl.diff !== diffFilter) continue;
+      const done = completed.has(missionId(seed));
+      if (tab === "active" ? done : !done) continue;
+      const m = generateMission(seed, cycle);
+      if (q) {
+        if (!m.name.toLowerCase().includes(q) && !m.description.toLowerCase().includes(q)) continue;
+      }
+      matches.push(m);
+    }
+    const total = tab === "active" ? activeCount : finishedCount;
+    return {
+      activeCount,
+      finishedCount,
+      pagedMissions: matches.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE),
+      totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+    };
+  }, [cycle, catFilter, diffFilter, search, tab, completedIds, page]);
 
-  const finishedMissions = useMemo(() =>
-    filteredMissions.filter(m => completedIds.has(m.id)),
-    [filteredMissions, completedIds]
-  );
-
-  const displayMissions = tab === "active" ? activeMissions : finishedMissions;
-  const pagedMissions = displayMissions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
-  const totalPages = Math.ceil(displayMissions.length / PAGE_SIZE);
+  const { activeCount, finishedCount, pagedMissions, totalPages } = missionStats;
 
   const handleComplete = async (mission: ReturnType<typeof generateMission>) => {
     if (completedIds.has(mission.id)) return;
@@ -772,8 +797,8 @@ export function MissionsOverviewPage() {
       localStorage.setItem("completedMissionIds", JSON.stringify(ids));
       setMsg(`✅ Mission complete! +$${mission.cashReward.toLocaleString()} +${mission.xpReward} XP`);
       setTimeout(() => setMsg(""), 3000);
-      // Force re-render
-      setTab(tab);
+      // Refresh lists immediately (completed mission moves to the Finished tab)
+      setRefresh(r => r + 1);
     } catch (e: any) {
       setMsg(`❌ ${e?.message || "Error completing mission"}`);
       setTimeout(() => setMsg(""), 3000);
@@ -786,7 +811,7 @@ export function MissionsOverviewPage() {
     // server and throw "Mission already completed!". This is now a no-op guard.
     // Payout already happened at completion time — re-claiming would hit the
     // server's "Mission already completed!" guard. Nothing to do here.
-    setMsg(`✅ All ${finishedMissions.length} finished missions were already paid out when completed.`);
+    setMsg(`✅ All ${finishedCount} finished missions were already paid out when completed.`);
     setTimeout(() => setMsg(""), 4000);
   };
 
@@ -930,19 +955,19 @@ export function MissionsOverviewPage() {
       <div className="flex gap-2">
         <button onClick={() => { setTab("active"); setPage(0); }}
           className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === "active" ? "bg-amber-600/20 border border-amber-500/40 text-amber-300" : "bg-slate-800/50 text-slate-400 hover:bg-slate-700/50"}`}>
-          📋 Active ({activeMissions.length.toLocaleString()})
+          📋 Active ({activeCount.toLocaleString()})
         </button>
         <button onClick={() => { setTab("finished"); setPage(0); }}
           className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === "finished" ? "bg-green-600/20 border border-green-500/40 text-green-300" : "bg-slate-800/50 text-slate-400 hover:bg-slate-700/50"}`}>
-          ✅ Finished ({finishedMissions.length.toLocaleString()})
+          ✅ Finished ({finishedCount.toLocaleString()})
         </button>
       </div>
 
       {/* Claim All Finished Button */}
-      {tab === "finished" && finishedMissions.length > 0 && (
+      {tab === "finished" && finishedCount > 0 && (
         <button onClick={handleClaimAll} disabled={loading}
           className="w-full py-3 rounded-xl text-sm font-black bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-500 hover:to-emerald-500 active:scale-[0.98] transition-all shadow-lg shadow-green-900/30 disabled:opacity-50">
-          {loading ? "⏳ Claiming..." : `🎉 CLAIM ALL (${finishedMissions.length.toLocaleString()} finished)`}
+          {loading ? "⏳ Claiming..." : `🎉 CLAIM ALL (${finishedCount.toLocaleString()} finished)`}
         </button>
       )}
 
