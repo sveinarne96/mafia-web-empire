@@ -51,7 +51,9 @@ export const recordAction = mutation({
     if (!player) return { volumeActions: 0, volumeMult: 1, volumeLabel: "" };
 
     const now = Date.now();
-    const timestamps: number[] = (player as any).actionTimestamps ?? [];
+    const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
+      ? ((player as any).actionTimestamps as number[]).filter((t: unknown): t is number => typeof t === "number" && Number.isFinite(t))
+      : [];
     
     // Add current action and filter to last hour
     const recent = [...timestamps, now].filter(t => now - t < WINDOW_MS);

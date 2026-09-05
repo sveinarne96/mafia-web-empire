@@ -17,7 +17,9 @@ async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   // XP Volume Bonus: more actions in the last hour = higher multiplier
   const now = Date.now();
-  const timestamps: number[] = (player as any).actionTimestamps ?? [];
+  const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
+    ? ((player as any).actionTimestamps as number[]).filter((t: unknown): t is number => typeof t === "number" && Number.isFinite(t))
+    : [];
   const recent = timestamps.filter((t: number) => now - t < 3600000);
   const actionCount = recent.length;
   let volMult = 1.0;

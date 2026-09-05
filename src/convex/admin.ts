@@ -23,7 +23,15 @@ export const heartbeat = mutation({
   args: {},
   handler: async (ctx) => {
     const player = await getAuthPlayer(ctx);
-    await ctx.db.patch(player._id, { lastActive: Date.now() } as any);
+    const patch: any = { lastActive: Date.now() };
+    // Self-heal: if actionTimestamps is ever a legacy non-array (old bugs
+    // wrote a bare number), rewrite it to a clean array so every action that
+    // reads it stops throwing a generic Server Error. The next successful
+    // action then keeps it healthy permanently.
+    if (!Array.isArray((player as any).actionTimestamps)) {
+      patch.actionTimestamps = [];
+    }
+    await ctx.db.patch(player._id, patch);
     // Accrue any pending Auto Rank ranks every heartbeat (runs ~30s) so the
     // perk keeps ranking the player on any page, not just crime/HQ screens.
     try { await processAutoRank(ctx); } catch {}
