@@ -613,6 +613,20 @@ const schema = defineSchema({
     started: v.boolean(),
     createdAt: v.number(),
     startedAt: v.optional(v.number()),
+    // Crew lobby extras: rolling chat log + per-member readiness + last ping.
+    chat: v.optional(
+      v.array(
+        v.object({
+          fromId: v.id("users"),
+          fromName: v.string(),
+          text: v.string(),
+          system: v.optional(v.boolean()),
+          at: v.number(),
+        }),
+      ),
+    ),
+    memberReadyIds: v.optional(v.array(v.id("users"))),
+    lastPingAt: v.optional(v.number()),
   })
     .index("by_created", ["createdAt"]),
 

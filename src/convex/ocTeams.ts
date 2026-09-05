@@ -26,6 +26,15 @@ export const OC_JOBS = [
 
 const TEAM_MAX = 3;
 const TTL_MS = 12 * 60 * 60 * 1000;
+const CHAT_MAX = 60;
+const CHAT_MAX_LEN = 160;
+
+// Keep a rolling log on the team doc so every member's reactive query refreshes.
+function pushChat(team: any, entry: any): any[] {
+  const chat = Array.isArray(team.chat) ? [...team.chat] : [];
+  chat.push(entry);
+  return chat.slice(-CHAT_MAX);
+}
 
 async function findPlayerTeam(ctx: any, player: any): Promise<any | null> {
   const rows = await ctx.db.query("ocTeams").collect();
@@ -51,6 +60,7 @@ export const getMyOcTeam = query({
       const u: any = await ctx.db.get(id as any);
       members.push({ id, name: u ? nameOf(u) : "?", level: u?.level ?? 0 });
     }
+    const readyIds: string[] = team.memberReadyIds ?? [];
     return {
       _id: team._id,
       jobIcon: team.jobIcon,
@@ -61,8 +71,13 @@ export const getMyOcTeam = query({
       successBase: team.successBase,
       members,
       isHost: team.hostId === player._id,
+      hostId: team.hostId,
       hostName: team.hostName,
       createdAt: team.createdAt,
+      // Lobby extras
+      readyIds,
+      chat: (team.chat ?? []).slice(-CHAT_MAX),
+      lastPingAt: team.lastPingAt ?? 0,
     };
   },
 });
@@ -123,6 +138,8 @@ export const createOcTeam = mutation({
       successBase: job.base,
       started: false,
       createdAt: Date.now(),
+      memberReadyIds: [player._id],
+      chat: [],
     } as any);
     return { success: true };
   },
@@ -143,6 +160,13 @@ export const joinOcTeam = mutation({
     await ctx.db.patch(args.teamId, {
       memberIds: [...(team.memberIds ?? []), player._id],
       names: [...(team.names ?? []), nameOf(player)],
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text: `${nameOf(player)} joined the crew.`,
+        system: true,
+        at: Date.now(),
+      }),
     } as any);
     return { success: true };
   },
@@ -163,13 +187,96 @@ export const leaveOcTeam = mutation({
       await ctx.db.patch(args.teamId, {
         memberIds: ids.filter((_: any, i: number) => i !== idx),
         names: (team.names ?? []).filter((_: any, i: number) => i !== idx),
+        memberReadyIds: (team.memberReadyIds ?? []).filter((id: any) => id !== player._id),
+        chat: pushChat(team, {
+          fromId: player._id,
+          fromName: nameOf(player),
+          text: `${nameOf(player)} left the crew.`,
+          system: true,
+          at: Date.now(),
+        }),
       } as any);
     }
     return { success: true };
   },
 });
 
-// Host kicks the crew into action once all three seats are filled.
+// Toggle your own readiness for the upcoming job.
+export const setOcReady = mutation({
+  args: { teamId: v.id("ocTeams"), ready: v.boolean() },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew not found");
+    if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
+    if (team.hostId === player._id) throw new Error("The host is always ready — you launch the job");
+    const readyIds: string[] = team.memberReadyIds ?? [];
+    const has = readyIds.includes(player._id);
+    if (args.ready === has) return { success: true, ready: has };
+
+    const next = args.ready ? [...readyIds, player._id] : readyIds.filter((id) => id !== player._id);
+    await ctx.db.patch(args.teamId, {
+      memberReadyIds: next,
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text: args.ready ? `${nameOf(player)} is READY to roll. ✅` : `${nameOf(player)} is standing by — not ready yet.`,
+        system: true,
+        at: Date.now(),
+      }),
+    } as any);
+    return { success: true, ready: args.ready };
+  },
+});
+
+// Loud "sound off" ping that every member sees in the crew chat.
+export const pingOcCrew = mutation({
+  args: { teamId: v.id("ocTeams") },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew not found");
+    if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
+
+    await ctx.db.patch(args.teamId, {
+      lastPingAt: Date.now(),
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text: `🔔 ${nameOf(player)} pings the crew — sound off if you're ready!`,
+        system: true,
+        at: Date.now(),
+      }),
+    } as any);
+    return { success: true };
+  },
+});
+
+// Crew chat: only current members can talk while the lobby is open.
+export const sendOcChat = mutation({
+  args: { teamId: v.id("ocTeams"), text: v.string() },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew chat is closed");
+    if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
+    const text = args.text.trim().slice(0, CHAT_MAX_LEN);
+    if (!text) throw new Error("Say something first");
+
+    await ctx.db.patch(args.teamId, {
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text,
+        system: false,
+        at: Date.now(),
+      }),
+    } as any);
+    return { success: true };
+  },
+});
+
+// Host kicks the crew into action once all three seats are filled AND ready.
 export const startOcTeam = mutation({
   args: { teamId: v.id("ocTeams") },
   handler: async (ctx, args) => {
@@ -180,6 +287,17 @@ export const startOcTeam = mutation({
     const ids: string[] = team.memberIds ?? [];
     if (ids.length < TEAM_MAX)
       throw new Error(`Need ${TEAM_MAX - ids.length} more member${TEAM_MAX - ids.length === 1 ? "" : "s"}`);
+
+    // Every filled seat must have sounded ready before the job launches.
+    const readyIds: string[] = team.memberReadyIds ?? [];
+    const notReady = ids.filter((id) => id !== team.hostId && !readyIds.includes(id));
+    if (notReady.length > 0) {
+      const names = notReady.map((id) => {
+        const m = (team.names ?? [])[ids.indexOf(id)];
+        return m ?? "a member";
+      });
+      throw new Error(`Waiting on ${names.join(", ")} — they need to mark READY`);
+    }
 
     // Charge every member their stake.
     const members: any[] = [];
