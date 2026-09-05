@@ -113,6 +113,14 @@ export function CarDealerPage() {
   }, [owned, sellRarity, sellDamage, sellForSale]);
 
   const damagedCars = owned.filter((v: any) => (v.damage ?? 0) > 0);
+  // Repair rarity filter — common / rare / epic / legendary (+ All)
+  const [repairRarity, setRepairRarity] = useState("All");
+  const repairFiltered = damagedCars.filter((v: any) => repairRarity === "All" || v.rarity === repairRarity);
+  const repairTotal = repairFiltered.reduce((sum: number, v: any) => {
+    const damage = v.damage ?? 0;
+    const base = (v.purchasePrice ?? 0) > 0 ? v.purchasePrice : (v.speed ?? 50) * 1000;
+    return sum + Math.max(100, Math.floor((damage / 100) * base * 0.05));
+  }, 0);
   const meltable = owned.filter((v: any) => v.isWreck || (v.damage ?? 0) >= 40);
 
   if (!store) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading car dealership...</div>;
@@ -375,22 +383,33 @@ export function CarDealerPage() {
 
           <div className="mafia-card rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-bold">🔧 Repair Cars</div>
-              {damagedCars.length > 0 && (
-                <BuyBtn active onClick={() => wrap("repairall", () => repairAll(), (r) => `Repaired ${r.count} car(s) for ${fmt(r.cost)}!`)}>Repair All ({damagedCars.length})</BuyBtn>
+              <div className="text-sm font-bold">🔧 Repair Cars <span className="text-[10px] text-muted-foreground font-normal">— for a price</span></div>
+              {repairFiltered.length > 0 && (
+                <BuyBtn active onClick={() => wrap("repairall", () => repairAll(), (r) => `Repaired ${r.count} car(s) for ${fmt(r.cost)}!`)}>Repair All ({repairFiltered.length}) · {fmt(repairTotal)}</BuyBtn>
               )}
             </div>
-            {damagedCars.length === 0 ? (
+            <div className="mb-3">
+              <select value={repairRarity} onChange={(e) => setRepairRarity(e.target.value)} className="bg-background border border-border rounded-lg px-3 py-1.5 text-xs">
+                <option value="All">Show Filter — All Rarities</option>
+                <option value="common">Common</option>
+                <option value="rare">Rare</option>
+                <option value="epic">Epic</option>
+                <option value="legendary">Legendary</option>
+              </select>
+            </div>
+            {repairFiltered.length === 0 ? (
               <div className="text-[11px] text-muted-foreground text-center py-6">No cars need repair — your fleet is pristine.</div>
             ) : (
               <div className="space-y-1.5">
-                {damagedCars.map((v: any) => {
+                {repairFiltered.map((v: any) => {
                   const damage = v.damage ?? 0;
                   const base = (v.purchasePrice ?? 0) > 0 ? v.purchasePrice : (v.speed ?? 50) * 1000;
                   const cost = Math.max(100, Math.floor((damage / 100) * base * 0.05));
                   return (
                     <div key={v._id} className="flex items-center gap-3 rounded-lg border border-slate-700/40 bg-slate-900/30 p-2.5">
+                      <span className="text-[9px] font-black uppercase shrink-0" style={{ color: getRarityColor(v.rarity) }}>{rarityLabel(v.rarity)}</span>
                       <span className="flex-1 text-xs font-bold">{v.name}</span>
+                      <span className="text-[10px] text-muted-foreground shrink-0">Car value {fmt(base)}</span>
                       <div className="w-24 h-1.5 bg-slate-800 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${damage >= 95 ? "bg-red-500" : damage > 40 ? "bg-amber-500" : "bg-green-500"}`} style={{ width: `${100 - damage}%` }} />
                       </div>

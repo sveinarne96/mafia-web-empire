@@ -269,11 +269,11 @@ export const crimeCategories: CrimeCategory[] = [
 ];
 
 // Specific vehicles granted by each GTA Car Theft option (last = most expensive).
-export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; damage: number; cost: number; armored?: boolean; rarity: string }> = {
-  gta_parked_car: { name: "2015 Toyota Corolla XSE", speed: 60, storage: 20, damage: 0, cost: 25000, rarity: "common" },
-  gta_sports_car: { name: "2019 BMW M4 Competition", speed: 88, storage: 16, damage: 5, cost: 150000, rarity: "rare" },
-  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 82, storage: 30, damage: 0, cost: 500000, rarity: "epic" },
-  gta_supercar: { name: "2018 Lamborghini Huracán Performante", speed: 116, storage: 12, damage: 8, cost: 1500000, rarity: "legendary" },
+export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; damage: number; cost: number; price: number; armored?: boolean; rarity: string }> = {
+  gta_parked_car: { name: "2015 Toyota Corolla XSE", speed: 60, storage: 20, damage: 0, cost: 25000, price: 25000, rarity: "common" },
+  gta_sports_car: { name: "2019 BMW M4 Competition", speed: 88, storage: 16, damage: 5, cost: 150000, price: 150000, rarity: "rare" },
+  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 82, storage: 30, damage: 0, cost: 500000, price: 500000, rarity: "epic" },
+  gta_supercar: { name: "2018 Lamborghini Huracán Performante", speed: 116, storage: 12, damage: 8, cost: 1500000, price: 1500000, rarity: "legendary" },
 };
 
 // Specific loot granted by each Steal-from-House option (last = most expensive).

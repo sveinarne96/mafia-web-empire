@@ -77,8 +77,20 @@ export function BankPage() {
 
       {msg && <div className={`text-xs font-semibold ${msg.c}`}>{msg.t}</div>}
 
-      <Card title={`Interest Bank · ${s.interestRatePct.toFixed(2)}% / 12h compound`} icon={<Landmark className="size-4 text-blue-400" />}>
-        <div className="text-[11px] text-muted-foreground mb-2">Compounds interest every 12 hours on your stored balance.</div>
+      <Card title="Interest Bank" icon={<Landmark className="size-4 text-blue-400" />}>
+        <div className="text-[11px] text-muted-foreground mb-2">Balance: <span className="font-black text-blue-300">${fmtInt(s.interestBank)}</span></div>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="rounded-lg border border-blue-500/20 bg-blue-950/20 p-3">
+            <div className="flex items-center gap-1.5 mb-1"><RefreshCw className="size-3 text-blue-400" /><span className="text-[10px] font-black text-blue-300">12 Hours</span></div>
+            <div className="text-sm font-black text-blue-400">4.04%</div>
+            <div className="text-[9px] text-muted-foreground">Daily Compound</div>
+          </div>
+          <div className="rounded-lg border border-green-500/20 bg-green-950/20 p-3">
+            <div className="flex items-center gap-1.5 mb-1"><RefreshCw className="size-3 text-green-400" /><span className="text-[10px] font-black text-green-300">24 Hours</span></div>
+            <div className="text-sm font-black text-green-400">4.20%</div>
+            <div className="text-[9px] text-muted-foreground">Daily Compound</div>
+          </div>
+        </div>
         <div className="flex flex-wrap items-end gap-2">
           <input type="number" value={iAmt} min={1} onChange={e => setIAmt(Number(e.target.value))} placeholder="Amount..." className="w-40 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
           <button onClick={() => run(() => depI({ amount: iAmt }), `Deposited $${fmtInt(iAmt)} into interest bank`)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition">↓ Deposit</button>
@@ -88,6 +100,7 @@ export function BankPage() {
       </Card>
 
       <Card title="Swiss Bank" icon={<ArrowUpFromLine className="size-4 text-teal-400" />}>
+        <div className="text-[11px] text-muted-foreground mb-2">Balance: <span className="font-black text-teal-300">${fmtInt(s.swissBank)}</span> · Limit: <span className="font-black text-slate-300">${fmtInt(s.swissLimit)}</span></div>
         <div className="text-[11px] text-muted-foreground mb-2">Hidden offshore vault. Protected from busts and raids.</div>
         <div className="flex flex-wrap items-end gap-2">
           <input type="number" value={sAmt} min={1} onChange={e => setSAmt(Number(e.target.value))} placeholder="Amount..." className="w-40 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
@@ -100,8 +113,9 @@ export function BankPage() {
         <div className="flex flex-wrap items-end gap-2">
           <input value={uName} onChange={e => setUName(e.target.value)} placeholder="Username" className="w-40 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
           <input type="number" value={sndAmt} min={1} onChange={e => setSndAmt(Number(e.target.value))} placeholder="Amount" className="w-40 bg-background border border-border rounded-lg px-3 py-2 text-sm" />
-          <button onClick={() => run(() => send({ username: uName, amount: sndAmt }), `Sent $${fmtInt(sndAmt)} to ${uName}`)} className="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 transition">Send · Fee: $1</button>
+          <button onClick={() => run(() => send({ username: uName, amount: sndAmt }), `Sent $${fmtInt(sndAmt)} to ${uName}`)} className="px-4 py-2 bg-orange-600 text-white rounded-lg text-xs font-bold hover:bg-orange-700 transition">Send</button>
         </div>
+        <div className="text-[10px] text-muted-foreground mt-2">Fee: $1 per transfer</div>
       </Card>
 
       <Card title="Bank Statistics" icon={<BarChart3 className="size-4 text-purple-400" />}>
@@ -113,12 +127,23 @@ export function BankPage() {
           <Stat label="Transfers Sent" value={bs.sent ?? 0} cls="text-slate-200" />
           <Stat label="Transfers Received" value={bs.received ?? 0} cls="text-slate-200" />
         </div>
-        <div className="mt-3 text-xs text-muted-foreground">Last 25 transfers:</div>
-        {(s.transfers || []).length === 0 && <div className="text-[11px] text-muted-foreground mt-1">No transfers yet.</div>}
-        <div className="mt-1 space-y-1 max-h-40 overflow-y-auto">
-          {(s.transfers || []).map((t: any, i: number) => (
+        <div className="mt-3 text-xs text-muted-foreground">Money Sent — view your last 25 sent transactions</div>
+        {(s.transfers || []).filter((t: any) => t.type === "sent").length === 0 && <div className="text-[11px] text-muted-foreground mt-1">No transfers sent yet</div>}
+        <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+          {(s.transfers || []).filter((t: any) => t.type === "sent").map((t: any, i: number) => (
             <div key={i} className="flex justify-between text-[11px] bg-muted/30 rounded px-2 py-1">
-              <span className={t.type === "sent" ? "text-orange-400" : "text-green-400"}>{t.type === "sent" ? "→ Sent" : "← Received"}</span>
+              <span className="text-orange-400">→ Sent</span>
+              <span className="text-slate-300">{t.username}</span>
+              <span className="font-mono">{fmtMoney(t.amount)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="mt-3 text-xs text-muted-foreground">Money Received — view your last 25 received transactions</div>
+        {(s.transfers || []).filter((t: any) => t.type === "received").length === 0 && <div className="text-[11px] text-muted-foreground mt-1">No transfers received yet</div>}
+        <div className="mt-1 space-y-1 max-h-32 overflow-y-auto">
+          {(s.transfers || []).filter((t: any) => t.type === "received").map((t: any, i: number) => (
+            <div key={i} className="flex justify-between text-[11px] bg-muted/30 rounded px-2 py-1">
+              <span className="text-green-400">← Received</span>
               <span className="text-slate-300">{t.username}</span>
               <span className="font-mono">{fmtMoney(t.amount)}</span>
             </div>
