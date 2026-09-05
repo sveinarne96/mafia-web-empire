@@ -53,19 +53,40 @@ import { BecomeAdminPage } from "@/components/BecomeAdmin";
 import { UpdatesPage } from "@/components/UpdatesPage";
 // Heavy leaf pages are lazy-loaded into their own chunks — keeps the main
 // bundle small and the platform build under its memory cap.
-const SeasonPassPage = lazy(() => import("@/components/SeasonPass").then((m) => ({ default: m.SeasonPassPage })));
-const SeasonStorePanel = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({ default: m.SeasonStorePanel })));
-const DailyRewardGame = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({ default: m.DailyRewardGame })));
-const OcFloatingCrew = lazy(() => import("@/components/OcFloatingCrew").then((m) => ({ default: m.OcFloatingCrew })));
+const SeasonPassPage = lazy(() => import("@/components/SeasonPass").then((m) => ({      default: m.SeasonPassPage })));
+const SeasonStorePanel = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({      default: m.SeasonStorePanel })));
+const DailyRewardGame = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({      default: m.DailyRewardGame })));
+const OcFloatingCrew = lazy(() => import("@/components/OcFloatingCrew").then((m) => ({      default: m.OcFloatingCrew })));
 import { LogoDropdown } from "@/components/LogoDropdown";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
 import { PacksOverviewPanel, PerksPanel } from "@/components/PacksPerksPanel";
 import { RanksPanel } from "@/components/RanksPanel";
-const HeistPage = lazy(() => import("@/components/HeistPage").then((m) => ({ default: m.HeistPage })));
+const HeistPage = lazy(() => import("@/components/HeistPage").then((m) => ({      default: m.HeistPage })));
 import { PromoBanner } from "@/components/PromoBanner";
 import { LiveGameBanner } from "@/components/LiveGameBanner";
 import { WantedStatusPage } from "@/components/GameEnhanced";
+import {
+  FuelMarketPage,
+  BusinessEmpirePage,
+  PropertyFlipPage,
+  StallMarketPage,
+  EscrowTradePage,
+  GamblingDebtsPage,
+  CasinoTablesPage,
+  RaceBettingPage,
+  TreasureHuntPage,
+  CarTuningPage,
+  StreakRewardsPage,
+  MilestonesBadgesPage,
+  FamePage,
+  VipLoungePage,
+  FlashDealsPage,
+  LotteryRolloverPage,
+  BossInvasionPage,
+  BugBountyPage,
+  EconomyHeatmapPage,
+} from "@/components/NewEmpirePages";
 import {
   CrimesOverviewPage, CrimeCategoryPage, CrimeEmpirePage, HeistPlanningPage,
   WorldEventsPage, BlackMarketPage, CrimeFamePage, LegendaryCrimePage,
@@ -84,13 +105,13 @@ import {
   OrganizedCrimePage, CompanyPage, LottoPage, BlackjackPage,
   LegacyPage, ForumSearchPage,
 } from "@/components/GamePages";
-const FullMissionsPage = lazy(() => import("@/components/FullMissionsPage").then((m) => ({ default: m.FullMissionsPage })));
-const GamblingOverviewPage = lazy(() => import("@/components/GamblingPages").then((m) => ({ default: m.GamblingOverviewPage })));
-const CombatOverviewPage = lazy(() => import("@/components/CombatPages").then((m) => ({ default: m.CombatOverviewPage })));
+const FullMissionsPage = lazy(() => import("@/components/FullMissionsPage").then((m) => ({      default: m.FullMissionsPage })));
+const GamblingOverviewPage = lazy(() => import("@/components/GamblingPages").then((m) => ({      default: m.GamblingOverviewPage })));
+const CombatOverviewPage = lazy(() => import("@/components/CombatPages").then((m) => ({      default: m.CombatOverviewPage })));
 // HubPages inlined below - no external import needed
 import { WitnessStatementsPage, WitnessSystemPage, ForensicsLabPage, CourtSystemPage } from "@/components/SystemWitness";
 import { SpyNetworkPage, InformantPage } from "@/components/SystemPrison";
-const PrisonPage = lazy(() => import("@/components/PrisonPage").then((m) => ({ default: m.PrisonPage })));
+const PrisonPage = lazy(() => import("@/components/PrisonPage").then((m) => ({      default: m.PrisonPage })));
 import { PropertyEmpirePage, MarketSystemPage } from "@/components/SystemProperty";
 import { FactionWarfarePage, AdvancedCraftingPage } from "@/components/SystemFaction";
 import { PetSystemPage, DayNightPage } from "@/components/SystemPetDayNight";
@@ -154,13 +175,13 @@ import { DrugTradePage } from "@/components/DrugTradePage";
 import { QsMarketPage } from "@/components/QsMarketPage";
 import { RecordKillsPage, RecordCrimesPage, RecordGtaPage, RecordPointsPage, RecordBulletsPage, RecordBustsPage, RecordStockPage, RecordBettingPage, RecordAssassinationPage, RecordPacksPage, RecordHeistsPage, RecordSupplyPage, RecordCasinoPage } from "@/components/GameRecords";
 const casinoLazy = () => import("@/components/CasinoPages");
-const CasinosPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinosPage })));
-const CasinoBlackjackPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoBlackjackPage })));
-const CasinoDicePage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoDicePage })));
-const CasinoRoulettePage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoRoulettePage })));
-const CasinoRacetrackPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoRacetrackPage })));
-const CasinoVideoPokerPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoVideoPokerPage })));
-const CasinoScratchcardsPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoScratchcardsPage })));
+const CasinosPage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinosPage })));
+const CasinoBlackjackPage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinoBlackjackPage })));
+const CasinoDicePage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinoDicePage })));
+const CasinoRoulettePage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinoRoulettePage })));
+const CasinoRacetrackPage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinoRacetrackPage })));
+const CasinoVideoPokerPage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinoVideoPokerPage })));
+const CasinoScratchcardsPage = lazy(() => casinoLazy().then((m) => ({      default: m.CasinoScratchcardsPage })));
 import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
 import { QuickTradePage } from "@/components/QuickTradePage";
 import { OrganizedCrimeTeamsPage } from "@/components/OrganizedCrimeTeamsPage";
@@ -1532,6 +1553,25 @@ export default function Dashboard() {
       case "arms_deal": return <GenericStub title="Arms Dealing" icon="🔫" />;
       case "tax_evasion": return <GenericStub title="Tax Evasion" icon="📋" />;
       case "racketeering": return <GenericStub title="Racketeering" icon="💰" />;
+      case "streak_rewards": return <StreakRewardsPage />;
+      case "milestones": return <MilestonesBadgesPage />;
+      case "player_of_week": return <FamePage />;
+      case "vip_lounge": return <VipLoungePage />;
+      case "flash_deals": return <FlashDealsPage />;
+      case "lottery_rollover": return <LotteryRolloverPage />;
+      case "boss_invasion": return <BossInvasionPage />;
+      case "bug_bounty": return <BugBountyPage />;
+      case "economy_heatmap": return <EconomyHeatmapPage />;
+      case "business_empire": return <BusinessEmpirePage />;
+      case "property_flip": return <PropertyFlipPage />;
+      case "stall_market": return <StallMarketPage />;
+      case "escrow_trades": return <EscrowTradePage />;
+      case "gambling_debts": return <GamblingDebtsPage />;
+      case "casino_tables": return <CasinoTablesPage />;
+      case "race_betting": return <RaceBettingPage />;
+      case "treasure_hunt": return <TreasureHuntPage />;
+      case "fuel_market": return <FuelMarketPage />;
+      case "car_tuning": return <CarTuningPage />;
       default:
         return <GenericStub title="Crime" icon="🔪" />;
     }

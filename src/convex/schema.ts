@@ -245,6 +245,34 @@ const schema = defineSchema({
     swissLimit: v.optional(v.number()),
     worldState: v.optional(v.any()),
     worldRentAt: v.optional(v.number()),
+    // ═══ NEW FRONTIERS (business, retention, cosmetics) ═══
+    loginStreak: v.optional(v.number()),
+    lastLoginDay: v.optional(v.string()),
+    lastPlaytimeTick: v.optional(v.number()),
+    lastIdleClaimAt: v.optional(v.number()),
+    lastReturnBonusAt: v.optional(v.number()),
+    fuelStock: v.optional(v.number()),
+    ownedCosmetics: v.optional(v.array(v.any())), // { id, category, name, icon, acquiredAt }
+    vipTier: v.optional(v.string()),
+    adFreeUntil: v.optional(v.number()),
+    starterPacksClaimed: v.optional(v.array(v.string())),
+    badges: v.optional(v.array(v.any())), // { id, name, icon, at }
+    claimedFlashDeals: v.optional(v.array(v.string())),
+    totalStallSales: v.optional(v.number()),
+    totalTreasuresDug: v.optional(v.number()),
+    totalRaceBets: v.optional(v.number()),
+    casinoHostProfit: v.optional(v.number()),
+    totalDividends: v.optional(v.number()),
+    xpMilestoneClaimed: v.optional(v.number()),
+    totalIdleEarned: v.optional(v.number()),
+    totalPlaytimeRewards: v.optional(v.number()),
+    totalReturnBonuses: v.optional(v.number()),
+    bossDamageDone: v.optional(v.number()),
+    playerOfWeekWins: v.optional(v.number()),
+    bugBountiesClaimed: v.optional(v.number()),
+    fuelProfit: v.optional(v.number()),
+    escrowTradesDone: v.optional(v.number()),
+    stallItemsSold: v.optional(v.number()),
   })
     .index("by_location", ["location"])
     .index("by_family", ["familyId"])
@@ -1124,6 +1152,12 @@ const schema = defineSchema({
     lottoJackpot: v.number(),
     superBoostEnabled: v.boolean(),
     superBoostOverrideUntil: v.optional(v.number()),
+    // ═══ NEW FRONTIERS live knobs ═══
+    blackFridayUntil: v.optional(v.number()),
+    lockdownUntil: v.optional(v.number()),
+    gasPrice: v.optional(v.number()),
+    gasUpdatedAt: v.optional(v.number()),
+    lotteryRolloverPct: v.optional(v.number()),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
   }).index("by_key", ["key"]),
@@ -1143,6 +1177,201 @@ const schema = defineSchema({
     itemId: v.string(),
     stock: v.number(),
   }).index("by_season_item", ["season", "itemId"]).index("by_season", ["season"]),
+
+  // ═══════════ NEW FRONTIERS: ECONOMY ═══════════
+  // Market stalls — players rent a stall, list inventory items for sale while offline.
+  vendorStalls: defineTable({
+    ownerId: v.id("users"),
+    ownerName: v.string(),
+    city: v.string(),
+    stallName: v.string(),
+    itemName: v.string(),
+    itemId: v.string(), // inventory row id (kept in escrow while listed)
+    rarity: v.string(),
+    price: v.number(),
+    qty: v.number(),
+    earnings: v.number(),
+    rentPaidUntil: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_active", ["active", "city"]).index("by_owner", ["ownerId"]),
+
+  // Player-to-player escrow trades: cash ⇄ points ⇄ items. Offerer's side is
+  // held in escrow until accepted or cancelled.
+  escrowTrades: defineTable({
+    offererId: v.id("users"),
+    offererName: v.string(),
+    offeredType: v.string(), // "cash" | "points" | "item"
+    offeredAmount: v.number(), // cash/points value; item: 1
+    offeredItemId: v.optional(v.string()),
+    offeredItemName: v.optional(v.string()),
+    requestedType: v.string(), // "cash" | "points" | "item"
+    requestedAmount: v.number(),
+    requestedItemId: v.optional(v.string()),
+    requestedItemName: v.optional(v.string()),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_active", ["active", "createdAt"]).index("by_offerer", ["offererId"]),
+
+  // Shares in player-owned businesses — buy/sell, dividends every 24h.
+  businessShares: defineTable({
+    businessId: v.id("businesses"),
+    userId: v.id("users"),
+    shares: v.number(),
+    boughtAt: v.number(),
+  }).index("by_business", ["businessId"]).index("by_user", ["userId"]),
+
+  // Player-to-player gambling debts with interest.
+  gamblingDebts: defineTable({
+    creditorId: v.id("users"),
+    creditorName: v.string(),
+    debtorId: v.id("users"),
+    debtorName: v.string(),
+    amount: v.number(),
+    interestPct: v.number(), // per 24h
+    dueAt: v.number(),
+    paid: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_debtor", ["debtorId"]).index("by_creditor", ["creditorId"]).index("by_active", ["paid"]),
+
+  // Underground player-hosted casino tables — host takes a rake on every hand.
+  casinoTables: defineTable({
+    hostId: v.id("users"),
+    hostName: v.string(),
+    game: v.string(), // "blackjack" | "dice"
+    minBet: v.number(),
+    maxBet: v.number(),
+    rakePct: v.number(),
+    city: v.string(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_active", ["active"]).index("by_host", ["hostId"]),
+
+  // Player races with open betting — creator hosts, racers join, everyone bets.
+  playerRaces: defineTable({
+    creatorId: v.id("users"),
+    creatorName: v.string(),
+    track: v.string(),
+    racerIds: v.array(v.id("users")),
+    racerNames: v.array(v.string()),
+    entryFee: v.number(),
+    prizePool: v.number(),
+    status: v.string(), // "open" | "racing" | "finished" | "cancelled"
+    winnerId: v.optional(v.id("users")),
+    winnerName: v.optional(v.string()),
+    createdAt: v.number(),
+    startedAt: v.optional(v.number()),
+  }).index("by_status", ["status"]).index("by_creator", ["creatorId"]),
+
+  raceBets: defineTable({
+    raceId: v.id("playerRaces"),
+    userId: v.id("users"),
+    targetId: v.id("users"),
+    targetName: v.string(),
+    amount: v.number(),
+    odds: v.number(),
+    paidOut: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_race", ["raceId"]).index("by_user", ["userId"]),
+
+  // Treasure hunting — buy a map, dig for loot, risk an ambush.
+  treasureMaps: defineTable({
+    ownerId: v.id("users"),
+    name: v.string(),
+    rarity: v.string(), // common | rare | epic | legendary
+    cost: v.number(),
+    region: v.string(),
+    boughtAt: v.number(),
+    dugAt: v.optional(v.number()),
+    dug: v.boolean(),
+  }).index("by_owner", ["ownerId"]),
+
+  // ═══════════ NEW FRONTIERS: EVENTS & FAME ═══════════
+  // City boss invasions — a roaming boss players can attack for rewards.
+  bossInvasions: defineTable({
+    bossId: v.string(),
+    name: v.string(),
+    icon: v.string(),
+    hp: v.number(),
+    maxHp: v.number(),
+    attack: v.number(),
+    rewardMin: v.number(),
+    rewardMax: v.number(),
+    pointsReward: v.number(),
+    city: v.string(),
+    active: v.boolean(),
+    startedAt: v.number(),
+    expiresAt: v.number(),
+    lastHitAt: v.optional(v.number()),
+  }).index("by_active", ["active"]),
+
+  hallOfFame: defineTable({
+    category: v.string(), // networth | level | kills | crimes | bettor | boss
+    rank: v.number(),
+    playerId: v.id("users"),
+    playerName: v.string(),
+    value: v.number(),
+    season: v.string(),
+    updatedAt: v.number(),
+  }).index("by_category", ["category", "rank"]),
+
+  playerOfWeek: defineTable({
+    playerId: v.id("users"),
+    playerName: v.string(),
+    weekStart: v.string(),
+    votes: v.number(),
+    resolved: v.boolean(),
+    rewardGiven: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_week", ["weekStart"]),
+
+  povVotes: defineTable({
+    voterId: v.id("users"),
+    candidateId: v.id("users"),
+    weekStart: v.string(),
+    createdAt: v.number(),
+  }).index("by_voter_week", ["voterId", "weekStart"]),
+
+  // ═══════════ NEW FRONTIERS: COMMUNITY ═══════════
+  bugReports: defineTable({
+    playerId: v.id("users"),
+    playerName: v.string(),
+    title: v.string(),
+    body: v.string(),
+    status: v.string(), // open | confirmed | resolved | rewarded
+    reward: v.number(),
+    createdAt: v.number(),
+  }).index("by_status", ["status", "createdAt"]),
+
+  feedbackPosts: defineTable({
+    playerId: v.id("users"),
+    playerName: v.string(),
+    title: v.string(),
+    body: v.string(),
+    votes: v.number(),
+    status: v.string(), // open | planned | shipped | declined
+    createdAt: v.number(),
+  }).index("by_created", ["createdAt"]),
+
+  feedbackVotes: defineTable({
+    playerId: v.id("users"),
+    postId: v.id("feedbackPosts"),
+    createdAt: v.number(),
+  }).index("by_player", ["playerId"]).index("by_post", ["postId"]),
+
+  // Limited-time point deals refreshed by the admin.
+  flashDeals: defineTable({
+    title: v.string(),
+    icon: v.string(),
+    desc: v.string(),
+    cost: v.number(), // points
+    rewardLabel: v.string(),
+    rewardType: v.string(), // cash | points | bullets | scrap | perk | cosmetic
+    rewardValue: v.number(),
+    expiresAt: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_active", ["active", "expiresAt"]),
 }, {
   schemaValidation: false,
 });
