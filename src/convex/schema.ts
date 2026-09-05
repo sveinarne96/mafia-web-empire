@@ -242,6 +242,7 @@ const schema = defineSchema({
     lastInterestApplied: v.optional(v.number()),
     bankStats: v.optional(v.any()),
     transferHistory: v.optional(v.any()),
+    swissLimit: v.optional(v.number()),
     worldState: v.optional(v.any()),
     worldRentAt: v.optional(v.number()),
   })

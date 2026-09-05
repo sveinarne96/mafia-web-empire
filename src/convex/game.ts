@@ -582,7 +582,22 @@ export const getStats = query({ args: {}, handler: async (ctx) => { const player
 export const getAllPlayers = query({ args: {}, handler: async (ctx) => await ctx.db.query("users").collect() });
 export const getPlayerAchievements = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) return []; return await ctx.db.query("playerAchievements").withIndex("by_player", (q) => q.eq("playerId", player._id)).collect(); } });
 export const unlockSkill = mutation({ args: { skillId: v.string(), cost: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if ((player.skillPoints ?? 0) < args.cost) throw new Error("Not enough skill points!"); await ctx.db.patch(player._id, { skillPoints: (player.skillPoints ?? 0) - args.cost }); return { success: true }; } });
-export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if ((player.money ?? 0) < args.amount) throw new Error("Not enough money!"); const receiver = await ctx.db.get(args.receiverId); if (!receiver) throw new Error("Player not found"); await ctx.db.patch(player._id, { money: (player.money ?? 0) - args.amount }); await ctx.db.patch(args.receiverId, { money: (receiver.money ?? 0) + args.amount }); return { success: true }; } });export const commitCategoryCrime = mutation({ args: { crimeId: v.string(), reward: v.number(), risk: v.number(), xp: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if (player.inPrison) throw new Error("You are in prison!"); if (player.isDead) throw new Error("You are dead!");  if (!Number.isFinite(args.reward) || !Number.isFinite(args.risk) || !Number.isFinite(args.xp)) throw new Error("Invalid operation parameters, please retry.");
+export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v.number() }, handler: async (ctx, args) => { const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated"); if ((player.money ?? 0) < args.amount) throw new Error("Not enough money!"); const receiver = await ctx.db.get(args.receiverId); if (!receiver) throw new Error("Player not found"); await ctx.db.patch(player._id, { money: (player.money ?? 0) - args.amount }); await ctx.db.patch(args.receiverId, { money: (receiver.money ?? 0) + args.amount }); return { success: true }; } });export const commitCategoryCrime = mutation({ args: { crimeId: v.string(), reward: v.number(), risk: v.number(), xp: v.number() }, handler: async (ctx, args) => {
+  const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+  if (player.inPrison) throw new Error("You are in prison!");
+  if (player.isDead) throw new Error("You are dead!");
+  // Clamp and validate every numeric input so the endpoint NEVER rejects any
+  // Realistic ∞ shouted by bodyguardprotein JSX (bump, but explicit error).
+  // When crimes ts are the current ntheft/steal_house/murder calls live, ending as
+  // gta_theft would fire the GTA car theft branch.
+  let reward = args.reward, risk = args.risk, xp = args.xp;
+  if (!Number.isFinite(reward) || reward < 0) reward = 0;
+  if (!Number.isFinite(risk) || risk < 0) risk = 0;
+  if (!Number.isFinite(xp) || xp < 0) xp = 0;
+  // Clamp to sane bounds for crashes.
+  reward = Math.min(1_000_000_000, reward);
+  risk = Math.min(100, risk);
+  xp = Math.min(100000, xp);
   const liveCfg = await getLiveModifiers(ctx);
   if (liveCfg.maintenanceMode) throw new Error(liveCfg.maintenanceMessage);
   // Check energy before executing
