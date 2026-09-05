@@ -161,6 +161,9 @@ const CasinoRacetrackPage = lazy(() => casinoLazy().then((m) => ({ default: m.Ca
 const CasinoVideoPokerPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoVideoPokerPage })));
 const CasinoScratchcardsPage = lazy(() => casinoLazy().then((m) => ({ default: m.CasinoScratchcardsPage })));
 import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
+import { QuickTradePage } from "@/components/QuickTradePage";
+import { ArmouryPage } from "@/components/ArmouryPage";
+import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
 
 
 // ===== RANK SYSTEM =====
@@ -1251,6 +1254,9 @@ export default function Dashboard() {
       case "reputation": return <ReputationPage />;
       case "wanted_status": return <WantedStatusPage />;
       case "prison": return <PrisonPage />;
+      case "quicktrade": return <QuickTradePage />;
+      case "demolition_derby": return <DemolitionDerbyPage />;
+      case "armoury": return <ArmouryPage />;
       case "companies_hub": return <CompaniesHubPage />;
       case "witness_system": return <WitnessSystemPage />;
       case "forensics_lab": return <ForensicsLabPage />;

@@ -579,6 +579,22 @@ const schema = defineSchema({
     .index("by_seller", ["sellerId"])
     .index("by_active", ["active"]),
 
+  // Player-to-player Quicktrade listings (points/cash). Currency is held in
+  // escrow on the seller's account for the lifetime of the offer.
+  quicktradeOffers: defineTable({
+    sellerId: v.id("users"),
+    sellerName: v.string(),
+    kind: v.string(), // "points" | "cash"
+    amount: v.number(), // quantity offered of `kind`
+    unitPrice: v.number(), // price per unit in the other currency
+    total: v.number(), // amount * unitPrice (other currency)
+    anonymous: v.boolean(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_active", ["active", "createdAt"])
+    .index("by_seller", ["sellerId"]),
+
   smugglingRuns: defineTable({
     runnerId: v.id("users"),
     originCity: v.string(),

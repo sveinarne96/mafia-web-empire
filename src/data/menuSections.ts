@@ -28,6 +28,13 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Garage", page: "garage", icon: "🚗" },
     { label: "Items", page: "my_items", icon: "🎒" },
     { label: "Cocaine", page: "drug_trade", icon: "❄️" },
+    { label: "Heist", page: "heist", icon: "💰" },
+    { label: "Prison", page: "prison", icon: "🔒" },
+    { label: "Quicktrade", page: "quicktrade", icon: "💱" },
+    { label: "Demolition Derby", page: "demolition_derby", icon: "💥" },
+    { label: "Armoury", page: "armoury", icon: "🔫" },
+    { label: "Stock Market", page: "stock_market", icon: "📈" },
+    { label: "Supply Running", page: "supply_running", icon: "📦" },
   ]},
   { title: "Casino", icon: Zap, items: [
     { label: "Casinos Overview", page: "casinos", icon: "🎰" },
@@ -100,7 +107,6 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Secret Challenges", page: "secret_challenges", icon: "🔮" },
     { label: "Reputation", page: "reputation", icon: "🌍" },
     { label: "Wanted Status", page: "wanted_status", icon: "🔴" },
-    { label: "Prison", page: "prison", icon: "🔒" },
   ]},
   { title: "Companies", icon: Building2, items: [
     { label: "Company Empire", page: "companies_hub", icon: "🏢" },
