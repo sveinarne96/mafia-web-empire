@@ -644,18 +644,182 @@ function CityOverviewPage() {
 }
 
 function StatisticsPage() {
-  const stats = [
-    { label: "Total Players", value: "—" }, { label: "Crimes Committed", value: "—" },
-    { label: "Money Earned", value: "—" }, { label: "Fights Won", value: "—" },
+  const [tab, setTab] = useState("global");
+  const [search, setSearch] = useState("");
+  const [queryName, setQueryName] = useState("");
+  const [killFilter, setKillFilter] = useState("");
+  const globalStats = useQuery(api.statistics.getGlobalStatistics);
+  const personal = useQuery(api.statistics.getPersonalStatistics, { username: queryName.trim() || undefined });
+  const deaths = useQuery(api.statistics.getRecentDeaths, { limit: 30 });
+  const my = useQuery(api.game.getPlayer);
+  const money = (x?: number) => `$${(x ?? 0).toLocaleString()}`;
+  const num = (x?: number) => (x ?? 0).toLocaleString();
+  const pct = (a?: number, b?: number) => (b && b > 0 ? Math.round(((a ?? 0) / b) * 1000) / 10 : 0);
+  const g = globalStats?.global;
+  const w = globalStats?.wealth;
+  const v = globalStats?.vehicle;
+  const r = globalStats?.ranking;
+  const gam = globalStats?.gambling;
+  const o = globalStats?.offence;
+  const boards = [
+    { id: "global", label: "Global", icon: "🌐" }, { id: "personal", label: "Personal", icon: "👤" },
+    { id: "wealth", label: "Wealth", icon: "💰" }, { id: "vehicle", label: "Vehicles", icon: "🚗" },
+    { id: "ranking", label: "Ranking", icon: "📊" }, { id: "gambling", label: "Gambling", icon: "🎰" },
+    { id: "offence", label: "Offence", icon: "💀" }, { id: "deaths", label: "Death List", icon: "🪦" },
   ];
+  const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
+    <div className="mafia-card rounded-xl p-3">
+      <div className="text-[9px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-0.5 text-sm font-black text-primary">{value}</div>
+      {sub && <div className="text-[9px] text-muted-foreground/70">{sub}</div>}
+    </div>
+  );
+  const panel = () => {
+    if (!globalStats) return <div className="animate-pulse py-16 text-center text-sm text-muted-foreground">Crunching global data…</div>;
+    if (tab === "global" && g) return (
+      <div className="space-y-3">
+        <div className="text-[10px] font-bold text-muted-foreground">Updated automatically</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <Stat label="Total Users" value={num(g.totalUsers)} />
+          <Stat label="Alive Users" value={num(g.aliveUsers)} sub={`${pct(g.aliveUsers, g.totalUsers)}% of total`} />
+          <Stat label="Dead Users" value={num(g.deadUsers)} sub={`${pct(g.deadUsers, g.totalUsers)}% of total`} />
+          <Stat label="Total Money" value={money(g.totalMoney)} />
+          <Stat label="Swissed Money" value={money(g.swissedMoney)} sub={`${pct(g.swissedMoney, g.totalMoney)}% of total`} />
+          <Stat label="Banked Money" value={money(g.bankedMoney)} sub={`${pct(g.bankedMoney, g.totalMoney)}% of total`} />
+          <Stat label="Points in circulation" value={num(w?.points)} />
+          <Stat label="Bullets in circulation" value={num(w?.bullets)} />
+        </div>
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-3 text-[10px] text-muted-foreground">
+          💡 Click an icon below to drill into a statistics board.
+        </div>
+      </div>
+    );
+    if (tab === "personal") return (
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <input value={search} onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && setQueryName(search)}
+            placeholder="Search… username"
+            className="flex-1 rounded-xl border border-slate-700/60 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-amber-500/50" />
+          <button onClick={() => setQueryName(search)} className="rounded-xl bg-amber-600 px-4 text-xs font-black text-slate-950 hover:bg-amber-500">SEARCH</button>
+          <button onClick={() => { setSearch(""); setQueryName(""); }} className="rounded-xl border border-slate-700 px-3 text-xs text-slate-400">Me</button>
+        </div>
+        {!personal ? <div className="animate-pulse py-12 text-center text-sm text-muted-foreground">Loading player…</div> : (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+            {personal.rows.map((row: any, i: number) => (
+              <div key={i} className="rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2">
+                <div className="text-[9px] uppercase tracking-wider text-slate-500">{row.label}</div>
+                <div className="text-xs font-bold text-white break-words">{row.value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+    if (tab === "wealth" && w) return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <Stat label="Total Money" value={money(w.totalMoney)} />
+        <Stat label="Banked Money" value={money(w.bankedMoney)} />
+        <Stat label="Swissed Money" value={money(w.swissedMoney)} />
+        <Stat label="Points" value={num(w.points)} />
+        <Stat label="IG Coins" value={num(w.igCoins)} />
+        <Stat label="Bullets" value={num(w.bullets)} />
+      </div>
+    );
+    if (tab === "vehicle" && v) return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <Stat label="Cars" value={num(v.total)} />
+        <Stat label="Rares" value={num(v.rares)} />
+        <Stat label="Epics" value={num(v.epics)} />
+        <Stat label="Legendaries" value={num(v.legendaries)} />
+        <Stat label="Commons" value={num(v.commons)} />
+        <Stat label="Stolen" value={num(v.stolen)} />
+        <Stat label="Total Bullets Melted" value={num(v.totalBulletsMelted)} />
+      </div>
+    );
+    if (tab === "ranking" && r) return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <Stat label="Total Crimes" value={num(r.totalCrimes)} />
+        <Stat label="Cars Stolen" value={num(r.carsStolen)} />
+        <Stat label="Total Heists" value={num(r.totalHeists)} />
+        <Stat label="Total OCs" value={num(r.totalOCs)} />
+        <Stat label="Total Busts" value={num(r.totalBusts)} />
+        <Stat label="Assassinations" value={num(r.totalAssassinations)} />
+        <Stat label="Packs Opened" value={num(r.packsOpened)} />
+        <Stat label="Combined Levels" value={num(r.totalLevels)} />
+      </div>
+    );
+    if (tab === "gambling" && gam) return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <Stat label="Betting Profit" value={money(gam.bettingProfit)} />
+        <Stat label="Stock Profit" value={money(gam.stockProfit)} />
+        <Stat label="Supply Profit" value={money(gam.supplyProfit)} />
+        <Stat label="Casino Wins" value={num(gam.casinoWins)} />
+        <Stat label="Bets Placed" value={num(gam.betsPlaced)} />
+      </div>
+    );
+    if (tab === "offence" && o) return (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <Stat label="Users Killed" value={num(o.usersKilled)} />
+        <Stat label="Bodyguards Killed" value={num(o.bodyguardsKilled)} />
+        <Stat label="Bodyguards Bought" value={num(o.bodyguardsBought)} />
+        <Stat label="Bullets Fired" value={num(o.bulletsFired)} />
+        <Stat label="Times Travelled" value={num(o.timesTravelled)} />
+      </div>
+    );
+    if (tab === "deaths") return (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <input value={killFilter} onChange={(e) => setKillFilter(e.target.value)}
+            placeholder="Filter by killer or victim…"
+            className="flex-1 min-w-40 rounded-xl border border-slate-700/60 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-600 outline-none focus:border-red-500/50" />
+          <span className="text-[10px] text-muted-foreground">Updated every minute · last 7 days</span>
+        </div>
+        {!deaths || deaths.length === 0 ? (
+          <div className="py-10 text-center text-sm text-muted-foreground">No kills recorded yet.</div>
+        ) : (
+          <div className="space-y-1">
+            {deaths
+              .filter((d: any) => !killFilter || d.killer.toLowerCase().includes(killFilter.toLowerCase()) || d.victim.toLowerCase().includes(killFilter.toLowerCase()))
+              .map((d: any, i: number) => (
+                <div key={i} className="mafia-card flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg px-3 py-2">
+                  <span className="text-lg">💀</span>
+                  <span className="text-sm font-bold text-red-400">{d.killer}</span>
+                  <span className="text-[9px] text-muted-foreground">Lv.{d.killerLv}</span>
+                  <span className="text-[10px] text-muted-foreground">killed</span>
+                  <span className="text-sm font-bold text-slate-300">{d.victim}</span>
+                  <span className="text-[9px] text-muted-foreground">Lv.{d.victimLv}</span>
+                  <span className="ml-auto text-[9px] text-muted-foreground">🔫 {num(d.damage)} dmg</span>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+    );
+    return null;
+  };
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><BarChart3 className="size-7 text-primary" /><h2 className="text-2xl font-bold">Statistics</h2></div>
-      <div className="grid grid-cols-2 gap-3">
-        {stats.map(s => (
-          <div key={s.label} className="mafia-card rounded-xl p-4 text-center"><div className="text-xs text-muted-foreground">{s.label}</div><div className="text-lg font-bold text-primary">{s.value}</div></div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <BarChart3 className="size-7 text-primary" />
+          <div>
+            <h2 className="text-2xl font-bold">Statistics</h2>
+            <p className="text-[10px] text-muted-foreground">City-wide data, refreshed live</p>
+          </div>
+        </div>
+        {my && <div className="text-[10px] text-muted-foreground">Viewing as <b className="text-white">{my.nickname || my.username || "You"}</b></div>}
+      </div>
+      <div className="grid grid-cols-4 md:grid-cols-8 gap-1.5">
+        {boards.map((b) => (
+          <button key={b.id} onClick={() => setTab(b.id)}
+            className={`flex flex-col items-center rounded-xl border px-1 py-2 text-[8px] font-black uppercase tracking-wider transition-all ${tab === b.id ? "border-amber-500/50 bg-amber-500/15 text-amber-300" : "border-slate-800 bg-slate-900/50 text-slate-500 hover:border-slate-600 hover:text-slate-300"}`}>
+            <span className="text-base mb-0.5">{b.icon}</span>
+            {b.label}
+          </button>
         ))}
       </div>
+      {panel()}
     </div>
   );
 }
