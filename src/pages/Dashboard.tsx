@@ -256,11 +256,6 @@ function HeadquartersPage() {
         </div>
       </div>
 
-      {/* Daily Reward match game */}
-      <Suspense fallback={<div className="mafia-card rounded-xl p-5 animate-pulse text-center text-xs text-muted-foreground">Loading Daily Reward…</div>}>
-        <DailyRewardGame />
-      </Suspense>
-
       {/* Core Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="mafia-card rounded-xl p-4 border border-green-500/20">
@@ -1472,6 +1467,20 @@ export default function Dashboard() {
       case "reports": return <GenericStub title="Reports" icon="📢" />;
       case "promo_codes": return <PromoCodesPage />;
       case "qs_market": return <QsMarketPage />;
+      case "daily_rewards": return (
+        <div className="animate-fade-in space-y-4 relative">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">🎁</span>
+            <div>
+              <h2 className="text-2xl font-black tracking-wide text-amber-300">Daily Rewards</h2>
+              <p className="text-[10px] text-amber-400/60">Match symbols on the board — every pair is a prize, up to X8 per game. New board every 15 minutes.</p>
+            </div>
+          </div>
+          <Suspense fallback={<div className="mafia-card rounded-xl p-8 animate-pulse text-center text-sm text-muted-foreground">Shuffling the board…</div>}>
+            <DailyRewardGame />
+          </Suspense>
+        </div>
+      );
       case "drug_trade": return <DrugTradePage />;
       case "admin_panel": return <AdminPanel />;
       case "become_admin": return <BecomeAdminPage />;

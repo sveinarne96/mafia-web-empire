@@ -63,7 +63,7 @@ export function OrganizedCrimeTeamsPage() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [draft, setDraft] = useState("");
-  const [clock, setClock] = useState(Date.now());
+  const [now, setNow] = useState(Date.now());
   const chatRef = useRef<HTMLDivElement | null>(null);
   const firedRef = useRef(false);
 
@@ -80,13 +80,13 @@ export function OrganizedCrimeTeamsPage() {
   // 1s tick while an auto-launch countdown is armed.
   useEffect(() => {
     if (!launchAt0 || !teamId0) return;
-    const iv = setInterval(() => setClock(Date.now()), 1000);
+    const iv = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(iv);
   }, [launchAt0, teamId0]);
 
   // Slow 20s tick so idle badges stay fresh even without a countdown.
   useEffect(() => {
-    const iv = setInterval(() => setClock(Date.now()), 20000);
+    const iv = setInterval(() => setNow(Date.now()), 20000);
     return () => clearInterval(iv);
   }, []);
 
@@ -143,7 +143,7 @@ export function OrganizedCrimeTeamsPage() {
   };
 
   const myTeamCrew = myTeam as any; // members / readyIds / chat come from the reactive query
-  const members: { id: string; name: string; level: number }[] = myTeamCrew.members ?? [];
+  const members: { id: string; name: string; level: number; seenAt?: number }[] = myTeamCrew.members ?? [];
   const readyIds: string[] = myTeamCrew.readyIds ?? [];
   const isReadyMember = (id: string) => id === myTeamCrew.hostId || readyIds.includes(id);
   const readyCount = members.filter((m) => isReadyMember(m.id)).length;
@@ -153,7 +153,7 @@ export function OrganizedCrimeTeamsPage() {
   const chat: ChatMsg[] = myTeamCrew.chat ?? [];
   const launchAt = myTeamCrew.launchAt ?? 0;
   const autoArmed = !!myTeamCrew.autoLaunch && launchAt > 0;
-  const countdown = autoArmed ? Math.max(0, Math.ceil((launchAt - (clock || Date.now())) / 1000)) : 0;
+  const countdown = autoArmed ? Math.max(0, Math.ceil((launchAt - (now || Date.now())) / 1000)) : 0;
   const crewFullAndReady = members.length === 3 && readyCount === 3;
 
   return (
@@ -228,8 +228,8 @@ export function OrganizedCrimeTeamsPage() {
                         {ready ? "● Ready" : "◐ Standing by"}
                       </div>
                       <div className="text-[10px] text-slate-500">Lv.{member.level} · {rankName(member.level)}</div>
-                      {!ready && member.seenAt && (clock || Date.now()) - member.seenAt > 90_000 && (
-                        <div className="mt-0.5 text-[8px] font-bold text-red-400/80">⚠ idle {Math.max(1, Math.floor(((clock || Date.now()) - member.seenAt) / 60000))}m</div>
+                      {!ready && member.seenAt && (now || Date.now()) - member.seenAt > 90_000 && (
+                        <div className="mt-0.5 text-[8px] font-bold text-red-400/80">⚠ idle {Math.max(1, Math.floor(((now || Date.now()) - member.seenAt) / 60000))}m</div>
                       )}
                     </div>
                   ) : (

@@ -275,6 +275,22 @@ const TILE_EMOJI: Record<string, string> = {
   heistChance: "🎰", heistTimer: "⏳", commonScrap: "🧩", rareScrap: "🔧", cash: "💵", points: "🏆", bullets: "💀",
 };
 
+// Mirror of the server pool (dailyReward.ts) for the visible prize legend.
+const PRIZE_POOL: { id: string; label: string; value: string }[] = [
+  { id: "doubleXp", label: "Double XP", value: "×5" },
+  { id: "doublePay", label: "Double Pay", value: "×5" },
+  { id: "jailImmune", label: "Jail Immune", value: "×5" },
+  { id: "bustBoost", label: "Bust Boost", value: "×5" },
+  { id: "autoRanks", label: "Auto Ranks", value: "×5" },
+  { id: "heistChance", label: "Heist Chance", value: "×5" },
+  { id: "heistTimer", label: "Heist Timer", value: "×5" },
+  { id: "commonScrap", label: "Common Scrap", value: "×10" },
+  { id: "rareScrap", label: "Rare Scrap", value: "×10" },
+  { id: "cash", label: "Cash", value: "$5,000,000" },
+  { id: "points", label: "Points", value: "2,500" },
+  { id: "bullets", label: "Bullets", value: "2,500" },
+];
+
 export function DailyRewardGame() {
   const data = useQuery(api.dailyReward.getDailyRewardState);
   const start = useMutation(api.dailyReward.startGame);
@@ -395,6 +411,21 @@ export function DailyRewardGame() {
         )}
       </div>
 
+      {/* Prize pool strip */}
+      <div>
+        <div className="text-center text-[9px] font-black uppercase tracking-[0.25em] text-muted-foreground mb-1.5">Prize pool — 8 pairs hide these rewards</div>
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {PRIZE_POOL.map((p) => (
+            <span key={p.id} className="inline-flex items-center gap-1 rounded-full border border-amber-500/15 bg-amber-500/5 px-2 py-0.5 text-[9px] font-bold">
+              <span>{TILE_EMOJI[p.id] ?? "🎁"}</span>
+              <span className="text-muted-foreground">{p.label}</span>
+              <span className="text-amber-400">{p.value}</span>
+            </span>
+          ))}
+        </div>
+        <p className="mt-1.5 text-center text-[9px] text-muted-foreground">Match a pair to bank that tile — every pair is a prize, up to <b className="text-amber-400">8 prizes (X8)</b> per board.</p>
+      </div>
+
       {/* Rules */}
       <div className="text-center">
         <button onClick={() => setShowRules(!showRules)} className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300">
@@ -406,9 +437,9 @@ export function DailyRewardGame() {
             <p>You can match up to 8 pairs which will be X8 prizes. You get 3 chances to match after that you fail. If you fail you will still get a reward based on the pairs you have matched.</p>
             <p className="text-amber-400/80">Note: Your cooldown starts when you reveal your first tile, not when you press Start Game. If you refresh mid-game, use Continue Game to resume your current board.</p>
             <div className="flex flex-wrap gap-1.5 pt-1">
-              {Object.entries(TILE_EMOJI).map(([id, emoji]) => (
-                <span key={id} className="px-2 py-0.5 rounded-full bg-white/5 border border-border/60 text-[9px] font-bold">
-                  {emoji} {id.replace(/([A-Z])/g, " $1")}
+              {PRIZE_POOL.map((p) => (
+                <span key={p.id} className="px-2 py-0.5 rounded-full bg-white/5 border border-border/60 text-[9px] font-bold">
+                  {TILE_EMOJI[p.id] ?? "🎁"} {p.label} <span className="text-amber-400">{p.value}</span>
                 </span>
               ))}
             </div>

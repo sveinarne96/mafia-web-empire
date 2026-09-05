@@ -16,6 +16,7 @@ export const LEFT_MENU_SECTIONS = [
     { label: "Hospital", page: "hospital", icon: "🏥" },
     { label: "Promo Codes", page: "promo_codes", icon: "🎟️" },
     { label: "Q's Market", page: "qs_market", icon: "🏪" },
+    { label: "Daily Rewards", page: "daily_rewards", icon: "🎁" },
   ]},
   { title: "Crime", icon: Skull, items: [
     { label: "Crimes Hub", page: "crimes", icon: "🔪" },
