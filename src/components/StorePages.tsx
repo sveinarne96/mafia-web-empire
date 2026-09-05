@@ -202,6 +202,7 @@ function SeasonXpPanel({ store, setMsg }: { store: any; setMsg: (m: { ok: boolea
   const claimVip = useMutation(api.storeSystem.claimVipLevel);
   const buyVip = useMutation(api.storeSystem.purchasePointItem);
   const [busy, setBusy] = useState<string | null>(null);
+  const [freePage, setFreePage] = useState(0);
 
   const doClaimTier = async (tier: number) => {
     setBusy(`t${tier}`);
@@ -236,6 +237,12 @@ function SeasonXpPanel({ store, setMsg }: { store: any; setMsg: (m: { ok: boolea
 
   const freeProgress = store.freeTrackProgress;
   const nextFree = FREE_TRACK[freeProgress];
+  // 500+ tiers render in pages — never materialize all rows at once.
+  const FREE_PER_PAGE = 20;
+  const freePages = Math.max(1, Math.ceil(FREE_TRACK.length / FREE_PER_PAGE));
+  const clampedFreePage = Math.min(freePages - 1, Math.max(0, freePage));
+  const pageFree = FREE_TRACK.slice(clampedFreePage * FREE_PER_PAGE, (clampedFreePage + 1) * FREE_PER_PAGE);
+  const currentFreePage = Math.min(freePages - 1, Math.max(0, Math.floor(freeProgress / FREE_PER_PAGE)));
   const freePct = nextFree ? Math.min(100, Math.round((store.seasonXp / nextFree.xp) * 100)) : 100;
   const vipLevel = store.vipLevel;
   const vipNext = vipLevel >= VIP_LEVELS ? null : vipLevel + 1;
@@ -253,7 +260,7 @@ function SeasonXpPanel({ store, setMsg }: { store: any; setMsg: (m: { ok: boolea
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
           <StatPill label="Membership" value={store.vipActive ? "👑 VIP" : "Free"} color={store.vipActive ? "text-amber-400" : "text-slate-300"} />
-          <StatPill label="Free Tier" value={`${freeProgress} / 10`} color="text-cyan-400" />
+          <StatPill label="Free Tier" value={`${freeProgress} / ${FREE_TRACK.length}`} color="text-cyan-400" />
           <StatPill label="VIP Level" value={store.vipActive ? `${vipLevel} / ${VIP_LEVELS}` : "Locked"} color={store.vipActive ? "text-amber-400" : "text-slate-500"} />
           <StatPill label="Season XP" value={short(store.seasonXp)} color="text-purple-400" />
         </div>
@@ -273,9 +280,9 @@ function SeasonXpPanel({ store, setMsg }: { store: any; setMsg: (m: { ok: boolea
       </div>
 
       <div className="mafia-card rounded-xl p-4">
-        <div className="text-sm font-bold mb-3">🆓 Free Track — available to all players</div>
+        <div className="text-sm font-bold mb-3">🆓 Free Track — available to all players <span className="text-[10px] text-muted-foreground font-normal">({FREE_TRACK.length} tiers)</span></div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {FREE_TRACK.map((t) => {
+          {pageFree.map((t) => {
             const done = (store.seasonTiersClaimed ?? []).includes(t.tier);
             const ready = !done && store.seasonXp >= t.xp;
             return (
@@ -296,6 +303,26 @@ function SeasonXpPanel({ store, setMsg }: { store: any; setMsg: (m: { ok: boolea
             );
           })}
         </div>
+        <div className="flex items-center justify-between pt-3">
+          <button
+            onClick={() => setFreePage(clampedFreePage - 1)}
+            disabled={clampedFreePage === 0}
+            className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold disabled:opacity-30 hover:bg-white/10 transition">
+            ◀ Prev
+          </button>
+          <span className="text-[10px] font-black text-muted-foreground">Tiers {clampedFreePage * FREE_PER_PAGE + 1}–{Math.min(FREE_TRACK.length, (clampedFreePage + 1) * FREE_PER_PAGE)} / {FREE_TRACK.length}</span>
+          <button
+            onClick={() => setFreePage(clampedFreePage + 1)}
+            disabled={clampedFreePage >= freePages - 1}
+            className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold disabled:opacity-30 hover:bg-white/10 transition">
+            Next ▶
+          </button>
+        </div>
+        <button
+          onClick={() => setFreePage(currentFreePage)}
+          className="mt-1 w-full px-2 py-1 rounded-lg bg-cyan-500/10 text-cyan-400 text-[10px] font-bold hover:bg-cyan-500/20 transition">
+          📍 Jump to your current tier
+        </button>
       </div>
 
       <div className="mafia-card rounded-xl p-4">

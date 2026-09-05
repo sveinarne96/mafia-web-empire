@@ -152,39 +152,98 @@ export interface SeasonTierDef {
   amount: number;
 }
 
-export const FREE_TRACK: SeasonTierDef[] = [
-  { tier: 1, xp: 34_500, reward: "2,500 Bullets", type: "bullets", amount: 2500 },
-  { tier: 2, xp: 277_000, reward: "5 Auto Rank Perks", type: "autoRank", amount: 5 },
-  { tier: 3, xp: 1_385_000, reward: "2 Common Packs", type: "commonPack", amount: 2 },
-  { tier: 4, xp: 6_230_000, reward: "125 Points", type: "points", amount: 125 },
-  { tier: 5, xp: 13_150_000, reward: "5 Double XP Perks", type: "doubleXp", amount: 5 },
-  { tier: 6, xp: 20_000_000, reward: "5,000 Bullets", type: "bullets", amount: 5000 },
-  { tier: 7, xp: 27_000_000, reward: "5 Gold Bars", type: "goldBar", amount: 5 },
-  { tier: 8, xp: 33_900_000, reward: "5 Heist Timer Perks", type: "heistTimer", amount: 5 },
-  { tier: 9, xp: 40_850_000, reward: "5 Heist Chance Perks", type: "heistChance", amount: 5 },
-  { tier: 10, xp: 45_000_000, reward: "2 Epic Packs", type: "epicPack", amount: 2 },
-  // ═══ UNLIMITED EXTENSION (tiers 11+) — keeps everything scaling forever ═══
-  { tier: 11, xp: 50_000_000, reward: "10,000 Bullets", type: "bullets", amount: 10000 },
-  { tier: 12, xp: 58_000_000, reward: "250 Points", type: "points", amount: 250 },
-  { tier: 13, xp: 67_000_000, reward: "1 Legendary Pack", type: "legendaryPack", amount: 1 },
-  { tier: 14, xp: 78_000_000, reward: "10 Auto Rank Perks", type: "autoRank", amount: 10 },
-  { tier: 15, xp: 90_000_000, reward: "25,000 Bullets", type: "bullets", amount: 25000 },
-  { tier: 16, xp: 105_000_000, reward: "1,000,000 Cash", type: "cash", amount: 1000000 },
-  { tier: 17, xp: 122_000_000, reward: "500 Points", type: "points", amount: 500 },
-  { tier: 18, xp: 142_000_000, reward: "5 Double XP + 5 Double Pay", type: "doubleXp", amount: 5 },
-  { tier: 19, xp: 165_000_000, reward: "2 Legendary Packs", type: "legendaryPack", amount: 2 },
-  { tier: 20, xp: 190_000_000, reward: "50,000 Bullets", type: "bullets", amount: 50000 },
-  { tier: 21, xp: 220_000_000, reward: "1,000 Points", type: "points", amount: 1000 },
-  { tier: 22, xp: 255_000_000, reward: "1 Hired Limo (garage)", type: "car", amount: 0 },
-  { tier: 23, xp: 295_000_000, reward: "10 Gold Bars", type: "goldBar", amount: 10 },
-  { tier: 24, xp: 340_000_000, reward: "100,000 Bullets", type: "bullets", amount: 100000 },
-  { tier: 25, xp: 390_000_000, reward: "3 Legendary Packs", type: "legendaryPack", amount: 3 },
-  { tier: 26, xp: 450_000_000, reward: "2,500 Points", type: "points", amount: 2500 },
-  { tier: 27, xp: 520_000_000, reward: "5,000,000 Cash", type: "cash", amount: 5000000 },
-  { tier: 28, xp: 600_000_000, reward: "250,000 Bullets", type: "bullets", amount: 250000 },
-  { tier: 29, xp: 700_000_000, reward: "5,000 Points", type: "points", amount: 5000 },
-  { tier: 30, xp: 820_000_000, reward: "5 Legendary Packs + 1,000 Coins", type: "coins", amount: 1000 },
-];
+export const FREE_TRACK: SeasonTierDef[] = (() => {
+  // Tiers 1–30 are hand-tuned — these exact values stay live so existing
+  // player progress is preserved untouched.
+  const handTuned: SeasonTierDef[] = [
+    { tier: 1, xp: 34_500, reward: "2,500 Bullets", type: "bullets", amount: 2500 },
+    { tier: 2, xp: 277_000, reward: "5 Auto Rank Perks", type: "autoRank", amount: 5 },
+    { tier: 3, xp: 1_385_000, reward: "2 Common Packs", type: "commonPack", amount: 2 },
+    { tier: 4, xp: 6_230_000, reward: "125 Points", type: "points", amount: 125 },
+    { tier: 5, xp: 13_150_000, reward: "5 Double XP Perks", type: "doubleXp", amount: 5 },
+    { tier: 6, xp: 20_000_000, reward: "5,000 Bullets", type: "bullets", amount: 5000 },
+    { tier: 7, xp: 27_000_000, reward: "5 Gold Bars", type: "goldBar", amount: 5 },
+    { tier: 8, xp: 33_900_000, reward: "5 Heist Timer Perks", type: "heistTimer", amount: 5 },
+    { tier: 9, xp: 40_850_000, reward: "5 Heist Chance Perks", type: "heistChance", amount: 5 },
+    { tier: 10, xp: 45_000_000, reward: "2 Epic Packs", type: "epicPack", amount: 2 },
+    { tier: 11, xp: 50_000_000, reward: "10,000 Bullets", type: "bullets", amount: 10000 },
+    { tier: 12, xp: 58_000_000, reward: "250 Points", type: "points", amount: 250 },
+    { tier: 13, xp: 67_000_000, reward: "1 Legendary Pack", type: "legendaryPack", amount: 1 },
+    { tier: 14, xp: 78_000_000, reward: "10 Auto Rank Perks", type: "autoRank", amount: 10 },
+    { tier: 15, xp: 90_000_000, reward: "25,000 Bullets", type: "bullets", amount: 25000 },
+    { tier: 16, xp: 105_000_000, reward: "1,000,000 Cash", type: "cash", amount: 1000000 },
+    { tier: 17, xp: 122_000_000, reward: "500 Points", type: "points", amount: 500 },
+    { tier: 18, xp: 142_000_000, reward: "5 Double XP + 5 Double Pay", type: "doubleXp", amount: 5 },
+    { tier: 19, xp: 165_000_000, reward: "2 Legendary Packs", type: "legendaryPack", amount: 2 },
+    { tier: 20, xp: 190_000_000, reward: "50,000 Bullets", type: "bullets", amount: 50000 },
+    { tier: 21, xp: 220_000_000, reward: "1,000 Points", type: "points", amount: 1000 },
+    { tier: 22, xp: 255_000_000, reward: "1 Hired Limo (garage)", type: "car", amount: 0 },
+    { tier: 23, xp: 295_000_000, reward: "10 Gold Bars", type: "goldBar", amount: 10 },
+    { tier: 24, xp: 340_000_000, reward: "100,000 Bullets", type: "bullets", amount: 100000 },
+    { tier: 25, xp: 390_000_000, reward: "3 Legendary Packs", type: "legendaryPack", amount: 3 },
+    { tier: 26, xp: 450_000_000, reward: "2,500 Points", type: "points", amount: 2500 },
+    { tier: 27, xp: 520_000_000, reward: "5,000,000 Cash", type: "cash", amount: 5000000 },
+    { tier: 28, xp: 600_000_000, reward: "250,000 Bullets", type: "bullets", amount: 250000 },
+    { tier: 29, xp: 700_000_000, reward: "5,000 Points", type: "points", amount: 5000 },
+    { tier: 30, xp: 820_000_000, reward: "5 Legendary Packs + 1,000 Coins", type: "coins", amount: 1000 },
+  ];
+
+  // Tiers 31–500 — generated. XP continues smoothly from tier 30's 820M
+  // via a power curve; rewards cycle through 13 types and scale up every
+  // 10 tiers, with a milestone car every 50 tiers.
+  const TOTAL_TIERS = 500;
+  const xpAt = (tier: number) => Math.round(820_000_000 * Math.pow(tier / 30, 1.2));
+  const fmtN = (n: number) => Math.floor(n).toLocaleString("en-US");
+  const CYCLE: { type: string; base: number }[] = [
+    { type: "bullets", base: 2500 },
+    { type: "points", base: 125 },
+    { type: "commonPack", base: 2 },
+    { type: "cash", base: 1_000_000 },
+    { type: "autoRank", base: 5 },
+    { type: "bullets", base: 5000 },
+    { type: "doubleXp", base: 5 },
+    { type: "goldBar", base: 5 },
+    { type: "heistTimer", base: 5 },
+    { type: "epicPack", base: 2 },
+    { type: "heistChance", base: 5 },
+    { type: "legendaryPack", base: 1 },
+    { type: "points", base: 500 },
+  ];
+  const labelFor = (type: string, amount: number) => {
+    switch (type) {
+      case "bullets": return `${fmtN(amount)} Bullets`;
+      case "points": return `${fmtN(amount)} Points`;
+      case "cash": return `$${fmtN(amount)} Cash`;
+      case "autoRank": return `${amount} Auto Rank Perks`;
+      case "doubleXp": return `${amount} Double XP Perks`;
+      case "heistTimer": return `${amount} Heist Timer Perks`;
+      case "heistChance": return `${amount} Heist Chance Perks`;
+      case "goldBar": return `${amount} Gold Bars`;
+      case "commonPack": return `${amount} Common Packs`;
+      case "epicPack": return `${amount} Epic Packs`;
+      case "legendaryPack": return `${amount} Legendary Packs`;
+      case "coins": return `${fmtN(amount)} Coins`;
+      case "car": return "Hired Limo (garage)";
+      default: return `${fmtN(amount)} ${type}`;
+    }
+  };
+
+  const tiers: SeasonTierDef[] = [...handTuned];
+  for (let tier = 31; tier <= TOTAL_TIERS; tier++) {
+    const band = Math.floor((tier - 31) / 10);
+    const mult = 1 + band * 0.8;
+    const isCar = tier % 50 === 0;
+    const spec = CYCLE[(tier - 31) % CYCLE.length];
+    const type = isCar ? "car" : spec.type;
+    const amount = type === "bullets"
+      ? Math.round((spec.base * mult) / 10) * 10
+      : type === "points" || type === "cash"
+        ? Math.round(spec.base * mult)
+        : spec.base;
+    tiers.push({ tier, xp: xpAt(tier), reward: labelFor(type, amount), type, amount });
+  }
+  return tiers;
+})();
 
 export const UNLIMITED_SEASON = true;
 

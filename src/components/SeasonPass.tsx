@@ -50,6 +50,46 @@ export function SeasonPassPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [showVip, setShowVip] = useState(false);
+  const [freePage, setFreePage] = useState(0);
+
+  // 500+ tiers render in pages — never materialize all rows at once.
+  const FREE_PER_PAGE = 25;
+  const freePages = Math.max(1, Math.ceil(FREE_TRACK.length / FREE_PER_PAGE));
+  const clampedPage = Math.min(freePages - 1, Math.max(0, freePage));
+  const pageStart = clampedPage * FREE_PER_PAGE;
+  const pageTiers = FREE_TRACK.slice(pageStart, pageStart + FREE_PER_PAGE);
+  const currentTierPage = Math.min(freePages - 1, Math.max(0, Math.floor((store?.freeTrackProgress ?? 0) / FREE_PER_PAGE)));
+  const PageControls = ({ compact }: { compact?: boolean }) => (
+    <div className={`flex items-center justify-between gap-2 ${compact ? "pt-1" : "pt-3"}`}>
+      <button
+        onClick={() => setFreePage(0)}
+        disabled={clampedPage === 0}
+        className="px-2 py-1 rounded-lg bg-white/5 text-[10px] font-bold disabled:opacity-30 hover:bg-white/10 transition">
+        ⏮ First
+      </button>
+      <div className="flex items-center gap-1.5">
+        <button
+          onClick={() => setFreePage(clampedPage - 1)}
+          disabled={clampedPage === 0}
+          className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold disabled:opacity-30 hover:bg-white/10 transition">
+          ◀
+        </button>
+        <span className="text-[10px] font-black text-muted-foreground">Tiers {pageStart + 1}–{Math.min(FREE_TRACK.length, pageStart + FREE_PER_PAGE)} / {FREE_TRACK.length}</span>
+        <button
+          onClick={() => setFreePage(clampedPage + 1)}
+          disabled={clampedPage >= freePages - 1}
+          className="px-2.5 py-1 rounded-lg bg-white/5 text-[10px] font-bold disabled:opacity-30 hover:bg-white/10 transition">
+          ▶
+        </button>
+      </div>
+      <button
+        onClick={() => setFreePage(currentTierPage)}
+        disabled={clampedPage === currentTierPage}
+        className="px-2 py-1 rounded-lg bg-cyan-500/15 text-cyan-400 text-[10px] font-bold hover:bg-cyan-500/25 transition disabled:opacity-30">
+        📍 Your tier
+      </button>
+    </div>
+  );
 
   if (!store) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading Season Pass...</div>;
 
@@ -86,10 +126,18 @@ export function SeasonPassPage() {
     return t;
   };
 
-  const claimedBullets = FREE_TRACK.filter((t) => (store.seasonTiersClaimed ?? []).includes(t.tier) && t.type === "bullets").reduce((s, t) => s + t.amount, 0);
-  const claimedPoints = FREE_TRACK.filter((t) => (store.seasonTiersClaimed ?? []).includes(t.tier) && t.type === "points").reduce((s, t) => s + t.amount, 0);
-  const claimedPerks = FREE_TRACK.filter((t) => (store.seasonTiersClaimed ?? []).includes(t.tier) && (t.type === "autoRank" || t.type === "doubleXp" || t.type === "heistTimer" || t.type === "heistChance")).reduce((s, t) => s + t.amount, 0);
-  const claimedPacks = FREE_TRACK.filter((t) => (store.seasonTiersClaimed ?? []).includes(t.tier) && (t.type === "commonPack" || t.type === "epicPack")).length;
+  const claimedSet = new Set(store.seasonTiersClaimed ?? []);
+  const claimedBullets = FREE_TRACK.filter((t) => claimedSet.has(t.tier) && t.type === "bullets").reduce((s, t) => s + t.amount, 0);
+  const claimedPoints = FREE_TRACK.filter((t) => claimedSet.has(t.tier) && t.type === "points").reduce((s, t) => s + t.amount, 0);
+  const claimedPerks = FREE_TRACK.filter((t) => claimedSet.has(t.tier) && (t.type === "autoRank" || t.type === "doubleXp" || t.type === "heistTimer" || t.type === "heistChance")).reduce((s, t) => s + t.amount, 0);
+  const claimedPacks = FREE_TRACK.filter((t) => claimedSet.has(t.tier) && (t.type === "commonPack" || t.type === "epicPack" || t.type === "legendaryPack")).reduce((s, t) => s + t.amount, 0);
+  const claimedGold = FREE_TRACK.filter((t) => claimedSet.has(t.tier) && t.type === "goldBar").reduce((s, t) => s + t.amount, 0);
+  // Full-track totals for the Rewards Bank (500 tiers).
+  const TOTAL_BULLETS = FREE_TRACK.filter((t) => t.type === "bullets").reduce((s, t) => s + t.amount, 0);
+  const TOTAL_PERKS = FREE_TRACK.filter((t) => t.type === "autoRank" || t.type === "doubleXp" || t.type === "heistTimer" || t.type === "heistChance").reduce((s, t) => s + t.amount, 0);
+  const TOTAL_PACKS = FREE_TRACK.filter((t) => t.type === "commonPack" || t.type === "epicPack" || t.type === "legendaryPack").reduce((s, t) => s + t.amount, 0);
+  const TOTAL_POINTS = FREE_TRACK.filter((t) => t.type === "points").reduce((s, t) => s + t.amount, 0);
+  const TOTAL_GOLD = FREE_TRACK.filter((t) => t.type === "goldBar").reduce((s, t) => s + t.amount, 0);
 
   return (
     <div className="animate-fade-in space-y-6">
@@ -162,18 +210,18 @@ export function SeasonPassPage() {
       <div className="mafia-card rounded-xl p-4">
         <div className="text-sm font-bold mb-3">📦 Rewards Bank</div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-center">
-          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">💀 Bullets</div><div className="text-xs font-black text-orange-400">{nf(claimedBullets)} / 7,500</div></div>
-          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">⭐ Rank Perks</div><div className="text-xs font-black text-yellow-400">{claimedPerks} / 15</div></div>
-          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">🎁 Packs</div><div className="text-xs font-black text-slate-300">{claimedPacks} / 4</div></div>
-          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">🏆 Points</div><div className="text-xs font-black text-yellow-300">{nf(claimedPoints)} / 125</div></div>
-          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">🪙 Gold Bars</div><div className="text-xs font-black text-amber-400">{FREE_TRACK.filter((t) => (store.seasonTiersClaimed ?? []).includes(t.tier) && t.type === "goldBar").length > 0 ? "5 / 5" : "0 / 5"}</div></div>
+          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">💀 Bullets</div><div className="text-xs font-black text-orange-400">{nf(claimedBullets)} / {nf(TOTAL_BULLETS)}</div></div>
+          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">⭐ Rank Perks</div><div className="text-xs font-black text-yellow-400">{nf(claimedPerks)} / {nf(TOTAL_PERKS)}</div></div>
+          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">🎁 Packs</div><div className="text-xs font-black text-slate-300">{nf(claimedPacks)} / {nf(TOTAL_PACKS)}</div></div>
+          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">🏆 Points</div><div className="text-xs font-black text-yellow-300">{nf(claimedPoints)} / {nf(TOTAL_POINTS)}</div></div>
+          <div className="rounded-lg bg-background/40 p-2"><div className="text-[9px] text-muted-foreground">🪙 Gold Bars</div><div className="text-xs font-black text-amber-400">{nf(claimedGold)} / {nf(TOTAL_GOLD)}</div></div>
         </div>
       </div>
 
       {/* Free Track */}
       <div className="mafia-card rounded-xl p-5 space-y-2">
-        <div className="flex items-center gap-2 mb-2"><Gift className="size-5 text-cyan-400" /><h3 className="font-bold text-sm">🎁 Free Track — available to all players</h3></div>
-        {FREE_TRACK.map((t) => {
+        <div className="flex items-center gap-2 mb-2"><Gift className="size-5 text-cyan-400" /><h3 className="font-bold text-sm">🎁 Free Track — available to all players <span className="text-[10px] text-muted-foreground font-normal">({FREE_TRACK.length} tiers)</span></h3></div>
+        {pageTiers.map((t) => {
           const claimed = (store.seasonTiersClaimed ?? []).includes(t.tier);
           const ready = !claimed && seasonXp >= t.xp;
           const isCurrent = !claimed && seasonXp < t.xp && t.tier === store.freeTrackProgress + 1;
@@ -201,6 +249,7 @@ export function SeasonPassPage() {
             </motion.div>
           );
         })}
+        <PageControls />
       </div>
 
       {/* VIP Track */}
@@ -278,7 +327,7 @@ export function SeasonPassPage() {
               </tr>
             </thead>
             <tbody>
-              {FREE_TRACK.map((t) => {
+              {pageTiers.map((t) => {
                 const claimed = (store.seasonTiersClaimed ?? []).includes(t.tier);
                 const isCurrent = !claimed && t.tier === store.freeTrackProgress + 1;
                 return (
@@ -297,6 +346,7 @@ export function SeasonPassPage() {
             </tbody>
           </table>
         </div>
+        <PageControls compact />
       </div>
     </div>
   );
