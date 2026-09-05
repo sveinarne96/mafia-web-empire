@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Users, LogOut, Play, Crown, Swords, Send, Bell, Check, BellRing } from "lucide-react";
+import { Users, LogOut, Play, Crown, Swords, Send, Bell, Check, BellRing, Timer, Zap } from "lucide-react";
 
 const nf = (n: number) => Math.floor(n).toLocaleString();
 const fmt = (n: number) => "$" + nf(n);
@@ -56,18 +56,58 @@ export function OrganizedCrimeTeamsPage() {
   const sendChat = useMutation(api.ocTeams.sendOcChat);
   const setReady = useMutation(api.ocTeams.setOcReady);
   const pingCrew = useMutation(api.ocTeams.pingOcCrew);
+  const armLaunch = useMutation(api.ocTeams.armAutoLaunch);
+  const disarmLaunch = useMutation(api.ocTeams.disarmAutoLaunch);
 
   const [jobId, setJobId] = useState(OC_JOBS[0].id);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [draft, setDraft] = useState("");
+  const [clock, setClock] = useState(Date.now());
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const firedRef = useRef(false);
 
   const chatLen = myTeam ? ((myTeam as any).chat ?? []).length : 0;
   useEffect(() => {
     const el = chatRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [chatLen, myTeam?._id]);
+
+  const meId0 = (player as any)?._id ?? "";
+  const launchAt0 = (myTeam as any)?.launchAt ?? 0;
+  const teamId0 = myTeam?._id;
+
+  // 1s tick while an auto-launch countdown is armed.
+  useEffect(() => {
+    if (!launchAt0 || !teamId0) return;
+    const iv = setInterval(() => setClock(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, [launchAt0, teamId0]);
+
+  // Slow 20s tick so idle badges stay fresh even without a countdown.
+  useEffect(() => {
+    const iv = setInterval(() => setClock(Date.now()), 20000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // Host auto-fires the job the moment the countdown expires.
+  useEffect(() => {
+    const t = myTeam as any;
+    if (!t || !t.launchAt || t.started) return;
+    if (t.hostId !== meId0) return;
+    if (Date.now() < t.launchAt) return;
+    if (firedRef.current) return;
+    firedRef.current = true;
+    (async () => {
+      try {
+        const r: any = await startTeam({ teamId: t._id });
+        setMsg({ ok: true, text: r.win ? `✅ ${r.teamName} COMPLETE — every member banked ${fmt(r.rewardEach)} (+${r.xpEach} XP)` : `❌ ${r.teamName} went sideways — stake lost, +${r.xpEach} XP each.` });
+      } catch (e: any) {
+        firedRef.current = false;
+        setMsg({ ok: false, text: e?.data?.message ?? e?.message ?? "Auto-launch failed" });
+      }
+    })();
+  }, [myTeam, meId0, launchAt0]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!player || myTeam === undefined || openTeams === undefined)
     return <div className="animate-pulse py-12 text-center text-sm text-slate-500">Assembling the crew…</div>;
@@ -111,6 +151,10 @@ export function OrganizedCrimeTeamsPage() {
   const hostSeen = myTeamCrew.hostId === meId;
   const lastPing = myTeamCrew.lastPingAt ?? 0;
   const chat: ChatMsg[] = myTeamCrew.chat ?? [];
+  const launchAt = myTeamCrew.launchAt ?? 0;
+  const autoArmed = !!myTeamCrew.autoLaunch && launchAt > 0;
+  const countdown = autoArmed ? Math.max(0, Math.ceil((launchAt - (clock || Date.now())) / 1000)) : 0;
+  const crewFullAndReady = members.length === 3 && readyCount === 3;
 
   return (
     <div className="animate-fade-in space-y-5">
@@ -184,6 +228,9 @@ export function OrganizedCrimeTeamsPage() {
                         {ready ? "● Ready" : "◐ Standing by"}
                       </div>
                       <div className="text-[10px] text-slate-500">Lv.{member.level} · {rankName(member.level)}</div>
+                      {!ready && member.seenAt && (clock || Date.now()) - member.seenAt > 90_000 && (
+                        <div className="mt-0.5 text-[8px] font-bold text-red-400/80">⚠ idle {Math.max(1, Math.floor(((clock || Date.now()) - member.seenAt) / 60000))}m</div>
+                      )}
                     </div>
                   ) : (
                     <div className="mt-3 py-2 text-center text-[10px] text-slate-600">
@@ -234,6 +281,45 @@ export function OrganizedCrimeTeamsPage() {
               )}
             </div>
           </div>
+
+          {/* Auto-launch countdown (host arms it once the crew is full + ready) */}
+          {(autoArmed || hostSeen) && (
+            <div className={`mt-3 rounded-xl border px-4 py-3 ${autoArmed ? "border-red-500/40 bg-red-950/20" : "border-slate-700/50 bg-slate-950/50"}`}>
+              {autoArmed ? (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Zap className={`size-5 ${countdown <= 10 ? "animate-pulse text-red-400" : "text-amber-400"}`} />
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-red-300">AUTO-LAUNCH ARMED</div>
+                      <div className="text-[9px] text-slate-500">Job fires itself in {countdown}s — nobody backs out now.</div>
+                    </div>
+                  </div>
+                  {hostSeen && (
+                    <button onClick={() => act(() => disarmLaunch({ teamId: myTeam._id }))} disabled={busy}
+                      className="rounded-xl border border-slate-600/60 bg-slate-900/60 px-3 py-1.5 text-[10px] font-black text-slate-300 hover:bg-slate-800 disabled:opacity-50">
+                      CANCEL
+                    </button>
+                  )}
+                </div>
+              ) : hostSeen && crewFullAndReady ? (
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Timer className="size-5 text-slate-400" />
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-300">Auto-launch</div>
+                      <div className="text-[9px] text-slate-500">Fire the job automatically 45s after arming — no need to babysit the lobby.</div>
+                    </div>
+                  </div>
+                  <button onClick={() => act(() => armLaunch({ teamId: myTeam._id }))} disabled={busy}
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 px-3.5 py-1.5 text-[10px] font-black text-white hover:from-red-500 hover:to-orange-500 disabled:opacity-50">
+                    <Zap className="size-3.5" /> ARM (45s)
+                  </button>
+                </div>
+              ) : hostSeen ? (
+                <div className="text-[9px] text-slate-600">⚡ Auto-launch unlocks when all 3 seats are filled and READY.</div>
+              ) : null}
+            </div>
+          )}
 
           {/* Crew chat */}
           <div className={`mt-3 rounded-xl border bg-slate-950/50 ${lastPing > 0 && Date.now() - lastPing < 30_000 ? "border-amber-500/50" : "border-slate-700/50"}`}>

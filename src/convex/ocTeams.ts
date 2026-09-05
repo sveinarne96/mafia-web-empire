@@ -28,12 +28,70 @@ const TEAM_MAX = 3;
 const TTL_MS = 12 * 60 * 60 * 1000;
 const CHAT_MAX = 60;
 const CHAT_MAX_LEN = 160;
+const IDLE_KICK_MS = 5 * 60 * 1000; // seated member silent this long gets auto-kicked on a ping
+const AUTO_LAUNCH_SECONDS = 45;
 
 // Keep a rolling log on the team doc so every member's reactive query refreshes.
 function pushChat(team: any, entry: any): any[] {
   const chat = Array.isArray(team.chat) ? [...team.chat] : [];
   chat.push(entry);
   return chat.slice(-CHAT_MAX);
+}
+
+// Aligned per-member activity stamps (same order as memberIds).
+function seenAt(team: any, memberId: any, ts: number): number[] {
+  const ids: any[] = team.memberIds ?? [];
+  const seen = alignSeen(team);
+  const idx = ids.indexOf(memberId);
+  if (idx === -1) return seen;
+  seen[idx] = ts;
+  return seen;
+}
+
+function alignSeen(team: any): number[] {
+  const ids: any[] = team.memberIds ?? [];
+  const seen = Array.isArray(team.seen) ? [...team.seen] : [];
+  const base = team.createdAt ?? Date.now();
+  while (seen.length < ids.length) seen.push(base);
+  return seen.slice(0, ids.length);
+}
+
+// Remove seated members who went idle (silent + not ready) past the threshold.
+// Host and the acting player are never swept. Kicks are index-safe (ordered
+// removals), disarm any armed auto-launch, and log a system line each.
+function sweepIdle(team: any, actorId: any): number {
+  const ids: any[] = [...(team.memberIds ?? [])];
+  const seen = alignSeen(team);
+  const names: any[] = [...(team.names ?? [])];
+  const ready: any[] = [...(team.memberReadyIds ?? [])];
+  const chat: any[] = Array.isArray(team.chat) ? [...team.chat] : [];
+  const now = Date.now();
+  const kickIdx: number[] = [];
+  ids.forEach((id, i) => {
+    if (id !== team.hostId && id !== actorId && !ready.includes(id) && now - seen[i] > IDLE_KICK_MS) {
+      kickIdx.push(i);
+    }
+  });
+  if (kickIdx.length === 0) return 0;
+  const keep = ids.filter((_, i) => !kickIdx.includes(i));
+  team.memberIds = keep;
+  team.names = names.filter((_, i) => !kickIdx.includes(i));
+  team.seen = seen.filter((_, i) => !kickIdx.includes(i));
+  team.memberReadyIds = ready.filter((id) => keep.includes(id));
+  team.launchAt = undefined;
+  team.autoLaunch = false;
+  for (const i of kickIdx) {
+    const nm = names[i] ?? "A member";
+    chat.push({
+      fromId: ids[i],
+      fromName: nm,
+      text: `🚫 ${nm} was idle too long and was auto-kicked.`,
+      system: true,
+      at: Date.now(),
+    });
+  }
+  team.chat = chat.slice(-CHAT_MAX);
+  return kickIdx.length;
 }
 
 async function findPlayerTeam(ctx: any, player: any): Promise<any | null> {
@@ -61,6 +119,7 @@ export const getMyOcTeam = query({
       members.push({ id, name: u ? nameOf(u) : "?", level: u?.level ?? 0 });
     }
     const readyIds: string[] = team.memberReadyIds ?? [];
+    const seen = alignSeen(team);
     return {
       _id: team._id,
       jobIcon: team.jobIcon,
@@ -69,7 +128,7 @@ export const getMyOcTeam = query({
       rewardMin: team.rewardMin,
       rewardMax: team.rewardMax,
       successBase: team.successBase,
-      members,
+      members: members.map((m, i) => ({ ...m, seenAt: seen[i] ?? team.createdAt ?? 0 })),
       isHost: team.hostId === player._id,
       hostId: team.hostId,
       hostName: team.hostName,
@@ -78,6 +137,9 @@ export const getMyOcTeam = query({
       readyIds,
       chat: (team.chat ?? []).slice(-CHAT_MAX),
       lastPingAt: team.lastPingAt ?? 0,
+      autoLaunch: !!team.autoLaunch,
+      launchAt: team.launchAt ?? 0,
+      idleKickMs: IDLE_KICK_MS,
     };
   },
 });
@@ -139,6 +201,7 @@ export const createOcTeam = mutation({
       started: false,
       createdAt: Date.now(),
       memberReadyIds: [player._id],
+      seen: [Date.now()],
       chat: [],
     } as any);
     return { success: true };
@@ -160,6 +223,9 @@ export const joinOcTeam = mutation({
     await ctx.db.patch(args.teamId, {
       memberIds: [...(team.memberIds ?? []), player._id],
       names: [...(team.names ?? []), nameOf(player)],
+      seen: [...alignSeen(team), Date.now()],
+      launchAt: undefined,
+      autoLaunch: false,
       chat: pushChat(team, {
         fromId: player._id,
         fromName: nameOf(player),
@@ -184,10 +250,15 @@ export const leaveOcTeam = mutation({
     if (team.hostId === player._id) {
       await ctx.db.delete(args.teamId);
     } else {
+      const keep = ids.filter((_: any, i: number) => i !== idx);
+      const seenBefore = alignSeen(team);
       await ctx.db.patch(args.teamId, {
-        memberIds: ids.filter((_: any, i: number) => i !== idx),
+        memberIds: keep,
         names: (team.names ?? []).filter((_: any, i: number) => i !== idx),
         memberReadyIds: (team.memberReadyIds ?? []).filter((id: any) => id !== player._id),
+        seen: seenBefore.filter((_: number, i: number) => i !== idx),
+        launchAt: undefined,
+        autoLaunch: false,
         chat: pushChat(team, {
           fromId: player._id,
           fromName: nameOf(player),
@@ -217,6 +288,10 @@ export const setOcReady = mutation({
     const next = args.ready ? [...readyIds, player._id] : readyIds.filter((id) => id !== player._id);
     await ctx.db.patch(args.teamId, {
       memberReadyIds: next,
+      seen: seenAt(team, player._id, Date.now()),
+      // Readiness changed → any armed auto-launch is void; host re-arms.
+      launchAt: undefined,
+      autoLaunch: false,
       chat: pushChat(team, {
         fromId: player._id,
         fromName: nameOf(player),
@@ -238,17 +313,29 @@ export const pingOcCrew = mutation({
     if (!team || team.started) throw new Error("Crew not found");
     if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
 
+    // Auto-kick seated members who have been idle (silent + not ready).
+    const kicked = sweepIdle(team, player._id);
+
     await ctx.db.patch(args.teamId, {
+      memberIds: team.memberIds,
+      names: team.names,
+      seen: team.seen,
+      memberReadyIds: team.memberReadyIds,
+      launchAt: undefined,
+      autoLaunch: false,
       lastPingAt: Date.now(),
-      chat: pushChat(team, {
-        fromId: player._id,
-        fromName: nameOf(player),
-        text: `🔔 ${nameOf(player)} pings the crew — sound off if you're ready!`,
-        system: true,
-        at: Date.now(),
-      }),
+      chat: [
+        ...(team.chat ?? []),
+        {
+          fromId: player._id,
+          fromName: nameOf(player),
+          text: `🔔 ${nameOf(player)} pings the crew — sound off if you're ready!`,
+          system: true,
+          at: Date.now(),
+        },
+      ].slice(-CHAT_MAX),
     } as any);
-    return { success: true };
+    return { success: true, kicked };
   },
 });
 
@@ -264,6 +351,7 @@ export const sendOcChat = mutation({
     if (!text) throw new Error("Say something first");
 
     await ctx.db.patch(args.teamId, {
+      seen: seenAt(team, player._id, Date.now()),
       chat: pushChat(team, {
         fromId: player._id,
         fromName: nameOf(player),
@@ -271,6 +359,54 @@ export const sendOcChat = mutation({
         system: false,
         at: Date.now(),
       }),
+    } as any);
+    return { success: true };
+  },
+});
+
+// Host arms the countdown: when every seat is full AND ready, the job fires
+// itself AUTO_LAUNCH_SECONDS later. Any roster/readiness change disarms it.
+export const armAutoLaunch = mutation({
+  args: { teamId: v.id("ocTeams") },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew not found");
+    if (team.hostId !== player._id) throw new Error("Only the host can arm auto-launch");
+    const ids: string[] = team.memberIds ?? [];
+    if (ids.length < TEAM_MAX)
+      throw new Error(`Need ${TEAM_MAX - ids.length} more member${TEAM_MAX - ids.length === 1 ? "" : "s"}`);
+    const readyIds: string[] = team.memberReadyIds ?? [];
+    const notReady = ids.filter((id) => id !== team.hostId && !readyIds.includes(id));
+    if (notReady.length > 0) throw new Error("Everyone must mark READY before arming auto-launch");
+
+    await ctx.db.patch(args.teamId, {
+      autoLaunch: true,
+      launchAt: Date.now() + AUTO_LAUNCH_SECONDS * 1000,
+      seen: seenAt(team, player._id, Date.now()),
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text: `⏱️ Auto-launch armed — ${AUTO_LAUNCH_SECONDS}s countdown starts now. Nobody backs out!`,
+        system: true,
+        at: Date.now(),
+      }),
+    } as any);
+    return { success: true, launchAt: Date.now() + AUTO_LAUNCH_SECONDS * 1000 };
+  },
+});
+
+export const disarmAutoLaunch = mutation({
+  args: { teamId: v.id("ocTeams") },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew not found");
+    if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
+    await ctx.db.patch(args.teamId, {
+      autoLaunch: false,
+      launchAt: undefined,
+      seen: seenAt(team, player._id, Date.now()),
     } as any);
     return { success: true };
   },
@@ -330,7 +466,12 @@ export const startOcTeam = mutation({
       await ctx.db.patch(u._id, patch as any);
     }
 
-    await ctx.db.patch(args.teamId, { started: true, startedAt: Date.now() } as any);
+    await ctx.db.patch(args.teamId, {
+      started: true,
+      startedAt: Date.now(),
+      autoLaunch: false,
+      launchAt: undefined,
+    } as any);
     return {
       success: true,
       win,

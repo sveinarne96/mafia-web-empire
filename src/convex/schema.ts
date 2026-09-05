@@ -627,6 +627,11 @@ const schema = defineSchema({
     ),
     memberReadyIds: v.optional(v.array(v.id("users"))),
     lastPingAt: v.optional(v.number()),
+    // Per-member last-activity stamps (aligned to memberIds) for idle sweeps.
+    seen: v.optional(v.array(v.number())),
+    // Host-armed auto-launch: launchAt = epoch ms when the job fires itself.
+    autoLaunch: v.optional(v.boolean()),
+    launchAt: v.optional(v.number()),
   })
     .index("by_created", ["createdAt"]),
 

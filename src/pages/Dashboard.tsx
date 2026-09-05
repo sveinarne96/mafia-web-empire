@@ -56,6 +56,7 @@ import { UpdatesPage } from "@/components/UpdatesPage";
 const SeasonPassPage = lazy(() => import("@/components/SeasonPass").then((m) => ({ default: m.SeasonPassPage })));
 const SeasonStorePanel = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({ default: m.SeasonStorePanel })));
 const DailyRewardGame = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({ default: m.DailyRewardGame })));
+const OcFloatingCrew = lazy(() => import("@/components/OcFloatingCrew").then((m) => ({ default: m.OcFloatingCrew })));
 import { LogoDropdown } from "@/components/LogoDropdown";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
@@ -1692,6 +1693,11 @@ export default function Dashboard() {
             </ErrorBoundary>
           </div>
         </main>
+
+        {/* Always-mounted OC crew watcher: ping sounds + floating lobby card */}
+        <Suspense fallback={null}>
+          <OcFloatingCrew active={activePage === "organized_crime"} onOpen={() => setPage("organized_crime")} />
+        </Suspense>
 
         {/* Right Sidebar */}
         {showRight && (

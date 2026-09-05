@@ -14,18 +14,18 @@ const COOLDOWN_MS = 15 * 60 * 1000;
 
 // 12 prize types (values scale with the pair multiplier).
 const PRIZES: { id: string; label: string; base: number; kind: "perk" | "cash" | "points" | "bullets" | "scrap" }[] = [
-  { id: "doubleXp", label: "Double XP", base: 1, kind: "perk" },
-  { id: "doublePay", label: "Double Pay", base: 1, kind: "perk" },
-  { id: "jailImmune", label: "Jail Immune", base: 1, kind: "perk" },
-  { id: "bustBoost", label: "Bust Boost", base: 1, kind: "perk" },
-  { id: "autoRanks", label: "Auto Ranks", base: 1, kind: "perk" },
-  { id: "heistChance", label: "Heist Chance", base: 1, kind: "perk" },
-  { id: "heistTimer", label: "Heist Timer", base: 1, kind: "perk" },
-  { id: "commonScrap", label: "Common Scrap", base: 5, kind: "scrap" },
-  { id: "rareScrap", label: "Rare Scrap", base: 2, kind: "scrap" },
-  { id: "cash", label: "Cash", base: 250_000, kind: "cash" },
-  { id: "points", label: "Points", base: 25, kind: "points" },
-  { id: "bullets", label: "Bullets", base: 500, kind: "bullets" },
+  { id: "doubleXp", label: "Double XP", base: 5, kind: "perk" },
+  { id: "doublePay", label: "Double Pay", base: 5, kind: "perk" },
+  { id: "jailImmune", label: "Jail Immune", base: 5, kind: "perk" },
+  { id: "bustBoost", label: "Bust Boost", base: 5, kind: "perk" },
+  { id: "autoRanks", label: "Auto Ranks", base: 5, kind: "perk" },
+  { id: "heistChance", label: "Heist Chance", base: 5, kind: "perk" },
+  { id: "heistTimer", label: "Heist Timer", base: 5, kind: "perk" },
+  { id: "commonScrap", label: "Common Scrap", base: 10, kind: "scrap" },
+  { id: "rareScrap", label: "Rare Scrap", base: 10, kind: "scrap" },
+  { id: "cash", label: "Cash", base: 5_000_000, kind: "cash" },
+  { id: "points", label: "Points", base: 2_500, kind: "points" },
+  { id: "bullets", label: "Bullets", base: 2_500, kind: "bullets" },
 ];
 
 const n = (val: any, d: number) => (typeof val === "number" && Number.isFinite(val) ? val : d);
@@ -225,10 +225,10 @@ export const finishGame = mutation({
     if (!state) throw new Error("No game to finish");
     if (state.active) throw new Error("Board still active — keep matching or use your chances first");
     const pairsCount = state.matchedPairs ?? 0;
-    // Tally matched pairs by prize
+    // Tally matched PAIRS by prize (two matched tiles = one banked prize).
     const tally: Record<string, number> = {};
-    for (const t of state.matched) {
-      const prize = state.board[t]?.prize;
+    for (let i = 0; i + 1 < state.matched.length; i += 2) {
+      const prize = state.board[state.matched[i]]?.prize;
       if (prize) tally[prize] = (tally[prize] ?? 0) + 1;
     }
     const pairs = Object.entries(tally).map(([prizeId, count]) => ({ prizeId, count }));
