@@ -853,7 +853,8 @@ function ForumPage({ forum }: { forum: string }) {
   );
 }
 
-function CityOverviewPage() {  const cities = ["New York", "Los Angeles", "Chicago", "Miami", "Las Vegas", "London", "Tokyo", "Berlin", "Sydney", "Dubai"];
+function CityOverviewPage() {
+  const cities = ["New York", "Los Angeles", "Chicago", "Miami", "Las Vegas", "London", "Tokyo", "Berlin", "Sydney", "Dubai"];
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex items-center gap-3"><Building2 className="size-7 text-primary" /><h2 className="text-2xl font-bold">City Overview</h2></div>
