@@ -3,7 +3,7 @@ import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
 import { CATEGORY_OBJECTIVES } from "../data/objectives";
-import { HEIST_JOBS, HEIST_CREWS, HEIST_EQUIPMENT } from "../data/heist";
+import { HEIST_JOBS, HEIST_CREWS, HEIST_EQUIPMENT, computeHeistChance } from "../data/heist";
 import { EMPIRE_DISTRICTS, DISTRICT_CASH } from "../data/empire";
 
 const n = (val: any, d: number) => (typeof val === "number" && Number.isFinite(val) ? val : d);
@@ -63,7 +63,13 @@ export const executeHeist = mutation({
     const cost = crew.cost + equip.cost;
     if (n(player.money, 0) < cost) throw new Error(`Need $${cost.toLocaleString()} to assemble this crew + equipment`);
 
-    const chance = Math.min(0.85, crew.chance + (player.level ?? 1) * 0.004 + (Date.now() < n(player.heistChanceUntil, 0) ? 0.1 : 0));
+    const chance = computeHeistChance(
+      job,
+      crew,
+      equip,
+      player.level ?? 1,
+      Date.now() < n(player.heistChanceUntil, 0),
+    );
     const success = Math.random() < chance;
     const cashBoost = Date.now() < n(player.cashBoostUntil, 0) ? 3 : 1;
     const payout = success ? Math.floor(randInt(job.min, job.max) * cashBoost) : 0;

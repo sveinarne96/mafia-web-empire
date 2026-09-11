@@ -1,21 +1,50 @@
 import { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Lock, ShieldAlert, Sparkles } from "lucide-react";
+import { Clock, Lock, ShieldAlert, Sparkles, Zap } from "lucide-react";
 import { crimeCategories } from "@/data/crimes";
 import { RESOURCE_COSTS } from "@/data/resourceCosts";
 
-const categoryMeta: Record<string, { title: string; icon: string; tone: string; tagline: string }> = {
-  street: { title: "Street Operations", icon: "🔪", tone: "red", tagline: "Fast moves, small targets, clean exits." },
-  robbery: { title: "Robbery Desk", icon: "💰", tone: "amber", tagline: "Plan the score before you touch the door." },
-  fraud: { title: "Fraud Bureau", icon: "🃏", tone: "yellow", tagline: "Information is leverage. Leverage is money." },
-  burglary: { title: "Burglary Board", icon: "🏠", tone: "orange", tagline: "Every property has a weakness." },
-  drugs: { title: "Distribution Network", icon: "💊", tone: "purple", tagline: "Routes, contacts, and controlled risk." },
-  organized: { title: "Organized Crime", icon: "🕵️", tone: "blue", tagline: "Bigger crews. Bigger exposure. Bigger returns." },
-  underground: { title: "Underground Desk", icon: "🕳️", tone: "slate", tagline: "The jobs nobody puts on a ledger." },
-  gta_theft: { title: "GTA Car Theft", icon: "🚗", tone: "red", tagline: "Steal anything with wheels. The bigger the engine, the bigger the score." },
-  steal_house: { title: "House Infiltration", icon: "🏠", tone: "rose", tagline: "Every home has a weakness. Find it, exploit it, vanish." },
-  murder: { title: "Contract Killings", icon: "💀", tone: "red", tagline: "No witnesses. No evidence. No mercy." },
+// Per-category accent palettes (static classes so Tailwind can see them).
+const TONE: Record<string, { text: string; border: string; selected: string; hover: string; btn: string; chip: string }> = {
+  street: { text: "text-emerald-300", border: "border-emerald-500/30", selected: "border-emerald-400/60 bg-emerald-950/25 shadow-lg shadow-emerald-900/20", hover: "hover:border-emerald-500/30", btn: "from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 shadow-emerald-900/30", chip: "bg-emerald-500/15 text-emerald-300" },
+  robbery: { text: "text-red-300", border: "border-red-500/30", selected: "border-red-400/60 bg-red-950/25 shadow-lg shadow-red-900/20", hover: "hover:border-red-500/30", btn: "from-red-600 to-rose-500 hover:from-red-500 hover:to-rose-400 shadow-red-900/30", chip: "bg-red-500/15 text-red-300" },
+  fraud: { text: "text-yellow-300", border: "border-yellow-500/30", selected: "border-yellow-400/60 bg-yellow-950/25 shadow-lg shadow-yellow-900/20", hover: "hover:border-yellow-500/30", btn: "from-yellow-600 to-amber-500 hover:from-yellow-500 hover:to-amber-400 shadow-yellow-900/30", chip: "bg-yellow-500/15 text-yellow-300" },
+  burglary: { text: "text-orange-300", border: "border-orange-500/30", selected: "border-orange-400/60 bg-orange-950/25 shadow-lg shadow-orange-900/20", hover: "hover:border-orange-500/30", btn: "from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-orange-900/30", chip: "bg-orange-500/15 text-orange-300" },
+  drugs: { text: "text-purple-300", border: "border-purple-500/30", selected: "border-purple-400/60 bg-purple-950/25 shadow-lg shadow-purple-900/20", hover: "hover:border-purple-500/30", btn: "from-purple-600 to-violet-500 hover:from-purple-500 hover:to-violet-400 shadow-purple-900/30", chip: "bg-purple-500/15 text-purple-300" },
+  organized: { text: "text-blue-300", border: "border-blue-500/30", selected: "border-blue-400/60 bg-blue-950/25 shadow-lg shadow-blue-900/20", hover: "hover:border-blue-500/30", btn: "from-blue-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 shadow-blue-900/30", chip: "bg-blue-500/15 text-blue-300" },
+  underground: { text: "text-slate-300", border: "border-slate-500/30", selected: "border-slate-400/60 bg-slate-950/40 shadow-lg shadow-slate-900/20", hover: "hover:border-slate-500/30", btn: "from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400 shadow-slate-900/30", chip: "bg-slate-500/15 text-slate-300" },
+  gta_theft: { text: "text-cyan-300", border: "border-cyan-500/30", selected: "border-cyan-400/60 bg-cyan-950/25 shadow-lg shadow-cyan-900/20", hover: "hover:border-cyan-500/30", btn: "from-cyan-600 to-blue-500 hover:from-cyan-500 hover:to-blue-400 shadow-cyan-900/30", chip: "bg-cyan-500/15 text-cyan-300" },
+  steal_house: { text: "text-rose-300", border: "border-rose-500/30", selected: "border-rose-400/60 bg-rose-950/25 shadow-lg shadow-rose-900/20", hover: "hover:border-rose-500/30", btn: "from-rose-600 to-red-500 hover:from-rose-500 hover:to-red-400 shadow-rose-900/30", chip: "bg-rose-500/15 text-rose-300" },
+  murder: { text: "text-red-300", border: "border-red-500/30", selected: "border-red-400/60 bg-red-950/30 shadow-lg shadow-red-900/20", hover: "hover:border-red-500/30", btn: "from-red-700 to-red-500 hover:from-red-600 hover:to-red-400 shadow-red-900/30", chip: "bg-red-500/15 text-red-300" },
+};
+const FALLBACK_TONE = TONE.street;
+
+const categoryMeta: Record<string, { title: string; icon: string; tagline: string }> = {
+  street: { title: "Street Operations", icon: "🔪", tagline: "Fast moves, small targets, clean exits." },
+  robbery: { title: "Robbery Desk", icon: "💰", tagline: "Plan the score before you touch the door." },
+  fraud: { title: "Fraud Bureau", icon: "🃏", tagline: "Information is leverage. Leverage is money." },
+  burglary: { title: "Burglary Board", icon: "🏠", tagline: "Every property has a weakness." },
+  drugs: { title: "Distribution Network", icon: "💊", tagline: "Routes, contacts, and controlled risk." },
+  organized: { title: "Organized Crime", icon: "🕵️", tagline: "Bigger crews. Bigger exposure. Bigger returns." },
+  underground: { title: "Underground Desk", icon: "🕳️", tagline: "The jobs nobody puts on a ledger." },
+  gta_theft: { title: "GTA Car Theft", icon: "🚗", tagline: "Steal anything with wheels. The bigger the engine, the bigger the score." },
+  steal_house: { title: "House Infiltration", icon: "🏠", tagline: "Every home has a weakness. Find it, exploit it, vanish." },
+  murder: { title: "Contract Killings", icon: "💀", tagline: "No witnesses. No evidence. No mercy." },
+};
+
+const riskTier = (risk: number) =>
+  risk < 20 ? { label: "Low Risk", cls: "text-green-400" }
+  : risk < 40 ? { label: "Moderate Risk", cls: "text-yellow-400" }
+  : risk < 60 ? { label: "High Risk", cls: "text-orange-400" }
+  : { label: "Extreme Risk", cls: "text-red-400" };
+
+const shortCash = (n: number) => {
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(0)}K`;
+  return `$${n}`;
 };
 
 export function CriminalOperationsPage({ category }: { category: string }) {
@@ -26,20 +55,24 @@ export function CriminalOperationsPage({ category }: { category: string }) {
   const recordCrime = useMutation(api.storeSystem.recordCrime);
   const getTarget = useMutation(api.storeSystem.getAssassinationTarget);
   const finishTarget = useMutation(api.storeSystem.completeAssassination);
+
   const [selectedId, setSelectedId] = useState<string>();
   const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<{ success: boolean; money: number; xp: number; coins?: number; message?: string }>();
   const [targetMsg, setTargetMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [targetBusy, setTargetBusy] = useState(false);
+
   const definition = crimeCategories.find((item) => item.id === category) ?? crimeCategories[0];
   const meta = categoryMeta[definition.id] ?? categoryMeta.street;
+  const tone = TONE[definition.id] ?? FALLBACK_TONE;
   const crimes = useMemo(() => [...definition.crimes].sort((a, b) => a.levelRequired - b.levelRequired), [definition.crimes]);
   const selected = crimes.find((crime) => crime.id === selectedId) ?? crimes[0];
 
   useEffect(() => {
     if (!selectedId && crimes[0]) setSelectedId(crimes[0].id);
   }, [crimes, selectedId]);
+
   useEffect(() => {
     const timer = window.setInterval(() => setCooldowns((current) => {
       const next = { ...current };
@@ -53,10 +86,14 @@ export function CriminalOperationsPage({ category }: { category: string }) {
   const level = player.level ?? 1;
   const unlocked = crimes.filter((crime) => level >= crime.levelRequired).length;
   const selectedLocked = level < selected.levelRequired;
-  const energy = resources?.energy ?? player.energy ?? 100;
+  const energy = resources?.energy ?? (player as any).energy ?? 100;
+  const maxEnergy = resources?.maxEnergy ?? 100;
   const cost = RESOURCE_COSTS[selected.id]?.energy ?? 5;
   const energyBlocked = energy < Math.max(5, cost);
   const cooldown = cooldowns[selected.id] ?? 0;
+  const cdTotal = Math.max(3, Math.round(selected.risk / 3));
+  const rewardRange = `${shortCash(Math.min(...crimes.map((c) => c.reward)))} – ${shortCash(Math.max(...crimes.map((c) => c.reward)))}`;
+
   const run = async () => {
     if (busy || selectedLocked || energyBlocked || cooldown > 0) return;
     setBusy(true); setResult(undefined);
@@ -65,27 +102,156 @@ export function CriminalOperationsPage({ category }: { category: string }) {
       setResult({ success: Boolean(response.success), money: response.moneyEarned ?? 0, xp: response.xpEarned ?? 0 });
       const rec = await recordCrime({ category: definition.id, reward: Math.max(0, response.moneyEarned ?? 0), xp: response.xpEarned ?? 0 }).catch(() => null);
       if (rec && rec.coinDrop) setResult((r) => (r ? { ...r, coins: rec.coinDrop } : r));
-      setCooldowns((current) => ({ ...current, [selected.id]: Math.max(3, Math.round(selected.risk / 3)) }));
+      setCooldowns((current) => ({ ...current, [selected.id]: cdTotal }));
     } catch (error) {
       setResult({ success: false, money: 0, xp: 0, message: error instanceof Error ? error.message : "Operation unavailable." });
     } finally { setBusy(false); }
   };
 
-  return <div className="animate-fade-in space-y-4">
-    <header className={`relative overflow-hidden rounded-2xl border border-${meta.tone}-500/25 bg-gradient-to-br from-${meta.tone}-950/50 via-slate-950/80 to-slate-900/60 p-5`}>
-      <div className="absolute -right-6 -top-10 text-9xl opacity-10">{meta.icon}</div>
-      <div className="relative flex items-end justify-between gap-4"><div><div className={`mb-1 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-${meta.tone}-300`}><Sparkles className="size-3" /> {meta.title}</div><h1 className="text-2xl font-black text-white">{meta.tagline}</h1><p className="mt-1 text-xs text-slate-400">{unlocked} of {crimes.length} operations available at your current rank.</p></div><div className="rounded-xl border border-white/10 bg-black/30 px-4 py-3 text-center"><div className="text-[9px] text-slate-500">RANK</div><div className={`text-xl font-black text-${meta.tone}-300`}>Lv.{level}</div></div></div>
-    </header>
-    <div className="grid gap-3 lg:grid-cols-[minmax(0,1.35fr)_minmax(260px,.65fr)]">
-      <div className="grid gap-2 sm:grid-cols-2">
-        {crimes.map((crime) => { const locked = level < crime.levelRequired; const active = crime.id === selected.id; return <button key={crime.id} onClick={() => !locked && setSelectedId(crime.id)} className={`rounded-xl border p-3 text-left transition-all ${locked ? "cursor-not-allowed border-slate-800/60 bg-slate-950/40 opacity-50" : active ? `border-${meta.tone}-400/50 bg-${meta.tone}-950/30 shadow-lg` : "border-slate-700/50 bg-slate-900/50 hover:border-white/20"}`}><div className="flex items-start gap-3"><span className="text-2xl">{locked ? "🔒" : meta.icon}</span><span className="min-w-0 flex-1"><span className="block text-sm font-bold text-white">{crime.name}</span><span className="mt-1 block text-[10px] leading-4 text-slate-400">{crime.description}</span></span></div><div className="mt-3 flex justify-between text-[10px]"><span className="text-green-400">${crime.reward.toLocaleString()}</span><span className="text-blue-400">+{crime.xp} XP</span><span className="text-yellow-300">-{RESOURCE_COSTS[crime.id]?.energy ?? 5} ⚡</span><span className="text-red-400">{crime.risk}% risk</span></div></button>; })}
+  return (
+    <div className="animate-fade-in space-y-5">
+      {/* ── GTA-style header ── */}
+      <div className="flex items-center gap-3">
+        <span className="text-4xl drop-shadow">{meta.icon}</span>
+        <div className="min-w-0">
+          <h2 className={`text-2xl font-bold ${tone.text}`}>{meta.title}</h2>
+          <p className="text-sm text-muted-foreground">{meta.tagline}</p>
+        </div>
+        <div className="ml-auto text-right">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Your Rank</div>
+          <div className={`text-lg font-black ${tone.text}`}>Lv.{level}</div>
+        </div>
       </div>
-      <section className="h-fit rounded-2xl border border-white/10 bg-slate-950/70 p-4 shadow-xl"><div className="mb-4 flex items-center justify-between"><div><div className="text-[10px] font-black uppercase tracking-widest text-slate-500">Selected operation</div>{resources && <div className="text-[10px] font-bold text-yellow-300">Energy now {energy}/{resources.maxEnergy}</div>}<h2 className="mt-1 text-xl font-black text-white">{meta.icon} {selected.name}</h2></div><div className="rounded-full bg-red-500/15 px-2 py-1 text-[10px] font-bold text-red-300">{selected.risk}% risk</div></div><p className="text-xs leading-5 text-slate-400">{selected.description}</p><div className="mt-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-3 text-[10px] leading-4 text-yellow-100/80"><span className="font-bold text-yellow-300">⚡ Energy briefing:</span> this operation uses {RESOURCE_COSTS[selected.id]?.energy ?? 5} energy when started. Energy regenerates by 5 every minute, and if your energy reaches 0, actions unlock again as soon as you recover to 5 energy.</div><div className="mt-4 grid grid-cols-2 gap-2 text-center text-[10px]"><div className="rounded-lg bg-white/5 p-2"><div className="text-slate-500">Reward</div><div className="font-bold text-green-400">${selected.reward.toLocaleString()}</div></div><div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2"><div className="text-slate-500">Energy per attempt</div><div className="font-bold text-yellow-300">-{RESOURCE_COSTS[selected.id]?.energy ?? 5} ⚡</div></div><div className="rounded-lg bg-white/5 p-2"><div className="text-slate-500">XP</div><div className="font-bold text-blue-400">+{selected.xp}</div></div><div className="rounded-lg bg-white/5 p-2"><div className="text-slate-500">Unlock</div><div className="font-bold text-purple-300">Lv.{selected.levelRequired}</div></div><div className="rounded-lg bg-white/5 p-2"><div className="text-slate-500">Cooldown</div><div className="font-bold text-amber-300">{cooldown ? `${cooldown}s` : "Ready"}</div></div></div>{selectedLocked ? <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-700/50 bg-slate-900/70 p-3 text-xs text-slate-400"><Lock className="size-4" /> Reach level {selected.levelRequired} to unlock this operation.</div> : <button onClick={run} disabled={busy || energyBlocked || cooldown > 0} className="mt-4 w-full rounded-xl px-4 py-3 text-xs font-black animate-execute-light relative overflow-hidden disabled:opacity-40">{energyBlocked ? (energy < 5 ? "Recovering to 5 ⚡" : `Need ${Math.max(5, cost)} ⚡ energy`) : busy ? "Executing..." : cooldown ? `Cooldown · ${cooldown}s` : `Execute ${selected.name} · -${cost} ⚡`}</button>}      {result && <div className={`mt-3 rounded-xl border p-3 text-xs ${result.success ? "border-green-500/30 bg-green-950/30 text-green-300" : "border-red-500/30 bg-red-950/30 text-red-300"}`}>{result.success ? `✅ Success · +$${result.money.toLocaleString()} · +${result.xp} XP${result.coins ? ` · +${result.coins} 🪙` : ""}${definition.id === "gta_theft" ? " · 🚗 Stolen vehicle sent to your Garage" : ""}${definition.id === "steal_house" ? " · 🎒 Loot added to My Items" : ""}` : `⚠️ Failed · ${result.message ?? "The operation went wrong."}`}</div>}<div className="mt-4 flex gap-2 text-[9px] leading-4 text-slate-600"><ShieldAlert className="size-3 shrink-0" /> Every top-bar operation uses its listed energy cost. Energy regenerates by 5 every minute; below 5 energy, actions unlock again at 5 energy.</div></section>
+
+      {/* ── Result (GTA style: animated slide-in) ── */}
+      {result && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`rounded-xl p-5 border-2 ${
+            result.success ? "bg-green-950/30 border-green-500/50" : "bg-red-950/30 border-red-500/50"
+          }`}
+        >
+          <div className={`text-xl font-bold ${result.success ? "text-green-400" : "text-red-400"}`}>
+            {result.success ? "✅ SUCCESS!" : "❌ FAILED!"}
+          </div>
+          {result.success ? (
+            <div className="text-sm text-green-300 mt-1">
+              💰 +${result.money.toLocaleString()} &nbsp; ⭐ +{result.xp} XP
+              {result.coins ? ` &nbsp; 🪙 +${result.coins}` : ""}
+              {definition.id === "gta_theft" ? " &nbsp; 🚗 Stolen vehicle sent to your Garage" : ""}
+              {definition.id === "steal_house" ? " &nbsp; 🎒 Loot added to My Items" : ""}
+            </div>
+          ) : (
+            <div className="text-sm text-red-300 mt-1">{result.message ?? "The operation went wrong. Better luck next time."}</div>
+          )}
+        </motion.div>
+      )}
+
+      {/* ── Info strip ── */}
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-xl border border-border/50 bg-card/50 p-3 text-center">
+          <div className="text-[9px] uppercase tracking-widest text-muted-foreground">Operations</div>
+          <div className="text-sm font-black text-white">{unlocked}/{crimes.length} unlocked</div>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card/50 p-3 text-center">
+          <div className="text-[9px] uppercase tracking-widest text-muted-foreground">Payout Range</div>
+          <div className="text-sm font-black text-green-400">{rewardRange}</div>
+        </div>
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 text-center">
+          <div className="text-[9px] uppercase tracking-widest text-yellow-300/70">Energy</div>
+          <div className="text-sm font-black text-yellow-300">{energy}/{maxEnergy} ⚡</div>
+        </div>
+      </div>
+
+      {/* ── Crime category grid (GTA Car Theft layout) ── */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {crimes.map((crime) => {
+          const locked = level < crime.levelRequired;
+          const active = crime.id === selected.id;
+          const tier = riskTier(crime.risk);
+          const onCd = (cooldowns[crime.id] ?? 0) > 0;
+          return (
+            <button key={crime.id} onClick={() => !locked && setSelectedId(crime.id)} disabled={locked}
+              className={`p-3 rounded-xl text-left transition-all border ${active ? tone.selected : `border-border/50 bg-card/50 ${tone.hover}`} ${locked ? "opacity-40 cursor-not-allowed" : ""}`}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{locked ? "🔒" : meta.icon}</span>
+                <div className="min-w-0">
+                  <div className={`text-xs font-bold ${locked ? "text-muted-foreground" : tone.text} truncate`}>{crime.name}</div>
+                  <div className="text-[9px] text-muted-foreground truncate">{crime.description}</div>
+                </div>
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="text-[8px] text-muted-foreground">{locked ? `Lv.${crime.levelRequired}` : shortCash(crime.reward)}</span>
+                <span className={`text-[8px] font-bold ${tier.cls}`}>{tier.label}</span>
+              </div>
+              {onCd && (
+                <div className="mt-1 h-1 rounded-full bg-black/40 overflow-hidden">
+                  <div className="h-full bg-amber-500/70 rounded-full transition-all duration-1000" style={{ width: `${((cooldowns[crime.id] ?? 0) / Math.max(3, Math.round(crime.risk / 3))) * 100}%` }} />
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Execute panel (GTA-style big button + cooldown bar) ── */}
+      {selectedLocked ? (
+        <div className="rounded-xl border border-slate-700/50 bg-slate-900/70 p-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+          <Lock className="size-4" /> Reach level {selected.levelRequired} to unlock {selected.name}.
+        </div>
+      ) : cooldown > 0 ? (
+        <div className="mafia-card rounded-xl p-6 text-center">
+          <Clock className="size-8 mx-auto mb-2 animate-pulse text-muted-foreground" />
+          <div className="text-sm font-bold">Laying low... {cooldown}s</div>
+          <div className="h-2 bg-background/60 rounded-full mt-3 overflow-hidden">
+            <motion.div
+              className={`h-full rounded-full bg-gradient-to-r ${tone.btn.split(" ").filter((c) => c.startsWith("from-") || c.startsWith("to-")).join(" ")}`}
+              animate={{ width: `${(cooldown / cdTotal) * 100}%` }}
+              transition={{ duration: 1 }}
+            />
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={run}
+          disabled={busy || energyBlocked}
+          className={`w-full py-4 bg-gradient-to-r ${tone.btn.split(" ").filter((c) => c.startsWith("from-") || c.startsWith("to-") || c.startsWith("hover:")).join(" ")} text-white font-bold text-lg rounded-xl transition-all disabled:opacity-50 shadow-lg`}
+        >
+          {busy ? "Executing..." : energyBlocked ? (energy < 5 ? "Recovering to 5 ⚡" : `Need ${Math.max(5, cost)} ⚡ Energy`) : `${meta.icon} Execute ${selected.name} · -${cost} ⚡`}
+        </button>
+      )}
+
+      {/* ── Selected op detail ── */}
+      <div className="rounded-xl border border-border/50 bg-card/50 p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <Sparkles className={`size-3.5 ${tone.text}`} />
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Selected operation</span>
+            </div>
+            <h3 className="mt-1 text-lg font-black text-white">{meta.icon} {selected.name}</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">{selected.description}</p>
+          </div>
+          <span className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold ${tone.chip}`}>{riskTier(selected.risk).label} · {selected.risk}%</span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-center text-[10px] sm:grid-cols-4">
+          <div className="rounded-lg bg-white/5 p-2"><div className="text-muted-foreground">Reward</div><div className="font-bold text-green-400">${selected.reward.toLocaleString()}</div></div>
+          <div className="rounded-lg bg-white/5 p-2"><div className="text-muted-foreground">XP</div><div className="font-bold text-blue-400">+{selected.xp}</div></div>
+          <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2"><div className="text-muted-foreground">Energy</div><div className="font-bold text-yellow-300">-{cost} ⚡</div></div>
+          <div className="rounded-lg bg-white/5 p-2"><div className="text-muted-foreground">Unlock</div><div className="font-bold text-purple-300">Lv.{selected.levelRequired}</div></div>
+        </div>
+        <div className="mt-3 flex gap-2 text-[9px] leading-4 text-muted-foreground">
+          <ShieldAlert className="size-3 shrink-0" />
+          Energy regenerates by 5 every minute. If you hit 0, actions unlock again once you recover to 5 energy.
+        </div>
+      </div>
+
+      {definition.id === "murder" && (
+        <AssassinationModule store={store} targetMsg={targetMsg} setTargetMsg={setTargetMsg} targetBusy={targetBusy} setTargetBusy={setTargetBusy} getTarget={getTarget} finishTarget={finishTarget} />
+      )}
     </div>
-    {definition.id === "murder" && (
-      <AssassinationModule store={store} targetMsg={targetMsg} setTargetMsg={setTargetMsg} targetBusy={targetBusy} setTargetBusy={setTargetBusy} getTarget={getTarget} finishTarget={finishTarget} />
-    )}
-  </div>;
+  );
 }
 
 function AssassinationModule({ store, targetMsg, setTargetMsg, targetBusy, setTargetBusy, getTarget, finishTarget }: any) {

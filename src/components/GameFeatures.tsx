@@ -884,12 +884,32 @@ export function CrimeCategoryPage({ categoryId }: { categoryId: string }) {
   );
 }
 
-// ===== CRIMES UNIFIED PAGE — ALL CRIMES ONE LIST =====
+// ===== CRIMES UNIFIED PAGE — GTA-STYLE CATEGORY LAUNCHER =====
+const CRIME_CAT_TONE: Record<string, { sel: string; text: string; btn: string }> = {
+  street: { sel: "border-emerald-400/60 bg-emerald-950/25", text: "text-emerald-300", btn: "from-emerald-600 to-green-500" },
+  robbery: { sel: "border-red-400/60 bg-red-950/25", text: "text-red-300", btn: "from-red-600 to-rose-500" },
+  fraud: { sel: "border-yellow-400/60 bg-yellow-950/25", text: "text-yellow-300", btn: "from-yellow-600 to-amber-500" },
+  burglary: { sel: "border-orange-400/60 bg-orange-950/25", text: "text-orange-300", btn: "from-orange-600 to-amber-500" },
+  drugs: { sel: "border-purple-400/60 bg-purple-950/25", text: "text-purple-300", btn: "from-purple-600 to-violet-500" },
+  organized: { sel: "border-blue-400/60 bg-blue-950/25", text: "text-blue-300", btn: "from-blue-600 to-sky-500" },
+  underground: { sel: "border-slate-400/60 bg-slate-950/40", text: "text-slate-300", btn: "from-slate-600 to-slate-500" },
+  gta_theft: { sel: "border-cyan-400/60 bg-cyan-950/25", text: "text-cyan-300", btn: "from-cyan-600 to-blue-500" },
+  steal_house: { sel: "border-rose-400/60 bg-rose-950/25", text: "text-rose-300", btn: "from-rose-600 to-red-500" },
+  murder: { sel: "border-red-400/60 bg-red-950/30", text: "text-red-300", btn: "from-red-700 to-red-500" },
+};
+
+const riskTierLabel = (risk: number) =>
+  risk < 20 ? { label: "Low Risk", cls: "text-green-400" }
+  : risk < 40 ? { label: "Moderate", cls: "text-yellow-400" }
+  : risk < 60 ? { label: "High Risk", cls: "text-orange-400" }
+  : { label: "Extreme", cls: "text-red-400" };
+
 export function CrimesOverviewPage({ initialCategory }: { initialCategory?: string }) {
   const player = useQuery(api.game.getPlayer);
   const [result, setResult] = useState<{ success: boolean; money: number; xp: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeCat, setActiveCat] = useState<string>(initialCategory ?? crimeCategories[0].id);
   const commitCrime = useMutation(api.game.commitCategoryCrime);
   const grantEgg = useMutation(api.gameExtended.grantEasterEgg);
   const grantGift = useMutation(api.eventGifts.grantEventGift);
@@ -903,16 +923,16 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
     c.crimes.map(cr => ({ ...cr, categoryId: c.id, categoryName: c.name, categoryIcon: c.icon }))
   );
 
-  const baseCrimes = initialCategory ? allCrimes.filter(c => c.categoryId === initialCategory) : allCrimes;
+  const category = crimeCategories.find(c => c.id === activeCat) ?? crimeCategories[0];
+  const tone = CRIME_CAT_TONE[category.id] ?? CRIME_CAT_TONE.street;
+  const level = player?.level ?? 0;
 
-  const filtered = searchQuery
-    ? baseCrimes.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase()) || c.categoryName.toLowerCase().includes(searchQuery.toLowerCase()))
-    : baseCrimes;
-
-  const sorted = [...filtered].sort((a, b) => b.xp - a.xp);
+  const baseCrimes = searchQuery
+    ? allCrimes.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.description.toLowerCase().includes(searchQuery.toLowerCase()) || c.categoryName.toLowerCase().includes(searchQuery.toLowerCase()))
+    : [...category.crimes].sort((a, b) => a.levelRequired - b.levelRequired);
 
   const executeCrime = async (crime: any) => {
-    if ((player?.level ?? 0) < crime.levelRequired) return;
+    if (level < crime.levelRequired) return;
     if ((player?.money ?? 0) < 100) return;
     if (cdRemaining > 0) return;
     setLoading(true); setResult(null);
@@ -926,57 +946,92 @@ export function CrimesOverviewPage({ initialCategory }: { initialCategory?: stri
     setLoading(false);
   };
 
-  const catBg: Record<string, string> = {
-    street: "bg-green-950/30 border-green-500/20", robbery: "bg-red-950/30 border-red-500/20",
-    fraud: "bg-yellow-950/30 border-yellow-500/20", burglary: "bg-orange-950/30 border-orange-500/20",
-    drugs: "bg-purple-950/30 border-purple-500/20", organized: "bg-blue-950/30 border-blue-500/20",
-    underground: "bg-gray-950/30 border-gray-500/20",
-  };
-
   return (
     <div className="animate-fade-in space-y-4">
       <AnimatePresence>{result && <EpicActionResult success={result.success} money={result.money} xp={result.xp} onClose={() => setResult(null)} />}</AnimatePresence>
       {cdRemaining > 0 && (
         <div className="mafia-card rounded-xl p-3 flex items-center gap-3">
           <span className="text-sm">⏳</span>
-          <div className="flex-1"><div className="w-full bg-secondary rounded-full h-2"><div className="bg-red-500 h-2 rounded-full transition-all" style={{ width: `${((15 - cdRemaining) / 15) * 100}%` }} /></div></div>
+          <div className="flex-1"><div className="w-full bg-secondary rounded-full h-2"><div className={`h-2 rounded-full transition-all bg-gradient-to-r ${tone.btn}`} style={{ width: `${((15 - cdRemaining) / 15) * 100}%` }} /></div></div>
           <span className="text-xs font-bold text-red-400">{cdRemaining}s</span>
         </div>
       )}
       <div className="flex items-center gap-3">
-        <span className="text-3xl">🔥</span>
-        <div><h2 className="text-2xl font-bold">All Crimes</h2><p className="text-xs text-muted-foreground">{sorted.length} crimes (filtered by category)</p></div>
+        <span className="text-3xl">{category.icon}</span>
+        <div>
+          <h2 className={`text-2xl font-bold ${tone.text}`}>{searchQuery ? "Search Results" : category.name}</h2>
+          <p className="text-xs text-muted-foreground">{searchQuery ? `${baseCrimes.length} crimes matching "${searchQuery}"` : category.description}</p>
+        </div>
+        <div className="ml-auto text-right">
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Your Rank</div>
+          <div className="text-lg font-black text-primary">Lv.{level}</div>
+        </div>
       </div>
       <div className="relative">
         <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="🔍 Search crimes..." className="w-full bg-background border border-border rounded-xl px-4 py-2.5 text-sm focus:border-primary/50 transition" />
         {searchQuery && <button onClick={() => setSearchQuery("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground">✕</button>}
       </div>
-      <div className="space-y-2">
-        {sorted.map((crime: any) => {
-          const locked = (player?.level ?? 0) < crime.levelRequired;
-          return (
-            <motion.div key={crime.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} whileHover={!locked && cdRemaining <= 0 ? { scale: 1.01 } : undefined}
-              className={`rounded-xl p-3 border transition-all ${locked ? "opacity-30" : cdRemaining > 0 || loading ? "opacity-50 pointer-events-none" : "hover:border-primary/40 cursor-pointer"} ${catBg[crime.categoryId] || "mafia-card"}`}
-              onClick={() => !locked && cdRemaining <= 0 && !loading && executeCrime(crime)}>
-              <div className="flex items-center gap-3">
-                <span className="text-lg">{crime.categoryIcon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm truncate">{crime.name}</span>
-                    {locked && <span className="text-[10px] bg-red-950/60 text-red-400 px-1.5 py-0.5 rounded-full font-bold shrink-0">🔒 Lv.{crime.levelRequired}</span>}
+
+      {/* GTA-style category grid */}
+      {!searchQuery && (
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2">
+          {crimeCategories.map((cat) => {
+            const cTone = CRIME_CAT_TONE[cat.id] ?? CRIME_CAT_TONE.street;
+            const unlocked = cat.crimes.filter(c => level >= c.levelRequired).length;
+            const active = cat.id === activeCat;
+            return (
+              <button key={cat.id} onClick={() => setActiveCat(cat.id)}
+                className={`p-3 rounded-xl text-left transition-all border ${active ? `${cTone.sel} shadow-lg` : "border-border/50 bg-card/50 hover:border-white/20"}`}>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{cat.icon}</span>
+                  <div className="min-w-0">
+                    <div className={`text-xs font-bold truncate ${cTone.text}`}>{cat.name}</div>
+                    <div className="text-[9px] text-muted-foreground">{unlocked}/{cat.crimes.length} unlocked</div>
                   </div>
-                  <div className="text-[11px] text-muted-foreground truncate">{crime.description}</div>
                 </div>
-                <div className="flex items-center gap-3 shrink-0 text-[11px] font-bold">
-                  <span className="text-red-400">{crime.risk}%</span>
-                  <span className="text-green-400">${crime.reward.toLocaleString()}</span>
-                  <span className="text-blue-400">+{crime.xp} XP</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Crime grid — GTA Car Theft card style */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {baseCrimes.map((crime: any) => {
+          const locked = level < crime.levelRequired;
+          const tier = riskTierLabel(crime.risk);
+          const catTone = CRIME_CAT_TONE[crime.categoryId] ?? CRIME_CAT_TONE.street;
+          return (
+            <motion.div key={crime.id}
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              whileHover={!locked && cdRemaining <= 0 ? { scale: 1.02 } : undefined}
+              className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${locked ? "border-border/30 bg-card/30 opacity-40" : `${catTone.sel} hover:shadow-lg`}`}
+              onClick={() => !locked && cdRemaining <= 0 && !loading && executeCrime(crime)}>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{locked ? "🔒" : crime.categoryIcon}</span>
+                <div className="min-w-0">
+                  <div className={`text-xs font-bold truncate ${locked ? "text-muted-foreground" : catTone.text}`}>{crime.name}</div>
+                  <div className="text-[9px] text-muted-foreground truncate">{crime.description}</div>
                 </div>
+              </div>
+              <div className="flex justify-between mt-1.5">
+                <span className="text-[8px] text-muted-foreground">{locked ? `Lv.${crime.levelRequired}` : searchQuery ? crime.categoryName : `$${crime.reward.toLocaleString()}`}</span>
+                <span className={`text-[8px] font-bold ${tier.cls}`}>{tier.label}</span>
               </div>
             </motion.div>
           );
         })}
       </div>
+      {baseCrimes.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border/50 py-10 text-center text-xs text-muted-foreground">
+          No crimes match "{searchQuery}".
+        </div>
+      )}
+      {!searchQuery && (
+        <div className="text-center text-[10px] text-muted-foreground">
+          Tap any card to run the job · 15s cooldown per category · failed jobs pay nothing
+        </div>
+      )}
     </div>
   );
 }
