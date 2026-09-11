@@ -205,7 +205,7 @@ export function BulletCalculatorPage() {
           <div>
             <div className="mb-1 text-[10px] font-bold text-slate-500">WEAPON</div>
             <select value={weaponId} onChange={(e) => setWeaponId(e.target.value)} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs">
-              {CALC_WEAPONS.map((w) => <option key={w.id} value={w.id}>{w.icon} {w.name} — DMG {w.dmg} · ${nf(w.cost)}</option>)}
+              {CALC_WEAPONS.map((w) => <option key={w.id} value={w.id}>{(w as any).icon} {w.name} — DMG {w.dmg} · ${nf(w.cost)}</option>)}
             </select>
           </div>
           <div>

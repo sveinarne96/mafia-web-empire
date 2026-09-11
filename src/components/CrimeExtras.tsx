@@ -101,10 +101,10 @@ export function ChasePage() {
   const run = async () => {
     setBusy(true); setMsg(null);
     try {
-      const r = await chase({ stake });
+      const r: any = await chase({ stake });
       setMsg(r.escaped
         ? { ok: true, text: `🚗 LOST THEM! Shook the cops and fenced the goods — +$${nf(r.payout)} · 🔴 +${r.wantedGained} wanted` }
-        : { ok: false, text: r.jailTime > 0 ? `🚔 BUSTED! Lost $${nf(r.lost)} and got locked up.` : `🚔 BUSTED! The cops seized $${nf(r.lost)}.` });
+        : { ok: false, text: (r.jailTime ?? 0) > 0 ? `🚔 BUSTED! Lost $${nf(r.lost)} and got locked up.` : `🚔 BUSTED! The cops seized $${nf(r.lost)}.` });
     } catch (e: any) { setMsg({ ok: false, text: e?.message ?? "Chase failed" }); }
     setBusy(false);
   };

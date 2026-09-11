@@ -48,7 +48,7 @@ export const buyLead = mutation({
     await ctx.db.patch(player._id, {
       money: (player.money ?? 0) - cost,
       lead: ((player as any).lead ?? 0) + qty,
-    });
+    } as any);
     return { bought: qty, cost, lead: ((player as any).lead ?? 0) + qty };
   },
 });
@@ -70,7 +70,7 @@ export const craftBullets = mutation({
       money: (player.money ?? 0) - cashNeeded,
       bullets: (player.bullets ?? 0) + qty,
       bulletsCrafted: ((player as any).bulletsCrafted ?? 0) + qty,
-    });
+    } as any);
     return { crafted: qty, leadUsed: leadNeeded, cashUsed: cashNeeded, bullets: (player.bullets ?? 0) + qty };
   },
 });
@@ -85,7 +85,7 @@ export const upgradeBulletFactory = mutation({
     await ctx.db.patch(player._id, {
       money: (player.money ?? 0) - cost,
       bulletFactoryLevel: level + 1,
-    });
+    } as any);
     return { level: level + 1, cost };
   },
 });
@@ -132,7 +132,7 @@ export const runRangeDrill = mutation({
       attack: atkUp ? (player.attack ?? 10) + 1 : (player.attack ?? 10),
       rangeShots: ((player as any).rangeShots ?? 0) + d.bullets,
       rangeDrillsToday: ((player as any).rangeDrillsToday ?? 0) + 1,
-    });
+    } as any);
     return {
       accGain,
       accuracy: newAcc,
@@ -182,7 +182,7 @@ export const hireDetective = mutation({
       if ((target.familyId ?? null) !== null) intel.push("Member of a family");
       intel.push(`Last seen online recently`);
     }
-    await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost, detectivesHired: ((player as any).detectivesHired ?? 0) + 1 });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost, detectivesHired: ((player as any).detectivesHired ?? 0) + 1 } as any);
     await ctx.db.insert("detectiveCases", {
       hirerId: player._id,
       targetId: args.targetId,
@@ -238,7 +238,7 @@ export const policeChase = mutation({
         chasesWon: ((player as any).chasesWon ?? 0) + 1,
         wantedLevel: Math.min(20, (player.wantedLevel ?? 0) + 1),
         lastCrimeAt: Date.now(),
-      });
+      } as any);
       return { escaped: true, payout, wantedGained: 1, chance: escapeChance };
     }
     // Busted: lose the stake, possible jail time
@@ -249,7 +249,7 @@ export const policeChase = mutation({
       inPrison: jailTime > 0,
       prisonTime: jailTime,
       lastCrimeAt: Date.now(),
-    });
+    } as any);
     return { escaped: false, lost: stake, jailTime, chance: escapeChance };
   },
 });
@@ -294,7 +294,7 @@ export const buyWreck = mutation({
       scrapMetal: ((player as any).scrapMetal ?? 0) + scrap,
       rareParts: rare ? ((player as any).rareParts ?? 0) + 1 : ((player as any).rareParts ?? 0),
       wrecksStripped: ((player as any).wrecksStripped ?? 0) + 1,
-    });
+    } as any);
     await ctx.db.insert("scrapWrecks", {
       ownerId: player._id,
       tier: args.tier,
@@ -318,7 +318,7 @@ export const sellScrap = mutation({
     await ctx.db.patch(player._id, {
       scrapMetal: ((player as any).scrapMetal ?? 0) - qty,
       money: (player.money ?? 0) + payout,
-    });
+    } as any);
     return { sold: qty, payout };
   },
 });
@@ -352,7 +352,7 @@ export const vaultDeposit = mutation({
     await ctx.db.patch(player._id, {
       money: (player.money ?? 0) - amt,
       vaultCash: ((player as any).vaultCash ?? 0) + amt,
-    });
+    } as any);
     return { vaulted: ((player as any).vaultCash ?? 0) + amt };
   },
 });
@@ -366,7 +366,7 @@ export const vaultWithdraw = mutation({
     await ctx.db.patch(player._id, {
       money: (player.money ?? 0) + amt,
       vaultCash: ((player as any).vaultCash ?? 0) - amt,
-    });
+    } as any);
     return { vaulted: ((player as any).vaultCash ?? 0) - amt };
   },
 });
@@ -378,7 +378,7 @@ export const upgradeVault = mutation({
     const level = (player as any).vaultLevel ?? 1;
     const cost = 100_000 * level;
     if ((player.money ?? 0) < cost) throw new Error(`Upgrade costs $${cost.toLocaleString()}`);
-    await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost, vaultLevel: level + 1 });
+    await ctx.db.patch(player._id, { money: (player.money ?? 0) - cost, vaultLevel: level + 1 } as any);
     return { level: level + 1, cost };
   },
 });
@@ -426,7 +426,7 @@ export const getCrimeAchievements = query({
       .withIndex("by_user", (q) => q.eq("userId", player._id))
       .collect();
     const byType: Record<string, { total: number; won: number }> = {};
-    for (const c: any of crimes) {
+    for (const c of crimes) {
       const t = c.type ?? "other";
       byType[t] = byType[t] ?? { total: 0, won: 0 };
       byType[t].total++;
