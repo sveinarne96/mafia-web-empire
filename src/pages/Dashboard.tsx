@@ -470,7 +470,7 @@ function OverviewQuickPanel({ onNavigate }: { onNavigate?: (page: string) => voi
         <div className="text-[10px] font-bold text-amber-300 mb-2">📣 Announcements</div>
         {announcements?.announcements?.length ? (
           <div className="space-y-1.5">
-            {announcements.announcements.filter((a: any) => a.active && a.expiresAt > Date.now()).slice(0, 3).map((a: any) => (
+            {announcements.announcements.slice(0, 3).map((a: any) => (
               <div key={a.id} className="text-[10px] flex items-start gap-2 rounded-md bg-slate-900/60 p-2" style={{ borderLeft: `3px solid ${a.color || "#f59e0b"}` }}>
                 <span>{a.emoji || "📌"}</span>
                 <div className="flex-1"><span className="text-slate-200 font-bold">{a.text}</span>
@@ -579,10 +579,10 @@ function OverviewQuickPanel({ onNavigate }: { onNavigate?: (page: string) => voi
           <div key={u._id} className="flex items-start gap-2 rounded-md bg-slate-900/60 border border-slate-700/30 px-2 py-1.5 mb-1">
             <span className="text-xs">🛠️</span>
             <div className="flex-1">
-              <div className="text-[10px] font-bold text-slate-200">{u.title}</div>
-              {u.body && <div className="text-[9px] text-muted-foreground">{u.body}</div>}
+              <div className="text-[10px] font-bold text-slate-200">{u.icon ? `${u.icon} ` : ""}{u.title}</div>
+              {u.description && <div className="text-[9px] text-muted-foreground">{u.description}</div>}
             </div>
-            <span className="text-[8px] text-muted-foreground whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</span>
+            <span className="text-[8px] text-muted-foreground whitespace-nowrap">{new Date(u.timestamp).toLocaleDateString()}</span>
           </div>
         ))}
         {(updates ?? []).length === 0 && <div className="text-[10px] text-muted-foreground">No updates posted yet.</div>}
