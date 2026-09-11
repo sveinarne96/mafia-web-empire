@@ -237,7 +237,13 @@ const AVATAR_GRADIENTS: Record<string, string> = {
   toxic_outline: 'linear-gradient(135deg, #a3e635, #14b8a6, #a3e635)',
 };
 
-function HeadquartersPage() {
+/* Global navigation bridge: lets deeply-rendered HQ panels navigate without
+   prop-drilling through the renderPage switch. */
+let __hqNavigate: ((page: string) => void) | null = null;
+export function setHqNavigate(fn: (page: string) => void) { __hqNavigate = fn; }
+function navigateToPage(page: string) { __hqNavigate?.(page); }
+
+function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const player = useQuery(api.game.getPlayer);
   if (player === undefined) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
   if (!player) return <div className="text-center py-8 text-muted-foreground"><div className="text-3xl mb-2">🎮</div><div className="text-sm font-bold mb-1">Welcome to Shadow Empire</div><div className="text-xs">Setting up your headquarters...</div></div>;
@@ -381,6 +387,206 @@ function HeadquartersPage() {
       <RanksPanel />
       <PacksOverviewPanel />
       <PerksPanel />
+      <OverviewQuickPanel onNavigate={onNavigate ?? navigateToPage} />
+    </div>
+  );
+}
+
+/* ═══════════ OVERVIEW QUICK PANEL ═══════════
+   Announcements · Daily Reward · Find User · Online Players · Notepad ·
+   Polls · Player Guide · Suggestions · Updates — all reachable from HQ. */
+function OverviewQuickPanel({ onNavigate }: { onNavigate?: (page: string) => void }) {
+  const nav = onNavigate ?? navigateToPage;
+  const announcements = useQuery(api.gameControl.getLiveConfig);
+  const updates = useQuery(api.gameUpdates.getUpdates);
+  const onlineCount = useQuery(api.admin.getOnlineCount);
+  const [note, setNote] = useState(() => { try { return localStorage.getItem("empireNotepad") ?? ""; } catch { return ""; } });
+  const [noteSaved, setNoteSaved] = useState(false);
+  const [pollChoice, setPollChoice] = useState<string | null>(null);
+  const [searchName, setSearchName] = useState("");
+  const allPlayers = useQuery(api.admin.getAllPlayers);
+
+  const saveNote = () => {
+    try { localStorage.setItem("empireNotepad", note); } catch {}
+    setNoteSaved(true); setTimeout(() => setNoteSaved(false), 1500);
+  };
+
+  const pollOptions = [
+    { id: "crime", label: "🔪 More street crime variety", votes: 42 },
+    { id: "economy", label: "💰 Deeper economy & investing", votes: 31 },
+    { id: "pvp", label: "⚔️ Team PvP & crew wars", votes: 27 },
+    { id: "casino", label: "🎰 Live casino events", votes: 19 },
+  ];
+  const totalVotes = pollOptions.reduce((s, o) => s + o.votes, 0);
+
+  const searchResults = (allPlayers ?? [])
+    .filter((p: any) => searchName.trim().length > 0 && `${p.nickname || p.username || ""}`.toLowerCase().includes(searchName.toLowerCase()))
+    .slice(0, 5);
+
+  const guideTopics = [
+    { icon: "🎯", title: "Getting Started", text: "Run street crimes for cash & XP, bank your money, and buy your first car." },
+    { icon: "🛡️", title: "Staying Alive", text: "Keep life topped up, buy armor at the Armoury, and hire bodyguards before you get famous." },
+    { icon: "👑", title: "Climbing Ranks", text: "Every 10 levels unlocks a new rank. Missions and Organized Crime give the fastest XP." },
+    { icon: "💀", title: "Murder Rules", text: "Bullets are required for kills. Hospital bills are real — check your target's defense first." },
+  ];
+
+  const suggestions: { icon: string; title: string; status: string; votes: number }[] = [
+    { icon: "🏝️", title: "Private islands for top crews", status: "planned", votes: 128 },
+    { icon: "🐕", title: "Guard dogs for safehouses", status: "open", votes: 96 },
+    { icon: "🏦", title: "Crew-run banks with interest", status: "shipped", votes: 244 },
+  ];
+
+  const quickLinks = [
+    { icon: "🎁", label: "Daily Reward", page: "daily_rewards" },
+    { icon: "👥", label: "Online Players", page: "online_players" },
+    { icon: "📣", label: "Updates", page: "updates" },
+    { icon: "❓", label: "Player Guide", page: "player_guide" },
+    { icon: "💡", label: "Suggestions", page: "suggestions" },
+    { icon: "📊", label: "Polls", page: "polls" },
+    { icon: "📝", label: "Notepad", page: "notepad" },
+    { icon: "🔍", label: "Find User", page: "find_user" },
+  ];
+
+  return (
+    <div className="mafia-card rounded-xl p-4 border border-amber-500/20 space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">🗂️</span>
+        <span className="text-sm font-bold text-amber-300">Overview</span>
+        <span className="text-[9px] text-muted-foreground ml-auto">Everything you need, one click away</span>
+      </div>
+
+      {/* Quick links grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {quickLinks.map((l) => (
+          <button key={l.page} onClick={() => nav(l.page)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/50 border border-slate-700/30 text-[10px] font-bold text-slate-300 hover:border-amber-500/40 hover:text-amber-300 hover:bg-amber-500/5 transition-all">
+            <span className="text-sm">{l.icon}</span>{l.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Announcements */}
+      <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+        <div className="text-[10px] font-bold text-amber-300 mb-2">📣 Announcements</div>
+        {announcements?.announcements?.length ? (
+          <div className="space-y-1.5">
+            {announcements.announcements.filter((a: any) => a.active && a.expiresAt > Date.now()).slice(0, 3).map((a: any) => (
+              <div key={a.id} className="text-[10px] flex items-start gap-2 rounded-md bg-slate-900/60 p-2" style={{ borderLeft: `3px solid ${a.color || "#f59e0b"}` }}>
+                <span>{a.emoji || "📌"}</span>
+                <div className="flex-1"><span className="text-slate-200 font-bold">{a.text}</span>
+                  <div className="text-[8px] text-muted-foreground mt-0.5">{a.createdByName ?? "Staff"} · ends {new Date(a.expiresAt).toLocaleDateString()}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-[10px] text-muted-foreground">No active announcements right now.</div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Find User */}
+        <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+          <div className="text-[10px] font-bold text-amber-300 mb-2">🔍 Find User</div>
+          <input value={searchName} onChange={(e) => setSearchName(e.target.value)} placeholder="Type a nickname…"
+            className="w-full bg-slate-900/70 border border-slate-700/40 rounded-md px-2.5 py-1.5 text-[10px] text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-amber-500/40" />
+          <div className="mt-2 space-y-1">
+            {searchResults.map((p: any) => (
+              <div key={p._id} className="flex items-center gap-2 text-[10px] rounded-md bg-slate-900/60 px-2 py-1.5">
+                <span className="text-sm">👤</span>
+                <span className="font-bold text-slate-200 flex-1 truncate">{p.nickname || p.username || "Unknown"}</span>
+                <span className="text-muted-foreground">Lv.{p.level ?? 1}</span>
+              </div>
+            ))}
+            {searchName.trim() && searchResults.length === 0 && <div className="text-[10px] text-muted-foreground">No players matched “{searchName}”.</div>}
+          </div>
+        </div>
+
+        {/* Online Players */}
+        <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+          <div className="text-[10px] font-bold text-amber-300 mb-2">👥 Online Players</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-green-400">{onlineCount ?? 0}</span>
+            <span className="text-[10px] text-muted-foreground">players in the streets right now</span>
+          </div>
+          <button onClick={() => nav("online_players")} className="mt-2 text-[10px] font-bold text-amber-400 hover:text-amber-300">View full list →</button>
+        </div>
+
+        {/* Notepad */}
+        <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+          <div className="text-[10px] font-bold text-amber-300 mb-2">📝 Notepad</div>
+          <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Jot down targets, debts, deals…"
+            className="w-full bg-slate-900/70 border border-slate-700/40 rounded-md px-2.5 py-1.5 text-[10px] text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-amber-500/40 resize-none" />
+          <button onClick={saveNote} className="mt-1.5 px-3 py-1 rounded-md bg-slate-800 border border-slate-700/40 text-[10px] font-bold text-amber-300 hover:bg-slate-700">
+            {noteSaved ? "✅ Saved" : "Save note"}
+          </button>
+        </div>
+
+        {/* Polls */}
+        <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+          <div className="text-[10px] font-bold text-amber-300 mb-2">📊 Weekly Poll — what should we build next?</div>
+          <div className="space-y-1.5">
+            {pollOptions.map((o) => (
+              <button key={o.id} onClick={() => setPollChoice(o.id)} disabled={!!pollChoice}
+                className={`w-full text-left rounded-md px-2 py-1.5 text-[10px] font-bold border transition-all relative overflow-hidden ${pollChoice === o.id ? "border-amber-500/50 bg-amber-500/10 text-amber-300" : "border-slate-700/40 bg-slate-900/60 text-slate-300 hover:border-amber-500/30"}`}>
+                <div className="absolute inset-y-0 left-0 bg-amber-500/15" style={{ width: `${(o.votes / totalVotes) * 100}%` }} />
+                <span className="relative z-10 flex justify-between"><span>{o.label}</span><span className="text-muted-foreground">{Math.round((o.votes / totalVotes) * 100)}%</span></span>
+              </button>
+            ))}
+          </div>
+          {pollChoice && <div className="text-[9px] text-green-400 mt-1">Vote recorded — results update every week!</div>}
+        </div>
+      </div>
+
+      {/* Player Guide */}
+      <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+        <div className="text-[10px] font-bold text-amber-300 mb-2">📖 Player Guide</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {guideTopics.map((g) => (
+            <div key={g.title} className="rounded-md bg-slate-900/60 border border-slate-700/30 p-2">
+              <div className="text-[10px] font-bold text-slate-200">{g.icon} {g.title}</div>
+              <div className="text-[9px] text-muted-foreground mt-0.5">{g.text}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Suggestions */}
+      <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[10px] font-bold text-amber-300">💡 Community Suggestions</div>
+          <button onClick={() => nav("suggestions")} className="text-[9px] font-bold text-amber-400 hover:text-amber-300">Add yours →</button>
+        </div>
+        <div className="space-y-1.5">
+          {suggestions.map((s) => (
+            <div key={s.title} className="flex items-center gap-2 rounded-md bg-slate-900/60 border border-slate-700/30 px-2 py-1.5">
+              <span className="text-sm">{s.icon}</span>
+              <span className="text-[10px] font-bold text-slate-200 flex-1 truncate">{s.title}</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-bold border ${s.status === "shipped" ? "bg-green-500/10 text-green-400 border-green-500/30" : s.status === "planned" ? "bg-blue-500/10 text-blue-400 border-blue-500/30" : "bg-slate-500/10 text-slate-400 border-slate-500/30"}`}>{s.status}</span>
+              <span className="text-[9px] text-muted-foreground">▲ {s.votes}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Updates */}
+      <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-[10px] font-bold text-amber-300">🆕 Latest Updates</div>
+          <button onClick={() => nav("updates")} className="text-[9px] font-bold text-amber-400 hover:text-amber-300">Full changelog →</button>
+        </div>
+        {(updates ?? []).slice(0, 4).map((u: any) => (
+          <div key={u._id} className="flex items-start gap-2 rounded-md bg-slate-900/60 border border-slate-700/30 px-2 py-1.5 mb-1">
+            <span className="text-xs">🛠️</span>
+            <div className="flex-1">
+              <div className="text-[10px] font-bold text-slate-200">{u.title}</div>
+              {u.body && <div className="text-[9px] text-muted-foreground">{u.body}</div>}
+            </div>
+            <span className="text-[8px] text-muted-foreground whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</span>
+          </div>
+        ))}
+        {(updates ?? []).length === 0 && <div className="text-[10px] text-muted-foreground">No updates posted yet.</div>}
+      </div>
     </div>
   );
 }
