@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { OC_JOBS, OC_ROLES, EXECUTE_PHASE_SECONDS, computeOcChance } from "../data/ocJobs";
 
 async function getCurrentUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
@@ -11,18 +12,6 @@ async function getCurrentUser(ctx: any) {
 }
 
 const nameOf = (p: any) => p?.nickname || p?.username || p?.name || "Unknown";
-
-// OC job board — each crew slots in behind one job.
-export const OC_JOBS = [
-  { id: "job_grocery_heist", icon: "🛒", name: "Grocery Depot Heist", level: 5, cost: 3_000_000, min: 4_500_000, max: 6_500_000, base: 0.62 },
-  { id: "job_armored_truck", icon: "🚛", name: "Armored Truck Ambush", level: 10, cost: 8_000_000, min: 12_000_000, max: 18_000_000, base: 0.55 },
-  { id: "job_casino_floor", icon: "🎰", name: "Casino Floor Sweep", level: 15, cost: 18_000_000, min: 26_000_000, max: 40_000_000, base: 0.50 },
-  { id: "job_port_raid", icon: "⚓", name: "Port Container Raid", level: 20, cost: 35_000_000, min: 52_000_000, max: 78_000_000, base: 0.45 },
-  { id: "job_bank_branch", icon: "🏦", name: "Federal Bank Branch", level: 25, cost: 60_000_000, min: 90_000_000, max: 135_000_000, base: 0.42 },
-  { id: "job_art_vault", icon: "🖼️", name: "Art Vault Job", level: 30, cost: 95_000_000, min: 145_000_000, max: 220_000_000, base: 0.38 },
-  { id: "job_central_vault", icon: "💎", name: "Central Vault Cracking", level: 40, cost: 160_000_000, min: 250_000_000, max: 380_000_000, base: 0.34 },
-  { id: "job_empire_reserve", icon: "👑", name: "Empire Reserve Job", level: 55, cost: 280_000_000, min: 440_000_000, max: 680_000_000, base: 0.30 },
-];
 
 const TEAM_MAX = 3;
 const TTL_MS = 12 * 60 * 60 * 1000;
@@ -120,15 +109,21 @@ export const getMyOcTeam = query({
     }
     const readyIds: string[] = team.memberReadyIds ?? [];
     const seen = alignSeen(team);
+    // Live odds preview with the roles as picked right now.
+    let odds: number | null = null;
+    if (members.length > 0) {
+      try { odds = computeOcChance(team, members); } catch { odds = null; }
+    }
     return {
       _id: team._id,
       jobIcon: team.jobIcon,
       jobName: team.jobName,
+      jobId: team.jobId,
       cost: team.cost,
       rewardMin: team.rewardMin,
       rewardMax: team.rewardMax,
       successBase: team.successBase,
-      members: members.map((m, i) => ({ ...m, seenAt: seen[i] ?? team.createdAt ?? 0 })),
+      members: members.map((m, i) => ({ ...m, seenAt: seen[i] ?? team.createdAt ?? 0, role: (team.roles ?? [])[i] ?? null })),
       isHost: team.hostId === player._id,
       hostId: team.hostId,
       hostName: team.hostName,
@@ -140,7 +135,40 @@ export const getMyOcTeam = query({
       autoLaunch: !!team.autoLaunch,
       launchAt: team.launchAt ?? 0,
       idleKickMs: IDLE_KICK_MS,
+      // Role phase + execute phase
+      roles: team.roles ?? [],
+      jobPhase: team.jobPhase ?? "prep",
+      executesAt: team.executesAt ?? 0,
+      odds,
+      jobResult: team.jobResult ?? null,
+      executeSeconds: EXECUTE_PHASE_SECONDS,
     };
+  },
+});
+
+// Recent resolved scores for the OC board.
+export const getOcHistory = query({
+  args: {},
+  handler: async (ctx) => {
+    const player: any = await getCurrentUser(ctx);
+    const rows = await ctx.db
+      .query("ocTeams")
+      .withIndex("by_created", (q: any) => q.gt("createdAt", Date.now() - 24 * 3600_000))
+      .collect();
+    return rows
+      .filter((t: any) => t.started && t.jobResult)
+      .sort((a: any, b: any) => (b.jobResult?.at ?? 0) - (a.jobResult?.at ?? 0))
+      .slice(0, 12)
+      .map((t: any) => ({
+        _id: t._id,
+        jobIcon: t.jobIcon,
+        jobName: t.jobName,
+        win: t.jobResult.win,
+        rewardEach: t.jobResult.rewardEach,
+        crewSize: (t.memberIds ?? []).length,
+        at: t.jobResult.at,
+        iWasIn: (t.memberIds ?? []).includes(player?._id),
+      }));
   },
 });
 
@@ -304,6 +332,39 @@ export const setOcReady = mutation({
   },
 });
 
+// Pick (or change) your specialist role for the current job.
+export const setOcRole = mutation({
+  args: { teamId: v.id("ocTeams"), role: v.string() },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew not found");
+    if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
+    if (team.jobPhase === "execute") throw new Error("Too late — the job is already going down");
+    if (!OC_ROLES[args.role]) throw new Error("Unknown role");
+
+    const ids: string[] = team.memberIds ?? [];
+    const idx = ids.indexOf(player._id);
+    const roles: string[] = [...((team.roles ?? []) as string[])];
+    while (roles.length < ids.length) roles.push("");
+    const previous = roles[idx] || "None";
+    roles[idx] = args.role;
+
+    await ctx.db.patch(args.teamId, {
+      roles,
+      seen: seenAt(team, player._id, Date.now()),
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text: `${nameOf(player)} took the ${OC_ROLES[args.role].name} role. ${OC_ROLES[args.role].icon}`,
+        system: true,
+        at: Date.now(),
+      }),
+    } as any);
+    return { success: true, role: args.role, previous };
+  },
+});
+
 // Loud "sound off" ping that every member sees in the crew chat.
 export const pingOcCrew = mutation({
   args: { teamId: v.id("ocTeams") },
@@ -364,8 +425,8 @@ export const sendOcChat = mutation({
   },
 });
 
-// Host arms the countdown: when every seat is full AND ready, the job fires
-// itself AUTO_LAUNCH_SECONDS later. Any roster/readiness change disarms it.
+// Host arms the countdown: when every seat is full AND ready, the job moves
+// into the execute phase. Any roster/readiness change disarms it.
 export const armAutoLaunch = mutation({
   args: { teamId: v.id("ocTeams") },
   handler: async (ctx, args) => {
@@ -396,6 +457,39 @@ export const armAutoLaunch = mutation({
   },
 });
 
+// Begin the execute phase: a short synchronized window every member rides
+// out together — then anyone (not just the host) can resolve the score.
+export const beginOcExecute = mutation({
+  args: { teamId: v.id("ocTeams") },
+  handler: async (ctx, args) => {
+    const player: any = await getCurrentUser(ctx);
+    const team: any = await ctx.db.get(args.teamId);
+    if (!team || team.started) throw new Error("Crew not found");
+    if (!(team.memberIds ?? []).includes(player._id)) throw new Error("You are not in this crew");
+    if (team.jobPhase === "execute") return { success: true };
+    const ids: string[] = team.memberIds ?? [];
+    if (ids.length < TEAM_MAX)
+      throw new Error(`Need ${TEAM_MAX - ids.length} more member${TEAM_MAX - ids.length === 1 ? "" : "s"}`);
+    const readyIds: string[] = team.memberReadyIds ?? [];
+    const notReady = ids.filter((id) => id !== team.hostId && !readyIds.includes(id));
+    if (notReady.length > 0) throw new Error("Everyone must be READY before the job goes down");
+
+    await ctx.db.patch(args.teamId, {
+      jobPhase: "execute",
+      executesAt: Date.now() + EXECUTE_PHASE_SECONDS * 1000,
+      seen: seenAt(team, player._id, Date.now()),
+      chat: pushChat(team, {
+        fromId: player._id,
+        fromName: nameOf(player),
+        text: `🚨 THE JOB IS ON — masks on, ${EXECUTE_PHASE_SECONDS}s. Resolve it when the timer dies.`,
+        system: true,
+        at: Date.now(),
+      }),
+    } as any);
+    return { success: true, executesAt: Date.now() + EXECUTE_PHASE_SECONDS * 1000 };
+  },
+});
+
 export const disarmAutoLaunch = mutation({
   args: { teamId: v.id("ocTeams") },
   handler: async (ctx, args) => {
@@ -419,20 +513,27 @@ export const startOcTeam = mutation({
     const player: any = await getCurrentUser(ctx);
     const team: any = await ctx.db.get(args.teamId);
     if (!team || team.started) throw new Error("Crew not found");
-    if (team.hostId !== player._id) throw new Error("Only the host can start the job");
+    // During the execute phase any crew member can resolve the score; before
+    // that, only the host can launch.
+    const inExecute = team.jobPhase === "execute";
+    if (team.hostId !== player._id && !inExecute)
+      throw new Error("Only the host can start the job");
     const ids: string[] = team.memberIds ?? [];
     if (ids.length < TEAM_MAX)
       throw new Error(`Need ${TEAM_MAX - ids.length} more member${TEAM_MAX - ids.length === 1 ? "" : "s"}`);
 
-    // Every filled seat must have sounded ready before the job launches.
-    const readyIds: string[] = team.memberReadyIds ?? [];
-    const notReady = ids.filter((id) => id !== team.hostId && !readyIds.includes(id));
-    if (notReady.length > 0) {
-      const names = notReady.map((id) => {
-        const m = (team.names ?? [])[ids.indexOf(id)];
-        return m ?? "a member";
-      });
-      throw new Error(`Waiting on ${names.join(", ")} — they need to mark READY`);
+    // Every filled seat must have sounded ready before the job launches
+    // (skipped during the execute phase — readiness was checked at go-time).
+    if (!inExecute) {
+      const readyIds: string[] = team.memberReadyIds ?? [];
+      const notReady = ids.filter((id) => id !== team.hostId && !readyIds.includes(id));
+      if (notReady.length > 0) {
+        const names = notReady.map((id) => {
+          const m = (team.names ?? [])[ids.indexOf(id)];
+          return m ?? "a member";
+        });
+        throw new Error(`Waiting on ${names.join(", ")} — they need to mark READY`);
+      }
     }
 
     // Charge every member their stake.
@@ -447,13 +548,13 @@ export const startOcTeam = mutation({
     for (const u of members)
       await ctx.db.patch(u._id, { money: (u.money ?? 0) - team.cost } as any);
 
-    // Success chance scales with the crew's combined muscle.
-    const avgLevel = members.reduce((s, m) => s + (m.level ?? 0), 0) / members.length;
-    const chance = Math.min(0.85, (team.successBase ?? 0.5) + avgLevel * 0.0025 + members.length * 0.02);
+    // Success chance: crew muscle + role synergy (shared with the lobby preview).
+    const chance = computeOcChance(team, members);
     const win = Math.random() < chance;
     const rewardEach = win
       ? Math.floor((team.rewardMin + Math.random() * (team.rewardMax - team.rewardMin)) / TEAM_MAX)
       : 0;
+    const avgLevel = members.reduce((s, m) => s + (m.level ?? 0), 0) / Math.max(1, members.length);
     const xpEach = win ? 40 + Math.floor(avgLevel * 0.4) : Math.floor(20 + avgLevel * 0.15);
 
     for (const u of members) {
@@ -462,15 +563,23 @@ export const startOcTeam = mutation({
         ocWins: ((u as any).ocWins ?? 0) + (win ? 1 : 0),
         experience: (u.experience ?? 0) + xpEach,
       };
-      if (win) patch.money = (u.money ?? 0) + rewardEach;
+      if (win) {
+        patch.money = (u.money ?? 0) + rewardEach;
+        patch.ocProfit = ((u as any).ocProfit ?? 0) + rewardEach - team.cost;
+      } else {
+        patch.ocProfit = ((u as any).ocProfit ?? 0) - team.cost;
+      }
       await ctx.db.patch(u._id, patch as any);
     }
 
+    const jobResult = { win, rewardEach, xpEach, jobName: team.jobName, at: Date.now() };
     await ctx.db.patch(args.teamId, {
       started: true,
       startedAt: Date.now(),
       autoLaunch: false,
       launchAt: undefined,
+      jobPhase: "done",
+      jobResult,
     } as any);
     return {
       success: true,
@@ -479,6 +588,8 @@ export const startOcTeam = mutation({
       rewardEach,
       xpEach,
       teamName: `${team.jobIcon} ${team.jobName}`,
+      favoredRoles: (OC_JOBS.find((j) => j.id === team.jobId) ?? ({} as any)).roles ?? [],
+      roles: team.roles ?? [],
     };
   },
 });

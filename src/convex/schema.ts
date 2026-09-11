@@ -660,6 +660,20 @@ const schema = defineSchema({
     // Host-armed auto-launch: launchAt = epoch ms when the job fires itself.
     autoLaunch: v.optional(v.boolean()),
     launchAt: v.optional(v.number()),
+    // Role phase: each member picks a specialist role; synergy with the job's
+    // favored roles boosts the crew's success odds.
+    roles: v.optional(v.array(v.string())),
+    jobPhase: v.optional(v.string()), // "prep" | "execute" | "done"
+    executesAt: v.optional(v.number()),
+    jobResult: v.optional(
+      v.object({
+        win: v.boolean(),
+        rewardEach: v.number(),
+        xpEach: v.number(),
+        jobName: v.string(),
+        at: v.number(),
+      }),
+    ),
   })
     .index("by_created", ["createdAt"]),
 
