@@ -382,3 +382,75 @@ export const upgradeVault = mutation({
     return { level: level + 1, cost };
   },
 });
+
+// ═══════════════════════════════════════════════════════════
+// HITLIST — active bounties other players can hunt
+// ═══════════════════════════════════════════════════════════
+export const getActiveBounties = query({
+  args: {},
+  handler: async (ctx) => {
+    const rows = await ctx.db
+      .query("bounties")
+      .withIndex("by_active", (q) => q.eq("active", true))
+      .order("desc")
+      .take(50);
+    const out: any[] = [];
+    for (const b of rows) {
+      const target: any = b.targetId ? await ctx.db.get(b.targetId) : null;
+      const placer: any = b.placerId ? await ctx.db.get(b.placerId) : null;
+      if (!target || target.isDead) continue;
+      out.push({
+        _id: b._id,
+        reward: b.reward ?? 0,
+        createdAt: b.createdAt,
+        targetId: b.targetId,
+        targetName: target.nickname ?? target.username ?? "Unknown",
+        targetLevel: target.level ?? 1,
+        targetWanted: target.wantedLevel ?? 0,
+        placedBy: placer?.nickname ?? "Anonymous",
+      });
+    }
+    return out.sort((a, b) => b.reward - a.reward);
+  },
+});
+
+// ═══════════════════════════════════════════════════════════
+// CRIME ACHIEVEMENTS — personal record board for the crime hub
+// ═══════════════════════════════════════════════════════════
+export const getCrimeAchievements = query({
+  args: {},
+  handler: async (ctx) => {
+    const player: any = await getCurrentUser(ctx);
+    const crimes = await ctx.db
+      .query("crimes")
+      .withIndex("by_user", (q) => q.eq("userId", player._id))
+      .collect();
+    const byType: Record<string, { total: number; won: number }> = {};
+    for (const c: any of crimes) {
+      const t = c.type ?? "other";
+      byType[t] = byType[t] ?? { total: 0, won: 0 };
+      byType[t].total++;
+      if (c.success) byType[t].won++;
+    }
+    const stolenTotal = crimes.reduce((s: number, c: any) => s + (c.success ? c.moneyEarned ?? 0 : 0), 0);
+    const streakBest = Math.max(0, (player as any).bestCrimeStreak ?? 0);
+    const tiers = [
+      { id: "rookie", name: "Rookie", icon: "🥚", need: 10 },
+      { id: "hustler", name: "Hustler", icon: "🧢", need: 100 },
+      { id: "operator", name: "Operator", icon: "🎩", need: 500 },
+      { id: "kingpin", name: "Kingpin", icon: "👑", need: 2000 },
+      { id: "legend", name: "Living Legend", icon: "🏆", need: 5000 },
+    ];
+    const total = crimes.length;
+    const tier = [...tiers].reverse().find((t) => total >= t.need) ?? null;
+    return {
+      totalCrimes: total,
+      successful: crimes.filter((c: any) => c.success).length,
+      stolenTotal,
+      streakBest,
+      byType,
+      tier,
+      tiers,
+    };
+  },
+});
