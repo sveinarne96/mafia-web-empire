@@ -1386,6 +1386,27 @@ const schema = defineSchema({
     active: v.boolean(),
     createdAt: v.number(),
   }).index("by_active", ["active", "expiresAt"]),
+
+  // ═══════════ MURDER/CRIME EXTRAS ═══════════
+  // Detective case files — results of hiring investigators on a rival.
+  detectiveCases: defineTable({
+    hirerId: v.id("users"),
+    targetId: v.id("users"),
+    targetName: v.string(),
+    result: v.string(), // intel | cold_trail
+    intel: v.array(v.string()),
+    createdAt: v.number(),
+  }).index("by_hirer", ["hirerId"]),
+
+  // Scrapyard history — wrecks the player bought and stripped.
+  scrapWrecks: defineTable({
+    ownerId: v.id("users"),
+    tier: v.string(), // sedan | suv | luxury | exotic
+    name: v.string(),
+    scrapYield: v.number(),
+    rareFound: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_owner", ["ownerId"]),
 }, {
   schemaValidation: false,
 });

@@ -188,6 +188,8 @@ import { QuickTradePage } from "@/components/QuickTradePage";
 import { OrganizedCrimeTeamsPage } from "@/components/OrganizedCrimeTeamsPage";
 import { ArmouryPage } from "@/components/ArmouryPage";
 import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
+import { BoxingGymPage, ChasePage, ScrapyardPage, VaultPage } from "@/components/CrimeExtras";
+import { AssassinatePage, BulletCalculatorPage, BulletFactoryPage, DetectivesPage, ShootingRangePage } from "@/components/MurderExtras";
 
 
 // ===== RANK SYSTEM =====
