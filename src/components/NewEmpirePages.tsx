@@ -12,12 +12,12 @@ import { api } from "@/convex/_generated/api";
 // lottery rollover, boss invasions, bug bounty, feedback, heatmap.
 // =====================================================================
 
-const fmt = (x: unknown, d = 0) => {
+export const fmt = (x: unknown, d = 0) => {
   const v = typeof x === "number" && Number.isFinite(x) ? x : d;
   return v.toLocaleString();
 };
 
-function Card({ title, icon, children, className = "" }: { title?: string; icon?: string; children: React.ReactNode; className?: string }) {
+export function Card({ title, icon, children, className = "" }: { title?: string; icon?: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`mafia-card rounded-xl p-4 space-y-3 ${className}`}>
       {title && (
@@ -31,7 +31,7 @@ function Card({ title, icon, children, className = "" }: { title?: string; icon?
   );
 }
 
-function Btn({ children, onClick, disabled, variant = "primary", className = "" }: {
+export function Btn({ children, onClick, disabled, variant = "primary", className = "" }: {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
@@ -57,7 +57,7 @@ function Btn({ children, onClick, disabled, variant = "primary", className = "" 
   );
 }
 
-function PageHead({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
+export function PageHead({ icon, title, sub }: { icon: string; title: string; sub?: string }) {
   return (
     <div className="flex items-center gap-3">
       <span className="text-3xl">{icon}</span>
@@ -69,7 +69,7 @@ function PageHead({ icon, title, sub }: { icon: string; title: string; sub?: str
   );
 }
 
-function Stat({ label, value, color = "text-slate-200" }: { label: string; value: React.ReactNode; color?: string }) {
+export function Stat({ label, value, color = "text-slate-200" }: { label: string; value: React.ReactNode; color?: string }) {
   return (
     <div className="bg-slate-800/40 rounded-lg p-2 text-center">
       <div className="text-[10px] text-slate-500 uppercase tracking-wide">{label}</div>

@@ -123,23 +123,25 @@ export const weaponItems: PointsShopItem[] = [
 ];
 
 // ===== CATEGORY 8: UTILITY & COOLDOWNS =====
+// The all-in-one skip is listed FIRST on purpose: it is strictly better value
+// than buying the individual skips piecemeal, so players should see it first.
 export const utilityItems: PointsShopItem[] = [
-  { id: "remove_cooldown", name: "Remove ALL Cooldowns", icon: "⏱️", cost: 500, desc: "Clear everything", category: "utility", tier: "epic" },
-  { id: "clear_heist_cd", name: "Clear Heist CD", icon: "💣", cost: 200, desc: "Reset heist wait", category: "utility" },
-  { id: "clear_car_cd", name: "Clear Car Theft CD", icon: "🚗", cost: 150, desc: "Steal new car now", category: "utility" },
-  { id: "clear_assassin_cd", name: "Clear Assassination CD", icon: "🗡️", cost: 300, desc: "Ready for assassination", category: "utility" },
-  { id: "clear_oc_cd", name: "Clear OC CD", icon: "🕵️", cost: 400, desc: "Start new gang heist", category: "utility" },
-  { id: "clear_drug_cd", name: "Clear Drug CD", icon: "💊", cost: 250, desc: "Buy/sell drugs now", category: "utility" },
-  { id: "clear_bank_cd", name: "Clear Bank CD", icon: "🏦", cost: 400, desc: "Ready for bank robbery", category: "utility" },
-  { id: "clear_street_cd", name: "Clear Street Fight CD", icon: "🥊", cost: 150, desc: "Fight on street again", category: "utility" },
-  { id: "clear_harbor_cd", name: "Clear Harbor CD", icon: "🚢", cost: 400, desc: "Rob container ship now", category: "utility" },
-  { id: "reset_assassination", name: "Reset Assassination", icon: "🗡️", cost: 1000, desc: "Plan new assassination", category: "utility", tier: "epic" },
+  { id: "remove_cooldown", name: "Remove ALL Cooldowns", icon: "⏱️", cost: 500, desc: "Skip every timer at once — best value", category: "utility", tier: "epic" },
   { id: "teleportation", name: "Teleportation", icon: "🌀", cost: 800, desc: "Instant travel", category: "utility", tier: "legendary" },
-  { id: "quick_laundering", name: "Quick Laundering", icon: "💵", cost: 300, desc: "Clean money instantly", category: "utility" },
-  { id: "quick_production", name: "Quick Production", icon: "🏭", cost: 350, desc: "Complete factory batch", category: "utility" },
-  { id: "express_research", name: "Express Research", icon: "🔬", cost: 400, desc: "Complete gang upgrade", category: "utility" },
-  { id: "stock_market_cd", name: "Stock Market CD", icon: "📈", cost: 500, desc: "Unlimited trades/hour", category: "utility" },
   { id: "vip_flight", name: "VIP Flight Pass", icon: "✈️", cost: 800, desc: "Free flights 7 days", category: "utility", tier: "epic" },
+  { id: "reset_assassination", name: "Reset Assassination", icon: "🗡️", cost: 1000, desc: "Plan new assassination", category: "utility", tier: "epic" },
+  { id: "stock_market_cd", name: "Stock Market CD", icon: "📈", cost: 500, desc: "Unlimited trades/hour", category: "utility", tier: "rare" },
+  { id: "clear_oc_cd", name: "Skip Cooldown — Organized Crime", icon: "🕵️", cost: 400, desc: "Start a new gang heist", category: "utility", tier: "rare" },
+  { id: "clear_bank_cd", name: "Skip Cooldown — Bank Robbery", icon: "🏦", cost: 400, desc: "Rob the bank again now", category: "utility", tier: "rare" },
+  { id: "clear_harbor_cd", name: "Skip Cooldown — Harbor", icon: "🚢", cost: 400, desc: "Rob the container ship now", category: "utility", tier: "rare" },
+  { id: "express_research", name: "Express Research", icon: "🔬", cost: 400, desc: "Complete gang upgrade", category: "utility", tier: "uncommon" },
+  { id: "quick_production", name: "Quick Production", icon: "🏭", cost: 350, desc: "Complete factory batch", category: "utility", tier: "uncommon" },
+  { id: "clear_assassin_cd", name: "Skip Cooldown — Assassination", icon: "🗡️", cost: 300, desc: "Ready to assassinate again", category: "utility", tier: "uncommon" },
+  { id: "quick_laundering", name: "Quick Laundering", icon: "💵", cost: 300, desc: "Clean money instantly", category: "utility", tier: "uncommon" },
+  { id: "clear_drug_cd", name: "Skip Cooldown — Drugs", icon: "💊", cost: 250, desc: "Buy or sell drugs now", category: "utility", tier: "uncommon" },
+  { id: "clear_heist_cd", name: "Skip Cooldown — Heist", icon: "💣", cost: 200, desc: "Reset the heist timer", category: "utility", tier: "common" },
+  { id: "clear_car_cd", name: "Skip Cooldown — Car Theft", icon: "🚗", cost: 150, desc: "Steal a new car now", category: "utility", tier: "common" },
+  { id: "clear_street_cd", name: "Skip Cooldown — Street Fight", icon: "🥊", cost: 150, desc: "Fight on the street again", category: "utility", tier: "common" },
 ];
 
 // ===== CATEGORY 9: CASH & STATS =====
@@ -186,7 +188,7 @@ export const categories = [
   { id: "property", name: "🏰 Property", icon: "🏰", color: "text-yellow-400", count: propertyItems.length },
   { id: "stealth", name: "🕵️ Stealth", icon: "🕵️", color: "text-purple-400", count: stealthItems.length },
   { id: "weapons", name: "⚔️ Weapons", icon: "⚔️", color: "text-red-400", count: weaponItems.length },
-  { id: "utility", name: "⏱️ Cooldowns", icon: "⏱️", color: "text-green-400", count: utilityItems.length },
+  { id: "utility", name: "⏱️ Cooldowns & Skips", icon: "⏱️", color: "text-green-400", count: utilityItems.length },
   { id: "cashstats", name: "💰 Cash & Stats", icon: "💰", color: "text-yellow-400", count: cashStatItems.length },
   { id: "special", name: "✨ Special", icon: "✨", color: "text-pink-400", count: specialItems.length },
 ] as const;

@@ -123,6 +123,7 @@ import { UnderworldEconomyPage, DynamicWorldEventsPage } from "@/components/Syst
 import { CrimeScenePage } from "@/components/SystemCrimeScene";
 import { CompaniesHubPage } from "@/components/SystemCompanies";
 import { EmpireBuildingPage, RelationshipsPage, SurvivalRealismPage, SecurityDefensePage } from "@/components/SystemEmpire";
+import { ArenaHubPage, ChatHubPage, CrimeOpsHubPage, CrewHubPage, WorldHubPage, PropertyHubPage, DailyHubPage, MoneyHubPage, ReportsHubPage, SecretChallengesHubPage } from "@/components/HubPages";
 import LiveEventCalendar from "@/components/LiveEventCalendar";
 import { LiveSupportPage } from "@/components/LiveSupport";
 import EventsHubPage from "@/components/EventsHub";
@@ -1251,8 +1252,8 @@ function AirportPage() {
   );
 }
 
-function FamilyChatPage() { return <GenericStub title="Family Chat" icon="👨‍👩‍👦" />; }
-function SecretChallengesPage() { return <GenericStub title="Secret Challenges" icon="🔮" />; }
+function FamilyChatPage() { return <ChatHubPage initialChannel="family" />; }
+function SecretChallengesPage() { return <SecretChallengesHubPage />; }
 
 function CrewRanksPage() {
   const ranks = [{ name: "Initiate", icon: "⭐", req: 0 }, { name: "Soldier", icon: "⚔️", req: 100 }, { name: "Lieutenant", icon: "🎖️", req: 500 }, { name: "Captain", icon: "👑", req: 1000 }, { name: "Boss", icon: "🏆", req: 5000 }];
@@ -1271,19 +1272,19 @@ function CrewRanksPage() {
   );
 }
 
-function CrewBankPage() { return <GenericStub title="Crew Bank" icon="🏦" />; }
-function CrewWarPage() { return <GenericStub title="Crew War" icon="⚔️" />; }
-function CrewTerritoryPage() { return <GenericStub title="Crew Territory" icon="📍" />; }
+function CrewBankPage() { return <CrewHubPage initialTab="bank" />; }
+function CrewWarPage() { return <CrewHubPage initialTab="war" />; }
+function CrewTerritoryPage() { return <CrewHubPage initialTab="territory" />; }
 function CrewLeaderboardPage() { return <LeaderboardPage title="Crew Leaderboard" icon="🏆" />; }
-function CrewChallengesPage() { return <GenericStub title="Crew Challenges" icon="🎯" />; }
-function CrewAlliancePage() { return <GenericStub title="Crew Alliance" icon="🤝" />; }
+function CrewChallengesPage() { return <CrewHubPage initialTab="challenges" />; }
+function CrewAlliancePage() { return <CrewHubPage initialTab="alliance" />; }
 
-function InterestRatesPage() { return <GenericStub title="Interest Rates" icon="📈" />; }
-function CreditScorePage() { return <GenericStub title="Credit Score" icon="💳" />; }
-function HealthInsurancePage() { return <GenericStub title="Health Insurance" icon="🏥" />; }
-function LifeInsurancePage() { return <GenericStub title="Life Insurance" icon="❤️" />; }
-function AutoShopPage() { return <GenericStub title="Auto Shop" icon="🚗" />; }
-function OffshorePage() { return <GenericStub title="Offshore Accounts" icon="🏝️" />; }
+function InterestRatesPage() { return <MoneyHubPage initialTab="interest" />; }
+function CreditScorePage() { return <MoneyHubPage initialTab="credit" />; }
+function HealthInsurancePage() { return <MoneyHubPage initialTab="insurance" />; }
+function LifeInsurancePage() { return <MoneyHubPage initialTab="insurance" />; }
+function AutoShopPage() { return <CarTuningPage />; }
+function OffshorePage() { return <MoneyHubPage initialTab="offshore" />; }
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
@@ -1417,7 +1418,7 @@ export default function Dashboard() {
       case "family": return <FamilyPage />;
       case "crew_challenges": return <CrewChallengesPage />;
       case "crew_alliance": return <CrewAlliancePage />;
-      case "crew_safehouse": return <GenericStub title="Crew Safe House" icon="🏠" />;
+      case "crew_safehouse": return <CrewHubPage initialTab="safehouse" />;
       case "prestige": return <PrestigeLegacyPage />;
       case "skill_tree": return <SkillTreePage />;
       case "titles": return <TitlesPage />;
@@ -1458,8 +1459,8 @@ export default function Dashboard() {
       case "day_night": return <DayNightPage />;
       case "world_events": return <DynamicWorldEventsPage />;
       case "coop_gameplay": return <CoopGameplayPage />;
-      case "neighborhoods": return <GenericStub title="Neighborhoods" icon="🏘️" />;
-      case "dynamic_events": return <GenericStub title="Dynamic Events" icon="⚡" />;
+      case "neighborhoods": return <WorldHubPage initialTab="districts" />;
+      case "dynamic_events": return <WorldHubPage initialTab="events" />;
       case "event_calendar": return <LiveEventCalendar />;
       case "messages": return <MessagesPage />;
       case "inbox": return <InboxPage />;
@@ -1469,15 +1470,15 @@ export default function Dashboard() {
       case "forum_offtopic": return <ForumPage forum="offtopic" />;
       case "forum_shadows": return <ForumPage forum="shadows" />;
       case "forum_search": return <ForumSearchPage />;
-      case "crew_chat": return <GenericStub title="Crew Chat" icon="💬" />;
+      case "crew_chat": return <ChatHubPage initialChannel="crew" />;
       case "family_chat": return <FamilyChatPage />;
-      case "global_chat": return <GenericStub title="Global Chat" icon="🌐" />;
-      case "trade_chat": return <GenericStub title="Trade Chat" icon="💹" />;
-      case "lfg": return <GenericStub title="Looking for Group" icon="👥" />;
+      case "global_chat": return <ChatHubPage initialChannel="global" />;
+      case "trade_chat": return <ChatHubPage initialChannel="trade" />;
+      case "lfg": return <ChatHubPage initialChannel="lfg" />;
       case "airport": return <AirportPage />;
       case "weather": return <WeatherPage />;
       case "news_ticker": return <NewsTickerPage />;
-      case "city_map": return <GenericStub title="City Map" icon="🗺️" />;
+      case "city_map": return <WorldHubPage initialTab="map" />;
       case "city_overview": return <CityOverviewPage />;
       case "statistics": return <StatisticsPage />;
       case "world_map": return <WorldMapPage />;
@@ -1485,7 +1486,7 @@ export default function Dashboard() {
       case "support": return <LiveSupportPage />;
       case "events_hub": return <EventsHubPage />;
       case "community": return <CommunityPage />;
-      case "reports": return <GenericStub title="Reports" icon="📢" />;
+      case "reports": return <ReportsHubPage />;
       case "promo_codes": return <PromoCodesPage />;
       case "qs_market": return <QsMarketPage />;
       case "daily_rewards": return (
@@ -1539,20 +1540,27 @@ export default function Dashboard() {
       case "coin_flip": return <CoinFlipPage />;
       case "crime_hub": return <CrimeHub />;
       case "my_profile": return <MyProfilePage />;
-      case "duel": return <GenericStub title="1v1 Duel" icon="⚔️" />;
-      case "ctf": return <GenericStub title="Capture the Flag" icon="🚩" />;
-      case "koth": return <GenericStub title="King of the Hill" icon="👑" />;
-      case "battle_royale": return <GenericStub title="Battle Royale" icon="🎯" />;
-      case "ladder": return <GenericStub title="Ladder" icon="📊" />;
-      case "champion": return <GenericStub title="Champion" icon="🏆" />;
-      case "ambush": return <GenericStub title="Ambush" icon="🔥" />;
-      case "counterfeiting": return <GenericStub title="Counterfeiting" icon="💵" />;
-      case "drug_trafficking": return <GenericStub title="Drug Trafficking" icon="💊" />;
-      case "arson": return <GenericStub title="Arson" icon="🔥" />;
-      case "identity_theft": return <GenericStub title="Identity Theft" icon="🪪" />;
-      case "arms_deal": return <GenericStub title="Arms Dealing" icon="🔫" />;
-      case "tax_evasion": return <GenericStub title="Tax Evasion" icon="📋" />;
-      case "racketeering": return <GenericStub title="Racketeering" icon="💰" />;
+      case "duel": return <ArenaHubPage initialTab="duel" />;
+      case "ctf": return <ArenaHubPage initialTab="duel" />;
+      case "koth": return <ArenaHubPage initialTab="ladder" />;
+      case "battle_royale": return <ArenaHubPage initialTab="duel" />;
+      case "ladder": return <ArenaHubPage initialTab="ladder" />;
+      case "champion": return <ArenaHubPage initialTab="ladder" />;
+      case "ambush": return <ArenaHubPage initialTab="ambush" />;
+      case "counterfeiting": return <CrimeOpsHubPage initialTab="counterfeit" />;
+      case "drug_trafficking": return <CrimeOpsHubPage initialTab="traffic" />;
+      case "arson": return <CrimeOpsHubPage initialTab="arson" />;
+      case "identity_theft": return <CrimeOpsHubPage initialTab="identity" />;
+      case "arms_deal": return <CrimeOpsHubPage initialTab="arms" />;
+      case "tax_evasion": return <CrimeOpsHubPage initialTab="tax" />;
+      case "racketeering": return <CrimeOpsHubPage initialTab="racket" />;
+      case "arena_hub": return <ArenaHubPage />;
+      case "crime_ops": return <CrimeOpsHubPage />;
+      case "crew_hub": return <CrewHubPage />;
+      case "world_hub": return <WorldHubPage />;
+      case "property_hub": return <PropertyHubPage />;
+      case "daily_hub": return <DailyHubPage />;
+      case "money_hub": return <MoneyHubPage />;
       case "streak_rewards": return <StreakRewardsPage />;
       case "milestones": return <MilestonesBadgesPage />;
       case "player_of_week": return <FamePage />;
