@@ -421,7 +421,6 @@ function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void 
         </div>
       </div>
 
-      <CrimeOperationsDeck activePage="headquarters" onNavigate={onNavigate ?? navigateToPage} />
       <ObjectivesPanel />
       <RanksPanel />
       <PacksOverviewPanel />
