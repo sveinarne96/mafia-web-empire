@@ -349,7 +349,6 @@ export const RIGHT_MENU_SECTIONS = [
     title: "System",
     icon: Settings,
     items: [
-      { label: "Online Users", page: "online_players", icon: "👥" },
       { label: "Become Admin", page: "become_admin", icon: "🔑" },
       { label: "Admin", page: "admin_panel", icon: "⚙️" },
     ],
