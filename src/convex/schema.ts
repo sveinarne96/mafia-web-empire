@@ -180,6 +180,14 @@ const schema = defineSchema({
     scraps: v.optional(v.any()),
     carKeys: v.optional(v.any()),
     autoConvertScraps: v.optional(v.boolean()),
+    // ═══ COMMUNITY & RETENTION ═══
+    voteClaims: v.optional(v.any()),
+    totalVotes: v.optional(v.number()),
+    voteEarnings: v.optional(v.number()),
+    prizeMatcherState: v.optional(v.any()),
+    prizeMatcherLastReveal: v.optional(v.number()),
+    prizeMatcherHistory: v.optional(v.array(v.any())),
+    freeBetTokens: v.optional(v.number()),
     // ═══ SEASON TOKENS / STORE / INVENTORY ═══
     seasonTokens: v.optional(v.number()),
     vipTokens: v.optional(v.number()),
@@ -1372,6 +1380,12 @@ const schema = defineSchema({
     postId: v.id("feedbackPosts"),
     createdAt: v.number(),
   }).index("by_player", ["playerId"]).index("by_post", ["postId"]),
+
+  communityMissionClaims: defineTable({
+    playerId: v.id("users"),
+    missionId: v.string(),
+    claimedAt: v.number(),
+  }).index("by_player", ["playerId"]).index("by_player_mission", ["playerId", "missionId"]),
 
   // Limited-time point deals refreshed by the admin.
   flashDeals: defineTable({

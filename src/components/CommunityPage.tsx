@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { CommunityHubPage } from "./CommunityHubPage";
 
 function CommunityPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -45,6 +46,7 @@ function CommunityPage() {
   const colorMap: Record<string, string> = { critical: "border-red-500/30 text-red-300 bg-red-500/10", warning: "border-amber-500/30 text-amber-300 bg-amber-500/10", info: "border-blue-500/30 text-blue-300 bg-blue-500/10" };
   return (
     <div className="animate-fade-in space-y-4">
+      <CommunityHubPage />
       <div className="flex items-center gap-3"><span className="text-3xl">📜</span><h2 className="text-2xl font-bold">Community Guidelines</h2></div>
       <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-xs text-slate-400">
         <span className="font-bold text-red-300">These rules are binding.</span> Violating any rule may result in warnings, suspensions, asset seizures, or permanent bans. You accepted these rules when you first entered the game.

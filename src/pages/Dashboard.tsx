@@ -144,6 +144,7 @@ import { EnergyDrinksPage } from "@/components/EnergyDrinksPage";
 import { HubP } from "@/components/HubPComponent";
 import { StorylinePage } from "@/components/StorylinePage";
 import { CommunityPage } from "@/components/CommunityPage";
+import { CommunityHubPage } from "@/components/CommunityHubPage";
 import { FBIStatusPage } from "@/components/FBIStatusPage";
 import {
   SkillTreePage, DailyChallengesPage, SafeHousesPage, CrimeSpreePage,
