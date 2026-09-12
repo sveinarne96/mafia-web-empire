@@ -48,7 +48,7 @@ const CRIME_NAV_GROUPS: CrimeNavGroup[] = [
 
 export function CrimeOperationsDeck({ activePage, onNavigate }: { activePage: string; onNavigate: (page: string) => void }) {
   return (
-    <div className="relative border-t border-white/[0.04] bg-black/20 px-2 pb-2 pt-2 sm:px-3">
+    <section className="relative mx-auto w-full max-w-7xl border-t border-white/[0.04] bg-black/20 px-2 pb-2 pt-3 sm:px-4">
       <div className="mb-2 flex items-center gap-2 px-1">
         <div className="flex size-6 items-center justify-center rounded-md border border-red-400/30 bg-red-500/10 text-xs shadow-[0_0_16px_rgba(239,68,68,0.12)]">🔪</div>
         <div className="min-w-0">
@@ -59,7 +59,7 @@ export function CrimeOperationsDeck({ activePage, onNavigate }: { activePage: st
           <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" /> Live city routes
         </div>
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+      <div className="flex justify-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {CRIME_NAV_GROUPS.map((group) => (
           <div key={group.label} className="shrink-0 rounded-xl border border-white/[0.06] bg-slate-950/55 p-1.5 shadow-inner shadow-black/30">
             <div className="flex items-center gap-1.5 px-1.5 pb-1.5">
@@ -93,6 +93,6 @@ export function CrimeOperationsDeck({ activePage, onNavigate }: { activePage: st
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

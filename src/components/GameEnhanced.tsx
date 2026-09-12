@@ -18,14 +18,15 @@ export function StealFromHousePage() {
   const grantGift = useMutation(api.eventGifts.grantEventGift);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [selectedDifficulty, setSelectedDifficulty] = useState("medium");
+  const cooldown = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
 
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
-    return () => clearInterval(timer);
-  }, [cooldown]);
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
 
   if (!player) return <LoadingPage />;
 
@@ -44,7 +45,7 @@ export function StealFromHousePage() {
       await maybeDropEasterEgg(grantEgg, res.success);
       await maybeDropEventGift(grantGift, res.success);
       setResult(res);
-      setCooldown(10);
+      setCooldownUntil(Date.now() + 10_000);
     } catch (e: unknown) {
       setResult({ error: e instanceof Error ? e.message : "Error" });
     }
@@ -86,11 +87,11 @@ export function StealFromHousePage() {
       {cooldown > 0 ? (
         <div className="mafia-card rounded-xl p-6 text-center">
           <Clock className="size-8 text-yellow-400 mx-auto mb-2 animate-pulse" />
-          <div className="text-sm font-bold">Cooldown: {cooldown}s</div>
+          <div className="flex items-center justify-center gap-2 text-sm font-bold"><span className="size-2 animate-pulse rounded-full bg-amber-400" /> Next run in {String(Math.floor(cooldown / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</div>
           <div className="h-2 bg-background/60 rounded-full mt-3 overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-yellow-500 to-orange-400 rounded-full"
-              animate={{ width: `${(cooldown / 10) * 100}%` }}
+              animate={{ width: `${Math.min(100, (cooldown / 10) * 100)}%` }}
               transition={{ duration: 1 }}
             />
           </div>
@@ -141,8 +142,10 @@ export function GtaCarTheftPage() {
   const grantGift2 = useMutation(api.eventGifts.grantEventGift);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [cooldown, setCooldown] = useState(0);
+  const [cooldownUntil, setCooldownUntil] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const cooldown = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
 
   const carCategories = [
     { id: "economy", name: "🚗 Economy Street", desc: "Cheap cars from parking lots", icon: "🚗", color: "text-gray-400", priceRange: "$4K-$10K", chance: "Common" },
@@ -161,10 +164,9 @@ export function GtaCarTheftPage() {
   ];
 
   useEffect(() => {
-    if (cooldown <= 0) return;
-    const timer = setInterval(() => setCooldown((c) => c - 1), 1000);
-    return () => clearInterval(timer);
-  }, [cooldown]);
+    const timer = window.setInterval(() => setNow(Date.now()), 250);
+    return () => window.clearInterval(timer);
+  }, []);
 
   if (!player) return <LoadingPage />;
 
@@ -176,7 +178,7 @@ export function GtaCarTheftPage() {
       await maybeDropEasterEgg(grantEgg2, res.success);
       await maybeDropEventGift(grantGift2, res.success);
       setResult(res);
-      setCooldown(10);
+      setCooldownUntil(Date.now() + 10_000);
     } catch (e: unknown) {
       setResult({ error: e instanceof Error ? e.message : "Error" });
     }
@@ -193,16 +195,21 @@ export function GtaCarTheftPage() {
       
       {/* Car Categories Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {carCategories.map((cat: any) => (
-            <ActionCard key={cat.id} active={selectedCategory === cat.id}><button onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)} className="w-full text-left">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">{cat.icon}</span>
-              <div>
-                <div className={`text-xs font-bold ${cat.color}`}>{cat.name}</div>
-                <div className="text-[9px] text-muted-foreground">{cat.desc}</div>
+        {carCategories.map((cat) => (
+          <ActionCard key={cat.id} active={selectedCategory === cat.id}>
+            <button
+              type="button"
+              onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+              className="w-full text-left"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{cat.icon}</span>
+                <div className="min-w-0">
+                  <div className={`truncate text-xs font-bold ${cat.color}`}>{cat.name}</div>
+                  <div className="truncate text-[9px] text-muted-foreground">{cat.desc}</div>
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
           </ActionCard>
         ))}
       </div>
@@ -211,11 +218,11 @@ export function GtaCarTheftPage() {
       {cooldown > 0 ? (
         <div className="mafia-card rounded-xl p-6 text-center">
           <Clock className="size-8 text-cyan-400 mx-auto mb-2 animate-pulse" />
-          <div className="text-sm font-bold">Stealing... {cooldown}s</div>
+          <div className="flex items-center justify-center gap-2 text-sm font-bold"><span className="size-2 animate-pulse rounded-full bg-cyan-400" /> Next run in {String(Math.floor(cooldown / 60)).padStart(2, "0")}:{String(cooldown % 60).padStart(2, "0")}</div>
           <div className="h-2 bg-background/60 rounded-full mt-3 overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full"
-              animate={{ width: `${(cooldown / 10) * 100}%` }}
+              animate={{ width: `${Math.min(100, (cooldown / 10) * 100)}%` }}
               transition={{ duration: 1 }}
             />
           </div>
