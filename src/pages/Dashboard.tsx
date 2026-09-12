@@ -421,6 +421,7 @@ function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void 
         </div>
       </div>
 
+      <CrimeOperationsDeck activePage="headquarters" onNavigate={onNavigate ?? navigateToPage} />
       <ObjectivesPanel />
       <RanksPanel />
       <PacksOverviewPanel />
@@ -1983,6 +1984,7 @@ export default function Dashboard() {
       </div>
 
           <div className="p-4 md:p-6 animate-page-enter" key={activePage}>
+            <CrimeOperationsDeck activePage={activePage} onNavigate={setPage} />
             <ErrorBoundary>
               <Suspense fallback={
                 <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
