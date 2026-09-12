@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
+const MAX_PERK_QTY = 999;
+
 const PERK_OPTIONS = [
   { id: "heistTimer", label: "Heist Timer", icon: "⏱️", desc: "Reduce heist cooldown" },
   { id: "heistChance", label: "Heist Chance", icon: "🎲", desc: "Boost heist success rate" },
@@ -30,9 +32,23 @@ export function PromoCodesPanel({ onClose }: { onClose: () => void }) {
     setPerks((prev) => {
       const next = { ...prev };
       const cur = next[id] ?? 0;
-      const val = Math.max(0, cur + delta);
+      const val = Math.min(MAX_PERK_QTY, Math.max(0, cur + delta));
       if (val === 0) delete next[id];
       else next[id] = val;
+      return next;
+    });
+  };
+
+  const setPerkQuantity = (id: string, rawValue: string) => {
+    const parsed = Number(rawValue);
+    const value = rawValue.trim() === "" || !Number.isFinite(parsed)
+      ? 0
+      : Math.min(MAX_PERK_QTY, Math.max(0, Math.floor(parsed)));
+
+    setPerks((prev) => {
+      const next = { ...prev };
+      if (value === 0) delete next[id];
+      else next[id] = value;
       return next;
     });
   };
@@ -94,9 +110,32 @@ export function PromoCodesPanel({ onClose }: { onClose: () => void }) {
                   <div className="text-[9px] text-muted-foreground truncate">{p.desc}</div>
                 </div>
                 <div className="flex items-center gap-0.5">
-                  <button onClick={() => setPerk(p.id, -1)} disabled={qty === 0} className="w-5 h-5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold hover:bg-slate-700 disabled:opacity-30 flex items-center justify-center">−</button>
-                  <span className="w-6 text-center text-[10px] font-bold text-amber-400">{qty}</span>
-                  <button onClick={() => setPerk(p.id, 1)} className="w-5 h-5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold hover:bg-slate-700 flex items-center justify-center">+</button>
+                  <button
+                    type="button"
+                    aria-label={`Remove one ${p.label}`}
+                    onClick={() => setPerk(p.id, -1)}
+                    disabled={qty === 0}
+                    className="w-5 h-5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold hover:bg-slate-700 disabled:opacity-30 flex items-center justify-center"
+                  >−</button>
+                  <input
+                    type="number"
+                    min={0}
+                    max={MAX_PERK_QTY}
+                    step={1}
+                    inputMode="numeric"
+                    aria-label={`${p.label} quantity`}
+                    value={qty}
+                    onChange={(e) => setPerkQuantity(p.id, e.target.value)}
+                    onWheel={(e) => e.currentTarget.blur()}
+                    className="w-10 h-6 rounded border border-amber-500/25 bg-black/30 px-1 text-center text-[10px] font-bold text-amber-400 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/30"
+                  />
+                  <button
+                    type="button"
+                    aria-label={`Add one ${p.label}`}
+                    onClick={() => setPerk(p.id, 1)}
+                    disabled={qty >= MAX_PERK_QTY}
+                    className="w-5 h-5 rounded bg-slate-800 text-slate-400 text-[10px] font-bold hover:bg-slate-700 disabled:opacity-30 flex items-center justify-center"
+                  >+</button>
                 </div>
               </div>
             );
