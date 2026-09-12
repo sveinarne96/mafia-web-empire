@@ -245,6 +245,32 @@ function navigateToPage(page: string) { __hqNavigate?.(page); }
 
 function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
   const player = useQuery(api.game.getPlayer);
+  useEffect(() => {
+    const labels: Record<string, string> = {
+      daily_rewards: "Daily Reward",
+      online_players: "Online Players",
+    };
+    setHqNavigate((page) => {
+      if (onNavigate) {
+        onNavigate(page);
+        return;
+      }
+      const target = labels[page];
+      if (!target) return;
+      const findButton = () => Array.from(document.querySelectorAll("button")).find((button) => button.textContent?.trim().includes(target));
+      const button = findButton();
+      if (button) {
+        button.click();
+        return;
+      }
+      const overview = Array.from(document.querySelectorAll("button")).find((candidate) => candidate.textContent?.trim() === "Overview");
+      if (overview) {
+        overview.click();
+        window.setTimeout(() => findButton()?.click(), 0);
+      }
+    });
+    return () => setHqNavigate(() => undefined);
+  }, [onNavigate]);
   if (player === undefined) return <div className="animate-pulse text-center py-8 text-muted-foreground">Loading...</div>;
   if (!player) return <div className="text-center py-8 text-muted-foreground"><div className="text-3xl mb-2">🎮</div><div className="text-sm font-bold mb-1">Welcome to Shadow Empire</div><div className="text-xs">Setting up your headquarters...</div></div>;
   const xpNeeded = 2000;
