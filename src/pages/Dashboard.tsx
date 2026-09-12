@@ -132,6 +132,7 @@ import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
 import { XPVolumePanel } from "@/components/XPVolumePanel";
 import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
+import { CrimeOperationsDeck } from "@/components/CrimeOperationsDeck";
 import { StreetCrimesPage } from "@/components/StreetCrimesPage";
 import { CriminalOperationsPage } from "@/components/CriminalOperationsPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";

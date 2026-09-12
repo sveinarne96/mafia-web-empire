@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
+import { CrimeOperationsDeck } from "@/components/CrimeOperationsDeck";
 
 /**
  * LIVE GAME BANNER
@@ -59,8 +60,21 @@ export function LiveGameBanner() {
 
   const headline = live.headlines?.[0];
 
+  const navigateFromDeck = (page: string) => {
+    const button = Array.from(document.querySelectorAll("button")).find((candidate) => {
+      const text = candidate.textContent?.trim() ?? "";
+      return text.includes(({
+        headquarters: "HQ", crime_street: "Street", crime_robbery: "Robbery", crime_fraud: "Fraud",
+        crime_burglary: "Burglary", crime_drugs: "Drugs", crime_organized: "Organized", crime_underground: "Underground",
+        car_theft: "GTA", steal_house: "Burglarize", organized_crime: "Org Crime", murder: "Murder", heist: "Heist",
+      } as Record<string, string>)[page] ?? "" );
+    });
+    button?.click();
+  };
+
   return (
     <div className="relative z-30">
+      <CrimeOperationsDeck activePage="" onNavigate={navigateFromDeck} />
       {/* Maintenance mode */}
       {live.maintenanceMode && (
         <div className="border-b border-red-500/40 bg-gradient-to-r from-red-950/70 via-red-900/40 to-red-950/70 px-4 py-2 text-center">
