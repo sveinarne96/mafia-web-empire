@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Crosshair, Eye, Shield, Skull, Target, Users, Zap, ChevronDown, AlertTriangle, ChevronRight, Clock } from "lucide-react";
+import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
 
 const MURDER_WEAPONS = [
   { id: "bare_hands", name: "Bare Hands", category: "Melee", damage: 10, trace: 5, cost: 0, icon: "👊" },
@@ -58,12 +59,7 @@ function MurderPage() {
 
   return (
     <div className="animate-fade-in space-y-5">
-      {/* Header */}
-      <div className="flex items-center gap-3">
-        <Skull className="size-7 text-red-400" />
-        <h2 className="text-2xl font-bold">Murder</h2>
-        <span className="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">☠️ LETHAL</span>
-      </div>
+      <ActionHero eyebrow="Lethal operations network" title="Murder & contracts" description="Read the room, choose your method, and make every trace count. The city remembers who leaves evidence behind." icon="💀" accent="red" right={<div className="rounded-xl border border-red-400/25 bg-black/30 px-3 py-2 text-right"><div className="text-[9px] uppercase tracking-widest text-red-200/60">Threat level</div><div className="text-lg font-black text-red-300">LETHAL</div></div>} />
 
       {/* Result */}
       {result && (
@@ -84,13 +80,7 @@ function MurderPage() {
         </div>
       )}
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-4 gap-3">
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">💰 Cash</div><div className="text-sm font-bold text-green-400">${(player?.money ?? 0).toLocaleString()}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">⚔️ ATK</div><div className="text-sm font-bold text-red-400">{player?.attack ?? 0}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">🛡️ DEF</div><div className="text-sm font-bold text-blue-400">{player?.defense ?? 0}</div></div>
-        <div className="mafia-card rounded-xl p-3 text-center"><div className="text-xs text-muted-foreground">💀 Kills</div><div className="text-sm font-bold text-purple-400">{player?.totalKills ?? 0}</div></div>
-      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4"><ActionStat icon="💰" label="Cash on hand" value={`$${(player?.money ?? 0).toLocaleString()}`} tone="green" /><ActionStat icon="⚔️" label="Attack" value={player?.attack ?? 0} tone="red" /><ActionStat icon="🛡️" label="Defense" value={player?.defense ?? 0} tone="blue" /><ActionStat icon="💀" label="Confirmed kills" value={player?.totalKills ?? 0} tone="red" /></div>
 
       {/* Tab Navigation */}
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -116,16 +106,13 @@ function MurderPage() {
             ))}
           </div>
           {target && (
-            <div className="mafia-card rounded-xl p-4 border border-red-500/20">
-              <div className="text-sm font-bold mb-2">🎯 Target: {target.nickname}</div>
-              <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground mb-3">
-                <div>Level: {target.level}</div><div>ATK: {target.attack}</div><div>DEF: {target.defense}</div><div>HP: {target.life}/{target.maxLife}</div>
+          <ActionCard active={Boolean(target)} className="border-red-500/25 bg-gradient-to-br from-red-950/25 to-slate-950/70"><div className="text-sm font-black text-red-200">🎯 Target lock</div>
+              <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-muted-foreground sm:grid-cols-4">
+                <div className="rounded-lg bg-black/25 p-2">Level <span className="font-bold text-white">{target.level}</span></div><div className="rounded-lg bg-black/25 p-2">ATK <span className="font-bold text-red-300">{target.attack}</span></div><div className="rounded-lg bg-black/25 p-2">DEF <span className="font-bold text-blue-300">{target.defense}</span></div><div className="rounded-lg bg-black/25 p-2">HP <span className="font-bold text-white">{target.life}/{target.maxLife}</span></div>
               </div>
-              <div className="text-xs text-muted-foreground mb-3">Weapon: {weapon.icon} {weapon.name} | Method: {method.icon} {method.name}</div>
-              <button onClick={execute} disabled={loading} className="w-full px-4 py-3 bg-red-600 text-white font-black rounded-xl hover:bg-red-700 disabled:opacity-50 text-sm">
-                {loading ? "Executing..." : `💀 ELIMINATE ${target.nickname.toUpperCase()}`}
-              </button>
-            </div>
+              <div className="mt-3 text-[10px] text-slate-500">Weapon: <span className="text-slate-300">{weapon.icon} {weapon.name}</span> · Method: <span className="text-slate-300">{method.icon} {method.name}</span></div>
+              <div className="mt-3"><ExecuteButton onClick={execute} disabled={loading}>{loading ? "Executing..." : `Eliminate ${target.nickname}`}</ExecuteButton></div>
+            </ActionCard>
           )}
         </div>
       )}

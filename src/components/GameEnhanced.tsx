@@ -4,6 +4,7 @@ import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Shield, Skull, Star, Zap, Clock, Trophy, Lock, Car, AlertTriangle, Users, Ban, Heart, Target, Coins, ChevronRight, Gift, ShieldCheck, Crosshair, Swords, Bomb, Eye, LockKeyhole, MapPin } from "lucide-react";
 import { maybeDropEasterEgg, maybeDropEventGift } from "../lib/easterEgg";
+import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
 
 function LoadingPage() {
   return <div className="flex items-center justify-center h-64"><div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -184,27 +185,16 @@ export function GtaCarTheftPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <div className="flex items-center gap-3">
-        <Car className="size-7 text-cyan-400" />
-        <div>
-          <h2 className="text-2xl font-bold">🚗 GTA Car Theft</h2>
-          <p className="text-sm text-muted-foreground">Steal vehicles from the streets. Stolen cars go to your Garage!</p>
-        </div>
-      </div>
+      <ActionHero eyebrow="Vehicle acquisition network" title="GTA Car Theft" description="Scout the city, pick your mark, and disappear before the sirens arrive. Every stolen vehicle is routed to your Garage." icon="🚗" accent="cyan" right={<div className="rounded-xl border border-cyan-400/25 bg-black/30 px-3 py-2 text-right"><div className="text-[9px] uppercase tracking-widest text-cyan-200/60">Heat status</div><div className="text-lg font-black text-cyan-300">MOVING</div></div>} />
 
-      <div className="mafia-card rounded-xl p-5">
-        <div className="text-center space-y-2">
-          <div className="text-6xl">🚗</div>
-          <div className="text-sm text-muted-foreground">Approach a vehicle on the street</div>
-          <div className="text-[10px] text-yellow-400">⚠️ 60% success rate • 40% fail chance</div>
-          <div className="text-[10px] text-muted-foreground">Stolen vehicles appear in your Garage</div>
-        </div>
+      <div className="grid grid-cols-3 gap-2"><ActionStat icon="💰" label="Cash" value={`$${(player.money ?? 0).toLocaleString()}`} tone="green" /><ActionStat icon="🔥" label="Street heat" value="Low" tone="red" /><ActionStat icon="🚘" label="Garage route" value="Active" tone="blue" /></div>
+
+      <ActionCard className="border-cyan-500/20 bg-gradient-to-br from-cyan-950/20 to-slate-950/70"><div className="flex items-center justify-between gap-3"><div><div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">Vehicle scouting</div><div className="mt-1 text-sm font-bold text-white">Choose a district before you take the wheel.</div></div><span className="rounded-full bg-cyan-400/10 px-2 py-1 text-[9px] font-bold text-cyan-300">13 districts</span></div></ActionCard>
       
       {/* Car Categories Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {carCategories.map((cat: any) => (
-          <button key={cat.id} onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-            className={`p-3 rounded-xl text-left transition-all border ${selectedCategory === cat.id ? "border-cyan-500/50 bg-cyan-950/20 shadow-lg" : "border-border/50 bg-card/50 hover:border-cyan-500/20"}`}>
+            <ActionCard key={cat.id} active={selectedCategory === cat.id}><button onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)} className="w-full text-left">
             <div className="flex items-center gap-2">
               <span className="text-lg">{cat.icon}</span>
               <div>
@@ -212,15 +202,11 @@ export function GtaCarTheftPage() {
                 <div className="text-[9px] text-muted-foreground">{cat.desc}</div>
               </div>
             </div>
-            <div className="flex justify-between mt-1.5">
-              <span className="text-[8px] text-muted-foreground">{cat.priceRange}</span>
-              <span className="text-[8px] text-primary">{cat.chance}</span>
-            </div>
           </button>
+          </ActionCard>
         ))}
       </div>
       <div className="text-[9px] text-muted-foreground text-center">Categories show where stolen vehicles come from — all cars go to your Garage</div>
-</div>
 
       {cooldown > 0 ? (
         <div className="mafia-card rounded-xl p-6 text-center">

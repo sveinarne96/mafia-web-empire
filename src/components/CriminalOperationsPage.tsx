@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Clock, Lock, ShieldAlert, Sparkles, Zap } from "lucide-react";
+import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
 import { crimeCategories } from "@/data/crimes";
 import { RESOURCE_COSTS } from "@/data/resourceCosts";
 
@@ -110,18 +111,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
 
   return (
     <div className="animate-fade-in space-y-5">
-      {/* ── GTA-style header ── */}
-      <div className="flex items-center gap-3">
-        <span className="text-4xl drop-shadow">{meta.icon}</span>
-        <div className="min-w-0">
-          <h2 className={`text-2xl font-bold ${tone.text}`}>{meta.title}</h2>
-          <p className="text-sm text-muted-foreground">{meta.tagline}</p>
-        </div>
-        <div className="ml-auto text-right">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Your Rank</div>
-          <div className={`text-lg font-black ${tone.text}`}>Lv.{level}</div>
-        </div>
-      </div>
+      <ActionHero eyebrow="Live operations network" title={meta.title} description={meta.tagline} icon={meta.icon} accent={definition.id === "organized" ? "purple" : definition.id === "drugs" ? "purple" : definition.id === "gta_theft" ? "cyan" : "red"} right={<div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-right"><div className="text-[9px] uppercase tracking-widest text-slate-500">Your rank</div><div className={`text-lg font-black ${tone.text}`}>Lv.{level}</div></div>} />
 
       {/* ── Result (GTA style: animated slide-in) ── */}
       {result && (
@@ -149,20 +139,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
       )}
 
       {/* ── Info strip ── */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-border/50 bg-card/50 p-3 text-center">
-          <div className="text-[9px] uppercase tracking-widest text-muted-foreground">Operations</div>
-          <div className="text-sm font-black text-white">{unlocked}/{crimes.length} unlocked</div>
-        </div>
-        <div className="rounded-xl border border-border/50 bg-card/50 p-3 text-center">
-          <div className="text-[9px] uppercase tracking-widest text-muted-foreground">Payout Range</div>
-          <div className="text-sm font-black text-green-400">{rewardRange}</div>
-        </div>
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3 text-center">
-          <div className="text-[9px] uppercase tracking-widest text-yellow-300/70">Energy</div>
-          <div className="text-sm font-black text-yellow-300">{energy}/{maxEnergy} ⚡</div>
-        </div>
-      </div>
+      <div className="grid grid-cols-3 gap-2"><ActionStat icon="🎯" label="Operations" value={`${unlocked}/${crimes.length} unlocked`} tone="blue" /><ActionStat icon="💰" label="Payout range" value={rewardRange} tone="green" /><ActionStat icon="⚡" label="Energy" value={`${energy}/${maxEnergy}`} tone="amber" /></div>
 
       {/* ── Crime category grid (GTA Car Theft layout) ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -172,8 +149,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
           const tier = riskTier(crime.risk);
           const onCd = (cooldowns[crime.id] ?? 0) > 0;
           return (
-            <button key={crime.id} onClick={() => !locked && setSelectedId(crime.id)} disabled={locked}
-              className={`p-3 rounded-xl text-left transition-all border ${active ? tone.selected : `border-border/50 bg-card/50 ${tone.hover}`} ${locked ? "opacity-40 cursor-not-allowed" : ""}`}>
+            <ActionCard key={crime.id} active={active} className={`${locked ? "opacity-40 cursor-not-allowed" : ""}`}><button onClick={() => !locked && setSelectedId(crime.id)} disabled={locked} className="w-full text-left">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{locked ? "🔒" : meta.icon}</span>
                 <div className="min-w-0">
@@ -190,7 +166,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
                   <div className="h-full bg-amber-500/70 rounded-full transition-all duration-1000" style={{ width: `${((cooldowns[crime.id] ?? 0) / Math.max(3, Math.round(crime.risk / 3))) * 100}%` }} />
                 </div>
               )}
-            </button>
+            </button></ActionCard>
           );
         })}
       </div>
@@ -213,13 +189,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
           </div>
         </div>
       ) : (
-        <button
-          onClick={run}
-          disabled={busy || energyBlocked}
-          className={`w-full py-4 bg-gradient-to-r ${tone.btn.split(" ").filter((c) => c.startsWith("from-") || c.startsWith("to-") || c.startsWith("hover:")).join(" ")} text-white font-bold text-lg rounded-xl transition-all disabled:opacity-50 shadow-lg`}
-        >
-          {busy ? "Executing..." : energyBlocked ? (energy < 5 ? "Recovering to 5 ⚡" : `Need ${Math.max(5, cost)} ⚡ Energy`) : `${meta.icon} Execute ${selected.name} · -${cost} ⚡`}
-        </button>
+        <ExecuteButton onClick={run} disabled={busy || energyBlocked}>{busy ? "Executing..." : energyBlocked ? (energy < 5 ? "Recovering to 5 ⚡" : `Need ${Math.max(5, cost)} ⚡ Energy`) : `${meta.icon} Execute ${selected.name} · -${cost} ⚡`}</ExecuteButton>
       )}
 
       {/* ── Selected op detail ── */}
@@ -241,10 +211,7 @@ export function CriminalOperationsPage({ category }: { category: string }) {
           <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-2"><div className="text-muted-foreground">Energy</div><div className="font-bold text-yellow-300">-{cost} ⚡</div></div>
           <div className="rounded-lg bg-white/5 p-2"><div className="text-muted-foreground">Unlock</div><div className="font-bold text-purple-300">Lv.{selected.levelRequired}</div></div>
         </div>
-        <div className="mt-3 flex gap-2 text-[9px] leading-4 text-muted-foreground">
-          <ShieldAlert className="size-3 shrink-0" />
-          Energy regenerates by 5 every minute. If you hit 0, actions unlock again once you recover to 5 energy.
-        </div>
+        <SafetyNote>Energy regenerates by 5 every minute. If you hit 0, actions unlock again once you recover to 5 energy.</SafetyNote>
       </div>
 
       {definition.id === "murder" && (

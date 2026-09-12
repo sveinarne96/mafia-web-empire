@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Skull, Car, Home, Shield, Clock, ChevronRight, Zap, AlertTriangle, Lock, MapPin, SkullIcon } from "lucide-react";
+import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
 
 // ═══════════════════════════════════════════════════════════════════
 // CRIME CATEGORIES WITH LEVEL-BASED SUB-PAGES
@@ -156,21 +157,8 @@ export default function CrimeHub() {
   return (
     <div className="animate-fade-in space-y-4">
       {/* Header */}
-      <div className="bg-gradient-to-r from-red-900/30 via-orange-900/20 to-red-900/30 rounded-2xl p-4 border border-red-500/20">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">🔪</span>
-            <div>
-              <h1 className="text-xl font-black text-red-300 tracking-wider">CRIME HUB</h1>
-              <p className="text-[10px] text-slate-500">Level-based criminal operations • {ALL_CRIMES.length} crimes total</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-[10px] text-slate-500">YOUR LEVEL</div>
-            <div className="text-lg font-black text-red-400">Lv.{player.level ?? 1}</div>
-          </div>
-        </div>
-      </div>
+      <ActionHero eyebrow="Citywide criminal network" title="Crime Hub" description={`${ALL_CRIMES.length} operations across five districts. Pick a lane, manage your exposure, and build a reputation that lasts.`} icon="🔪" accent="red" right={<div className="rounded-xl border border-red-400/25 bg-black/30 px-3 py-2 text-right"><div className="text-[9px] uppercase tracking-widest text-red-200/60">Operator level</div><div className="text-lg font-black text-red-300">LV.{player.level ?? 1}</div></div>} />
+      <div className="grid grid-cols-3 gap-2"><ActionStat icon="🎯" label="Unlocked" value={`${ALL_CRIMES.filter((crime) => (player.level ?? 0) >= crime.level).length}/${ALL_CRIMES.length}`} tone="red" /><ActionStat icon="💰" label="Best score" value={`$${Math.max(...ALL_CRIMES.map((crime) => crime.reward)).toLocaleString()}`} tone="green" /><ActionStat icon="⚡" label="Momentum" value={`${(player as any).crimeMomentum ?? 0}%`} tone="amber" /></div>
 
       {/* Search */}
       <div className="relative">
