@@ -395,18 +395,28 @@ function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void 
       )}
 
       {/* Quick Actions */}
-      <div className="mafia-card rounded-xl p-4 border border-amber-500/20">
-        <div className="text-sm font-bold mb-3">🎮 Quick Actions</div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+      <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-slate-950 via-amber-950/10 to-slate-950 p-4 shadow-[0_18px_60px_rgba(0,0,0,0.18)]">
+        <div className="pointer-events-none absolute -right-10 -top-12 text-[150px] opacity-[0.035]">♛</div>
+        <div className="relative mb-3 flex items-center gap-2">
+          <div className="flex size-8 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-lg">⚡</div>
+          <div>
+            <div className="text-sm font-black tracking-wide text-amber-200">Command shortcuts</div>
+            <div className="text-[9px] uppercase tracking-[0.22em] text-slate-500">Make your next move</div>
+          </div>
+          <span className="ml-auto rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-emerald-300">Live</span>
+        </div>
+        <div className="relative grid grid-cols-2 gap-2 md:grid-cols-4">
           {[
-            { icon: "🔪", label: "Street Crime", color: "from-emerald-500/20 to-emerald-600/10 border-emerald-500/30" },
-            { icon: "💰", label: "Robbery", color: "from-red-500/20 to-red-600/10 border-red-500/30" },
-            { icon: "🎰", label: "Casino", color: "from-amber-500/20 to-amber-600/10 border-amber-500/30" },
-            { icon: "🛒", label: "Coin Store", color: "from-cyan-500/20 to-cyan-600/10 border-cyan-500/30" },
+            { icon: "🔪", label: "Street Crime", hint: "Quick hits", page: "crime_street", color: "from-emerald-500/25 to-emerald-600/5 border-emerald-500/30 text-emerald-200" },
+            { icon: "💰", label: "Robbery", hint: "High stakes", page: "crime_robbery", color: "from-red-500/25 to-red-600/5 border-red-500/30 text-red-200" },
+            { icon: "🎰", label: "Casino", hint: "Play the odds", page: "casinos", color: "from-amber-500/25 to-amber-600/5 border-amber-500/30 text-amber-200" },
+            { icon: "🛒", label: "Coin Store", hint: "Upgrade your empire", page: "coin_store", color: "from-cyan-500/25 to-cyan-600/5 border-cyan-500/30 text-cyan-200" },
           ].map((action) => (
-            <div key={action.label} className={`bg-gradient-to-r ${action.color} border rounded-xl p-3 text-center cursor-pointer hover:scale-[1.02] transition-all`}>\n              <div className="text-2xl mb-1">{action.icon}</div>
-              <div className="text-[10px] font-bold text-slate-300">{action.label}</div>
-            </div>
+            <button key={action.label} onClick={() => (onNavigate ?? navigateToPage)(action.page)} className={`group rounded-xl border bg-gradient-to-r p-3 text-left transition-all duration-200 hover:-translate-y-0.5 hover:brightness-125 ${action.color}`}>
+              <div className="flex items-center justify-between"><span className="text-2xl transition-transform duration-200 group-hover:scale-110">{action.icon}</span><ChevronRight className="size-3 opacity-40 transition-transform group-hover:translate-x-0.5 group-hover:opacity-90" /></div>
+              <div className="mt-2 text-[10px] font-black">{action.label}</div>
+              <div className="mt-0.5 text-[8px] text-slate-500">{action.hint}</div>
+            </button>
           ))}
         </div>
       </div>
