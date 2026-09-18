@@ -1,107 +1,134 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef } from "react";
 
 type CrimeOperationsDeckProps = {
   activePage: string;
   onNavigate: (page: string) => void;
 };
 
-type Operation = {
-  icon: string;
+type OperationMeta = {
   label: string;
-  page: string;
   description: string;
   cooldown: number;
-  tone: string;
 };
 
-const OPERATIONS: Operation[] = [
-  { icon: "🔪", label: "Street", page: "crime_street", description: "Fast cash · low profile", cooldown: 45, tone: "emerald" },
-  { icon: "💰", label: "Robbery", page: "crime_robbery", description: "High payout · raises heat", cooldown: 120, tone: "red" },
-  { icon: "🃏", label: "Fraud", page: "crime_fraud", description: "Work the mark · watch the trail", cooldown: 180, tone: "amber" },
-  { icon: "🏠", label: "Burglary", page: "crime_burglary", description: "Quiet entry · careful exit", cooldown: 240, tone: "orange" },
-  { icon: "💊", label: "Drugs", page: "crime_drugs", description: "Move product · manage risk", cooldown: 300, tone: "purple" },
-  { icon: "🕵️", label: "Organized", page: "crime_organized", description: "Crew pressure · serious return", cooldown: 600, tone: "blue" },
-  { icon: "🕳️", label: "Underground", page: "crime_underground", description: "Off-grid work · long setup", cooldown: 900, tone: "slate" },
-  { icon: "🚗", label: "GTA", page: "car_theft", description: "Take a vehicle · garage delivery", cooldown: 180, tone: "red" },
-  { icon: "🏠", label: "Burglarize", page: "steal_house", description: "Case the property · lift the loot", cooldown: 240, tone: "rose" },
-  { icon: "🕵️", label: "Org Crime", page: "organized_crime", description: "Coordinate the crew · split the take", cooldown: 900, tone: "violet" },
-  { icon: "💀", label: "Murder", page: "murder", description: "Lethal contract · extreme exposure", cooldown: 1800, tone: "red" },
-  { icon: "💰", label: "Heist", page: "heist", description: "Build the plan · chase the big score", cooldown: 3600, tone: "amber" },
+const OPERATIONS: OperationMeta[] = [
+  { label: "Street", description: "Quick hit · low profile", cooldown: 45 },
+  { label: "Robbery", description: "High payout · heat rises", cooldown: 120 },
+  { label: "Fraud", description: "Work the mark · leave no trail", cooldown: 180 },
+  { label: "Burglary", description: "Quiet entry · clean exit", cooldown: 240 },
+  { label: "Drugs", description: "Move product · manage exposure", cooldown: 300 },
+  { label: "Organized", description: "Crew pressure · serious return", cooldown: 600 },
+  { label: "Underground", description: "Off-grid work · slow setup", cooldown: 900 },
+  { label: "GTA", description: "Take the wheel · garage delivery", cooldown: 180 },
+  { label: "Burglarize", description: "Case the house · lift the loot", cooldown: 240 },
+  { label: "Org Crime", description: "Coordinate the crew · split the take", cooldown: 900 },
+  { label: "Murder", description: "Lethal contract · extreme exposure", cooldown: 1800 },
+  { label: "Heist", description: "Build the plan · chase the big score", cooldown: 3600 },
 ];
 
 const formatTime = (seconds: number) => {
   if (seconds <= 0) return "READY";
   const minutes = Math.floor(seconds / 60);
-  const remaining = seconds % 60;
-  return minutes ? `${minutes}m ${String(remaining).padStart(2, "0")}s` : `${remaining}s`;
+  return minutes > 0 ? `${minutes}m ${String(seconds % 60).padStart(2, "0")}s` : `${seconds}s`;
 };
 
-export function CrimeOperationsDeck({ activePage, onNavigate }: CrimeOperationsDeckProps) {
-  const [now, setNow] = useState(() => Date.now());
-  const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
+/**
+ * The operation cards live in Dashboard's compact top bar. This component
+ * intentionally renders no separate panel; it adds the live intelligence HUD
+ * to those existing buttons without changing their navigation handlers.
+ */
+export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNavigate }: CrimeOperationsDeckProps) {
+  const deadlines = useRef<Record<string, number>>({});
 
   useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(timer);
+    let disposed = false;
+    const timers = new Map<HTMLButtonElement, (event: MouseEvent) => void>();
+
+    const enhance = () => {
+      if (disposed) return;
+      const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>("button"));
+      for (const operation of OPERATIONS) {
+        const button = buttons.find((candidate) => {
+          const text = candidate.textContent?.replace(/\s+/g, " ").trim() ?? "";
+          return text.includes(operation.label) && !candidate.closest("aside") && !candidate.closest("nav");
+        });
+        if (!button) continue;
+
+        button.dataset.operationRail = operation.label;
+        button.title = `${operation.description} · ${Math.floor(operation.cooldown / 60)}m cycle`;
+        button.style.minWidth = "92px";
+        button.style.minHeight = "47px";
+        button.style.position = "relative";
+        button.style.overflow = "hidden";
+        button.style.transition = "transform 180ms ease, filter 180ms ease, border-color 180ms ease";
+
+        let intel = button.querySelector<HTMLElement>("[data-operation-intel]");
+        if (!intel) {
+          intel = document.createElement("span");
+          intel.dataset.operationIntel = "true";
+          intel.style.cssText = "display:block;position:relative;z-index:2;margin-top:2px;text-align:left;pointer-events:none;line-height:1.1;";
+          const description = document.createElement("span");
+          description.dataset.operationDescription = "true";
+          description.textContent = operation.description;
+          description.style.cssText = "display:block;max-width:112px;overflow:hidden;text-overflow:ellipsis;color:rgba(148,163,184,.82);font-size:8px;font-weight:500;white-space:nowrap;";
+          const cooldown = document.createElement("span");
+          cooldown.dataset.operationCooldown = "true";
+          cooldown.style.cssText = "display:block;margin-top:2px;color:#fbbf24;font-size:8px;font-weight:900;letter-spacing:.04em;white-space:nowrap;";
+          intel.append(description, cooldown);
+          button.appendChild(intel);
+
+          const progress = document.createElement("span");
+          progress.dataset.operationProgress = "true";
+          progress.style.cssText = "position:absolute;left:0;bottom:0;height:2px;width:100%;transform-origin:left;background:linear-gradient(90deg,#f59e0b,#ef4444);opacity:.9;pointer-events:none;transition:transform 250ms linear;";
+          button.appendChild(progress);
+        }
+
+        if (!timers.has(button)) {
+          const handleClick = () => {
+            deadlines.current[operation.label] = Math.max(deadlines.current[operation.label] ?? 0, Date.now() + operation.cooldown * 1000);
+          };
+          button.addEventListener("click", handleClick);
+          timers.set(button, handleClick);
+        }
+      }
+    };
+
+    const update = () => {
+      enhance();
+      const now = Date.now();
+      for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>("[data-operation-rail]"))) {
+        const operation = OPERATIONS.find((candidate) => candidate.label === button.dataset.operationRail);
+        if (!operation) continue;
+        const seconds = Math.max(0, Math.ceil(((deadlines.current[operation.label] ?? 0) - now) / 1000));
+        const cooldown = button.querySelector<HTMLElement>("[data-operation-cooldown]");
+        const progress = button.querySelector<HTMLElement>("[data-operation-progress]");
+        if (cooldown) cooldown.textContent = seconds > 0 ? `⏱ ${formatTime(seconds)} · RECOVERING` : `✓ READY · ${Math.floor(operation.cooldown / 60)}m cycle`;
+        if (progress) progress.style.transform = `scaleX(${seconds > 0 ? Math.max(0, seconds / operation.cooldown) : 0})`;
+        button.style.filter = seconds > 0 ? "saturate(.72)" : "saturate(1)";
+      }
+    };
+
+    update();
+    const observer = new MutationObserver(enhance);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const interval = window.setInterval(update, 250);
+    return () => {
+      disposed = true;
+      observer.disconnect();
+      window.clearInterval(interval);
+      for (const [button, handler] of timers) button.removeEventListener("click", handler);
+      document.querySelectorAll<HTMLElement>("[data-operation-intel], [data-operation-progress]").forEach((element) => element.remove());
+      document.querySelectorAll<HTMLButtonElement>("[data-operation-rail]").forEach((button) => {
+        delete button.dataset.operationRail;
+        button.style.removeProperty("min-width");
+        button.style.removeProperty("min-height");
+        button.style.removeProperty("position");
+        button.style.removeProperty("overflow");
+        button.style.removeProperty("filter");
+        button.style.removeProperty("transition");
+      });
+    };
   }, []);
 
-  const remaining = useMemo(() => {
-    return Object.fromEntries(
-      OPERATIONS.map((operation) => [operation.page, Math.max(0, Math.ceil(((cooldowns[operation.page] ?? 0) - now) / 1000))]),
-    ) as Record<string, number>;
-  }, [cooldowns, now]);
-
-  const handleNavigate = (operation: Operation) => {
-    onNavigate(operation.page);
-    setCooldowns((current) => ({
-      ...current,
-      [operation.page]: Math.max(current[operation.page] ?? 0, Date.now() + operation.cooldown * 1000),
-    }));
-  };
-
-  return (
-    <section className="mb-5 overflow-hidden rounded-2xl border border-amber-500/20 bg-[linear-gradient(135deg,rgba(15,10,7,.96),rgba(28,15,9,.92),rgba(8,10,14,.98))] shadow-[0_18px_55px_rgba(0,0,0,.28)]" aria-label="Crime operations">
-      <div className="border-b border-white/5 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="flex size-8 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-400/10 text-lg">◈</span>
-          <div>
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-amber-200">Operations control</h2>
-            <p className="text-[9px] text-slate-500">Choose a route. Every move has a realistic recovery window.</p>
-          </div>
-          <span className="ml-auto hidden rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-1 text-[8px] font-black uppercase tracking-widest text-emerald-300 sm:block">Live city network</span>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-        {OPERATIONS.map((operation) => {
-          const seconds = remaining[operation.page] ?? 0;
-          const isActive = activePage === operation.page;
-          const progress = seconds > 0 ? Math.max(0, Math.min(100, (seconds / operation.cooldown) * 100)) : 0;
-          return (
-            <button
-              key={operation.page}
-              type="button"
-              onClick={() => handleNavigate(operation)}
-              className={`group relative overflow-hidden rounded-xl border p-3 text-left transition-all duration-300 hover:-translate-y-0.5 hover:brightness-125 ${isActive ? "border-amber-400/60 bg-amber-400/10 shadow-[0_0_22px_rgba(245,158,11,.12)]" : "border-white/10 bg-black/20 hover:border-white/25"}`}
-              aria-label={`${operation.label}: ${operation.description}. ${seconds > 0 ? `Cooldown ${formatTime(seconds)}` : "Ready"}`}
-            >
-              <div className={`absolute inset-x-0 bottom-0 h-0.5 origin-left bg-${operation.tone}-400/70 transition-transform duration-300`} style={{ transform: `scaleX(${progress / 100})` }} />
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-xl transition-transform duration-300 group-hover:scale-110">{operation.icon}</span>
-                <span className={`rounded-full px-1.5 py-0.5 text-[8px] font-black tracking-wide ${seconds > 0 ? "bg-orange-400/10 text-orange-300" : "bg-emerald-400/10 text-emerald-300"}`}>
-                  {seconds > 0 ? `⏱ ${formatTime(seconds)}` : "✓ READY"}
-                </span>
-              </div>
-              <div className="mt-2 text-[11px] font-black text-slate-100">{operation.label}</div>
-              <div className="mt-0.5 min-h-7 text-[9px] leading-3 text-slate-500">{operation.description}</div>
-              <div className="mt-2 flex items-center justify-between text-[8px] uppercase tracking-wider text-slate-600">
-                <span>{seconds > 0 ? "Recovering" : "Available"}</span>
-                <span>{Math.floor(operation.cooldown / 60)}m cycle</span>
-              </div>
-              {seconds > 0 && <div className="pointer-events-none absolute inset-0 animate-pulse bg-orange-400/[0.02]" />}
-            </button>
-          );
-        })}
-      </div>
-    </section>
-  );
+  return null;
 }
