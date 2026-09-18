@@ -75,7 +75,7 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Prison", page: "prison", icon: "🔒" },
       { label: "Achievements", page: "crime_achievements", icon: "🏅" },
       { label: "Boxing / Gym", page: "boxing_gym", icon: "🥊" },
-      { label: "Chase", page: "chase", icon: "🚨" },
+      { label: "Police Chase", page: "police_chase", icon: "🚨" },
       { label: "Scrapyard", page: "scrapyard", icon: "⚙️" },
       { label: "Smuggling", page: "smuggling", icon: "🚢" },
       { label: "Life Insurance", page: "life_insurance", icon: "🛡️" },
