@@ -53,12 +53,12 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
 
       const parent = operationButtons[0].button.parentElement;
       if (parent) {
-        parent.style.gap = "5px";
+        parent.style.gap = "7px";
         parent.style.alignItems = "stretch";
-        parent.style.padding = "6px 8px 7px";
-        parent.style.background = "linear-gradient(180deg, rgba(5,8,12,.82), rgba(12,10,9,.96))";
-        parent.style.borderTop = "1px solid rgba(245,158,11,.12)";
-        parent.style.borderBottom = "1px solid rgba(245,158,11,.18)";
+        parent.style.padding = "9px 10px 10px";
+        parent.style.background = "linear-gradient(180deg, rgba(8,4,2,.96), rgba(18,8,3,.98) 48%, rgba(6,3,2,.98))";
+        parent.style.borderTop = "1px solid rgba(245,158,11,.18)";
+        parent.style.borderBottom = "1px solid rgba(245,158,11,.28)";
         parent.style.scrollPaddingInline = "8px";
         [
           { key: "street", text: "STREET WORK", color: "#86efac" },
@@ -70,7 +70,7 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
           const label = document.createElement("span");
           label.dataset.operationSection = section.key;
           label.textContent = section.text;
-          label.style.cssText = `display:flex;align-items:center;align-self:stretch;padding:0 4px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;font-weight:950;letter-spacing:.18em;color:${section.color};opacity:.7;white-space:nowrap;pointer-events:none;`;
+          label.style.cssText = `display:flex;align-items:center;align-self:center;height:18px;padding:0 8px;border:1px solid ${section.color}55;border-radius:999px;background:${section.color}12;font-size:7px;font-weight:950;letter-spacing:.16em;color:${section.color};opacity:.92;white-space:nowrap;pointer-events:none;`;
           parent.insertBefore(label, anchor);
         });
       }
@@ -78,9 +78,9 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
       operationButtons.forEach(({ operation, button }, index) => {
         button.dataset.operationRail = operation.label;
         button.title = `${operation.description} · ${Math.floor(operation.cooldown / 60)}m recovery cycle`;
-        button.style.minWidth = "116px";
-        button.style.minHeight = "68px";
-        button.style.padding = "7px 8px 6px";
+        button.style.minWidth = "132px";
+        button.style.minHeight = "82px";
+        button.style.padding = "9px 10px 8px";
         button.style.position = "relative";
         button.style.overflow = "hidden";
         button.style.display = "flex";
@@ -100,28 +100,29 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
           primary.style.justifyContent = "space-between";
           primary.style.gap = "5px";
           primary.style.width = "100%";
-          primary.style.fontSize = "10px";
-          primary.style.fontWeight = "900";
-          primary.style.letterSpacing = ".01em";
+          primary.style.fontSize = "11px";
+          primary.style.fontWeight = "950";
+          primary.style.letterSpacing = ".025em";
+          primary.style.color = operation.section === "major" ? "#fed7aa" : "#e2e8f0";
         }
 
         let intel = button.querySelector<HTMLElement>("[data-operation-intel]");
         if (!intel) {
           intel = document.createElement("span");
           intel.dataset.operationIntel = "true";
-          intel.style.cssText = "display:block;position:relative;z-index:3;margin-top:4px;text-align:left;pointer-events:none;line-height:1.1;";
+          intel.style.cssText = "display:block;position:relative;z-index:3;margin-top:7px;padding-top:6px;border-top:1px solid rgba(255,255,255,.08);text-align:left;pointer-events:none;line-height:1.1;";
           const description = document.createElement("span");
           description.dataset.operationDescription = "true";
           description.textContent = operation.description;
-          description.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;color:rgba(148,163,184,.86);font-size:8px;font-weight:600;white-space:nowrap;";
+          description.style.cssText = "display:block;overflow:hidden;text-overflow:ellipsis;color:rgba(203,213,225,.74);font-size:8px;font-weight:650;white-space:nowrap;";
           const cooldown = document.createElement("span");
           cooldown.dataset.operationCooldown = "true";
-          cooldown.style.cssText = "display:block;margin-top:4px;color:#fbbf24;font-size:8px;font-weight:950;letter-spacing:.04em;white-space:nowrap;";
+          cooldown.style.cssText = "display:block;margin-top:5px;color:#fcd34d;font-size:8px;font-weight:950;letter-spacing:.06em;white-space:nowrap;";
           intel.append(description, cooldown);
           button.appendChild(intel);
           const progress = document.createElement("span");
           progress.dataset.operationProgress = "true";
-          progress.style.cssText = "position:absolute;left:0;bottom:0;height:3px;width:100%;transform-origin:left;background:linear-gradient(90deg,#f59e0b,#ef4444);opacity:.9;pointer-events:none;transition:transform 250ms linear;";
+          progress.style.cssText = "position:absolute;left:0;bottom:0;height:3px;width:100%;transform-origin:left;background:linear-gradient(90deg,#fbbf24,#f97316,#ef4444);opacity:.95;pointer-events:none;transition:transform 250ms linear;";
           button.appendChild(progress);
         }
 
