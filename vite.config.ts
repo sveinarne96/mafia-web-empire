@@ -35,6 +35,9 @@ export default defineConfig({
         assetFileNames: 'assets/[name]-[hash].[ext]',
       },
     },
+    // Avoid a second gzip pass after rendering; constrained deploy builders
+    // can be killed while reporting compressed sizes even after a successful build.
+    reportCompressedSize: false,
     // Increase chunk size warning limit for better chunking
     chunkSizeWarningLimit: 1000,
     // Target modern browsers for better optimization
