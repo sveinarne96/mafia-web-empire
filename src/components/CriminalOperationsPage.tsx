@@ -4,6 +4,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Clock, Lock, ShieldAlert, Sparkles, Zap } from "lucide-react";
 import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
+import { StreetCrimesPage } from "@/components/StreetCrimesPage";
 import { crimeCategories } from "@/data/crimes";
 import { RESOURCE_COSTS } from "@/data/resourceCosts";
 
@@ -61,6 +62,11 @@ const shortCash = (n: number) => {
 };
 
 export function CriminalOperationsPage({ category }: { category: string }) {
+  if (category === "street") return <StreetCrimesPage />;
+  return <CriminalOperationsContent category={category} />;
+}
+
+function CriminalOperationsContent({ category }: { category: string }) {
   const player = useQuery(api.game.getPlayer);
   const resources = useQuery(api.resourceSystem.getResources);
   const store = useQuery(api.storeSystem.getStoreState);
