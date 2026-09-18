@@ -25,22 +25,9 @@ export default defineConfig({
         // Manual chunk splitting for better caching AND lower peak build memory
         // (each package gets its own chunk so no single JS file blows up minify/RSS).
         manualChunks(id: string) {
-          if (!id.includes("node_modules")) return undefined;
-          const pkgPath = id.split("node_modules/")[1] ?? "";
-          const pkgName = pkgPath.startsWith("@")
-            ? pkgPath.split("/").slice(0, 2).join("/")
-            : pkgPath.split("/")[0];
-          if (pkgName.startsWith("@radix-ui/")) return "radix-ui";
-          if (pkgName.startsWith("@convex-dev/")) return "convex-vendor";
-          if (pkgName.startsWith("react-router")) return "react-vendor";
-          if (["react", "react-dom"].includes(pkgName)) return "react-vendor";
-          if (["react-hook-form", "zod"].includes(pkgName) || pkgName === "@hookform") return "forms";
-          if (pkgName === "recharts" || pkgName === "d3" || pkgName.startsWith("d3-")) return "charts";
-          if (pkgName === "framer-motion") return "framer-motion";
-          if (pkgName.startsWith("date-fns")) return "dates";
-          if (pkgName === "lucide-react") return "lucide";
-          if (pkgName === "convex") return "convex-vendor";
-          return pkgName.replace(/[^a-zA-Z0-9_-]/g, "_") || undefined;
+          // One shared vendor graph avoids the hundreds of dependency chunks
+          // that previously exhausted memory during Rollup rendering.
+          return id.includes("node_modules") ? "vendor" : undefined;
         },
         // Optimize chunk size
         chunkFileNames: 'assets/[name]-[hash].js',
