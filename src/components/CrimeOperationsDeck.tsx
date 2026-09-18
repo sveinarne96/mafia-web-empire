@@ -37,7 +37,8 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
       [data-operation-rail] { isolation:isolate; }
       [data-operation-rail]::after { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; opacity:0; transition:opacity .25s ease; box-shadow:inset 0 0 18px rgba(245,158,11,.14), 0 0 18px rgba(245,158,11,.08); }
       [data-operation-rail]:hover::after { opacity:1; }
-      [data-operation-rail]:hover { transform:translateY(-1px); }
+      [data-operation-rail]:hover { transform:translateY(-2px) scale(1.015); border-color:rgba(251,191,36,.55)!important; box-shadow:inset 0 1px 0 rgba(255,255,255,.1), 0 9px 24px rgba(0,0,0,.34), 0 0 14px rgba(245,158,11,.1)!important; }
+      [data-operation-section] { text-shadow:0 0 10px currentColor; }
       [data-operation-rail] [data-operation-progress] { animation:operation-rail-pulse 2.4s ease-in-out infinite; }
       @keyframes operation-rail-pulse { 0%,100% { opacity:.45 } 50% { opacity:1 } }
     `;
@@ -52,8 +53,26 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
 
       const parent = operationButtons[0].button.parentElement;
       if (parent) {
-        parent.style.gap = "4px";
+        parent.style.gap = "5px";
         parent.style.alignItems = "stretch";
+        parent.style.padding = "6px 8px 7px";
+        parent.style.background = "linear-gradient(180deg, rgba(5,8,12,.82), rgba(12,10,9,.96))";
+        parent.style.borderTop = "1px solid rgba(245,158,11,.12)";
+        parent.style.borderBottom = "1px solid rgba(245,158,11,.18)";
+        parent.style.scrollPaddingInline = "8px";
+        [
+          { key: "street", text: "STREET WORK", color: "#86efac" },
+          { key: "major", text: "MAJOR OPERATIONS", color: "#fdba74" },
+        ].forEach((section, sectionIndex) => {
+          if (parent.querySelector(`[data-operation-section=\"${section.key}\"]`)) return;
+          const anchor = operationButtons[sectionIndex === 0 ? 0 : 7]?.button;
+          if (!anchor) return;
+          const label = document.createElement("span");
+          label.dataset.operationSection = section.key;
+          label.textContent = section.text;
+          label.style.cssText = `display:flex;align-items:center;align-self:stretch;padding:0 4px;writing-mode:vertical-rl;transform:rotate(180deg);font-size:7px;font-weight:950;letter-spacing:.18em;color:${section.color};opacity:.7;white-space:nowrap;pointer-events:none;`;
+          parent.insertBefore(label, anchor);
+        });
       }
 
       operationButtons.forEach(({ operation, button }, index) => {
@@ -141,7 +160,7 @@ export function CrimeOperationsDeck({ activePage: _activePage, onNavigate: _onNa
       observer.disconnect();
       window.clearInterval(interval);
       listeners.forEach((handler, button) => button.removeEventListener("click", handler));
-      document.querySelectorAll<HTMLElement>("[data-operation-intel], [data-operation-progress]").forEach((element) => element.remove());
+      document.querySelectorAll<HTMLElement>("[data-operation-intel], [data-operation-progress], [data-operation-section]").forEach((element) => element.remove());
       document.querySelectorAll<HTMLButtonElement>("[data-operation-rail]").forEach((button) => { delete button.dataset.operationRail; button.style.removeProperty("min-width"); button.style.removeProperty("min-height"); button.style.removeProperty("padding"); button.style.removeProperty("position"); button.style.removeProperty("overflow"); button.style.removeProperty("display"); button.style.removeProperty("flex-direction"); button.style.removeProperty("align-items"); button.style.removeProperty("justify-content"); button.style.removeProperty("border-radius"); button.style.removeProperty("background"); button.style.removeProperty("border-color"); button.style.removeProperty("box-shadow"); button.style.removeProperty("filter"); button.style.removeProperty("transition"); });
       style.remove();
     };
