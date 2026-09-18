@@ -312,15 +312,15 @@ export default function LiveEventCalendar() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="event-calendar-command space-y-4">
       {/* ─── HEADER ─── */}
       <div className="bg-gradient-to-r from-amber-900/30 via-red-900/20 to-purple-900/30 rounded-2xl p-4 md:p-6 border border-amber-500/20">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="text-4xl animate-pulse">📅</div>
             <div>
-              <h1 className="text-xl md:text-2xl font-black text-amber-300 tracking-wider">LIVE EVENT CALENDAR</h1>
-              <p className="text-[10px] text-slate-500">Real-time tracking • All {ALL_EVENTS.length} events</p>
+              <h1 className="text-xl md:text-2xl font-black text-amber-300 tracking-wider">CITY EVENT CONTROL</h1>
+              <p className="text-[10px] text-slate-400">Every scheduled window, recurring boost, and seasonal takeover — mapped across the year.</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -337,7 +337,7 @@ export default function LiveEventCalendar() {
         </div>
 
         {/* Leap year indicator */}
-        <div className="mt-2 flex items-center gap-2 text-[10px] text-slate-600">
+        <div className="event-calendar-brief mt-2 flex items-center gap-2 text-[10px] text-slate-600">
           <span>{isLeapYear(selectedYear) ? "Leap Year ✅" : "Standard Year"}</span>
           <span>•</span>
           <span>{getDaysInMonth(selectedYear, selectedMonth)} days in {MONTH_NAMES[selectedMonth - 1]}</span>

@@ -210,6 +210,7 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Neighborhoods", page: "neighborhoods", icon: "🏘️" },
       { label: "City Map", page: "city_map", icon: "🗺️" },
       { label: "Dynamic Events", page: "dynamic_events", icon: "⚡" },
+      { label: "Event Calendar", page: "event_calendar", icon: "📅" },
       { label: "World Map", page: "world_map", icon: "🌍" },
       { label: "World Events", page: "world_events", icon: "🌎" },
       { label: "Faction Warfare", page: "faction_warfare", icon: "⚔️" },
@@ -332,7 +333,6 @@ export const RIGHT_MENU_SECTIONS = [
     title: "Live Events",
     icon: Clock,
     items: [
-      { label: "Event Calendar", page: "event_calendar", icon: "📅" },
       { label: "Events Hub", page: "events_hub", icon: "🎆" },
     ],
   },
