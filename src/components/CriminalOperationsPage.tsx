@@ -22,6 +22,18 @@ const TONE: Record<string, { text: string; border: string; selected: string; hov
 };
 const FALLBACK_TONE = TONE.street;
 
+const GTA_MISSIONS = [
+  "Street Keys — recover a Volvo 240 or Volkswagen Golf",
+  "Glasshuset Sweep — deliver an executive sedan to the Garage",
+  "Charging Station Run — extract an e-Golf without triggering the immobiliser",
+  "City Nord Score — move a Tesla Model S before the heat closes in",
+];
+const HOUSE_MISSIONS = [
+  "Gammelt hus — recover a keycard, watch or gold ring",
+  "Nytt hus — extract a tablet, camera, passport or diamond",
+  "Villa — secure the laptop, bank card, painting or diamond loot",
+];
+
 const categoryMeta: Record<string, { title: string; icon: string; tagline: string }> = {
   street: { title: "Street Operations", icon: "🔪", tagline: "Fast moves, small targets, clean exits." },
   robbery: { title: "Robbery Desk", icon: "💰", tagline: "Plan the score before you touch the door." },
@@ -149,7 +161,8 @@ export function CriminalOperationsPage({ category }: { category: string }) {
           const tier = riskTier(crime.risk);
           const onCd = (cooldowns[crime.id] ?? 0) > 0;
           return (
-            <ActionCard key={crime.id} active={active} className={`${locked ? "opacity-40 cursor-not-allowed" : ""}`}><button onClick={() => !locked && setSelectedId(crime.id)} disabled={locked} className="w-full text-left">
+            <ActionCard key={crime.id} active={active} className={locked ? "opacity-40 cursor-not-allowed" : ""}>
+              <button onClick={() => !locked && setSelectedId(crime.id)} disabled={locked} className="w-full text-left">
               <div className="flex items-center gap-2">
                 <span className="text-lg">{locked ? "🔒" : meta.icon}</span>
                 <div className="min-w-0">

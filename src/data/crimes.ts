@@ -215,35 +215,30 @@ export const crimeCategories: CrimeCategory[] = [
     ],
   },
 
-  // GTA THEFT (40 energy)
+  // GTA THEFT — Norwegian street-to-supercar progression
   {
     id: "gta_theft",
     name: "GTA Car Theft",
     icon: "🚗",
-    description: "Steal vehicles from junk cars to luxury rides.",
+    description: "Choose a source, steal a specific vehicle, then send it to your Garage at its real resale value.",
     crimes: [
-      { id: "gta_parked_car", name: "Parked Car Theft", description: "Hotwire a car parked on the street.", reward: 25000, risk: 10, xp: 125, levelRequired: 1 },
-      { id: "gta_sports_car", name: "Sports Car Theft", description: "Steal a high-performance sports car.", reward: 150000, risk: 25, xp: 200, levelRequired: 4 },
-      { id: "gta_luxury_suv", name: "Luxury SUV Theft", description: "Swipe an expensive SUV from a dealership.", reward: 500000, risk: 30, xp: 250, levelRequired: 6 },
-      { id: "gta_supercar", name: "Supercar Heist", description: "Steal an exotic hypercar worth millions.", reward: 1500000, risk: 50, xp: 400, levelRequired: 10 },
+      { id: "gta_street_keys", name: "Steal keys from the street", description: "Volvo 240 → Volkswagen Golf · ordinary street cars and clean getaway routes.", reward: 4000, risk: 12, xp: 125, levelRequired: 1 },
+      { id: "gta_glasshouse", name: "Steal from Glasshuset", description: "Family cars and executive sedans from the downtown glass district.", reward: 40000, risk: 28, xp: 225, levelRequired: 2 },
+      { id: "gta_charging_station", name: "Steal from a charging station", description: "Quiet electric cars and premium SUVs with modern immobilisers.", reward: 40000, risk: 34, xp: 275, levelRequired: 2 },
+      { id: "gta_city_nord", name: "Steal from City Nord", description: "Tesla Model S through the rarest hypercars in the city.", reward: 100000, risk: 55, xp: 500, levelRequired: 3 },
     ],
   },
 
-  // STEAL FROM HOUSE (40 energy)
+  // HOUSE INFILTRATION — item loot and repeatable item missions
   {
     id: "steal_house",
-    name: "Steal from House",
+    name: "House Infiltration",
     icon: "🏠",
-    description: "Break into homes and grab what you can.",
+    description: "Select a property tier, extract loot, and complete missions for specific stolen items.",
     crimes: [
-      { id: "sh_easy_home", name: "Easy Suburban Home", description: "An unlocked door in the suburbs.", reward: 10000, risk: 5, xp: 100, levelRequired: 1 },
-      { id: "sh_poor_apartment", name: "Tenant Apartment", description: "A ground-floor apartment with a hidden stash.", reward: 30000, risk: 10, xp: 125, levelRequired: 1 },
-      { id: "sh_average_house", name: "Average Family Home", description: "A standard house with a jewelry safe.", reward: 75000, risk: 15, xp: 150, levelRequired: 2 },
-      { id: "sh_suburban_mansion", name: "Suburban Mansion", description: "A big house in the wealthy suburbs.", reward: 200000, risk: 25, xp: 200, levelRequired: 5 },
-      { id: "sh_penthouse", name: "Downtown Penthouse", description: "A luxury penthouse apartment.", reward: 600000, risk: 40, xp: 350, levelRequired: 8 },
-      { id: "sh_rich_estate", name: "Rich Estate", description: "A gated estate with private security.", reward: 2000000, risk: 55, xp: 500, levelRequired: 12 },
-      { id: "sh_ceo_condo", name: "CEO Condo", description: "The penthouse of a tech billionaire.", reward: 6000000, risk: 70, xp: 700, levelRequired: 18 },
-      { id: "sh_villa_heist", name: "Private Villa Heist", description: "An oceanfront villa with armed guards.", reward: 15000000, risk: 85, xp: 900, levelRequired: 22 },
+      { id: "sh_old_house", name: "Gammelt hus", description: "Low-security house: DVD player, gold ring, disguise, clock, mask, float ring and keycard.", reward: 20, risk: 15, xp: 125, levelRequired: 1 },
+      { id: "sh_new_house", name: "Nytt hus", description: "Modern home: tablet, TV, diamond, camera, lockpick set, consoles, radio and passport.", reward: 4200, risk: 30, xp: 225, levelRequired: 2 },
+      { id: "sh_villa", name: "Villa", description: "High-security villa: paintings, diamonds, bank card, laptop, alarm system and gaming hardware.", reward: 50000, risk: 60, xp: 500, levelRequired: 4 },
     ],
   },
 
@@ -269,23 +264,17 @@ export const crimeCategories: CrimeCategory[] = [
 ];
 
 // Specific vehicles granted by each GTA Car Theft option (last = most expensive).
-export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; damage: number; cost: number; price: number; armored?: boolean; rarity: string }> = {
-  gta_parked_car: { name: "2015 Toyota Corolla XSE", speed: 60, storage: 20, damage: 0, cost: 25000, price: 25000, rarity: "common" },
-  gta_sports_car: { name: "2019 BMW M4 Competition", speed: 88, storage: 16, damage: 5, cost: 150000, price: 150000, rarity: "rare" },
-  gta_luxury_suv: { name: "2021 Range Rover Autobiography", speed: 82, storage: 30, damage: 0, cost: 500000, price: 500000, rarity: "epic" },
-  gta_supercar: { name: "2018 Lamborghini Huracán Performante", speed: 116, storage: 12, damage: 8, cost: 1500000, price: 1500000, rarity: "legendary" },
+export const GTA_LOOT: Record<string, { name: string; speed: number; storage: number; damage: number; cost: number; price: number; armored?: boolean; rarity: string; source: string }> = {
+  gta_street_keys: { name: "Volvo 240", speed: 48, storage: 22, damage: 4, cost: 4000, price: 4000, rarity: "common", source: "Street keys" },
+  gta_glasshouse: { name: "BMW 5-serie", speed: 88, storage: 20, damage: 5, cost: 95000, price: 95000, rarity: "rare", source: "Glasshuset" },
+  gta_charging_station: { name: "Volkswagen e-Golf", speed: 72, storage: 18, damage: 3, cost: 45000, price: 45000, rarity: "rare", source: "Charging station" },
+  gta_city_nord: { name: "Tesla Model S", speed: 110, storage: 18, damage: 8, cost: 100000, price: 100000, rarity: "epic", source: "City Nord" },
 };
 
-// Specific loot granted by each Steal-from-House option (last = most expensive).
-export const SH_LOOT: Record<string, { name: string; rarity: string; attack?: number; defense?: number; price: number }> = {
-  sh_easy_home: { name: "Coin & Stamp Collection", rarity: "common", defense: 1, price: 10000 },
-  sh_poor_apartment: { name: "Hidden Jewelry Case", rarity: "common", defense: 2, price: 30000 },
-  sh_average_house: { name: "Solid Gold Watch", rarity: "uncommon", defense: 3, price: 75000 },
-  sh_suburban_mansion: { name: "Hi-End Watch Collection", rarity: "uncommon", attack: 2, defense: 4, price: 200000 },
-  sh_penthouse: { name: "Original Master Painting", rarity: "rare", attack: 4, defense: 4, price: 600000 },
-  sh_rich_estate: { name: "Kilo Gold Bars (5x)", rarity: "rare", attack: 5, defense: 5, price: 2000000 },
-  sh_ceo_condo: { name: "Historic Diamond Vault", rarity: "legendary", attack: 6, defense: 6, price: 6000000 },
-  sh_villa_heist: { name: "Rare Black Diamond Crown", rarity: "legendary", attack: 10, defense: 10, price: 15000000 },
+export const SH_LOOT: Record<string, { name: string; rarity: string; attack?: number; defense?: number; price: number; tier: string }> = {
+  sh_old_house: { name: "DVD-Spiller · Gullring · Kamuflasjedrakt · DVD-Samling · Klokke · Finlandshette · Badering · Nøkkelkort", rarity: "common", defense: 1, price: 400, tier: "Gammelt hus" },
+  sh_new_house: { name: "Nettbrett · TV · Diamant · Kamera · Dirkesett · Playstation 4 Pro · Xbox One · Walkietalkie · Pass", rarity: "rare", attack: 2, defense: 3, price: 10000, tier: "Nytt hus" },
+  sh_villa: { name: "Mystisk boks · Stor diamant · Diamantsmykke · Maleri · Playstation 5 Pro · Xbox Series X · Tredemølle · Diamantring · Bankkort · Laptop · Alarmsystem · Xbox One X · Playstation 5 · Gaming PC", rarity: "legendary", attack: 6, defense: 8, price: 50000000, tier: "Villa" },
 };
 
 export function getCrimeTypeColor(type: string): string {

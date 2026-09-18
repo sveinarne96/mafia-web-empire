@@ -142,7 +142,11 @@ export function CarDealerPage() {
   };
 
   const carValue = (v: any) => {
-    const base = (v.purchasePrice ?? 0) > 0 ? v.purchasePrice : (v.speed ?? 50) * 1000;
+    // Stolen cars carry their catalog value into the Garage; damage only
+    // affects the resale quote, never the original vehicle value.
+    const base = (v.stolenValue ?? v.marketValue ?? v.purchasePrice ?? 0) > 0
+      ? (v.stolenValue ?? v.marketValue ?? v.purchasePrice)
+      : (v.speed ?? 50) * 1000;
     return Math.max(500, Math.floor(base * (1 - (v.damage ?? 0) / 100 * 0.7) * 0.6));
   };
 

@@ -1,66 +1,63 @@
-// ===== WEALTH RANKS (cash + bank) =====
-export interface WealthRankDef {
-  id: string;
-  label: string;
-  min: number;
-  color: string;
-  icon: string;
-}
+// Progression ladders. Values are deliberately kept in one place so the HUD,
+// rank panel and rewards can all describe the same economy.
+export interface WealthRankDef { id: string; label: string; min: number; max?: number; color: string; icon: string; }
 
 export const WEALTH_RANKS: WealthRankDef[] = [
-  { id: "trillionaire", label: "Trillionaire", min: 1_000_000_000_000, color: "#fbbf24", icon: "💎" },
-  { id: "i_billionaire", label: "I.Billionaire", min: 100_000_000_000, color: "#fde047", icon: "💠" },
-  { id: "m_billionaire", label: "M.Billionaire", min: 10_000_000_000, color: "#facc15", icon: "👑" },
-  { id: "billionaire", label: "Billionaire", min: 1_000_000_000, color: "#f59e0b", icon: "🏆" },
-  { id: "u_rich", label: "U.Rich", min: 100_000_000, color: "#34d399", icon: "🤑" },
-  { id: "v_rich", label: "V.Rich", min: 10_000_000, color: "#22d3ee", icon: "💰" },
-  { id: "rich", label: "Rich", min: 1_000_000, color: "#60a5fa", icon: "💵" },
-  { id: "broke", label: "Broke", min: 0, color: "#94a3b8", icon: "🪙" },
+  { id: "homeless", label: "Homeless", min: 0, max: 4_999, color: "#94a3b8", icon: "🪙" },
+  { id: "poor", label: "Poor", min: 5_000, max: 24_999, color: "#a1a1aa", icon: "🥾" },
+  { id: "unemployed", label: "Unemployed", min: 25_000, max: 99_999, color: "#cbd5e1", icon: "📭" },
+  { id: "employed", label: "Employed", min: 100_000, max: 499_999, color: "#86efac", icon: "💼" },
+  { id: "average", label: "Average", min: 500_000, max: 999_999, color: "#4ade80", icon: "🏠" },
+  { id: "millionaire", label: "Millionaire", min: 1_000_000, max: 1_999_999, color: "#22d3ee", icon: "💵" },
+  { id: "multimillionaire", label: "Multimillionaire", min: 2_000_000, max: 4_999_999, color: "#38bdf8", icon: "💰" },
+  { id: "multi_millionaire", label: "Multi-millionaire", min: 5_000_000, max: 9_999_999, color: "#60a5fa", icon: "💎" },
+  { id: "rich", label: "Rich", min: 10_000_000, max: 24_999_999, color: "#818cf8", icon: "🤑" },
+  { id: "very_rich", label: "Very rich", min: 25_000_000, max: 99_999_999, color: "#a78bfa", icon: "👑" },
+  { id: "extremely_rich", label: "Extremely rich", min: 100_000_000, max: 999_999_999, color: "#c084fc", icon: "🏛️" },
+  { id: "billionaire", label: "Billionaire", min: 1_000_000_000, max: 1_999_999_999, color: "#e879f9", icon: "🏆" },
+  { id: "multibillionaire", label: "Multibillionaire", min: 2_000_000_000, max: 4_999_999_999, color: "#f472b6", icon: "💠" },
+  { id: "multi_billionaire", label: "Multi-billionaire", min: 5_000_000_000, max: 9_999_999_999, color: "#fb7185", icon: "🌟" },
+  { id: "financial_executive", label: "Financial Executive", min: 10_000_000_000, max: 24_999_999_999, color: "#f97316", icon: "📈" },
+  { id: "businessman", label: "Businessman", min: 25_000_000_000, max: 49_999_999_999, color: "#fb923c", icon: "🏢" },
+  { id: "investor", label: "Investor", min: 50_000_000_000, max: 99_999_999_999, color: "#facc15", icon: "📊" },
+  { id: "oil_sheik", label: "Oil Sheik", min: 100_000_000_000, max: 199_999_999_999, color: "#fde047", icon: "🛢️" },
+  { id: "piggy_bank", label: "Piggy bank", min: 200_000_000_000, color: "#fbbf24", icon: "🐷" },
 ];
 
 export function wealthRankFor(total: number): WealthRankDef {
-  for (const r of WEALTH_RANKS) if (total >= r.min) return r;
-  return WEALTH_RANKS[WEALTH_RANKS.length - 1];
+  let current = WEALTH_RANKS[0];
+  for (const rank of WEALTH_RANKS) if (total >= rank.min) current = rank;
+  return current;
 }
-
 export function wealthRankIndex(total: number): number {
-  return WEALTH_RANKS.findIndex((r) => total >= r.min);
+  let index = 0;
+  WEALTH_RANKS.forEach((rank, i) => { if (total >= rank.min) index = i; });
+  return index;
 }
 
-// ===== GAME RANKS (level ladder) =====
-export interface GameRankDef {
-  level: number;
-  label: string;
-  icon: string;
-  color: string;
-}
-
+export interface GameRankDef { level: number; label: string; xp: number; icon: string; color: string; }
 export const GAME_RANKS: GameRankDef[] = [
-  { level: 1, label: "Hobo", icon: "🧍", color: "#9ca3af" },
-  { level: 5, label: "Noob", icon: "🐣", color: "#9ca3af" },
-  { level: 10, label: "Shadow", icon: "🌫️", color: "#a78bfa" },
-  { level: 15, label: "Civilian Shadow", icon: "🏙️", color: "#c4b5fd" },
-  { level: 20, label: "Soldier Shadow", icon: "🪖", color: "#818cf8" },
-  { level: 25, label: "Criminal Shadow", icon: "🔫", color: "#c084fc" },
-  { level: 30, label: "Associate Shadow", icon: "💼", color: "#e879f9" },
-  { level: 40, label: "Made Man Shadow", icon: "🍸", color: "#f472b6" },
-  { level: 50, label: "Capo Shadow", icon: "🎩", color: "#fb7185" },
-  { level: 60, label: "Underboss Shadow", icon: "🕶️", color: "#f43f5e" },
-  { level: 70, label: "Boss Shadow", icon: "👔", color: "#ef4444" },
-  { level: 80, label: "Godfather Shadow", icon: "⛪", color: "#facc15" },
-  { level: 90, label: "Don Shadow", icon: "🎖️", color: "#fbbf24" },
-  { level: 100, label: "International Shadow", icon: "🌍", color: "#f59e0b" },
-  { level: 125, label: "Gangster", icon: "🚬", color: "#fb923c" },
-  { level: 150, label: "International Shadow Empire", icon: "👑", color: "#fde047" },
+  { level: 1, label: "Novice", xp: 50_000, icon: "🧍", color: "#94a3b8" },
+  { level: 2, label: "Troublemaker", xp: 130_000, icon: "🥷", color: "#a3e635" },
+  { level: 3, label: "Runner", xp: 320_000, icon: "🏃", color: "#4ade80" },
+  { level: 4, label: "Dealer", xp: 530_000, icon: "💼", color: "#22d3ee" },
+  { level: 5, label: "Gangster", xp: 1_170_000, icon: "🚬", color: "#38bdf8" },
+  { level: 6, label: "Hitman", xp: 5_000_000, icon: "🎯", color: "#818cf8" },
+  { level: 7, label: "Junior Boss", xp: 9_000_000, icon: "🕶️", color: "#a78bfa" },
+  { level: 8, label: "Boss", xp: 25_000_000, icon: "👔", color: "#c084fc" },
+  { level: 9, label: "Captain", xp: 40_000_000, icon: "🎖️", color: "#e879f9" },
+  { level: 10, label: "Godfather", xp: 80_000_000, icon: "⛪", color: "#f472b6" },
+  { level: 11, label: "Legendary Godfather", xp: 150_000_000, icon: "👑", color: "#fb7185" },
+  { level: 12, label: "Don", xp: 1_000_000_000, icon: "🎩", color: "#f97316" },
+  { level: 13, label: "Legendary Don", xp: 35_000_000_000, icon: "💎", color: "#fb923c" },
+  { level: 14, label: "Crime King", xp: 1_000_000_000_000, icon: "🏆", color: "#facc15" },
+  { level: 15, label: "Legend", xp: 5_000_000_000_000, icon: "🌟", color: "#fde047" },
 ];
-
 export function gameRankForLevel(level: number): GameRankDef {
   let rank = GAME_RANKS[0];
-  for (const r of GAME_RANKS) if (level >= r.level) rank = r;
+  for (const candidate of GAME_RANKS) if (level >= candidate.level) rank = candidate;
   return rank;
 }
-
 export function nextGameRank(level: number): GameRankDef | null {
-  for (const r of GAME_RANKS) if (r.level > level) return r;
-  return null;
+  return GAME_RANKS.find((rank) => rank.level > level) ?? null;
 }
