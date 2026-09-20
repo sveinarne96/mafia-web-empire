@@ -2,6 +2,7 @@ import { EventsManager } from "@/components/EventsManager";
 import { DatabaseWipeUI } from "@/components/DatabaseWipeUI";
 import { PromoCodesPanel } from "./AdminPromo";
 import { LiveControlsPanel } from "./LiveControlsPanel";
+import { ServerOpsPanel } from "./ServerOpsPanel";
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -436,6 +437,9 @@ export function AdminPanel() {
   if (activeTool === "live_controls") {
     return <div className="animate-fade-in"><LiveControlsPanel onClose={() => setActiveTool(null)} /></div>;
   }
+  if (activeTool === "server_ops") {
+    return <div className="animate-fade-in"><ServerOpsPanel onClose={() => setActiveTool(null)} /></div>;
+  }
   if (activeTool === "events" || activeTool === "event_mgr") {
     return <div className="animate-fade-in"><EventsManager onClose={() => setActiveTool(null)} /></div>;
   }
@@ -499,6 +503,10 @@ export function AdminPanel() {
         <button onClick={() => setActiveTool("live_controls")}
           className="px-4 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
           🎛️ Live Controls
+        </button>
+        <button onClick={() => setActiveTool("server_ops")}
+          className="px-4 py-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
+          🛰️ Server Ops
         </button>
         <button onClick={() => setActiveTool("broadcast")}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:opacity-90 flex items-center gap-2">
