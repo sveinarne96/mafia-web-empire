@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
+import { applyIntelligence, trainingWage, intelligencePct, TEAM_TRAINING_MULTIPLIER } from "./intelligence";
 
 /* ══════════════════════════════════════════════════════════════
    ULTIMATE ARSENAL — six brand-new game systems:
@@ -159,10 +160,16 @@ export const hireTrainer = mutation({
     if (n(player.money, 0) < t.cost) throw new Error("Not enough money.");
 
     const expiresAt = Date.now() + t.hours * 3600_000;
+    // INTELLIGENCE: team training enjoys superior percentage-based benefits (2× the bonus)
+    // — extra XP + a cash wage scaled by the +1%-per-5-levels advantage.
+    const teamXP = applyIntelligence(40, (player as any).level ?? 1, TEAM_TRAINING_MULTIPLIER);
+    const wage = trainingWage((player as any).level ?? 1, TEAM_TRAINING_MULTIPLIER);
+    const xp = await addXpAndCheckLevel(ctx, player, teamXP);
     await ctx.db.patch(player._id, {
-      money: n(player.money, 0) - t.cost,
+      money: n(player.money, 0) - t.cost + wage,
       attack: n(player.attack, 10) + t.atk,
       defense: n(player.defense, 10) + t.def,
+      ...xp,
     });
     await ctx.db.insert("trainerSessions", {
       userId: player._id,
@@ -172,7 +179,7 @@ export const hireTrainer = mutation({
       expiresAt,
       createdAt: Date.now(),
     });
-    return { ok: true, name: t.name, atk: t.atk, def: t.def, hours: t.hours };
+    return { ok: true, name: t.name, atk: t.atk, def: t.def, hours: t.hours, wage, intelBonusPct: intelligencePct((player as any).level ?? 1) * TEAM_TRAINING_MULTIPLIER };
   },
 });
 

@@ -2154,6 +2154,18 @@ export default function Dashboard() {
                   <div className="bg-slate-800/50 rounded p-1 text-center"><span className="text-blue-400 font-bold">⚔️ {player?.attack ?? 0}</span></div>
                   <div className="bg-slate-800/50 rounded p-1 text-center"><span className="text-green-400 font-bold">🛡️ {player?.defense ?? 0}</span></div>
                 </div>
+                {/* INTELLIGENCE — your current advantage */}
+                <div className="mt-2 rounded-lg p-2 border border-violet-500/25 bg-violet-950/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-black uppercase tracking-[0.16em] text-violet-300">🧠 Intelligence</span>
+                    <span className="text-[11px] font-black text-violet-200 tabular-nums">+{Math.floor((player?.level ?? 1) / 5)}%</span>
+                  </div>
+                  <div className="text-[9px] text-violet-300/70 mt-0.5 leading-snug">Your current advantage — +1% XP & cash bonus for all training every 5 levels.</div>
+                  <div className="mt-1 flex justify-between text-[9px] font-bold">
+                    <span className="text-sky-300">👤 Solo +{Math.floor((player?.level ?? 1) / 5)}%</span>
+                    <span className="text-emerald-300">👥 Team +{Math.floor((player?.level ?? 1) / 5) * 2}%</span>
+                  </div>
+                </div>
               </div>
 
               {/* Resources Panel */}

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
+import { applyIntelligence, trainingWage } from "./intelligence";
 
 async function getCurrentUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
@@ -209,13 +210,15 @@ export const trainGym = mutation({
     const energy = typeof (player as any).energy === "number" ? (player as any).energy : 100;
     if (energy < energyCost) throw new Error("Not enough energy — rest a bit first!");
     const gain = 1 + Math.floor(Math.random() * 2);
-    const xpGain = 5;
-    const xp = await addXpAndCheckLevel(ctx, player, xpGain);
-    const patch: any = { energy: energy - energyCost };
+    // INTELLIGENCE: +1% XP & cash bonus per 5 levels applies to all training.
+    const intelXP = applyIntelligence(5, (player as any).level ?? 1, 1);
+    const wage = trainingWage((player as any).level ?? 1, 1);
+    const xp = await addXpAndCheckLevel(ctx, player, intelXP);
+    const patch: any = { energy: energy - energyCost, money: (player.money ?? 0) + wage };
     if (args.stat === "attack") patch.attack = (player.attack ?? 10) + gain;
     else patch.defense = (player.defense ?? 10) + gain;
     await ctx.db.patch(player._id, { ...patch, ...xp });
-    return { stat: args.stat, gain, energyCost, levelUp: (xp as any)?.levelUp ?? false };
+    return { stat: args.stat, gain, energyCost, wage, intelBonusPct: Math.floor(((player as any).level ?? 1) / 5), levelUp: (xp as any)?.levelUp ?? false };
   },
 });
 

@@ -26,12 +26,15 @@ export function BoxingGymPage() {
   if (!player) return <div className="animate-pulse py-12 text-center text-sm text-slate-500">Chalking up…</div>;
 
   const energy = (player as any).energy ?? 100;
+  const lvl = player.level ?? 1;
+  const intelPct = Math.floor(lvl / 5);
+  const teamPct = intelPct * 2;
 
   const run = async (stat: "attack" | "defense") => {
     setBusy(stat); setMsg(null);
     try {
-      const r = await train({ stat });
-      setMsg({ ok: true, text: `🥊 ${stat === "attack" ? "Attack" : "Defense"} +${r.gain}${r.levelUp ? " · 🌟 LEVEL UP!" : ""} · −10 energy` });
+      const r: any = await train({ stat });
+      setMsg({ ok: true, text: `🥊 ${stat === "attack" ? "Attack" : "Defense"} +${r.gain} · ⭐ +${r.intelBonusPct ? Math.floor(5 * (1 + r.intelBonusPct / 100)) : 5} XP (🧠 +${r.intelBonusPct ?? 0}%) · 💰 +$${nf(r.wage ?? 0)} wage${r.levelUp ? " · 🌟 LEVEL UP!" : ""} · −10 energy` });
     } catch (e: any) { setMsg({ ok: false, text: e?.message ?? "Training failed" }); }
     setBusy(null);
   };
@@ -56,6 +59,31 @@ export function BoxingGymPage() {
         <div className="mafia-card rounded-xl p-3 text-center"><div className="text-[10px] text-slate-500">⭐ Level</div><div className="text-lg font-black text-amber-400">{player.level ?? 1}</div></div>
       </div>
 
+      {/* INTELLIGENCE — your current advantage */}
+      <div className="mafia-card rounded-xl border-violet-500/25 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-2xl">🧠</span>
+            <span className="text-sm font-black uppercase tracking-[0.14em] text-violet-300">Intelligence</span>
+            <span className="rounded-full bg-violet-500/20 px-2 py-0.5 text-[9px] font-black text-violet-300">YOUR CURRENT ADVANTAGE</span>
+          </div>
+          <span className="text-2xl font-black text-violet-200 tabular-nums">+{intelPct}%</span>
+        </div>
+        <p className="mt-2 text-[10px] leading-snug text-violet-300/75">
+          The calculated bonus percentage increases by <span className="font-black text-violet-200">1% every 5 levels</span>, providing more XP and cash bonuses for all training — including team training, which offers superior percentage-based benefits.
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-sky-500/20 bg-sky-950/20 p-2 text-center">
+            <div className="text-[9px] font-bold text-sky-300/70">👤 PERSONAL TRAINING</div>
+            <div className="text-base font-black text-sky-200 tabular-nums">+{intelPct}% XP · cash</div>
+          </div>
+          <div className="rounded-lg border border-emerald-500/20 bg-emerald-950/20 p-2 text-center">
+            <div className="text-[9px] font-bold text-emerald-300/70">👥 TEAM TRAINING</div>
+            <div className="text-base font-black text-emerald-200 tabular-nums">+{teamPct}% XP · cash</div>
+          </div>
+        </div>
+      </div>
+
       {msg && <ResultBanner ok={msg.ok} text={msg.text} />}
 
       <div className="grid gap-3 md:grid-cols-2">
@@ -64,7 +92,7 @@ export function BoxingGymPage() {
             <div className="mb-1 flex items-center gap-2"><span className="text-3xl">{p.icon}</span><span className="text-sm font-black text-white">{p.name}</span></div>
             <p className="mb-4 text-[10px] text-slate-500">{p.desc}</p>
             <div className="mb-4 flex gap-3 text-[10px] text-slate-400">
-              <span>⚡ 10 energy</span><span>⭐ +5 XP</span><span className="text-green-400">+1–2 {p.stat}</span>
+              <span>⚡ 10 energy</span><span>⭐ +5 XP <span className="text-violet-300">(+🧠{intelPct}%)</span></span><span>💰 wage <span className="text-violet-300">(+🧠{intelPct}%)</span></span><span className="text-green-400">+1–2 {p.stat}</span>
             </div>
             <button onClick={() => run(p.stat)} disabled={busy !== null || energy < 10}
               className="w-full rounded-xl bg-yellow-600 py-2.5 text-xs font-black text-slate-950 transition hover:bg-yellow-500 disabled:opacity-50">
@@ -75,7 +103,7 @@ export function BoxingGymPage() {
       </div>
 
       <div className="mafia-card rounded-xl p-3 text-[10px] text-slate-500">
-        💡 Gym stats stack on top of gear bonuses and directly raise your murder & fight success. Energy regenerates over time — pace your sessions.
+        💡 Gym stats stack on top of gear bonuses and directly raise your murder & fight success. Energy regenerates over time — pace your sessions. 🧠 Intelligence boosts all training payouts, and <span className="font-bold text-emerald-400">team training (Street Trainer coaches) earns double the intelligence bonus</span>.
       </div>
     </div>
   );

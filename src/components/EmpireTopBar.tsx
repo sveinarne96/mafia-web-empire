@@ -289,6 +289,17 @@ function ProfilePopup({ player, onClose, onNavigate }: { player: any; onClose: (
           </div>
         ))}
       </div>
+      <div className="mb-3 rounded-lg border border-violet-500/25 bg-violet-950/25 px-2.5 py-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-black uppercase tracking-[0.16em] text-violet-300">🧠 Intelligence</span>
+          <span className="text-[12px] font-black text-violet-200 tabular-nums">+{Math.floor((player?.level ?? 1) / 5)}%</span>
+        </div>
+        <div className="text-[8px] leading-snug text-violet-300/70 mt-0.5">Your current advantage — +1% XP & cash bonus for all training every 5 levels.</div>
+        <div className="mt-1 flex justify-between text-[9px] font-bold">
+          <span className="text-sky-300">👤 Solo +{Math.floor((player?.level ?? 1) / 5)}%</span>
+          <span className="text-emerald-300">👥 Team +{Math.floor((player?.level ?? 1) / 5) * 2}%</span>
+        </div>
+      </div>
       <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-amber-500/15">
         {[
           { icon: "👤", label: "Profile", page: "my_profile" },
