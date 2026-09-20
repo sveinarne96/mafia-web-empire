@@ -132,7 +132,7 @@ import { FamilyPage } from "@/components/FamilyPage";
 import { ResourcesPanel } from "@/components/ResourcesPanel";
 import { XPVolumePanel } from "@/components/XPVolumePanel";
 import { CrimeSubBar, getCrimeByRoute } from "@/components/CrimeSubPages";
-import { CrimeOperationsDeck } from "@/components/CrimeOperationsDeck";
+import { EmpireTopBar, CityPulsePanel } from "@/components/EmpireTopBar";
 import { StreetCrimesPage } from "@/components/StreetCrimesPage";
 import { CriminalOperationsPage } from "@/components/CriminalOperationsPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -425,6 +425,7 @@ function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void 
       <RanksPanel />
       <PacksOverviewPanel />
       <PerksPanel />
+      <CityPulsePanel />
       <OverviewQuickPanel onNavigate={onNavigate ?? navigateToPage} />
     </div>
   );
@@ -1887,103 +1888,9 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto">
-          {/* ═══ TOP BAR — CENTERED ═══ */}
-          
-      <div className="border-b border-amber-500/20 animate-gradient" style={{ background: 'linear-gradient(135deg, oklch(0.07 0.02 30), oklch(0.09 0.03 45), oklch(0.07 0.02 30), oklch(0.10 0.025 55))' }}>
-        {/* Animated glow line at top */}
-        <div className="h-[1px] w-full relative overflow-hidden" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.3), rgba(255,100,50,0.3), rgba(200,150,255,0.2), transparent)' }}>
-          <div className="absolute inset-0 animate-shimmer" style={{ background: 'linear-gradient(90deg, transparent 30%, rgba(255,220,80,0.5) 50%, transparent 70%)' }} />
-        </div>
-        {/* Row 1: Player Stats — Centered */}
-        <div className="flex items-center justify-center px-4 py-2 gap-4 flex-wrap">
-          <span className="flex items-center gap-1 text-amber-300"><span className="animate-float" style={{ animationDelay: '1.1s' }}>🪙</span> {igCoins}</span>
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-2">
-            <span className="relative inline-flex size-7 items-center justify-center rounded-full p-[2px]" style={{ background: AVATAR_GRADIENTS[(player as any)?.equippedCosmetics?.avatar] ?? 'linear-gradient(135deg, rgba(245,158,11,0.35), rgba(180,83,9,0.25))' }}>
-              <span className="flex size-full items-center justify-center rounded-full bg-black/80 text-[10px] font-black text-amber-300">{(player?.nickname || player?.username || "P").slice(0, 1).toUpperCase()}</span>
-            </span>
-            <span className="text-sm font-black animate-neon-glow" style={{ color: '#ffd700' }}>{player?.nickname || player?.username || player?.name || "Player"}</span>
-          </span>
-            <RankBadge level={player?.level ?? 1} />
-            <span className="text-[10px] text-amber-400/70">Lv.{player?.level ?? 1}</span>
-          </div>
-          <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
-          <div className="flex items-center gap-3 text-[11px]">
-            <span className="flex items-center gap-1 text-red-400"><span className="animate-float">❤️</span> {player?.life ?? 0}/{player?.maxLife ?? 100}</span>
-            <span className="flex items-center gap-1 text-blue-400"><span className="animate-float" style={{ animationDelay: '0.3s' }}>⭐</span> {player?.experience ?? 0}/{xpNeeded}</span>
-            <span className="flex items-center gap-1 text-green-400 font-black"><span className="animate-float" style={{ animationDelay: '0.6s' }}>💰</span> ${(player?.money ?? 0).toLocaleString()}</span>
-            <span className="flex items-center gap-1 text-yellow-400"><span className="animate-float" style={{ animationDelay: '0.9s' }}>🏆</span> {(player?.points ?? 0).toLocaleString()}</span>
-            <span className="flex items-center gap-1 text-orange-400">⚔️ {player?.attack ?? 0}</span>
-            <span className="flex items-center gap-1 text-blue-400">🛡️ {player?.defense ?? 0}</span>
-            <span className="flex items-center gap-1 text-red-400">💀 {(player as any)?.kills ?? 0}</span>
-            <span className="flex items-center gap-1 text-orange-400"><span className="animate-float" style={{ animationDelay: '1.2s' }}>🔫</span> {(player as any)?.bullets ?? 0}</span>
-          </div>
-          <div className="w-px h-5 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent hidden md:block" />
-          <div className="flex items-center gap-1.5">
-            {(player?.wantedLevel ?? 0) > 0 && <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-[9px] font-bold text-red-400 animate-pulse border border-red-500/30">🔴 WANTED</span>}
-            {(player as any)?.xpBoostUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-[9px] font-bold text-cyan-400 border border-cyan-500/30 animate-breathe">⚡ 3x XP</span>}
-            {(player as any)?.cashBoostUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-[9px] font-bold text-green-400 border border-green-500/30 animate-breathe">💰 3x Cash</span>}
-            {(player as any)?.energyDrinkUntil > Date.now() && <span className="px-2 py-0.5 rounded-full bg-orange-500/20 text-[9px] font-bold text-orange-400 border border-orange-500/30 animate-breathe">🥤 Energy</span>}
-            <button onClick={() => setPage("my_profile")} className="ml-1 px-3 py-1 rounded-full bg-gradient-to-r from-amber-900/40 to-amber-800/30 border border-amber-600/30 text-[10px] font-bold text-amber-400 hover:from-amber-800/50 hover:to-amber-700/40 hover:text-amber-300 transition-all animate-border-glow relative overflow-hidden">
-              👤 Profile
-              <div className="absolute inset-0 animate-slide-glow" />
-            </button>
-          </div>
-        </div>
-        {/* Row 2: Navigation Tabs — Smooth & Compact */}
-        <div className="relative">
-          <div className="flex items-center gap-0.5 px-2 py-1 overflow-x-auto scrollbar-hide" style={{ background: 'linear-gradient(90deg, rgba(0,0,0,0.15), rgba(15,8,3,0.25), rgba(0,0,0,0.15))' }}>
-            {(
-              [
-                // ═══ CORE ═══
-                { icon: "🏠", label: "HQ", page: "headquarters", c: ["amber","217,119,6"], isCrime: false },
-                // ═══ CRIME CATEGORIES ═══
-                { icon: "🔪", label: "Street", page: "crime_street", c: ["emerald","34,197,94"], isCrime: true, count: 20 },
-                { icon: "💰", label: "Robbery", page: "crime_robbery", c: ["red","239,68,68"], isCrime: true, count: 30 },
-                { icon: "🃏", label: "Fraud", page: "crime_fraud", c: ["yellow","234,179,8"], isCrime: true, count: 14 },
-                { icon: "🏠", label: "Burglary", page: "crime_burglary", c: ["orange","249,115,22"], isCrime: true, count: 8 },
-                { icon: "💊", label: "Drugs", page: "crime_drugs", c: ["purple","168,85,247"], isCrime: true, count: 12 },
-                { icon: "🕵️", label: "Organized", page: "crime_organized", c: ["blue","59,130,246"], isCrime: true, count: 20 },
-                { icon: "🕳️", label: "Underground", page: "crime_underground", c: ["slate","148,163,184"], isCrime: true, count: 24 },
-                // ═══ ACTIONS ═══
-                { icon: "🚗", label: "GTA", page: "car_theft", c: ["red","220,38,38"], isCrime: false },
-                { icon: "🏠", label: "Burglarize", page: "steal_house", c: ["rose","225,29,72"], isCrime: false },
-                { icon: "🕵️", label: "Org Crime", page: "organized_crime", c: ["purple","147,51,234"], isCrime: false },
-                { icon: "💀", label: "Murder", page: "murder", c: ["red","185,28,28"], isCrime: false },
-                { icon: "💰", label: "Heist", page: "heist", c: ["amber","210,153,43"], isCrime: false },
-              ] as const
-            ).map((tab, idx) => {
-              const isActive = activePage === tab.page;
-              const [color, rgb] = tab.c;
-              return (
-                <React.Fragment key={tab.page}>
-                  {/* Divider after HQ, before crimes */}
-                  {idx === 1 && <div className="w-px h-4 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent mx-0.5" />}
-                  {/* Divider after Underground, before GTA */}
-                  {idx === 7 && <div className="w-px h-4 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent mx-0.5" />}
-                  <button onClick={() => setPage(tab.page)}
-                    className={`relative px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all duration-200 border ${
-                      isActive ? `text-${color}-400 border-${color}-500/40 shadow-md shadow-${color}-500/15 scale-[1.03]` : "text-slate-500 hover:text-slate-300 hover:bg-white/5 border-transparent"
-                    }`}
-                    style={isActive ? { background: `linear-gradient(135deg, rgba(${rgb},0.25), rgba(${rgb},0.1))` } : undefined}>
-                    {isActive && <div className="absolute inset-0 rounded-lg animate-slide-glow" />}
-                    <span className="relative z-10 flex items-center gap-0.5"><span className="text-[11px]">{tab.icon}</span>{tab.label}{tab.isCrime && <span className="text-[7px] opacity-40">{tab.count}</span>}</span>
-                  </button>
-                </React.Fragment>
-              );
-            })}
-          </div>
-          {/* Edge fade gradients for smooth scroll hint */}
-          <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/30 to-transparent pointer-events-none z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/30 to-transparent pointer-events-none z-10" />
-        </div>
-        {/* Crime sub-bar removed */}
-        {/* Animated glow line at bottom */}
-        <div className="h-[1px] w-full" style={{ background: 'linear-gradient(90deg, transparent, rgba(255,200,50,0.15), rgba(200,100,255,0.1), rgba(100,200,255,0.1), transparent)' }} />
-      </div>
-
+          {/* ═══ EMPIRE TOP BAR — cinematic HUD ═══ */}
+          <EmpireTopBar activePage={activePage} onNavigate={setPage} />
           <div className="p-4 md:p-6 animate-page-enter" key={activePage}>
-            <CrimeOperationsDeck activePage={activePage} onNavigate={setPage} />
             <ErrorBoundary>
               <Suspense fallback={
                 <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
