@@ -27,7 +27,7 @@ export const getGlobalStatistics = query({
   args: {},
   handler: async (ctx) => {
     const users = await ctx.db.query("users").collect();
-    const reg = users.filter((u: any) => u.nickname || u.username || u.name);
+    const reg = users.filter((u: any) => (u.nickname || u.username || u.name) && !u.isSystemChar);
     const alive = reg.filter((u: any) => !u.isDead);
     const dead = reg.filter((u: any) => u.isDead);
     const vehicles = await ctx.db.query("vehicles").collect();
@@ -204,8 +204,9 @@ export const getOnlinePlayers = query({
     const all = await ctx.db.query("users").collect();
     const now = Date.now();
     const online = all
-      .filter((u: any) => (u.lastActive ?? 0) > now - 120000 && u.nickname && !u.isBanned)
+      .filter((u: any) => (u.lastActive ?? 0) > now - 120000 && u.nickname && !u.isBanned && (u.isSystemChar ? u.systemVisible !== false : true))
       .map((u: any) => ({
+        isSystem: !!u.isSystemChar,
         id: u._id,
         name: u.nickname,
         level: n(u.level),
@@ -230,8 +231,9 @@ export const getPresenceRoster = query({
   handler: async (ctx) => {
     const all = await ctx.db.query("users").collect();
     const now = Date.now();
-    const registered = all.filter((u: any) => u.nickname && !u.isBanned);
+    const registered = all.filter((u: any) => u.nickname && !u.isBanned && (u.isSystemChar ? u.systemVisible !== false : true));
     const map = (u: any, online: boolean) => ({
+      isSystem: !!u.isSystemChar,
       id: u._id,
       name: u.nickname,
       level: n(u.level),

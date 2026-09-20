@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { getRankEventMultiplier } from "./serverOps";
 
 async function getCurrentUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
@@ -75,6 +76,10 @@ export const commitMurder = mutation({
     if (player.inPrison) throw new Error("You are in prison! Can't commit murder.");
     if (player.isDead) throw new Error("You are dead!");
 
+    // SERVER OPS: murder system master switch.
+    const { isMurderEnabled } = await import("./serverOps");
+    if (!(await isMurderEnabled(ctx))) throw new Error("🔪 The murder system is currently disabled by the administration.");
+
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Target not found!");
     if (args.targetId === player._id) throw new Error("Can't murder yourself!");
@@ -142,7 +147,8 @@ export const commitMurder = mutation({
     if (succeeded) {
       // MURDER SUCCESS
       const stolenCash = Math.floor((target.money ?? 0) * 0.05);
-      const xpGained = Math.floor((20 + weapon.damage / 2 + method.bonusXP) * (1 + levelDiff * 0.02));
+      const rankEventMult = await getRankEventMultiplier(ctx);
+      const xpGained = Math.floor((20 + weapon.damage / 2 + method.bonusXP) * (1 + levelDiff * 0.02) * rankEventMult);
 
       // Auto-level-up via addXpAndCheckLevel pattern
       const newXP = (player.experience ?? 0) + xpGained;
@@ -268,7 +274,8 @@ export const commitMurder = mutation({
       // MURDER FAILED
       const damageTaken = Math.floor(10 + Math.random() * 40);
       const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-      const xpGained = Math.floor(5 + method.bonusXP * 0.2);
+      const rankEventMult = await getRankEventMultiplier(ctx);
+      const xpGained = Math.floor(5 + method.bonusXP * 0.2) * rankEventMult > 0 ? Math.floor((5 + method.bonusXP * 0.2) * rankEventMult) : Math.floor(5 + method.bonusXP * 0.2);
       const newXP = (player.experience ?? 0) + xpGained;
       const xpNeeded = (player.level ?? 1) * 100;
       const levelUpNow = newXP >= xpNeeded;

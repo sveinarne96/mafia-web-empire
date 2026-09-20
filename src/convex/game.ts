@@ -193,6 +193,11 @@ export const registerPlayer = mutation({
       const existing = await getCurrentUser(ctx);
       if (!existing) throw new Error("Not authenticated");
       if (existing.nickname) return { success: true, alreadyRegistered: true };
+      // SERVER OPS: registration gate (admins always pass).
+      const { isRegistrationOpen } = await import("./serverOps");
+      if (!(await isRegistrationOpen(ctx)) && existing.role !== "admin") {
+        throw new Error("🚫 Registration is currently closed by the administration.");
+      }
       // If user already has username (registered via Auth page), just set nickname and class
       const stats = classStats[args.playerClass];
       const nicknameTaken = await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).unique();
@@ -292,6 +297,10 @@ export const acknowledgeLevelUp = mutation({
 
 // Helper: add XP and check for level-up
 export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
+  // SERVER OPS: LIVE EVENT — 2x to 10x Ranking. Doubles-to-10xs all
+  // server-managed rank XP from crime, car theft, missions, and film production.
+  const { getRankEventMultiplier } = await import("./serverOps");
+  const rankEventMult = await getRankEventMultiplier(ctx);
   // XP Volume Bonus: more actions in the last hour = higher multiplier.
   // Use only valid timestamps so legacy records cannot make the counter display 0 incorrectly.
   const now = Date.now();
@@ -311,7 +320,7 @@ export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number
   else if (actionCount >= 30) volMult = 2.0;
   else if (actionCount >= 15) volMult = 1.5;
   else if (actionCount >= 5) volMult = 1.25;
-  const finalXP = Math.floor(xpAmount * volMult);
+  const finalXP = Math.floor(xpAmount * volMult * rankEventMult);
   let remaining = (player.experience ?? 0) + finalXP;
   let lvl = player.level ?? 1;
   const updates: Record<string, any> = {};
@@ -685,7 +694,18 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const xpUpdate = await addXpAndCheckLevel(ctx, player, xpEarned);
   const levelUpNow = (player as any).levelUpPending === true || ((player.experience ?? 0) + xpEarned >= 2000);
   const oldCooldowns: Record<string, number> = ((player as any).crimeCooldowns ?? {}) as Record<string, number>;
-  const cooldowns: Record<string, number> = { ...oldCooldowns, [args.crimeId]: _now + (liveCfg.superBoostActive ? Math.ceil(5000 * 0.25) : 5000) };
+    // SERVER OPS GAME BALANCE: global crime cooldown (10–3600s) applies after every
+  // crime attempt; super-boost still shortens it (25%).
+  const { getGlobalCrimeCooldown, getCrimeJailTimes } = await import("./serverOps");
+  const globalCd = await getGlobalCrimeCooldown(ctx);
+  const cdMs = globalCd * 1000;
+  const jailTimes = await getCrimeJailTimes(ctx);
+  const jailFor = (id: string, fallbackMs: number): number => {
+    const t = jailTimes[id];
+    if (typeof t === "number" && Number.isFinite(t) && t > 0) return Math.max(1000, t * 1000);
+    return fallbackMs;
+  };
+  const cooldowns: Record<string, number> = { ...oldCooldowns, [args.crimeId]: _now + (liveCfg.superBoostActive ? Math.ceil(cdMs * 0.25) : cdMs), ["__global"]: _now + (liveCfg.superBoostActive ? Math.ceil(cdMs * 0.25) : cdMs) };
   const categoryId = args.crimeId.split('_')[0];
   const oldCompleted: Record<string, string[]> = ((player as any).crimeCompleted ?? {}) as Record<string, string[]>;
   const categoryCompleted: string[] = (oldCompleted[categoryId || ''] ?? []).concat(succeeded ? [args.crimeId] : []);
@@ -695,7 +715,7 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
     ? ((player as any).actionTimestamps as number[]).filter((t: unknown): t is number => typeof t === "number" && Number.isFinite(t))
     : [];
   const _newTs = [...existingTs.filter((t: number) => t > _now - 3600000), _now];
-  await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : effectiveEnergy, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: _now, actionTimestamps: _newTs } as any);
+  await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : effectiveEnergy, inPrison: arrested, prisonTime: arrested ? jailFor(args.crimeId, 15000) : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: _now, actionTimestamps: _newTs } as any);
   await applyWeekendDrops(ctx, player, _sbRoll);
   try { await ctx.db.insert('crimes', { userId: player._id, type: args.crimeId, target: 'environment', success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); } catch (_logErr) { /* log must never cancel the crime */ }
   try { if (arrested) await ctx.db.insert('notifications', { userId: player._id, type: 'prison', message: 'Arrested!', read: false, timestamp: Date.now() }); } catch (_notifErr) { /* notification must never cancel the crime */ }

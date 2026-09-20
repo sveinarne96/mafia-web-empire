@@ -386,7 +386,7 @@ export const getGameStats = query({
   args: {},
   handler: async (ctx) => {
     const all = await ctx.db.query("users").collect();
-    const registered = all.filter((u: any) => u.nickname);
+    const registered = all.filter((u: any) => u.nickname && !u.isSystemChar);
     const now = Date.now();
     const online = registered.filter((u: any) => (u.lastActive ?? 0) > now - 120000);
     return {

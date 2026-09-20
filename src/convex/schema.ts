@@ -110,6 +110,8 @@ const schema = defineSchema({
     dailyStreak: v.optional(v.number()),
     lastDailyClaim: v.optional(v.number()),
     isBanned: v.optional(v.boolean()),
+    isSystemChar: v.optional(v.boolean()),
+    systemVisible: v.optional(v.boolean()),
     banReason: v.optional(v.string()),
     role: v.optional(v.string()),
     familyId: v.optional(v.id("families")),
@@ -1180,6 +1182,15 @@ const schema = defineSchema({
     gasPrice: v.optional(v.number()),
     gasUpdatedAt: v.optional(v.number()),
     lotteryRolloverPct: v.optional(v.number()),
+    // ═══ SERVER OPS live knobs ═══
+    rankEventMultiplier: v.optional(v.number()),
+    rankEventEndsAt: v.optional(v.number()),
+    rankEventLabel: v.optional(v.string()),
+    globalCrimeCooldown: v.optional(v.number()),
+    crimeJailTimes: v.optional(v.any()),
+    murderSystemEnabled: v.optional(v.boolean()),
+    registrationOpen: v.optional(v.boolean()),
+    seasonPlannedEnd: v.optional(v.number()),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
   }).index("by_key", ["key"]),
@@ -2172,6 +2183,16 @@ const schema = defineSchema({
     .index("by_player", ["playerId"])
     .index("by_time", ["createdAt"])
     .index("by_category", ["category"]),
+  // Season state — one row per started season (server ops panel).
+  seasonState: defineTable({
+    seasonNumber: v.number(),
+    name: v.string(),
+    startedAt: v.number(),
+    plannedEndsAt: v.number(),
+    days: v.number(),
+    createdAt: v.number(),
+    startedBy: v.optional(v.string()),
+  }).index("by_number", ["seasonNumber"]),
 }, {
   schemaValidation: false,
 });
