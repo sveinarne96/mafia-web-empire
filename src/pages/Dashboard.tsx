@@ -189,6 +189,10 @@ import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, Betting
 import { QuickTradePage } from "@/components/QuickTradePage";
 import { OrganizedCrimeTeamsPage } from "@/components/OrganizedCrimeTeamsPage";
 import { ArenaPage, TrainerPage, RangePage, RaceStakesPage, HotelPage, TipsyInformantPage } from "@/components/ArsenalPages";
+import {
+  DockPage, ChopShopPage, GraffitiPage, PawnPage, CabPage, DogsPage,
+  NightMarketPage, CablePage, NumbersPage, ValetPage, BathhousePage, BillboardPage,
+} from "@/components/ExpansionPages";
 import { ArmouryPage } from "@/components/ArmouryPage";
 import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
 import { BoxingGymPage, ChasePage, ScrapyardPage, VaultPage } from "@/components/CrimeExtras";
@@ -1635,6 +1639,18 @@ export default function Dashboard() {
       case "arsenal_race": return <RaceStakesPage />;
       case "arsenal_hotel": return <HotelPage />;
       case "arsenal_informant": return <TipsyInformantPage />;
+      case "x_dock": return <DockPage />;
+      case "x_chop": return <ChopShopPage />;
+      case "x_graffiti": return <GraffitiPage />;
+      case "x_pawn": return <PawnPage />;
+      case "x_cab": return <CabPage />;
+      case "x_dogs": return <DogsPage />;
+      case "x_nightmarket": return <NightMarketPage />;
+      case "x_cable": return <CablePage />;
+      case "x_numbers": return <NumbersPage />;
+      case "x_valet": return <ValetPage />;
+      case "x_bath": return <BathhousePage />;
+      case "x_billboards": return <BillboardPage />;
       case "missions": return <FullMissionsPage />;
       case "murder": return <CriminalOperationsPage category="murder" />;
       case "heist": return <HeistPage />;

@@ -1505,6 +1505,129 @@ const schema = defineSchema({
     revealedMax: v.number(),
     createdAt: v.number(),
   }).index("by_user_job", ["userId", "jobId"]),
+  // ═══════════ EXPANSION PACK — 12 NEW RACKET SYSTEMS ═══════════
+
+  // 1. Dockworker hustle — unload crates at the harbor for cash.
+  dockShifts: defineTable({
+    userId: v.id("users"),
+    shiftType: v.string(),
+    earned: v.number(),
+    crates: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 2. Chop-shop parts trading — strip cars, sell parts on the gray market.
+  chopParts: defineTable({
+    userId: v.id("users"),
+    partName: v.string(),
+    value: v.number(),
+    source: v.string(),
+    sold: v.boolean(),
+    soldFor: v.optional(v.number()),
+    createdAt: v.number(),
+    soldAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  // 3. Street art crew — tag walls for crew reputation, risk getting caught.
+  graffitiTags: defineTable({
+    userId: v.id("users"),
+    spot: v.string(),
+    fame: v.number(),
+    caught: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 4. Pawn shop runs — buy low, sell high, appraise goods.
+  pawnFlips: defineTable({
+    userId: v.id("users"),
+    itemName: v.string(),
+    boughtFor: v.number(),
+    soldFor: v.number(),
+    profit: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 5. Cab company — drive fares, earn cash + city intel.
+  cabShifts: defineTable({
+    userId: v.id("users"),
+    fares: v.number(),
+    earned: v.number(),
+    intel: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 6. Junkyard dog training — raise attack dogs for protection.
+  junkyardDogs: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    breed: v.string(),
+    level: v.number(),
+    loyalty: v.number(),
+    boughtAt: v.number(),
+    trainedAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  // 7. Night market stalls — run a stall in the black-market night bazaar.
+  nightStalls: defineTable({
+    userId: v.id("users"),
+    stallName: v.string(),
+    goods: v.string(),
+    earned: v.number(),
+    lastCollectAt: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]).index("by_active", ["active"]),
+
+  // 8. Cable piracy ring — tap cables, sell access, risk raids.
+  cableTaps: defineTable({
+    userId: v.id("users"),
+    district: v.string(),
+    earned: v.number(),
+    raided: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 9. Numbers racket — run a street lottery, collect bets.
+  numbersBets: defineTable({
+    userId: v.id("users"),
+    numbers: v.string(),
+    bet: v.number(),
+    payout: v.optional(v.number()),
+    won: v.optional(v.boolean()),
+    drawn: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 10. Valet hustle — park exotic cars, occasionally take one for a spin.
+  valetRuns: defineTable({
+    userId: v.id("users"),
+    carName: v.string(),
+    earned: v.number(),
+    stole: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 11. Bathhouse — scrub up, restore energy & life over time.
+  bathhouseVisits: defineTable({
+    userId: v.id("users"),
+    service: v.string(),
+    cost: v.number(),
+    energyRestored: v.number(),
+    lifeRestored: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // 12. Skyline billboards — rent ad space, launder dirty money.
+  billboards: defineTable({
+    userId: v.id("users"),
+    location: v.string(),
+    tier: v.string(),
+    cost: v.number(),
+    launderedPerDay: v.number(),
+    lastLaunderAt: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
 }, {
   schemaValidation: false,
 });
