@@ -1628,6 +1628,25 @@ const schema = defineSchema({
     active: v.boolean(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // Racket master switches — admin control over the 12 expansion rackets.
+  racketConfig: defineTable({
+    key: v.string(), // "main"
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+    dock: v.optional(v.boolean()),
+    chop: v.optional(v.boolean()),
+    graffiti: v.optional(v.boolean()),
+    pawn: v.optional(v.boolean()),
+    cab: v.optional(v.boolean()),
+    dogs: v.optional(v.boolean()),
+    nightmarket: v.optional(v.boolean()),
+    cable: v.optional(v.boolean()),
+    numbers: v.optional(v.boolean()),
+    valet: v.optional(v.boolean()),
+    bath: v.optional(v.boolean()),
+    billboards: v.optional(v.boolean()),
+  }).index("by_key", ["key"]),
 }, {
   schemaValidation: false,
 });

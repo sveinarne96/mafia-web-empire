@@ -193,6 +193,7 @@ import {
   DockPage, ChopShopPage, GraffitiPage, PawnPage, CabPage, DogsPage,
   NightMarketPage, CablePage, NumbersPage, ValetPage, BathhousePage, BillboardPage,
 } from "@/components/ExpansionPages";
+import { RacketsHubPage } from "@/components/RacketsHub";
 import { ArmouryPage } from "@/components/ArmouryPage";
 import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
 import { BoxingGymPage, ChasePage, ScrapyardPage, VaultPage } from "@/components/CrimeExtras";
@@ -1639,7 +1640,7 @@ export default function Dashboard() {
       case "arsenal_race": return <RaceStakesPage />;
       case "arsenal_hotel": return <HotelPage />;
       case "arsenal_informant": return <TipsyInformantPage />;
-      case "x_dock": return <DockPage />;
+      case "rackets_hub": case "x_dock": return <RacketsHubPage />;
       case "x_chop": return <ChopShopPage />;
       case "x_graffiti": return <GraffitiPage />;
       case "x_pawn": return <PawnPage />;

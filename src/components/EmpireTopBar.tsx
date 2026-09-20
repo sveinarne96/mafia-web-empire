@@ -381,8 +381,8 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
       <CommandPalette open={cmdkOpen} onClose={() => setCmdkOpen(false)} onNavigate={onNavigate} />
 
       <div className="empire-topbar">
-        {/* ── Row 0: brand strip ── */}
-        <div className="flex items-center gap-3 px-4 pt-2">
+        {/* ── Row 0: brand strip (compact) ── */}
+        <div className="flex items-center gap-3 px-4 pt-1.5">
           <button onClick={() => onNavigate("headquarters")} className="flex items-center gap-2.5 group">
             <span className="brand-emblem">🕴️</span>
             <span className="brand-title">SHADOW EMPIRE</span>
@@ -395,8 +395,8 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
           </span>
         </div>
 
-        {/* ── Row 1: identity + vitals + chips ── */}
-        <div className="relative flex items-center gap-3 px-4 pt-2 pb-2 flex-wrap">
+        {/* ── Row 1: identity + vitals + chips (compact) ── */}
+        <div className="relative flex items-center gap-2.5 px-4 pt-1.5 pb-1.5 flex-wrap">
           {/* Identity + popup */}
           <div className="relative" ref={popRef}>
             <button className="flex items-center gap-2.5" onClick={() => setPopOpen((v) => !v)}>
@@ -431,7 +431,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
           <div className="w-px h-8 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent hidden lg:block" />
 
           {/* Vitals */}
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             <Vital icon="❤️" label="Life" value={life} max={maxLife} color="#ef4444" />
             <Vital icon="⚡" label="Energy" value={energy} max={maxEnergy} color="#f59e0b" />
             <Vital icon="⭐" label="XP" value={xp} max={xpNeed} color="#38bdf8" />
@@ -517,8 +517,8 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
               </div>
             </button>
 
-            <div className="w-px self-stretch my-1 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent" />
-            <span className="eyebrow self-center px-1 hidden xl:block">Street work</span>
+            <div className="w-px self-stretch my-1 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent hidden lg:block" />
+            <span className="eyebrow self-center px-1 hidden 2xl:block">Street work</span>
 
             {OPS.map((op, idx) => {
               const cdEnd = findCdEnd(cooldowns, op.prefixes);
@@ -531,8 +531,8 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
                 <React.Fragment key={op.page}>
                   {showMajorLabel && (
                     <>
-                      <div className="w-px self-stretch my-1 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent" />
-                      <span className="eyebrow self-center px-1 hidden xl:block">Major ops</span>
+                      <div className="w-px self-stretch my-1 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent hidden lg:block" />
+                      <span className="eyebrow self-center px-1 hidden 2xl:block">Major ops</span>
                     </>
                   )}
                   <button
@@ -542,18 +542,18 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
                     title={`${op.desc} · ~${Math.round(op.nominalCd / 60) || 1}m cycle`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="cooldown-ring" style={{ width: 30, height: 30 }}>
-                        <span className="crime-icon" style={{ width: 30, height: 30, border: "none", background: "transparent", fontSize: "0.95rem" }}>
+                      <span className="cooldown-ring" style={{ width: 28, height: 28 }}>
+                        <span className="crime-icon" style={{ width: 28, height: 28, border: "none", background: "transparent", fontSize: "0.9rem" }}>
                           {op.icon}
                         </span>
                         {cooling ? <CooldownRing fraction={fraction} rgb={op.rgb} /> : null}
                       </span>
                       <div className="min-w-0">
-                        <div className="text-[11px] font-black truncate" style={{ color: `rgb(${op.rgb})` }}>{op.label}</div>
-                        <div className="text-[8px] text-amber-100/35 truncate">{op.desc}</div>
+                        <div className="text-[10px] font-black truncate leading-tight" style={{ color: `rgb(${op.rgb})` }}>{op.label}</div>
+                        <div className="text-[7.5px] text-amber-100/35 truncate leading-tight">{op.desc}</div>
                       </div>
                     </div>
-                    <div className="mt-1.5 flex items-center justify-between">
+                    <div className="mt-1 flex items-center justify-between">
                       {cooling ? (
                         <span className="text-[8px] font-black tabular-nums tracking-wide" style={{ color: `rgb(${op.rgb})` }}>
                           ⏱ {fmtCountdown(remaining)}
@@ -579,8 +579,8 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
               );
             })}
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-black/50 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-black/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-0 bg-gradient-to-r from-black/50 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-0 bg-gradient-to-l from-black/50 to-transparent" />
         </div>
 
         {/* ── Row 3: live city wire ── */}

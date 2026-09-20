@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { addXpAndCheckLevel } from "./game";
+import { ensureRacket } from "./rackets";
 
 /* ══════════════════════════════════════════════════════════════
    EXPANSION PACK — 12 street-racket systems:
@@ -44,7 +45,7 @@ export const workDockShift = mutation({
   args: { shiftId: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "dock");
     const s = DOCK_SHIFTS.find((x) => x.id === args.shiftId);
     if (!s) throw new Error("Unknown shift.");
     const crates = randInt(Math.floor(s.crates * 0.6), s.crates);
@@ -74,7 +75,7 @@ export const stripCar = mutation({
   args: { vehicleId: v.id("vehicles") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "chop");
     const car = await ctx.db.get(args.vehicleId);
     if (!car || (car as any).userId !== player._id) throw new Error("That car is not in your garage.");
     const carName = (car as any).name ?? "Unknown car";
@@ -95,7 +96,7 @@ export const sellChopPart = mutation({
   args: { partId: v.id("chopParts") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "chop");
     const part = await ctx.db.get(args.partId);
     if (!part || (part as any).userId !== player._id) throw new Error("Part not found.");
     if ((part as any).sold) throw new Error("Already sold.");
@@ -125,7 +126,7 @@ export const sprayTag = mutation({
   args: { spot: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "graffiti");
     const caught = Math.random() < 0.22;
     const fame = caught ? 0 : randInt(3, 18);
     await ctx.db.insert("graffitiTags", { userId: player._id, spot: args.spot, fame, caught, createdAt: Date.now() });
@@ -165,7 +166,7 @@ export const pawnFlip = mutation({
   args: { goodIndex: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "pawn");
     const good = PAWN_GOODS[Math.max(0, Math.min(PAWN_GOODS.length - 1, args.goodIndex))];
     const boughtFor = randInt(good.min, good.max);
     if (n(player.money, 0) < boughtFor) throw new Error(`Need ${"$" + boughtFor.toLocaleString()} to buy the ${good.name}.`);
@@ -201,7 +202,7 @@ export const driveCabShift = mutation({
   args: {},
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "cab");
     const fares = randInt(4, 12);
     const earned = fares * randInt(900, 2_600);
     const intel = Math.random() < 0.35 ? pick(CAB_INTEL) : undefined;
@@ -233,7 +234,7 @@ export const buyDog = mutation({
   args: { breedIndex: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "dogs");
     const b = DOG_BREEDS[Math.max(0, Math.min(DOG_BREEDS.length - 1, args.breedIndex))];
     if (n(player.money, 0) < b.cost) throw new Error("Not enough money.");
     const names = ["Bruiser", "Fang", "Duke", "Mayhem", "Bullet", "Sable", "Tank", "Ghost"];
@@ -247,7 +248,7 @@ export const trainDog = mutation({
   args: { dogId: v.id("junkyardDogs") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "dogs");
     const dog = await ctx.db.get(args.dogId);
     if (!dog || (dog as any).userId !== player._id) throw new Error("Dog not found.");
     const cost = 25_000;
@@ -276,7 +277,7 @@ export const openNightStall = mutation({
   args: { goodIndex: v.number(), stallName: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "nightmarket");
     const cost = 90_000;
     if (n(player.money, 0) < cost) throw new Error("Renting a stall costs $90,000.");
     if (args.stallName.trim().length < 2) throw new Error("Give your stall a name.");
@@ -300,7 +301,7 @@ export const collectNightStall = mutation({
   args: { stallId: v.id("nightStalls") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "nightmarket");
     const stall = await ctx.db.get(args.stallId);
     if (!stall || (stall as any).userId !== player._id) throw new Error("Stall not found.");
     const hours = Math.max(0, (Date.now() - n((stall as any).lastCollectAt, Date.now())) / 3600_000);
@@ -316,7 +317,7 @@ export const closeNightStall = mutation({
   args: { stallId: v.id("nightStalls") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "nightmarket");
     const stall = await ctx.db.get(args.stallId);
     if (!stall || (stall as any).userId !== player._id) throw new Error("Stall not found.");
     await ctx.db.patch(args.stallId, { active: false });
@@ -341,7 +342,7 @@ export const tapCable = mutation({
   args: { district: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "cable");
     const raided = Math.random() < 0.25;
     if (raided) {
       const fine = randInt(20_000, 60_000);
@@ -371,7 +372,7 @@ export const playNumbers = mutation({
   args: { numbers: v.string(), bet: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "numbers");
     const clean = args.numbers.replace(/\D/g, "").slice(0, 3);
     if (clean.length !== 3) throw new Error("Pick exactly 3 digits (0-9).");
     const bet = Math.floor(n(args.bet, 0));
@@ -418,7 +419,7 @@ export const workValet = mutation({
   args: {},
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "valet");
     const car = pick(VALET_CARS);
     const earned = randInt(1_200, 4_800);
     const stole = Math.random() < 0.12;
@@ -462,7 +463,7 @@ export const visitBathhouse = mutation({
   args: { serviceId: v.string() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "bath");
     const s = BATH_SERVICES.find((x) => x.id === args.serviceId);
     if (!s) throw new Error("Unknown service.");
     if (n(player.money, 0) < s.cost) throw new Error("Not enough money.");
@@ -495,7 +496,7 @@ export const rentBillboard = mutation({
   args: { spotIndex: v.number() },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "billboards");
     const spot = BILLBOARD_SPOTS[Math.max(0, Math.min(BILLBOARD_SPOTS.length - 1, args.spotIndex))];
     if (n(player.money, 0) < spot.cost) throw new Error("Not enough money.");
     const existing = await ctx.db.query("billboards").withIndex("by_user", (q) => q.eq("userId", player._id)).collect();
@@ -510,7 +511,7 @@ export const launderBillboard = mutation({
   args: { boardId: v.id("billboards") },
   handler: async (ctx, args) => {
     const player = await getCurrentUser(ctx);
-    if (!player) throw new Error("Not authenticated");
+    if (!player) throw new Error("Not authenticated"); await ensureRacket(ctx, "billboards");
     const board = await ctx.db.get(args.boardId);
     if (!board || (board as any).userId !== player._id) throw new Error("Billboard not found.");
     const days = Math.max(0, (Date.now() - n((board as any).lastLaunderAt, Date.now())) / 86_400_000);
