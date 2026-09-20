@@ -84,6 +84,7 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Street Crimes", page: "mega_street", icon: "🗡️" },
       { label: "Big Heists", page: "mega_heists", icon: "🎪" },
       { label: "Odd Jobs", page: "mega_odd", icon: "⚰️" },
+      { label: "The 500", page: "actions500", icon: "📖" },
     ],
   },
   {

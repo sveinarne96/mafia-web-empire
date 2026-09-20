@@ -2147,6 +2147,31 @@ const schema = defineSchema({
     active: v.boolean(),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  // THE 500 - generic action engine
+  actionCooldowns: defineTable({
+    playerId: v.id("users"),
+    actionKey: v.string(),
+    readyAt: v.number(),
+  })
+    .index("by_player", ["playerId"])
+    .index("by_player_action", ["playerId", "actionKey"]),
+
+  actionHistory: defineTable({
+    playerId: v.id("users"),
+    playerName: v.string(),
+    actionKey: v.string(),
+    actionName: v.string(),
+    category: v.string(),
+    success: v.boolean(),
+    earned: v.number(),
+    spent: v.number(),
+    text: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_player", ["playerId"])
+    .index("by_time", ["createdAt"])
+    .index("by_category", ["category"]),
 }, {
   schemaValidation: false,
 });

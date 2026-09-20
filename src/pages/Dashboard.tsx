@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { StreetCrimesPage as MegaStreetCrimes, BigHeistsPage, OddJobsPage, SocialHubPage, FrontsHubPage, ViceDenPage, CityDeskPage } from "../components/MegaPackPages";
+import Actions500Page from "@/components/Actions500Page";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1643,6 +1644,7 @@ export default function Dashboard() {
       case "arsenal_informant": return <TipsyInformantPage />;
       case "rackets_hub": case "x_dock": return <RacketsHubPage />;
       case "mega_street": return <MegaStreetCrimes />;
+      case "actions500": return <Actions500Page />;
       case "mega_heists": return <BigHeistsPage />;
       case "mega_odd": return <OddJobsPage />;
       case "mega_social": return <SocialHubPage />;
