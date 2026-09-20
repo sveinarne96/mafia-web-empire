@@ -188,6 +188,7 @@ const CasinoScratchcardsPage = lazy(() => casinoLazy().then((m) => ({      defau
 import { BettingSportsPage, BettingMultiDicePage, BettingPokerNightPage, BettingMpBlackjackPage, BettingLmsPage, BettingChampionsPage } from "@/components/BettingPages";
 import { QuickTradePage } from "@/components/QuickTradePage";
 import { OrganizedCrimeTeamsPage } from "@/components/OrganizedCrimeTeamsPage";
+import { ArenaPage, TrainerPage, RangePage, RaceStakesPage, HotelPage, TipsyInformantPage } from "@/components/ArsenalPages";
 import { ArmouryPage } from "@/components/ArmouryPage";
 import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
 import { BoxingGymPage, ChasePage, ScrapyardPage, VaultPage } from "@/components/CrimeExtras";
@@ -1628,6 +1629,12 @@ export default function Dashboard() {
       case "coin_store": return <CoinStorePage />;
       case "steal_house": return <CriminalOperationsPage category="steal_house" />;
       case "organized_crime": return <OrganizedCrimeTeamsPage />;
+      case "arsenal_arena": return <ArenaPage />;
+      case "arsenal_trainer": return <TrainerPage />;
+      case "arsenal_range": return <RangePage />;
+      case "arsenal_race": return <RaceStakesPage />;
+      case "arsenal_hotel": return <HotelPage />;
+      case "arsenal_informant": return <TipsyInformantPage />;
       case "missions": return <FullMissionsPage />;
       case "murder": return <CriminalOperationsPage category="murder" />;
       case "heist": return <HeistPage />;

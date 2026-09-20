@@ -1,18 +1,22 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Command } from "cmdk";
-import { Search, Sparkles, Terminal, Radio } from "lucide-react";
+import { Search, Sparkles, Terminal, Radio, Bell, Inbox, Flame } from "lucide-react";
 import { LEFT_MENU_SECTIONS, RIGHT_MENU_SECTIONS } from "@/data/menuSections";
 
 /* ══════════════════════════════════════════════════════════════
-   EMPIRE TOP BAR — cinematic HUD with:
-   · gold vitals row (life / energy / xp with animated bars)
-   · resource chips (cash, bank, points, coins, bullets, atk/def)
-   · crime rail cards with live cooldown rings
-   · scrolling live city ticker (kill feed + casino wire)
-   · ambient ember layer (toggleable)
+   EMPIRE TOP BAR v2 — cinematic command HUD:
+   · brand emblem + live clock
+   · gold vitals (life / energy / xp) with flowing shine
+   · resource chips + boost badges
+   · crime rail with REAL server-synced cooldown rings
+     (reads player.crimeCooldowns — reactive Convex subscription)
+   · profile quick-glance popup on avatar click
+   · inbox / notification badges + online census
+   · scrolling City Wire ticker (kill feed + casino wire)
+   · ambient embers + vignette (toggleable)
    · ⌘K command palette across every page
    ══════════════════════════════════════════════════════════════ */
 
@@ -23,34 +27,25 @@ type Op = {
   label: string;
   desc: string;
   page: string;
-  cd: number; // seconds
+  nominalCd: number; // seconds — used for ring fraction + cycle label
   rgb: string;
-  section: "street" | "major";
+  prefixes: string[]; // crimeCooldowns keys that belong to this op
 };
 
 const OPS: Op[] = [
-  { icon: "🔪", label: "Street", desc: "Quick hit · low profile", page: "crime_street", cd: 45, rgb: "52,211,153", section: "street" },
-  { icon: "💰", label: "Robbery", desc: "High payout · heat rises", page: "crime_robbery", cd: 120, rgb: "239,68,68", section: "street" },
-  { icon: "🃏", label: "Fraud", desc: "Work the mark · no trail", page: "crime_fraud", cd: 180, rgb: "234,179,8", section: "street" },
-  { icon: "🏠", label: "Burglary", desc: "Quiet entry · clean exit", page: "crime_burglary", cd: 240, rgb: "249,115,22", section: "street" },
-  { icon: "💊", label: "Drugs", desc: "Move product · watch heat", page: "crime_drugs", cd: 300, rgb: "168,85,247", section: "street" },
-  { icon: "🕵️", label: "Organized", desc: "Crew pressure · big return", page: "crime_organized", cd: 600, rgb: "59,130,246", section: "street" },
-  { icon: "🕳️", label: "Underground", desc: "Off-grid · slow setup", page: "crime_underground", cd: 900, rgb: "148,163,184", section: "street" },
-  { icon: "🚗", label: "GTA", desc: "Take the wheel · deliver", page: "car_theft", cd: 180, rgb: "220,38,38", section: "major" },
-  { icon: "🏠", label: "Burglarize", desc: "Case the house · lift loot", page: "steal_house", cd: 240, rgb: "225,29,72", section: "major" },
-  { icon: "🎭", label: "Org Crime", desc: "Coordinate · split the take", page: "organized_crime", cd: 900, rgb: "147,51,234", section: "major" },
-  { icon: "💀", label: "Murder", desc: "Lethal contract · exposure", page: "murder", cd: 1800, rgb: "185,28,28", section: "major" },
-  { icon: "💰", label: "Heist", desc: "Build the plan · big score", page: "heist", cd: 3600, rgb: "245,158,11", section: "major" },
+  { icon: "🔪", label: "Street", desc: "Quick hit · low profile", page: "crime_street", nominalCd: 45, rgb: "52,211,153", prefixes: ["pickpocket", "mug", "shoplift", "snatch", "bike_theft", "dumpster", "package", "atm_skim", "carjack", "armed_robbery", "mail_theft", "coin_push", "street"] },
+  { icon: "💰", label: "Robbery", desc: "High payout · heat rises", page: "crime_robbery", nominalCd: 120, rgb: "239,68,68", prefixes: ["smash_grab", "breaking_entering", "convenience_store", "gas_station", "bank_", "jewel", "armored", "robbery"] },
+  { icon: "🃏", label: "Fraud", desc: "Work the mark · no trail", page: "crime_fraud", nominalCd: 180, rgb: "234,179,8", prefixes: ["fraud", "scam", "phish", "counterfeit", "fake_", "identity"] },
+  { icon: "🏠", label: "Burglary", desc: "Quiet entry · clean exit", page: "crime_burglary", nominalCd: 240, rgb: "249,115,22", prefixes: ["house_", "office", "warehouse", "burglary"] },
+  { icon: "💊", label: "Drugs", desc: "Move product · watch heat", page: "crime_drugs", nominalCd: 300, rgb: "168,85,247", prefixes: ["drug_", "weed", "coke", "meth", "deal", "drugs"] },
+  { icon: "🕵️", label: "Organized", desc: "Crew pressure · big return", page: "crime_organized", nominalCd: 600, rgb: "59,130,246", prefixes: ["org_", "racket", "protection", "shakedown", "extortion"] },
+  { icon: "🕳️", label: "Underground", desc: "Off-grid · slow setup", page: "crime_underground", nominalCd: 900, rgb: "148,163,184", prefixes: ["under_", "bootleg", "smug", "pit_", "underground"] },
+  { icon: "🚗", label: "GTA", desc: "Take the wheel · deliver", page: "car_theft", nominalCd: 180, rgb: "220,38,38", prefixes: ["car_theft", "joyride", "chop_shop", "race_rig", "car_bomb", "gta_"] },
+  { icon: "🏠", label: "Burglarize", desc: "Case the house · lift loot", page: "steal_house", nominalCd: 240, rgb: "225,29,72", prefixes: ["sh_"] },
+  { icon: "🎭", label: "Org Crime", desc: "Coordinate · split the take", page: "organized_crime", nominalCd: 900, rgb: "147,51,234", prefixes: ["oc_", "organized_"] },
+  { icon: "💀", label: "Murder", desc: "Lethal contract · exposure", page: "murder", nominalCd: 1800, rgb: "185,28,28", prefixes: ["murder", "hit_", "assassin"] },
+  { icon: "💰", label: "Heist", desc: "Build the plan · big score", page: "heist", nominalCd: 3600, rgb: "245,158,11", prefixes: ["heist"] },
 ];
-
-const CD_KEY = "empireOpCooldowns";
-
-function loadCooldowns(): Record<string, number> {
-  try { return JSON.parse(localStorage.getItem(CD_KEY) || "{}"); } catch { return {}; }
-}
-function saveCooldowns(map: Record<string, number>) {
-  try { localStorage.setItem(CD_KEY, JSON.stringify(map)); } catch {}
-}
 
 function fmtCountdown(s: number): string {
   if (s <= 0) return "READY";
@@ -60,6 +55,18 @@ function fmtCountdown(s: number): string {
   if (m < 60) return `${m}m ${String(r).padStart(2, "0")}s`;
   const h = Math.floor(m / 60);
   return `${h}h ${String(m % 60).padStart(2, "0")}m`;
+}
+
+/** Latest cooldown end (ms) among all keys matching this op's prefixes. */
+function findCdEnd(cds: Record<string, number> | undefined, prefixes: string[]): number {
+  if (!cds) return 0;
+  let latest = 0;
+  for (const key of Object.keys(cds)) {
+    const v = cds[key];
+    if (typeof v !== "number") continue;
+    if (prefixes.some((p) => key === p || key.startsWith(p))) latest = Math.max(latest, v);
+  }
+  return latest;
 }
 
 function CooldownRing({ fraction, rgb }: { fraction: number; rgb: string }) {
@@ -129,7 +136,6 @@ function CommandPalette({ open, onClose, onNavigate }: { open: boolean; onClose:
     for (const s of LEFT_MENU_SECTIONS) for (const i of s.items) out.push({ label: i.label, page: i.page, icon: i.icon, group: s.title });
     for (const s of RIGHT_MENU_SECTIONS) for (const i of s.items) out.push({ label: i.label, page: i.page, icon: i.icon, group: s.title });
     for (const o of OPS) out.push({ label: o.label, page: o.page, icon: o.icon, group: "Quick Action" });
-    // dedupe by page, keep first
     const seen = new Set<string>();
     return out.filter((p) => (seen.has(p.page) ? false : (seen.add(p.page), true)));
   }, []);
@@ -230,18 +236,92 @@ function Vital({ icon, label, value, max, color }: { icon: string; label: string
   );
 }
 
+/* ————— Profile quick-glance popup ————— */
+function ProfilePopup({ player, onClose, onNavigate }: { player: any; onClose: () => void; onNavigate: (p: string) => void }) {
+  const xpNeed = 2000;
+  const xp = player?.experience ?? 0;
+  const pct = Math.min(100, (xp / Math.max(1, xpNeed)) * 100);
+  const stats = [
+    { icon: "💰", label: "Cash", value: `$${(player?.money ?? 0).toLocaleString()}`, cls: "text-emerald-300" },
+    { icon: "🏦", label: "Bank", value: `$${(player?.bank ?? 0).toLocaleString()}`, cls: "text-sky-300" },
+    { icon: "🏆", label: "Points", value: (player?.points ?? 0).toLocaleString(), cls: "text-amber-300" },
+    { icon: "🔫", label: "Bullets", value: ((player as any)?.bullets ?? 0).toLocaleString(), cls: "text-orange-300" },
+    { icon: "⚔️", label: "ATK", value: player?.attack ?? 0, cls: "text-red-300" },
+    { icon: "🛡️", label: "DEF", value: player?.defense ?? 0, cls: "text-blue-300" },
+    { icon: "🔪", label: "Crimes", value: (player?.totalCrimes ?? 0).toLocaleString(), cls: "text-fuchsia-300" },
+    { icon: "💀", label: "Kills", value: (player?.totalKills ?? 0).toLocaleString(), cls: "text-red-400" },
+  ];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.16 }}
+      className="avatar-pop"
+    >
+      <div className="flex items-center gap-3 pb-3 border-b border-amber-500/15">
+        <span className="flex size-11 items-center justify-center rounded-xl bg-black/80 text-base font-black text-amber-300 border border-amber-500/30">
+          {(player?.nickname || player?.username || "P").slice(0, 1).toUpperCase()}
+        </span>
+        <div className="min-w-0">
+          <div className="text-sm font-black text-amber-300 truncate">{player?.nickname || player?.username || "Player"}</div>
+          <div className="text-[9px] uppercase tracking-[0.18em] text-amber-200/45">
+            Level {player?.level ?? 1} · 📍 {player?.location ?? "New York"}
+          </div>
+          {((player as any)?.dailyStreak ?? 0) > 0 && (
+            <div className="mt-0.5 inline-flex items-center gap-1 text-[9px] font-bold text-orange-300">
+              <Flame className="size-2.5" /> {((player as any).dailyStreak)}-day streak
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="py-2.5">
+        <div className="flex items-center justify-between text-[9px] font-bold mb-1">
+          <span className="text-amber-200/55">⭐ XP to next level</span>
+          <span className="text-sky-300 font-black tabular-nums">{xp.toLocaleString()} / {xpNeed.toLocaleString()}</span>
+        </div>
+        <div className="vital-bar"><i style={{ width: `${pct}%`, background: "linear-gradient(90deg,#38bdf8,#38bdf8aa)" }} /></div>
+      </div>
+      <div className="grid grid-cols-2 gap-1.5 pb-3">
+        {stats.map((s) => (
+          <div key={s.label} className="rounded-lg border border-amber-500/10 bg-black/30 px-2 py-1.5">
+            <div className="text-[8px] uppercase tracking-widest text-amber-200/40">{s.icon} {s.label}</div>
+            <div className={`text-[11px] font-black ${s.cls}`}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-amber-500/15">
+        {[
+          { icon: "👤", label: "Profile", page: "my_profile" },
+          { icon: "🎒", label: "Items", page: "my_items" },
+          { icon: "🚗", label: "Garage", page: "garage" },
+          { icon: "🏦", label: "Bank", page: "bank" },
+        ].map((b) => (
+          <button
+            key={b.page}
+            onClick={() => { onNavigate(b.page); onClose(); }}
+            className="rounded-lg border border-amber-500/15 bg-amber-500/5 py-1.5 text-[9px] font-bold text-amber-200/80 hover:bg-amber-500/15 hover:text-amber-100 transition-colors"
+          >
+            <div className="text-sm">{b.icon}</div>{b.label}
+          </button>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 /* ————— Main top bar ————— */
 export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; onNavigate: (p: string) => void }) {
   const player = useQuery(api.game.getPlayer);
-  const [cds, setCds] = useState<Record<string, number>>(loadCooldowns);
+  const notifications = useQuery(api.game.getNotifications);
+  const onlineCount = useQuery(api.admin.getOnlineCount);
   const [now, setNow] = useState(Date.now());
   const [ambienceOn, setAmbienceOn] = useState(() => { try { return localStorage.getItem("empireAmbience") !== "off"; } catch { return true; } });
   const [cmdkOpen, setCmdkOpen] = useState(false);
-  const cdsRef = useRef(cds);
-  cdsRef.current = cds;
+  const [popOpen, setPopOpen] = useState(false);
+  const popRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const iv = setInterval(() => setNow(Date.now()), 500);
+    const iv = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(iv);
   }, []);
 
@@ -251,31 +331,32 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
         e.preventDefault();
         setCmdkOpen((o) => !o);
       }
+      if (e.key === "Escape") setPopOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const triggerCooldown = (op: Op) => {
-    const next = { ...cdsRef.current, [op.label]: now + op.cd * 1000 };
-    setCds(next);
-    saveCooldowns(next);
-  };
-
-  const toggleAmbience = () => {
-    setAmbienceOn((v) => {
-      const next = !v;
-      try { localStorage.setItem("empireAmbience", next ? "on" : "off"); } catch {}
-      return next;
-    });
-  };
+  // Close profile popup on outside click
+  useEffect(() => {
+    if (!popOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (popRef.current && !popRef.current.contains(e.target as Node)) setPopOpen(false);
+    };
+    window.addEventListener("mousedown", onDown);
+    return () => window.removeEventListener("mousedown", onDown);
+  }, [popOpen]);
 
   const life = player?.life ?? 0;
   const maxLife = player?.maxLife ?? 100;
   const energy = (player as any)?.energy ?? 100;
+  const maxEnergy = (player as any)?.maxEnergy ?? 100;
   const wanted = (player as any)?.wantedLevel ?? 0;
   const xp = player?.experience ?? 0;
   const xpNeed = 2000;
+  const cooldowns = (player as any)?.crimeCooldowns as Record<string, number> | undefined;
+
+  const unread = (notifications ?? []).filter((n: any) => !n?.read).length;
 
   const chips = [
     { icon: "💰", label: "Cash", value: `$${(player?.money ?? 0).toLocaleString()}`, cls: "text-emerald-300" },
@@ -287,7 +368,12 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
     { icon: "🛡️", label: "DEF", value: player?.defense ?? 0, cls: "text-blue-300" },
   ];
 
-  let railIndex = 0;
+  const boostBadges: { icon: string; label: string; until?: number; cls: string }[] = [
+    { icon: "⚡", label: "3x XP", until: (player as any)?.xpBoostUntil, cls: "cyan" },
+    { icon: "💰", label: "3x Cash", until: (player as any)?.cashBoostUntil, cls: "green" },
+    { icon: "🥤", label: "Energy", until: (player as any)?.energyDrinkUntil, cls: "orange" },
+  ];
+  const activeBoosts = boostBadges.filter((b) => (b.until ?? 0) > now);
 
   return (
     <>
@@ -295,32 +381,51 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
       <CommandPalette open={cmdkOpen} onClose={() => setCmdkOpen(false)} onNavigate={onNavigate} />
 
       <div className="empire-topbar">
+        {/* ── Row 0: brand strip ── */}
+        <div className="flex items-center gap-3 px-4 pt-2">
+          <button onClick={() => onNavigate("headquarters")} className="flex items-center gap-2.5 group">
+            <span className="brand-emblem">🕴️</span>
+            <span className="brand-title">SHADOW EMPIRE</span>
+          </button>
+          <span className="hidden md:inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-widest text-emerald-300">
+            <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" /> {onlineCount ?? "—"} online
+          </span>
+          <span className="ml-auto hidden sm:block text-[9px] font-bold tabular-nums tracking-widest text-amber-200/40">
+            {new Date(now).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </span>
+        </div>
+
         {/* ── Row 1: identity + vitals + chips ── */}
-        <div className="relative flex items-center gap-3 px-4 pt-2.5 pb-2 flex-wrap">
-          {/* Identity */}
-          <div className="flex items-center gap-2.5">
-            <span
-              className="relative inline-flex size-9 items-center justify-center rounded-xl p-[2px] shadow-lg"
-              style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.5), rgba(180,83,9,0.35))", boxShadow: "0 0 18px rgba(245,158,11,0.25)" }}
-            >
-              <span className="flex size-full items-center justify-center rounded-[10px] bg-black/85 text-xs font-black text-amber-300">
-                {(player?.nickname || player?.username || "P").slice(0, 1).toUpperCase()}
-              </span>
-              {wanted > 0 && (
-                <span className="absolute -top-1 -right-1 size-3 rounded-full bg-red-500 border-2 border-black animate-pulse" title={`Wanted level ${wanted}`} />
-              )}
-            </span>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black text-amber-300" style={{ textShadow: "0 0 12px rgba(255,200,50,0.4)" }}>
-                  {player?.nickname || player?.username || "Player"}
+        <div className="relative flex items-center gap-3 px-4 pt-2 pb-2 flex-wrap">
+          {/* Identity + popup */}
+          <div className="relative" ref={popRef}>
+            <button className="flex items-center gap-2.5" onClick={() => setPopOpen((v) => !v)}>
+              <span
+                className="relative inline-flex size-9 items-center justify-center rounded-xl p-[2px]"
+                style={{ background: "linear-gradient(135deg, rgba(245,158,11,0.5), rgba(180,83,9,0.35))", boxShadow: "0 0 18px rgba(245,158,11,0.25)" }}
+              >
+                <span className="flex size-full items-center justify-center rounded-[10px] bg-black/85 text-xs font-black text-amber-300">
+                  {(player?.nickname || player?.username || "P").slice(0, 1).toUpperCase()}
                 </span>
-                {wanted > 0 && <span className="px-1.5 py-px rounded-full bg-red-500/20 border border-red-500/40 text-[8px] font-black text-red-300 animate-pulse">WANTED</span>}
+                {wanted > 0 && (
+                  <span className="absolute -top-1 -right-1 size-3 rounded-full bg-red-500 border-2 border-black animate-pulse" title={`Wanted level ${wanted}`} />
+                )}
+              </span>
+              <div className="text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-sm font-black text-amber-300" style={{ textShadow: "0 0 12px rgba(255,200,50,0.4)" }}>
+                    {player?.nickname || player?.username || "Player"}
+                  </span>
+                  {wanted > 0 && <span className="px-1.5 py-px rounded-full bg-red-500/20 border border-red-500/40 text-[8px] font-black text-red-300 animate-pulse">WANTED</span>}
+                </div>
+                <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-200/45">
+                  Lv.{player?.level ?? 1} · 📍 {player?.location ?? "New York"}
+                </div>
               </div>
-              <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-amber-200/45">
-                Lv.{player?.level ?? 1} · 📍 {player?.location ?? "New York"}
-              </div>
-            </div>
+            </button>
+            {popOpen && player && (
+              <ProfilePopup player={player} onClose={() => setPopOpen(false)} onNavigate={onNavigate} />
+            )}
           </div>
 
           <div className="w-px h-8 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent hidden lg:block" />
@@ -328,7 +433,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
           {/* Vitals */}
           <div className="flex items-center gap-4 flex-wrap">
             <Vital icon="❤️" label="Life" value={life} max={maxLife} color="#ef4444" />
-            <Vital icon="⚡" label="Energy" value={energy} max={100} color="#f59e0b" />
+            <Vital icon="⚡" label="Energy" value={energy} max={maxEnergy} color="#f59e0b" />
             <Vital icon="⭐" label="XP" value={xp} max={xpNeed} color="#38bdf8" />
           </div>
 
@@ -337,14 +442,38 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
           {/* Resource chips */}
           <div className="flex items-center gap-1.5 flex-wrap">
             {chips.map((c) => (
-              <span key={c.label} className={`empire-stat-chip ${c.cls}`}>
+              <span key={c.label} className={`empire-stat-chip ${c.cls}`} title={c.label}>
                 <span className="text-[11px]">{c.icon}</span>{c.value}
+              </span>
+            ))}
+            {activeBoosts.map((b) => (
+              <span key={b.label} className={`empire-stat-chip boost-${b.cls} animate-breathe`}>
+                <span className="text-[11px]">{b.icon}</span>{b.label}
               </span>
             ))}
           </div>
 
           {/* Utility buttons */}
           <div className="ml-auto flex items-center gap-1.5">
+            <button
+              onClick={() => onNavigate("inbox")}
+              className="empire-stat-chip text-sky-300/90 relative"
+              title="Inbox"
+            >
+              <Inbox className="size-3" />
+              <span className="hidden md:inline">Inbox</span>
+              {unread > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-red-500 text-[8px] font-black text-white flex items-center justify-center animate-pulse">{unread > 9 ? "9+" : unread}</span>
+              )}
+            </button>
+            <button
+              onClick={() => onNavigate("notifications_page")}
+              className="empire-stat-chip text-amber-300/90 relative"
+              title="Notifications"
+            >
+              <Bell className="size-3" />
+              <span className="hidden md:inline">Alerts</span>
+            </button>
             <button
               onClick={() => setCmdkOpen(true)}
               className="empire-stat-chip text-amber-300/80"
@@ -354,7 +483,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
               <span className="hidden sm:inline">Ctrl K</span>
             </button>
             <button
-              onClick={toggleAmbience}
+              onClick={toggleAmbienceSafe(ambienceOn, setAmbienceOn)}
               className={`empire-stat-chip ${ambienceOn ? "text-amber-300" : "text-slate-500"}`}
               title="Toggle ambient embers"
             >
@@ -369,7 +498,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
           </div>
         </div>
 
-        {/* ── Row 2: crime rail with cooldown rings ── */}
+        {/* ── Row 2: crime rail with REAL cooldown rings ── */}
         <div className="relative">
           <div className="crime-rail">
             {/* HQ anchor */}
@@ -391,29 +520,29 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
             <div className="w-px self-stretch my-1 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent" />
             <span className="eyebrow self-center px-1 hidden xl:block">Street work</span>
 
-            {OPS.map((op) => {
-              railIndex++;
-              const remaining = Math.max(0, Math.ceil(((cds[op.label] ?? 0) - now) / 1000));
+            {OPS.map((op, idx) => {
+              const cdEnd = findCdEnd(cooldowns, op.prefixes);
+              const remaining = Math.max(0, Math.ceil((cdEnd - now) / 1000));
               const cooling = remaining > 0;
-              const fraction = cooling ? remaining / op.cd : 0;
+              const fraction = cooling ? remaining / op.nominalCd : 0;
               const isActive = activePage === op.page;
-              const showStreetLabel = railIndex === 8;
+              const showMajorLabel = idx === 7;
               return (
                 <React.Fragment key={op.page}>
-                  {showStreetLabel && (
+                  {showMajorLabel && (
                     <>
                       <div className="w-px self-stretch my-1 bg-gradient-to-b from-transparent via-amber-500/30 to-transparent" />
                       <span className="eyebrow self-center px-1 hidden xl:block">Major ops</span>
                     </>
                   )}
                   <button
-                    onClick={() => { triggerCooldown(op); onNavigate(op.page); }}
-                    className={`crime-card ${isActive ? "is-active" : ""} ${cooling ? "is-cooling" : ""}`}
+                    onClick={() => onNavigate(op.page)}
+                    className={`crime-card ${isActive ? "is-active" : ""} ${cooling ? "is-cooling" : "is-ready"}`}
                     style={{ ["--accent" as any]: op.rgb }}
-                    title={`${op.desc} · ${Math.round(op.cd / 60) || 1}m recovery cycle`}
+                    title={`${op.desc} · ~${Math.round(op.nominalCd / 60) || 1}m cycle`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={`cooldown-ring ${cooling ? "" : ""}`} style={{ width: 30, height: 30 }}>
+                      <span className="cooldown-ring" style={{ width: 30, height: 30 }}>
                         <span className="crime-icon" style={{ width: 30, height: 30, border: "none", background: "transparent", fontSize: "0.95rem" }}>
                           {op.icon}
                         </span>
@@ -433,7 +562,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
                         <span className="text-[8px] font-black text-emerald-400/90 tracking-wide">✓ READY</span>
                       )}
                       <span className="text-[7px] font-bold uppercase tracking-widest text-amber-100/25">
-                        {Math.round(op.cd / 60) || 1}m
+                        ~{Math.round(op.nominalCd / 60) || 1}m
                       </span>
                     </div>
                     {/* bottom recovery bar */}
@@ -461,15 +590,24 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
   );
 }
 
+function toggleAmbienceSafe(current: boolean, set: (v: boolean) => void) {
+  return () => {
+    const next = !current;
+    set(next);
+    try { localStorage.setItem("empireAmbience", next ? "on" : "off"); } catch {}
+  };
+}
+
 /* ══════════════════════════════════════════════════════════════
    CITY PULSE — live server feed panel rendered inside HQ:
-   online players, recent takedowns, casino wire, open bounties.
+   online players, recent takedowns, casino wire, top operators.
    ══════════════════════════════════════════════════════════════ */
 export function CityPulsePanel() {
   const online = useQuery(api.admin.getOnlinePlayers);
   const deaths = useQuery(api.statistics.getRecentDeaths, { limit: 6 });
   const casinoEvents = useQuery(api.casinoSystem.getCasinoEvents);
   const bounties = useQuery(api.game.getBounties);
+  const stats = useQuery(api.game.getStats);
 
   const activeBounties = (bounties ?? []).filter((b: any) => b.active).length;
 
@@ -516,7 +654,7 @@ export function CityPulsePanel() {
           </div>
           {activeBounties > 0 && (
             <div className="mt-2 rounded-lg bg-red-500/10 border border-red-500/25 px-2 py-1 text-[10px] font-bold text-red-300">
-              🎯 {activeBounties} open bounty{activeBounties > 1 ? "ies" : ""} on the board
+              🎯 {activeBounties} open bount{activeBounties > 1 ? "ies" : "y"} on the board
             </div>
           )}
         </div>
@@ -540,11 +678,29 @@ export function CityPulsePanel() {
           </div>
         </div>
 
+        {/* Top operators */}
+        <div className="rounded-xl border border-slate-700/30 bg-black/25 p-3">
+          <div className="eyebrow mb-2">👑 Top operators</div>
+          <div className="space-y-1">
+            {(stats?.topPlayers ?? []).slice(0, 5).map((p: any, i: number) => (
+              <div key={i} className="pulse-row !py-1.5">
+                <span className={`text-[10px] font-black w-5 ${i === 0 ? "text-yellow-400" : i === 1 ? "text-slate-300" : i === 2 ? "text-orange-400" : "text-slate-600"}`}>#{i + 1}</span>
+                <span className="text-[10px] font-bold text-amber-100/90 flex-1 truncate">{p.nickname}</span>
+                <span className="text-[9px] text-emerald-300 font-bold">${(p.money ?? 0).toLocaleString()}</span>
+                <span className="text-[8px] text-slate-500">Lv.{p.level}</span>
+              </div>
+            ))}
+            {(stats?.topPlayers ?? []).length === 0 && (
+              <div className="text-[10px] text-slate-600">The throne is unclaimed.</div>
+            )}
+          </div>
+        </div>
+
         {/* Casino wire */}
-        <div className="rounded-xl border border-slate-700/30 bg-black/25 p-3 md:col-span-2">
+        <div className="rounded-xl border border-slate-700/30 bg-black/25 p-3">
           <div className="eyebrow mb-2">🎰 Casino wire</div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
-            {(casinoEvents ?? []).slice(0, 6).map((e: any) => (
+          <div className="space-y-1">
+            {(casinoEvents ?? []).slice(0, 5).map((e: any) => (
               <div key={e._id} className="pulse-row !py-1.5">
                 <span className="text-sm">{e.type === "seized" ? "🚨" : e.type === "purchased" ? "🎟️" : "💸"}</span>
                 <span className="text-[10px] text-amber-100/80 flex-1 truncate">{e.message}</span>
@@ -565,5 +721,3 @@ export function CityPulsePanel() {
     </div>
   );
 }
-
-export { AnimatePresence };

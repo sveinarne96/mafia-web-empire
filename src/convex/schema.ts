@@ -1421,6 +1421,90 @@ const schema = defineSchema({
     rareFound: v.boolean(),
     createdAt: v.number(),
   }).index("by_owner", ["ownerId"]),
+
+  // ═══════════ ULTIMATE ARSENAL: NEW SYSTEMS ═══════════
+
+  // Underground fight arena — AI fighters players can bet on and watch.
+  arenaFights: defineTable({
+    playerId: v.id("users"),
+    pickId: v.string(),
+    pickName: v.string(),
+    rivalId: v.string(),
+    rivalName: v.string(),
+    wager: v.number(),
+    oddsPick: v.number(),
+    oddsRival: v.number(),
+    status: v.string(), // pending | finished
+    winnerId: v.optional(v.string()),
+    rounds: v.optional(v.number()),
+    won: v.optional(v.boolean()),
+    payout: v.optional(v.number()),
+    commentary: v.optional(v.array(v.string())),
+    createdAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  }).index("by_player", ["playerId"]).index("by_status", ["status"]),
+
+  // Trainer sessions — pay a coach for a temporary attack/defense buff.
+  trainerSessions: defineTable({
+    userId: v.id("users"),
+    kind: v.string(), // boxing | mma | weapons | survival
+    buffAttack: v.number(),
+    buffDefense: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // Shooting-range sessions — pay to raise accuracy for a while.
+  rangeSessions: defineTable({
+    userId: v.id("users"),
+    bulletsUsed: v.number(),
+    accuracyGain: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // Street race stakes — challenge a rival racer for money.
+  streetRaceStakes: defineTable({
+    playerId: v.id("users"),
+    opponentName: v.string(),
+    opponentSkill: v.number(),
+    carSpeed: v.number(),
+    wager: v.number(),
+    status: v.string(), // racing | won | lost
+    payout: v.optional(v.number()),
+    createdAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  }).index("by_player", ["playerId"]),
+
+  // Safehouse hotel — stay away from the city, cash keeps flowing in.
+  hotelStays: defineTable({
+    userId: v.id("users"),
+    suite: v.string(),
+    cost: v.number(),
+    perHour: v.number(),
+    startedAt: v.number(),
+    endsAt: v.number(),
+    claimed: v.boolean(),
+    claimedAmount: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  // Tipsy informant — pay for rumors that make your next crime safer.
+  informantTips: defineTable({
+    userId: v.id("users"),
+    tip: v.string(),
+    cost: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // Heist scouting — reveal the real payout band of a heist job before committing.
+  heistIntel: defineTable({
+    userId: v.id("users"),
+    jobId: v.string(),
+    revealedMin: v.number(),
+    revealedMax: v.number(),
+    createdAt: v.number(),
+  }).index("by_user_job", ["userId", "jobId"]),
 }, {
   schemaValidation: false,
 });

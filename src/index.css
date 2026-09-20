@@ -1290,3 +1290,136 @@
   text-transform: uppercase;
   color: rgba(253, 186, 116, 0.55);
 }
+
+/* ════════════════ EMPIRE TOP BAR v2 additions ════════════════ */
+.brand-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.95rem;
+  background: linear-gradient(140deg, rgba(255, 190, 80, 0.22), rgba(120, 53, 15, 0.28));
+  border: 1px solid rgba(255, 200, 90, 0.4);
+  box-shadow: 0 0 14px rgba(255, 180, 60, 0.22), inset 0 1px 0 rgba(255, 230, 170, 0.25);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.brand-emblem:hover { transform: rotate(-8deg) scale(1.06); box-shadow: 0 0 22px rgba(255, 190, 70, 0.4), inset 0 1px 0 rgba(255, 230, 170, 0.3); }
+.brand-title {
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.34em;
+  background: linear-gradient(90deg, #fde9b8, #f7b733, #d97706, #f7b733, #fde9b8);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: brand-sheen 6s ease infinite;
+  text-shadow: none;
+}
+@keyframes brand-sheen { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+/* Boost chips */
+.empire-stat-chip.boost-cyan { border-color: rgba(34, 211, 238, 0.45); background: rgba(8, 51, 68, 0.5); }
+.empire-stat-chip.boost-green { border-color: rgba(52, 211, 153, 0.45); background: rgba(6, 59, 43, 0.5); }
+.empire-stat-chip.boost-orange { border-color: rgba(251, 146, 60, 0.45); background: rgba(69, 26, 3, 0.5); }
+
+/* Ready pulse on crime cards */
+.crime-card.is-ready .crime-icon { animation: icon-glow 3.2s ease-in-out infinite; }
+@keyframes icon-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(255, 220, 140, 0.25)); }
+  50% { filter: drop-shadow(0 0 7px rgba(255, 220, 140, 0.55)); }
+}
+
+/* Profile quick-glance popup */
+.avatar-pop {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: 0;
+  z-index: 70;
+  width: min(320px, 86vw);
+  padding: 0.85rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 214, 140, 0.25);
+  background: linear-gradient(165deg, rgba(24, 10, 3, 0.98), rgba(8, 3, 1, 0.99));
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65), 0 0 34px rgba(255, 180, 60, 0.1), inset 0 1px 0 rgba(255, 224, 165, 0.08);
+}
+.avatar-pop::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 26px;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  border-left: 1px solid rgba(255, 214, 140, 0.25);
+  border-top: 1px solid rgba(255, 214, 140, 0.25);
+  background: rgba(24, 10, 3, 0.98);
+}
+
+/* ════════════════ ULTIMATE VISUAL LAYER ════════════════ */
+
+/* Cinematic aurora band — subtle color drift behind everything */
+body::after {
+  content: "";
+  position: fixed;
+  inset: -20% -10%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background:
+    radial-gradient(ellipse 45% 28% at 18% 22%, rgba(255, 140, 40, 0.05), transparent 70%),
+    radial-gradient(ellipse 40% 30% at 82% 68%, rgba(190, 80, 220, 0.04), transparent 70%),
+    radial-gradient(ellipse 50% 24% at 50% 90%, rgba(255, 190, 60, 0.035), transparent 70%);
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(1.6%, -1.2%, 0) scale(1.04); }
+  100% { transform: translate3d(-1.4%, 1.4%, 0) scale(1.02); }
+}
+
+/* Horizontal scanline sheen on cards */
+.mafia-card { position: relative; }
+.mafia-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 214, 140, 0.012) 0 1px, transparent 1px 4px);
+  opacity: 0.8;
+}
+
+/* Gold dust particle on hover for crime cards */
+.crime-card.is-ready::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 224, 150, 0.95), transparent 70%);
+  animation: gold-dust 2.4s ease-in-out infinite;
+}
+@keyframes gold-dust {
+  0%, 100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 6px rgba(255, 214, 120, 0.8); }
+  50% { transform: scale(1.35); opacity: 1; box-shadow: 0 0 12px rgba(255, 214, 120, 1); }
+}
+
+/* Smooth page container scrollbar */
+main::-webkit-scrollbar { width: 8px; }
+main::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+main::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,190,80,0.35), rgba(200,120,40,0.3)); border-radius: 999px; }
+main::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, rgba(255,200,90,0.55), rgba(210,130,50,0.45)); }
+
+/* Selection color */
+::selection { background: rgba(255, 190, 80, 0.3); color: #fff7e6; }
+
+/* Focus ring glow */
+button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid rgba(255, 190, 80, 0.5);
+  outline-offset: 2px;
+}
