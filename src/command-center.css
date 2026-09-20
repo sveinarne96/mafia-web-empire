@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap');
 /* Shadow Empire global command-center skin */
 .event-calendar-command { position: relative; isolation: isolate; }
 .event-calendar-command::before { content: ""; position: absolute; inset: -2rem; z-index: -1; pointer-events: none; opacity: .32; background: radial-gradient(circle at 15% 0%, rgba(245,158,11,.16), transparent 22rem), radial-gradient(circle at 92% 35%, rgba(59,130,246,.12), transparent 20rem); }
@@ -133,6 +134,9 @@
   --noir-blue: #38bdf8;
   --noir-red: #fb7185;
   --noir-ink: #030712;
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-ui: "Rajdhani", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
   background: #020617 !important;
   background-image: radial-gradient(circle at 50% -20%, rgba(14,116,144,.30), transparent 36rem), radial-gradient(circle at 100% 80%, rgba(127,29,29,.22), transparent 28rem), linear-gradient(135deg, #020617, #0b1120 48%, #030712) !important;
 }
@@ -230,10 +234,153 @@
   .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before { margin-top: 3.6rem; }
 }
 
+/* CINEMATIC LAYER — typography, HUD chrome, ambient depth */
+.min-h-screen.flex.flex-col.bg-background.text-foreground,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside {
+  font-family: var(--font-ui);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h1,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  letter-spacing: .02em;
+  line-height: 1.04;
+  color: #f0f9ff !important;
+  text-shadow: 0 0 30px rgba(34,211,238,.22), 0 2px 12px rgba(0,0,0,.6);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h3 { font-family: var(--font-display); font-size: 1.12rem; letter-spacing: .045em; text-transform: uppercase; color: #bae6fd !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside nav > div > button { font-family: var(--font-display); letter-spacing: .14em; font-size: .72rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2),
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) span { font-family: var(--font-mono); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div {
+  position: relative;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child {
+  position: relative;
+  padding-top: 2.4rem;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 118%, rgba(14,116,144,.20), transparent 44%),
+    radial-gradient(ellipse at 50% 50%, transparent 58%, rgba(0,0,0,.42) 100%);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > * { position: relative; z-index: 2; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card {
+  border-radius: .55rem !important;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s, box-shadow .22s, filter .22s;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card:hover,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card:hover { transform: translateY(-3px); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main table { font-family: var(--font-mono); font-size: .72rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main table th { font-family: var(--font-display); letter-spacing: .16em; color: #67e8f9; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-primary"],
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-green-"],
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-red-"] {
+  font-family: var(--font-display);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  border-radius: .45rem !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground input,
+.min-h-screen.flex.flex-col.bg-background.text-foreground textarea,
+.min-h-screen.flex.flex-col.bg-background.text-foreground select { font-family: var(--font-mono); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before { font-family: var(--font-mono); }
+@supports (backdrop-filter: blur(1px)) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div { backdrop-filter: blur(10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card:hover,
+  .min-h-screen.flex.flex-col.bg-background.text-foreground .action-card:hover { transform: none; }
+}
+
 /* Re-skin the live operation rail too, including its injected inline surfaces. */
-[data-operation-section] { color: #67e8f9 !important; border-color: rgba(103,232,249,.32) !important; background: rgba(8,47,73,.34) !important; text-shadow: 0 0 12px rgba(34,211,238,.5) !important; }
-[data-operation-rail] { border-color: rgba(103,232,249,.2) !important; background: linear-gradient(145deg, rgba(8,47,73,.58), rgba(2,6,23,.94)) !important; box-shadow: inset 0 1px rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.34) !important; }
+[data-operation-section] { color: #67e8f9 !important; border-color: rgba(103,232,249,.32) !important; background: rgba(8,47,73,.34) !important; text-shadow: 0 0 12px rgba(34,211,238,.5) !important; font-family: var(--font-mono) !important; }
+[data-operation-rail] { border-color: rgba(103,232,249,.2) !important; background: linear-gradient(145deg, rgba(8,47,73,.58), rgba(2,6,23,.94)) !important; box-shadow: inset 0 1px rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.34) !important; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
 [data-operation-rail]:hover { border-color: rgba(103,232,249,.62) !important; box-shadow: inset 0 0 22px rgba(34,211,238,.1), 0 12px 30px rgba(0,0,0,.4), 0 0 18px rgba(34,211,238,.13) !important; }
 [data-operation-rail] [data-operation-cooldown] { color: #67e8f9 !important; }
+[data-operation-rail] [data-operation-description] { color: #7dd3fc !important; }
 [data-operation-rail] [data-operation-progress] { background: linear-gradient(90deg, #22d3ee, #3b82f6, #fb7185) !important; }
 [data-operation-rail] [data-operation-intel] { border-top-color: rgba(103,232,249,.15) !important; }
+
+/* Console scrollbars + top-bar scan sweep */
+.min-h-screen.flex.flex-col.bg-background.text-foreground main::-webkit-scrollbar,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside::-webkit-scrollbar { width: 9px; height: 9px; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main::-webkit-scrollbar-thumb,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(34,211,238,.35), rgba(59,130,246,.25)); border-radius: 99px; border: 2px solid rgba(2,6,23,.9); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main::-webkit-scrollbar-track,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside::-webkit-scrollbar-track { background: rgba(2,6,23,.6); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:first-child > div {
+  animation: noir-scan 6s linear infinite;
+}
+@keyframes noir-scan { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+@media (prefers-reduced-motion: reduce) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:first-child > div { animation: none; }
+}
+
+/* FINISHERS — dossier panels, tabular numerics, film grain, cinematic header frame */
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child {
+  position: sticky;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2),
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) * {
+  font-variant-numeric: tabular-nums;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div:first-child,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div:nth-child(3) {
+  border-color: rgba(103,232,249,.24);
+  background: linear-gradient(120deg, rgba(8,47,73,.5), rgba(2,6,23,.66));
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div:last-child {
+  border-color: rgba(251,113,133,.26);
+  background: linear-gradient(120deg, rgba(127,29,29,.3), rgba(2,6,23,.66));
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child > div > div:first-child {
+  position: relative;
+  border-color: rgba(103,232,249,.22) !important;
+  background: linear-gradient(145deg, rgba(8,47,73,.4), rgba(2,6,23,.86)) !important;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child > div > div:first-child::before {
+  content: "AGENT DOSSIER";
+  display: block;
+  margin-bottom: .55rem;
+  color: rgba(103,232,249,.6);
+  font: 700 .5rem/1 var(--font-mono);
+  letter-spacing: .22em;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card {
+  font-variant-numeric: tabular-nums;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > div:first-child {
+  position: relative;
+  padding: 1px;
+  background: linear-gradient(120deg, rgba(103,232,249,.35), transparent 30%, transparent 70%, rgba(251,113,133,.3));
+  border-radius: .65rem;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > div:first-child > * {
+  border-radius: calc(.65rem - 1px);
+  background: rgba(2,6,23,.88);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child,
+  .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside {
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
