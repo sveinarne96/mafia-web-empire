@@ -196,3 +196,30 @@ export const getPersonalStatistics = query({
     return { rows, isSelf: target._id === userId };
   },
 });
+
+// Live online players list for City Overview.
+export const getOnlinePlayers = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("users").collect();
+    const now = Date.now();
+    const online = all
+      .filter((u: any) => (u.lastActive ?? 0) > now - 120000 && u.nickname && !u.isBanned)
+      .map((u: any) => ({
+        id: u._id,
+        name: u.nickname,
+        level: n(u.level),
+        rank: rankName(n(u.level)),
+        money: n(u.money),
+        life: n(u.life),
+        maxLife: n(u.maxLife) || 100,
+        inPrison: !!u.inPrison,
+        wanted: n(u.wantedLevel),
+        family: u.familyName ?? null,
+        isDead: !!u.isDead,
+        lastActive: u.lastActive ?? 0,
+      }))
+      .sort((a: any, b: any) => b.lastActive - a.lastActive);
+    return { players: online, count: online.length, updatedAt: now };
+  },
+});
