@@ -223,3 +223,34 @@ export const getOnlinePlayers = query({
     return { players: online, count: online.length, updatedAt: now };
   },
 });
+
+// Full presence roster: who is online AND who is offline (recently seen).
+export const getPresenceRoster = query({
+  args: {},
+  handler: async (ctx) => {
+    const all = await ctx.db.query("users").collect();
+    const now = Date.now();
+    const registered = all.filter((u: any) => u.nickname && !u.isBanned);
+    const map = (u: any, online: boolean) => ({
+      id: u._id,
+      name: u.nickname,
+      level: n(u.level),
+      rank: rankName(n(u.level)),
+      online,
+      inPrison: !!u.inPrison,
+      wanted: n(u.wantedLevel),
+      family: u.familyName ?? null,
+      lastActive: u.lastActive ?? 0,
+    });
+    const onlinePlayers = registered
+      .filter((u: any) => (u.lastActive ?? 0) > now - 120000)
+      .map((u: any) => map(u, true))
+      .sort((a: any, b: any) => b.lastActive - a.lastActive);
+    const offlinePlayers = registered
+      .filter((u: any) => (u.lastActive ?? 0) <= now - 120000)
+      .sort((a: any, b: any) => (b.lastActive ?? 0) - (a.lastActive ?? 0))
+      .slice(0, 100)
+      .map((u: any) => map(u, false));
+    return { onlinePlayers, offlinePlayers, onlineCount: onlinePlayers.length, total: registered.length, updatedAt: now };
+  },
+});

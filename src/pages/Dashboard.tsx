@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { StreetCrimesPage as MegaStreetCrimes, BigHeistsPage, OddJobsPage, SocialHubPage, FrontsHubPage, ViceDenPage, CityDeskPage } from "../components/MegaPackPages";
 import Actions500Page from "@/components/Actions500Page";
+import PresencePage from "@/components/PresencePage";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1972,7 +1973,7 @@ export default function Dashboard() {
       case "record_heists": return <RecordHeistsPage />;
       case "record_supply": return <RecordSupplyPage />;
       case "record_casino": return <RecordCasinoPage />;
-      case "online_players": return <OnlineList />;
+      case "online_players": return <PresencePage />;
       case "poker_texas": return <PokerTexasPage />;
       case "craps": return <CrapsPage />;
       case "blackjack": return <BlackjackPage />;

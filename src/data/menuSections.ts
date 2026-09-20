@@ -41,6 +41,7 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Q's Market", page: "qs_market", icon: "🏪" },
       { label: "Community Center", page: "community", icon: "🌐" },
       { label: "City Overview", page: "city_overview", icon: "🏙️" },
+      { label: "Online Players", page: "online_players", icon: "📡" },
       { label: "Statistics", page: "statistics", icon: "📊" },
     ],
   },
