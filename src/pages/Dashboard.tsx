@@ -1005,6 +1005,8 @@ function StatisticsPage() {
   const [search, setSearch] = useState("");
   const [queryName, setQueryName] = useState("");
   const [killFilter, setKillFilter] = useState("");
+  const [onlineFilter, setOnlineFilter] = useState("");
+  const online = useQuery(api.statistics.getOnlinePlayers);
   const globalStats = useQuery(api.statistics.getGlobalStatistics);
   const personal = useQuery(api.statistics.getPersonalStatistics, { username: queryName.trim() || undefined });
   const deaths = useQuery(api.statistics.getRecentDeaths, { limit: 30 });
@@ -1023,6 +1025,7 @@ function StatisticsPage() {
     { id: "wealth", label: "Wealth", icon: "💰" }, { id: "vehicle", label: "Vehicles", icon: "🚗" },
     { id: "ranking", label: "Ranking", icon: "📊" }, { id: "gambling", label: "Gambling", icon: "🎰" },
     { id: "offence", label: "Offence", icon: "💀" }, { id: "deaths", label: "Death List", icon: "🪦" },
+    { id: "online", label: "Online", icon: "🟢" },
   ];
   const Stat = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
     <div className="mafia-card rounded-xl p-3">
@@ -1153,6 +1156,79 @@ function StatisticsPage() {
         )}
       </div>
     );
+    if (tab === "online") {
+      const players = online?.players ?? [];
+      const shown = onlineFilter.trim()
+        ? players.filter((p: any) => p.name?.toLowerCase().includes(onlineFilter.toLowerCase()))
+        : players;
+      return (
+        <div className="space-y-3">
+          <div className="mafia-card rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+              </span>
+              <span className="text-sm font-black text-emerald-400">{online?.count ?? 0} PLAYERS ONLINE</span>
+            </div>
+            <input
+              value={onlineFilter}
+              onChange={(e) => setOnlineFilter(e.target.value)}
+              placeholder="Search players…"
+              className="rounded-lg border border-amber-500/30 bg-slate-950 px-3 py-1.5 text-xs font-bold text-amber-200 placeholder:text-slate-600 outline-none focus:border-amber-500/60 w-48"
+            />
+          </div>
+          <div className="mafia-card rounded-xl overflow-hidden">
+            <div className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-3 items-center px-4 py-2 text-[9px] font-black uppercase tracking-widest text-muted-foreground border-b border-amber-500/20 bg-amber-500/5">
+              <span>Player</span>
+              <span className="hidden md:inline text-right">Rank</span>
+              <span className="text-right">Cash</span>
+              <span className="text-right">Life</span>
+              <span className="text-right">Status</span>
+              <span className="text-right">Active</span>
+            </div>
+            <div className="divide-y divide-amber-500/5">
+              {!online && (
+                <div className="px-4 py-10 text-center text-sm text-muted-foreground animate-pulse">Scanning the streets…</div>
+              )}
+              {online && shown.length === 0 && (
+                <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+                  {onlineFilter ? `No online players match "${onlineFilter}".` : "The streets are empty right now."}
+                </div>
+              )}
+              {shown.map((p: any) => (
+                <div key={p.id} className="grid grid-cols-[1fr_auto_auto_auto] md:grid-cols-[1fr_auto_auto_auto_auto_auto] gap-x-3 items-center px-4 py-2.5 hover:bg-amber-500/5 transition">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="relative flex size-2 shrink-0">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                      <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                    </span>
+                    <span className="text-sm font-black text-amber-300 truncate">{p.name}</span>
+                    <span className="text-[9px] font-bold text-muted-foreground">Lv.{p.level}</span>
+                  </div>
+                  <span className="hidden md:inline text-[10px] font-bold text-muted-foreground text-right">{p.rank}</span>
+                  <span className="text-[11px] font-bold text-emerald-400/90 text-right tabular-nums">{"$"}{(p.money ?? 0).toLocaleString()}</span>
+                  <div className="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden" title={`${p.life}/${p.maxLife}`}>
+                    <div className="h-full rounded-full" style={{
+                      width: `${Math.max(0, Math.min(100, (p.life / (p.maxLife || 100)) * 100))}%`,
+                      background: p.life / (p.maxLife || 100) > 0.5 ? "#22c55e" : p.life / (p.maxLife || 100) > 0.25 ? "#eab308" : "#ef4444",
+                    }} />
+                  </div>
+                  <div className="flex justify-end gap-1">
+                    {p.inPrison && <span className="text-[8px] font-black px-1 py-0.5 rounded bg-sky-500/15 text-sky-300">🔒 JAIL</span>}
+                    {p.wanted > 0 && <span className="text-[8px] font-black px-1 py-0.5 rounded bg-red-500/15 text-red-300">🚨 {p.wanted}</span>}
+                    {p.family && <span className="text-[8px] font-black px-1 py-0.5 rounded bg-amber-500/15 text-amber-300">{p.family}</span>}
+                  </div>
+                  <span className="text-[9px] text-muted-foreground text-right tabular-nums">
+                    {Math.max(0, Math.round((Date.now() - p.lastActive) / 1000))}s
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
     return null;
   };
   return (
