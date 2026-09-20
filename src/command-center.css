@@ -125,3 +125,115 @@
 @media (prefers-reduced-motion: reduce) {
   .syndicate-sidebar nav > div > div button:hover { transform: none; }
 }
+
+/* NOIR OPERATIONS REDESIGN
+   A deliberately different visual system from the old brown/gold skin. */
+.min-h-screen.flex.flex-col.bg-background.text-foreground {
+  --noir-cyan: #67e8f9;
+  --noir-blue: #38bdf8;
+  --noir-red: #fb7185;
+  --noir-ink: #030712;
+  background: #020617 !important;
+  background-image: radial-gradient(circle at 50% -20%, rgba(14,116,144,.30), transparent 36rem), radial-gradient(circle at 100% 80%, rgba(127,29,29,.22), transparent 28rem), linear-gradient(135deg, #020617, #0b1120 48%, #030712) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground::before {
+  opacity: .48 !important;
+  background-image: linear-gradient(rgba(103,232,249,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(103,232,249,.045) 1px, transparent 1px) !important;
+  background-size: 36px 36px !important;
+  mask-image: linear-gradient(to bottom, black, transparent 90%) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 { gap: 0; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child,
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child {
+  background: linear-gradient(180deg, rgba(3,7,18,.98), rgba(2,6,23,.96)) !important;
+  border-color: rgba(103,232,249,.13) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.04), inset 0 0 44px rgba(14,116,144,.07) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child { width: 18rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child { width: 18rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before {
+  content: "SHADOW EMPIRE / NETWORK";
+  display: block;
+  margin: .9rem .9rem .45rem;
+  padding: .65rem .7rem;
+  border: 1px solid rgba(103,232,249,.2);
+  border-radius: .8rem;
+  background: linear-gradient(135deg, rgba(8,47,73,.54), rgba(3,7,18,.7));
+  color: rgba(165,243,252,.72);
+  font: 900 .58rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .18em;
+  box-shadow: 0 0 26px rgba(14,116,144,.12), inset 0 1px rgba(255,255,255,.07);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child > div:first-child { padding-top: .25rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside input {
+  border-color: rgba(56,189,248,.22) !important;
+  background: rgba(2,6,23,.8) !important;
+  color: #bae6fd !important;
+  border-radius: .65rem !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div { border-color: rgba(56,189,248,.08); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > button {
+  color: #94a3b8;
+  border-radius: .55rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .62rem;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > button:hover { color: var(--noir-cyan); background: rgba(14,116,144,.12); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div {
+  border-left-color: rgba(56,189,248,.22);
+  background: linear-gradient(90deg, rgba(14,116,144,.11), transparent);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button { color: #64748b; border-radius: .45rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button:hover { color: #e0f2fe; background: rgba(56,189,248,.1); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button[class*="bg-primary"] { color: #a5f3fc !important; background: linear-gradient(90deg, rgba(8,145,178,.3), rgba(14,116,144,.08)) !important; box-shadow: inset 3px 0 #22d3ee, 0 0 24px rgba(34,211,238,.1); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main {
+  background: linear-gradient(180deg, rgba(2,6,23,.72), rgba(2,6,23,.96)) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child {
+  background: linear-gradient(180deg, rgba(3,7,18,.98), rgba(8,21,38,.94)) !important;
+  border-color: rgba(56,189,248,.22) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.34), inset 0 -1px rgba(103,232,249,.15) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:first-child { background: linear-gradient(90deg, transparent, rgba(34,211,238,.75), rgba(59,130,246,.5), transparent) !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) { justify-content: space-between; background: linear-gradient(90deg, rgba(8,47,73,.22), transparent, rgba(127,29,29,.16)); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div { border-color: rgba(103,232,249,.17); background: rgba(2,6,23,.56); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) .text-amber-300,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) .text-amber-400 { color: #a5f3fc !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) { background: rgba(2,6,23,.72); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button {
+  min-height: 2.8rem;
+  border-color: rgba(148,163,184,.13);
+  background: linear-gradient(180deg, rgba(15,23,42,.8), rgba(2,6,23,.72));
+  box-shadow: inset 0 1px rgba(255,255,255,.05);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button:hover { border-color: rgba(103,232,249,.45); background: rgba(8,47,73,.5); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button[class*="shadow-md"] { border-color: rgba(103,232,249,.7); box-shadow: 0 0 0 1px rgba(103,232,249,.18), 0 0 28px rgba(34,211,238,.16), inset 0 1px rgba(255,255,255,.12); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button[class*="shadow-md"] span { color: #cffafe !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child { max-width: 1240px; padding-top: 2rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child::before { background: linear-gradient(90deg, transparent, rgba(34,211,238,.42), rgba(255,255,255,.13), rgba(251,113,133,.35), transparent); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card {
+  border-color: rgba(103,232,249,.16) !important;
+  background: linear-gradient(145deg, rgba(15,23,42,.78), rgba(2,6,23,.9)) !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,.27), inset 0 1px rgba(255,255,255,.06) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card:hover,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card:hover { border-color: rgba(103,232,249,.42) !important; box-shadow: 0 22px 44px rgba(0,0,0,.36), 0 0 28px rgba(34,211,238,.08) !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h1,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h2 { color: #e0f2fe !important; text-shadow: 0 0 24px rgba(34,211,238,.15); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h3 { color: #bae6fd !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main .text-primary { color: #67e8f9 !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main .text-muted-foreground { color: #7c8da6 !important; }
+@media (max-width: 768px) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child { width: min(22rem, 88vw); }
+  .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before { margin-top: 3.6rem; }
+}
+
+/* Re-skin the live operation rail too, including its injected inline surfaces. */
+[data-operation-section] { color: #67e8f9 !important; border-color: rgba(103,232,249,.32) !important; background: rgba(8,47,73,.34) !important; text-shadow: 0 0 12px rgba(34,211,238,.5) !important; }
+[data-operation-rail] { border-color: rgba(103,232,249,.2) !important; background: linear-gradient(145deg, rgba(8,47,73,.58), rgba(2,6,23,.94)) !important; box-shadow: inset 0 1px rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.34) !important; }
+[data-operation-rail]:hover { border-color: rgba(103,232,249,.62) !important; box-shadow: inset 0 0 22px rgba(34,211,238,.1), 0 12px 30px rgba(0,0,0,.4), 0 0 18px rgba(34,211,238,.13) !important; }
+[data-operation-rail] [data-operation-cooldown] { color: #67e8f9 !important; }
+[data-operation-rail] [data-operation-progress] { background: linear-gradient(90deg, #22d3ee, #3b82f6, #fb7185) !important; }
+[data-operation-rail] [data-operation-intel] { border-top-color: rgba(103,232,249,.15) !important; }
