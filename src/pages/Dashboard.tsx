@@ -448,6 +448,7 @@ function OverviewQuickPanel({ onNavigate }: { onNavigate?: (page: string) => voi
   const announcements = useQuery(api.gameControl.getLiveConfig);
   const updates = useQuery(api.gameUpdates.getUpdates);
   const onlineCount = useQuery(api.admin.getOnlineCount);
+  const roster = useQuery(api.statistics.getPresenceRoster);
   const [note, setNote] = useState(() => { try { return localStorage.getItem("empireNotepad") ?? ""; } catch { return ""; } });
   const [noteSaved, setNoteSaved] = useState(false);
   const [pollChoice, setPollChoice] = useState<string | null>(null);
@@ -550,14 +551,43 @@ function OverviewQuickPanel({ onNavigate }: { onNavigate?: (page: string) => voi
           </div>
         </div>
 
-        {/* Online Players */}
+        {/* Online Players — live list inline */}
         <div className="rounded-lg bg-slate-900/40 border border-slate-700/30 p-3">
-          <div className="text-[10px] font-bold text-amber-300 mb-2">👥 Online Players</div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-green-400">{onlineCount ?? 0}</span>
-            <span className="text-[10px] text-muted-foreground">players in the streets right now</span>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-[10px] font-bold text-amber-300">👥 Online Players</div>
+            <span className="relative flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+            </span>
           </div>
-          <button onClick={() => nav("online_players")} className="mt-2 text-[10px] font-bold text-amber-400 hover:text-amber-300">View full list →</button>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-green-400">{roster?.onlineCount ?? onlineCount ?? 0}</span>
+            <span className="text-[10px] text-muted-foreground">in the streets right now</span>
+          </div>
+          <div className="mt-2 space-y-1 max-h-44 overflow-y-auto">
+            {(roster?.onlinePlayers ?? []).slice(0, 8).map((p: any) => (
+              <div key={p.id} className="flex items-center gap-2 text-[10px] rounded-md bg-slate-900/60 px-2 py-1">
+                <span className="relative flex size-1.5 shrink-0">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                  <span className="relative inline-flex size-1.5 rounded-full bg-emerald-500" />
+                </span>
+                <span className="font-bold text-amber-200 flex-1 truncate">{p.name}</span>
+                <span className="text-muted-foreground">Lv.{p.level}</span>
+                {p.inPrison && <span className="text-[7px] font-black px-1 rounded bg-sky-500/15 text-sky-300">🔒</span>}
+                {p.wanted > 0 && <span className="text-[7px] font-black px-1 rounded bg-red-500/15 text-red-300">🚨{p.wanted}</span>}
+              </div>
+            ))}
+            {roster && roster.onlinePlayers.length === 0 && (
+              <div className="text-[10px] text-muted-foreground italic">The streets are empty right now.</div>
+            )}
+            {!roster && <div className="text-[10px] text-muted-foreground animate-pulse">Scanning…</div>}
+          </div>
+          {roster && (
+            <div className="text-[9px] text-muted-foreground mt-1.5">
+              ⚫ {roster.total - roster.onlineCount} offline · {roster.total} total
+            </div>
+          )}
+          <button onClick={() => nav("online_players")} className="mt-1.5 text-[10px] font-bold text-amber-400 hover:text-amber-300">View full list →</button>
         </div>
 
         {/* Notepad */}
