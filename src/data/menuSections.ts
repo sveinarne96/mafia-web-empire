@@ -81,6 +81,9 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Life Insurance", page: "life_insurance", icon: "🛡️" },
       { label: "Market", page: "underground_market", icon: "📈" },
       { label: "Vault", page: "vault", icon: "🔐" },
+      { label: "Street Crimes", page: "mega_street", icon: "🗡️" },
+      { label: "Big Heists", page: "mega_heists", icon: "🎪" },
+      { label: "Odd Jobs", page: "mega_odd", icon: "⚰️" },
     ],
   },
   {
@@ -178,6 +181,8 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Offshore Accounts", page: "offshore", icon: "🏝️" },
       { label: "Escrow Trades", page: "escrow_trades", icon: "🤝" },
       { label: "Gambling Debts", page: "gambling_debts", icon: "💸" },
+      { label: "Vice Den", page: "mega_vice", icon: "🎭" },
+      { label: "Bail Bondsman", page: "mega_vice", icon: "⚖️" },
     ],
   },
   {
@@ -240,6 +245,9 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Advanced Combat", page: "advanced_combat", icon: "🥊" },
       { label: "Advanced Crafting", page: "advanced_crafting", icon: "🔨" },
       { label: "Rackets Hub", page: "rackets_hub", icon: "🏙️" },
+      { label: "City Desk", page: "mega_city", icon: "🌇" },
+      { label: "Street Fronts", page: "mega_fronts", icon: "🏪" },
+      { label: "Social Hub", page: "mega_social", icon: "🎭" },
     ],
   },
   {

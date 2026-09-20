@@ -1647,6 +1647,506 @@ const schema = defineSchema({
     bath: v.optional(v.boolean()),
     billboards: v.optional(v.boolean()),
   }).index("by_key", ["key"]),
+
+  // ═══════════ MEGA PACK: PLAYER-SELECTED FEATURES ═══════════
+
+  // #1 Pickpocket tourists — payout scales with day/night foot traffic.
+  touristPockets: defineTable({
+    userId: v.id("users"),
+    earned: v.number(),
+    timeOfDay: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #2 Vending machines — volume hustle, tiny payouts.
+  vendingHits: defineTable({
+    userId: v.id("users"),
+    earned: v.number(),
+    machines: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #3 Food truck hijack — choice: steal truck (garage) or till (cash).
+  truckHijacks: defineTable({
+    userId: v.id("users"),
+    choice: v.string(), // truck | till
+    earned: v.number(),
+    success: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #4 Mail keys — unlock a 24h Mailbox Raid chain.
+  mailKeyState: defineTable({
+    userId: v.id("users"),
+    hasKeys: v.boolean(),
+    raidsLeft: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #6 ATM explosion — needs dynamite; big cash, big heat.
+  atmBlasts: defineTable({
+    userId: v.id("users"),
+    earned: v.number(),
+    wantedGain: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #10 Museum night lift — paintings appreciate like stocks.
+  museumLoot: defineTable({
+    userId: v.id("users"),
+    pieceName: v.string(),
+    artist: v.string(),
+    paid: v.number(), // "street value" at theft
+    soldFor: v.optional(v.number()),
+    sold: v.boolean(),
+    stolenAt: v.number(),
+    soldAt: v.optional(v.number()),
+  }).index("by_user", ["userId"]),
+
+  // #11 Grave robbery — creepy loot, artifacts.
+  graveLoot: defineTable({
+    userId: v.id("users"),
+    graveName: v.string(),
+    itemName: v.string(),
+    value: v.number(),
+    isArtifact: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #12 Hearse smuggling — move contraband past checkpoints.
+  hearseRuns: defineTable({
+    userId: v.id("users"),
+    cargoValue: v.number(),
+    inspected: v.boolean(),
+    success: v.boolean(),
+    earned: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #13 Sunken cargo salvage — needs dive gear, randomized treasure.
+  salvageFinds: defineTable({
+    userId: v.id("users"),
+    find: v.string(),
+    value: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #14 Cattle rustling — sells to shady butchers.
+  cattleRaids: defineTable({
+    userId: v.id("users"),
+    head: v.number(),
+    earned: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #15 Ship bottom loading — hide contraband on legit ships.
+  shipLoads: defineTable({
+    userId: v.id("users"),
+    ship: v.string(),
+    invested: v.number(),
+    customsRisk: v.boolean(),
+    payout: v.optional(v.number()),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+    resolvesAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #23 Bounty auctions — players bid to add to a bounty.
+  bountyAuctionBids: defineTable({
+    targetId: v.id("users"),
+    targetName: v.string(),
+    bidderId: v.id("users"),
+    bidderName: v.string(),
+    amount: v.number(),
+    method: v.string(), // kill method the top bidder picks
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_target", ["targetId"]).index("by_active", ["active"]),
+
+  // #24 Duels at dawn — scheduled 1v1 with spectator bets.
+  dawnDuels: defineTable({
+    challengerId: v.id("users"),
+    challengerName: v.string(),
+    defenderId: v.optional(v.id("users")),
+    defenderName: v.optional(v.string()),
+    stake: v.number(),
+    scheduledAt: v.number(),
+    status: v.string(), // open | scheduled | finished
+    winnerId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  }).index("by_status", ["status"]),
+
+  // #25 Prison bust raids — raid jail to free a specific player.
+  prisonRaids: defineTable({
+    raiderId: v.id("users"),
+    raiderName: v.string(),
+    targetId: v.id("users"),
+    targetName: v.string(),
+    helpers: v.array(v.id("users")),
+    success: v.optional(v.boolean()),
+    status: v.string(), // gathering | resolved
+    createdAt: v.number(),
+    resolvedAt: v.optional(v.number()),
+  }).index("by_status", ["status"]),
+
+  // #26 Caravan escort — paid bodyguard missions.
+  escortJobs: defineTable({
+    clientId: v.id("users"),
+    clientName: v.string(),
+    guardId: v.id("users"),
+    guardName: v.string(),
+    pay: v.number(),
+    status: v.string(), // active | completed | betrayed
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_guard", ["guardId"]).index("by_status", ["status"]),
+
+  // #27 Kidnap & interrogation — capture players, extract intel/ransom.
+  kidnappings2: defineTable({
+    kidnapperId: v.id("users"),
+    kidnapperName: v.string(),
+    victimId: v.id("users"),
+    victimName: v.string(),
+    ransom: v.number(),
+    intel: v.optional(v.string()),
+    status: v.string(), // holding | ransomed | escaped | released
+    createdAt: v.number(),
+    endsAt: v.number(),
+  }).index("by_status", ["status"]).index("by_victim", ["victimId"]),
+
+  // #28 Shoe shine stand — humble business, rumor network.
+  shoeShineStands: defineTable({
+    userId: v.id("users"),
+    level: v.number(),
+    rumor: v.optional(v.string()),
+    earned: v.number(),
+    lastCollectAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #29 Cinema backroom — bootleg screenings.
+  cinemaScreens: defineTable({
+    userId: v.id("users"),
+    film: v.string(),
+    earned: v.number(),
+    lastCollectAt: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #30 Funeral home — heat reduction service.
+  funeralHome: defineTable({
+    userId: v.id("users"),
+    level: v.number(),
+    clientsServed: v.number(),
+    earned: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #31 Fish market stall — daily catch minigame.
+  fishStalls: defineTable({
+    userId: v.id("users"),
+    catch: v.string(),
+    earned: v.number(),
+    suspiciousCrate: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #32 Taxi medallion — lease out for passive income.
+  taxiMedallions: defineTable({
+    userId: v.id("users"),
+    count: v.number(),
+    earned: v.number(),
+    lastCollectAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #33 Laundromat chain — multiple locations, daily wash capacity.
+  laundromats: defineTable({
+    userId: v.id("users"),
+    locations: v.array(v.string()),
+    washCapacity: v.number(),
+    earned: v.number(),
+    lastCollectAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #34 Fuel tankers — speculation: buy storage cheap, sell at spikes.
+  fuelSpeculation: defineTable({
+    userId: v.id("users"),
+    gallons: v.number(),
+    boughtAtPrice: v.number(),
+    status: v.string(), // holding | sold
+    soldAtPrice: v.optional(v.number()),
+    profit: v.optional(v.number()),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #35 Power grid tap — illegal electricity for grow-ops.
+  powerTaps: defineTable({
+    userId: v.id("users"),
+    district: v.string(),
+    discountPct: v.number(),
+    blackoutRisk: v.boolean(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #36 Union desk — bribed dock unions speed up harbor actions.
+  unionBribes: defineTable({
+    userId: v.id("users"),
+    tier: v.string(),
+    cost: v.number(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #37 Cigarette run — distance = profit = risk.
+  cigaretteRuns: defineTable({
+    userId: v.id("users"),
+    distance: v.string(),
+    invested: v.number(),
+    earned: v.number(),
+    busted: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #38 Art forging studio — forge paintings, risk collectors noticing.
+  forgedPaintings: defineTable({
+    userId: v.id("users"),
+    painting: v.string(),
+    cost: v.number(),
+    soldFor: v.optional(v.number()),
+    detected: v.boolean(),
+    sold: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #39 Vending route — place machines, restock daily.
+  vendingRoutes: defineTable({
+    userId: v.id("users"),
+    spots: v.array(v.string()),
+    earned: v.number(),
+    lastRestockAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #40 Bail bondsman — pay others' bail for interest.
+  bailBonds: defineTable({
+    bondsmanId: v.id("users"),
+    bondsmanName: v.string(),
+    defendantId: v.id("users"),
+    defendantName: v.string(),
+    amount: v.number(),
+    repaid: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_bondsman", ["bondsmanId"]).index("by_defendant", ["defendantId"]),
+
+  // #46 Coffin shop roulette — bet on which crew's shipment gets seized.
+  coffinBets: defineTable({
+    userId: v.id("users"),
+    crew: v.string(),
+    wager: v.number(),
+    won: v.optional(v.boolean()),
+    payout: v.optional(v.number()),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+    week: v.string(),
+  }).index("by_user", ["userId"]),
+
+  // #47 Double-or-nothing exits — gamble crime loot on a coin flip.
+  donGambles: defineTable({
+    userId: v.id("users"),
+    staked: v.number(),
+    won: v.boolean(),
+    payout: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #48 Insurance fraud — torch your own property.
+  fraudClaims: defineTable({
+    userId: v.id("users"),
+    property: v.string(),
+    claimed: v.number(),
+    investigated: v.boolean(),
+    paidOut: v.number(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #49 Ponzi desk — take player investments, inevitable collapse.
+  ponziDesk: defineTable({
+    ownerId: v.id("users"),
+    ownerName: v.string(),
+    investorId: v.id("users"),
+    investorName: v.string(),
+    amount: v.number(),
+    status: v.string(), // active | paid | collapsed
+    createdAt: v.number(),
+  }).index("by_owner", ["ownerId"]).index("by_investor", ["investorId"]),
+
+  // #50 Whale hunting — high-stakes table, 5% net worth buy-in.
+  whaleGames: defineTable({
+    playerId: v.id("users"),
+    playerName: v.string(),
+    buyIn: v.number(),
+    won: v.boolean(),
+    payout: v.number(),
+    createdAt: v.number(),
+  }).index("by_player", ["playerId"]),
+
+  // #51 Fight fixing — bribe boxers, bet on fixed matches.
+  fightFixes: defineTable({
+    userId: v.id("users"),
+    match: v.string(),
+    bribe: v.number(),
+    wager: v.number(),
+    won: v.optional(v.boolean()),
+    payout: v.optional(v.number()),
+    boxerRan: v.boolean(),
+    resolved: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #52 Lotto syndicate — pool tickets with crew, auto-split.
+  syndicatePools: defineTable({
+    crewId: v.optional(v.string()),
+    leaderId: v.id("users"),
+    leaderName: v.string(),
+    members: v.array(v.id("users")),
+    tickets: v.number(),
+    pot: v.number(),
+    status: v.string(), // open | drawn
+    win: v.optional(v.boolean()),
+    createdAt: v.number(),
+  }).index("by_status", ["status"]),
+
+  // #56 Blackout heists — during blackouts certain crimes only work.
+  blackoutRuns: defineTable({
+    userId: v.id("users"),
+    target: v.string(),
+    earned: v.number(),
+    success: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #57 Weather damage — storms hit assets; repair or lose income.
+  weatherDamage: defineTable({
+    userId: v.id("users"),
+    asset: v.string(),
+    assetType: v.string(),
+    repairCost: v.number(),
+    repaired: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #58 Sewer caches — hide loot in tunnels; others can hunt.
+  sewerCaches: defineTable({
+    ownerId: v.id("users"),
+    ownerName: v.string(),
+    contentsValue: v.number(),
+    label: v.string(),
+    foundBy: v.optional(v.id("users")),
+    found: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_owner", ["ownerId"]).index("by_found", ["found"]),
+
+  // #59 Unique-crime census — weekly prize for most varied crimes.
+  censusEntries: defineTable({
+    userId: v.id("users"),
+    userName: v.string(),
+    week: v.string(),
+    uniqueCrimes: v.number(),
+    createdAt: v.number(),
+  }).index("by_week", ["week"]),
+
+  // #60 Harbor manifests — buy/sell knowledge of arriving ships.
+  harborManifests: defineTable({
+    sellerId: v.optional(v.id("users")),
+    buyerId: v.optional(v.id("users")),
+    ship: v.string(),
+    cargo: v.string(),
+    eta: v.number(),
+    price: v.number(),
+    sold: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_sold", ["sold"]),
+
+  // #69 Blood oath ranks — permanent sacrifice for unique titles.
+  bloodOaths: defineTable({
+    userId: v.id("users"),
+    oath: v.string(),
+    title: v.string(),
+    sacrificed: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #70 Old-timer's tales — lore from weird achievements.
+  loreUnlocks: defineTable({
+    userId: v.id("users"),
+    tale: v.string(),
+    trigger: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #71 Heirlooms — items that level up with the player.
+  heirlooms: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    tier: v.number(),
+    history: v.array(v.string()),
+    acquiredAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #72 Street name legacy — custom nickname after milestones.
+  streetNames: defineTable({
+    userId: v.id("users"),
+    name: v.string(),
+    milestone: v.string(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]).index("by_active", ["active"]),
+
+  // #73 Crew banner forge — custom emblems/colors.
+  crewBanners: defineTable({
+    crewId: v.optional(v.string()),
+    ownerId: v.id("users"),
+    emblem: v.string(),
+    colorPrimary: v.string(),
+    colorSecondary: v.string(),
+    motto: v.string(),
+    createdAt: v.number(),
+  }).index("by_owner", ["ownerId"]),
+
+  // #78 Witness elimination — delete pending testimony.
+  witnessHits: defineTable({
+    userId: v.id("users"),
+    witnessName: v.string(),
+    cost: v.number(),
+    success: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #79 Dead man's switch — pre-programmed leaks if jailed.
+  deadSwitches: defineTable({
+    userId: v.id("users"),
+    targetName: v.string(),
+    armed: v.boolean(),
+    triggered: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  // #80 Cartel introduction — endgame supply chains.
+  cartelContracts: defineTable({
+    userId: v.id("users"),
+    route: v.string(),
+    invested: v.number(),
+    months: v.number(),
+    monthlyReturn: v.number(),
+    collectedMonths: v.number(),
+    active: v.boolean(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"]),
 }, {
   schemaValidation: false,
 });
