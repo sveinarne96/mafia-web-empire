@@ -14,6 +14,8 @@ export function InboxV2() {
   const tickets = useQuery(api.empireFeatures.getMyTickets);
   const botMessages = useQuery(api.empireFeatures.getBotMessages);
   const sendMsg = useMutation(api.game.sendMessage);
+  const replyMsg = useMutation(api.game.replyToMessage);
+  const markRead = useMutation(api.game.markMessageRead);
   const createTicket = useMutation(api.empireFeatures.createTicket);
   const replyTicket = useMutation(api.empireFeatures.replyTicket);
   const claimReward = useMutation(api.empireFeatures.claimBotReplyReward);
@@ -30,6 +32,7 @@ export function InboxV2() {
   const [tSubject, setTSubject] = useState("");
   const [tBody, setTBody] = useState("");
   const [search, setSearch] = useState("");
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
   const players = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
@@ -75,6 +78,27 @@ export function InboxV2() {
     try {
       const r = await claimReward({ messageId: messageId as any });
       show(r.text || (r.reward ? `🎁 ${r.reward}` : "Reply sent"));
+    } catch (e: any) { show(`⚠️ ${e.message}`); }
+    setBusy(false);
+  };
+
+  const toggleMessage = (id: string) => {
+    const next = expanded === id ? null : id;
+    setExpanded(next);
+    if (next) {
+      const m = (messages ?? []).find((x: any) => x._id === id);
+      if (m && !m.read) markRead({ messageId: id as any }).catch(() => {});
+    }
+  };
+
+  const handleReply = async (m: any) => {
+    const text = replyText[m._id]?.trim();
+    if (!text) return;
+    setBusy(true);
+    try {
+      const r = await replyMsg({ messageId: m._id as any, body: text });
+      show(r.reward ? `✅ Reply sent — 🎁 Fast reply reward: ${r.reward}!` : "✅ Reply sent!");
+      setReplyText((p) => ({ ...p, [m._id]: "" }));
     } catch (e: any) { show(`⚠️ ${e.message}`); }
     setBusy(false);
   };
@@ -151,7 +175,7 @@ export function InboxV2() {
             </div>
           ) : (
             filteredMessages.map((m: any) => (
-              <div key={m._id} onClick={() => setExpanded(expanded === m._id ? null : m._id)}
+              <div key={m._id} onClick={() => toggleMessage(m._id)}
                 className={`mafia-card cursor-pointer rounded-xl p-3 transition-all hover:border-primary/30 ${!m.read ? "border-primary/30 bg-primary/5" : ""}`}>
                 <div className="flex items-center gap-2">
                   <MessageSquare className="size-3.5 shrink-0 text-primary" />
@@ -159,9 +183,30 @@ export function InboxV2() {
                   {!m.read && <span className="size-2 shrink-0 rounded-full bg-primary" />}
                   <span className="shrink-0 text-[10px] text-muted-foreground">{new Date(m.timestamp).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
+                <div className="mt-1 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className={m.senderIsBot ? "font-bold text-violet-400" : "font-bold text-cyan-400"}>👤 {m.senderName}</span>
+                  <span>· Lv.{m.senderLevel}</span>
+                  {m.senderIsBot && <span className="rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[8px] font-black uppercase text-violet-300">Street contact</span>}
+                  {(m as any).rewardClaimed && <span title="Reward claimed">🎁</span>}
+                </div>
                 {expanded === m._id && (
-                  <div className="mt-3 space-y-2 border-t border-border/50 pt-3 animate-fade-in">
+                  <div className="mt-3 space-y-3 border-t border-border/50 pt-3 animate-fade-in">
                     <div className="text-xs text-muted-foreground whitespace-pre-wrap">{m.body}</div>
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <input value={replyText[m._id] ?? ""} onChange={(e) => setReplyText((p) => ({ ...p, [m._id]: e.target.value }))}
+                        placeholder={`Reply to ${m.senderName}…`}
+                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleReply(m); } }}
+                        className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-xs" />
+                      <button onClick={() => handleReply(m)} disabled={busy || !replyText[m._id]?.trim()}
+                        className="shrink-0 rounded-lg bg-gradient-to-r from-primary to-primary/80 px-4 py-2 text-[10px] font-black text-primary-foreground disabled:opacity-40">
+                        ↩ Reply
+                      </button>
+                    </div>
+                    {m.senderIsBot && !(m as any).rewardClaimed && (
+                      <div className="rounded-lg border border-violet-500/25 bg-violet-950/20 px-3 py-2 text-[10px] text-violet-300">
+                        ⚡ Street contact: reply within 25 minutes for a random reward — faster replies, better loot.
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

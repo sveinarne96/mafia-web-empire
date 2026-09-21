@@ -484,6 +484,8 @@ const schema = defineSchema({
     body: v.string(),
     read: v.boolean(),
     timestamp: v.number(),
+    rewardClaimed: v.optional(v.boolean()),
+    replyToId: v.optional(v.id("messages")),
   })
     .index("by_receiver", ["receiverId"])
     .index("by_sender", ["senderId"]),

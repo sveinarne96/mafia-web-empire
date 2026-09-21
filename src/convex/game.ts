@@ -492,7 +492,78 @@ export const sendMessage = mutation({ args: { receiverId: v.id("users"), subject
   },
 });
 
-export const getMessages = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) return []; return await ctx.db.query("messages").withIndex("by_receiver", (q) => q.eq("receiverId", player._id)).order("desc").take(50); } });
+/** Reply to a message in your inbox. If the sender is a street contact (bot) and you reply within 25 min, you get a random reward. */
+export const replyToMessage = mutation({ args: { messageId: v.id("messages"), body: v.string() }, handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+    const text = args.body.trim(); if (!text) throw new Error("Reply cannot be empty");
+    const msg = await ctx.db.get(args.messageId); if (!msg) throw new Error("Message not found");
+    if (msg.receiverId !== player._id) throw new Error("Not your message");
+
+    const originalSender = await ctx.db.get(msg.senderId);
+    if (!originalSender) throw new Error("Sender no longer exists");
+
+    // Deliver the reply to the original sender
+    await ctx.db.insert("messages", {
+      senderId: player._id,
+      receiverId: msg.senderId,
+      subject: msg.subject.startsWith("Re:") ? msg.subject : `Re: ${msg.subject}`,
+      body: text,
+      read: false,
+      timestamp: Date.now(),
+      replyToId: args.messageId,
+    });
+
+    const patch: any = { read: true };
+    let rewardText: string | null = null;
+
+    // Street contact (bot) reward: reply within 25 minutes → random reward, once per message
+    if ((originalSender as any).isBotPlayer && !(msg as any).rewardClaimed) {
+      patch.rewardClaimed = true;
+      const age = Date.now() - msg.timestamp;
+      if (age <= 25 * 60 * 1000) {
+        const REWARDS: { type: string; label: string; amount: number }[] = [
+          { type: "money", label: "$50,000 cash", amount: 50000 },
+          { type: "money", label: "$150,000 cash", amount: 150000 },
+          { type: "money", label: "$500,000 cash", amount: 500000 },
+          { type: "points", label: "25 points", amount: 25 },
+          { type: "points", label: "100 points", amount: 100 },
+          { type: "bullets", label: "50 bullets", amount: 50 },
+          { type: "coins", label: "10 casino coins", amount: 10 },
+          { type: "xp", label: "5,000 XP", amount: 5000 },
+          { type: "xp", label: "25,000 XP", amount: 25000 },
+        ];
+        const fastBonus = age < 5 * 60 * 1000 ? 2 : 1;
+        const pool = REWARDS.concat(REWARDS.slice(0, fastBonus * 2));
+        const reward = pool[Math.floor(Math.random() * pool.length)];
+        const p2: any = {};
+        switch (reward.type) {
+          case "money": p2.money = (player.money ?? 0) + reward.amount; break;
+          case "points": p2.points = (player.points ?? 0) + reward.amount; break;
+          case "bullets": p2.bullets = (player.bullets ?? 0) + reward.amount; break;
+          case "coins": p2.coins = (player.coins ?? 0) + reward.amount; break;
+          case "xp": p2.experience = (player.experience ?? 0) + reward.amount; break;
+        }
+        await ctx.db.patch(player._id, p2);
+        await ctx.db.insert("notifications", { userId: player._id, type: "reward", message: `🎁 Street contact rewarded you: ${reward.label}!`, read: false, timestamp: Date.now() });
+        rewardText = reward.label;
+      }
+    }
+
+    await ctx.db.patch(args.messageId, patch);
+    return { success: true, reward: rewardText };
+  },
+});
+
+/** Mark a single message as read. */
+export const markMessageRead = mutation({ args: { messageId: v.id("messages") }, handler: async (ctx, args) => {
+    const player = await getCurrentUser(ctx); if (!player) throw new Error("Not authenticated");
+    const msg = await ctx.db.get(args.messageId); if (!msg) throw new Error("Message not found");
+    if (msg.receiverId !== player._id) throw new Error("Not your message");
+    if (!msg.read) await ctx.db.patch(args.messageId, { read: true });
+  },
+});
+
+export const getMessages = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) return []; const msgs = await ctx.db.query("messages").withIndex("by_receiver", (q) => q.eq("receiverId", player._id)).order("desc").take(50); return await Promise.all(msgs.map(async (m: any) => { const sender: any = await ctx.db.get(m.senderId); return { ...m, senderName: sender?.nickname ?? "Unknown", senderLevel: sender?.level ?? 1, senderIsBot: sender?.isBotPlayer ?? false }; })); } });
 export const getUnreadCount = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) return 0; const messages = await ctx.db.query("messages").withIndex("by_receiver", (q) => q.eq("receiverId", player._id)).collect(); return messages.filter((m: any) => !m.read).length; } });
 export const getNotifications = query({ args: {}, handler: async (ctx) => { const player = await getCurrentUser(ctx); if (!player) return []; return await ctx.db.query("notifications").withIndex("by_user", (q) => q.eq("userId", player._id)).order("desc").take(20); } });
 export const getForumPosts = query({ args: { forum: v.string() }, handler: async (ctx, args) => await ctx.db.query("forumPosts").withIndex("by_forum", (q) => q.eq("forum", args.forum)).order("desc").take(30) });
