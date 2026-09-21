@@ -20,6 +20,8 @@ const schema = defineSchema({
     xpBoostUntil: v.optional(v.number()),
     cashBoostUntil: v.optional(v.number()),
     rankBoostUntil: v.optional(v.number()),
+    pointsBoostUntil: v.optional(v.number()),
+    energyDrinkUntil: v.optional(v.number()),
     lastOilCollect: v.optional(v.number()),
     playerClass: v.optional(v.string()),
     registeredAt: v.optional(v.number()),
