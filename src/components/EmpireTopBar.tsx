@@ -325,6 +325,9 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
   const player = useQuery(api.game.getPlayer);
   const notifications = useQuery(api.game.getNotifications);
   const onlineCount = useQuery(api.admin.getOnlineCount);
+  // Server-managed game balance (admin GAME BALANCE panel) — drives the real
+  // cooldown rings and "~Xm cycle" labels on the crime rail.
+  const gameBalance = useQuery(api.serverOps.getGameBalancePublic);
   const [now, setNow] = useState(Date.now());
   const [ambienceOn, setAmbienceOn] = useState(() => { try { return localStorage.getItem("empireAmbience") !== "off"; } catch { return true; } });
   const [cmdkOpen, setCmdkOpen] = useState(false);
@@ -535,7 +538,10 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
               const cdEnd = findCdEnd(cooldowns, op.prefixes);
               const remaining = Math.max(0, Math.ceil((cdEnd - now) / 1000));
               const cooling = remaining > 0;
-              const fraction = cooling ? remaining / op.nominalCd : 0;
+              // Live server balance: the global cooldown set in the admin GAME
+              // BALANCE panel is the true cycle length for every op on the rail.
+              const liveCd = gameBalance?.globalCrimeCooldown ?? op.nominalCd;
+              const fraction = cooling ? remaining / liveCd : 0;
               const isActive = activePage === op.page;
               const showMajorLabel = idx === 7;
               return (
@@ -550,7 +556,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
                     onClick={() => onNavigate(op.page)}
                     className={`crime-card ${isActive ? "is-active" : ""} ${cooling ? "is-cooling" : "is-ready"}`}
                     style={{ ["--accent" as any]: op.rgb }}
-                    title={`${op.desc} · ~${Math.round(op.nominalCd / 60) || 1}m cycle`}
+                    title={`${op.desc} · ~${Math.round(liveCd / 60) || 1}m cycle`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="cooldown-ring" style={{ width: 28, height: 28 }}>
@@ -573,7 +579,7 @@ export function EmpireTopBar({ activePage, onNavigate }: { activePage: string; o
                         <span className="text-[8px] font-black text-emerald-400/90 tracking-wide">✓ READY</span>
                       )}
                       <span className="text-[7px] font-bold uppercase tracking-widest text-amber-100/25">
-                        ~{Math.round(op.nominalCd / 60) || 1}m
+                        ~{liveCd < 60 ? `${liveCd}s` : `${Math.round(liveCd / 60)}m`}
                       </span>
                     </div>
                     {/* bottom recovery bar */}

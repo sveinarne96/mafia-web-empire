@@ -395,6 +395,21 @@ export async function getCrimeJailTimes(ctx: any): Promise<Record<string, number
   } catch { return {}; }
 }
 
+/** Public (any signed-in player): live game-balance timers for the top bar /
+ *  crime pages. Only exposes the two timer values — nothing sensitive. */
+export const getGameBalancePublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { globalCrimeCooldown: 60, crimeJailTimes: {} as Record<string, number> };
+    const doc = await getConfigDoc(ctx);
+    return {
+      globalCrimeCooldown: clamp(finite(doc?.globalCrimeCooldown, 60), 10, 3600),
+      crimeJailTimes: (doc?.crimeJailTimes ?? {}) as Record<string, number>,
+    };
+  },
+});
+
 /* ══════════════════ 5. SERVER FUNCTIONS ══════════════════ */
 
 export const setMurderSystem = mutation({
