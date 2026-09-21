@@ -353,9 +353,39 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
 }
 
 // ===== GTA CAR THEFT (cars show in garage) =====
+const GTA_TIER_TYPES: Record<string, string[]> = {
+  budget: ["economy", "compact", "truck"],
+  standard: ["sedan", "suv", "rally"],
+  premium: ["luxury", "electric", "vintage", "armored"],
+  sport: ["sport", "muscle"],
+  exotic: ["supercar", "ultra"],
+  legendary: ["legendary", "hypercar"],
+};
+
+function rollGtaTier(level: number): string {
+  // Budget 30% / Standard 30% / Premium 10% / Sport 10% / Exotic 10% / Legendary 10%
+  // +1% to each top tier per 10 levels (shifted out of Budget/Standard).
+  const shift = Math.min(24, Math.floor(Math.max(1, level) / 10));
+  const top = 10 + shift / 2;
+  const weights: [string, number][] = [
+    ["budget", Math.max(6, 30 - shift)],
+    ["standard", Math.max(6, 30 - shift)],
+    ["premium", top],
+    ["sport", top],
+    ["exotic", top],
+    ["legendary", top],
+  ];
+  let roll = Math.random() * 100;
+  for (const [id, w] of weights) {
+    roll -= w;
+    if (roll <= 0) return id;
+  }
+  return "budget";
+}
+
 export const gtaCarTheft = mutation({
-  args: {},
-  handler: async (ctx, _args) => {
+  args: { tier: v.optional(v.string()) },
+  handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
     const player = await ctx.db.get(userId);
@@ -627,10 +657,6 @@ export const gtaCarTheft = mutation({
       { name: "2021 Mercedes-AMG A45", type: "rally", speed: 82, storage: 14, price: 55000, armored: false },
       { name: "2020 Honda Civic Type R", type: "rally", speed: 76, storage: 14, price: 45000, armored: false },
     ];
-    const carNames = carData.map(c => c.name);
-    const carSpeeds = carData.map(c => c.speed);
-    const carStorages = carData.map(c => c.storage);
-    const carPrices = carData.map(c => c.price);
 
     let vehicleId = null;
     let moneyEarned = 0;
@@ -640,29 +666,35 @@ export const gtaCarTheft = mutation({
     if (succeeded) {
       // 10% ULTRA RARE gold/orange neon ($100M-$1B), 25% regular neon ($50M-$500M)
       const roll = Math.random();
-      let idx: number;
+      // Tiered loot: weighted tier roll, then a random car inside it.
+      // Targeting a district ("sport", "legendary", ...) heavily biases toward its tier.
+      const target = args.tier && GTA_TIER_TYPES[args.tier] ? args.tier : null;
+      const tierId = target ?? rollGtaTier(player.level ?? 1);
+      const allowed = new Set(GTA_TIER_TYPES[tierId]);
+      let pool = carData.filter((c: any) => allowed.has(c.type));
+      if (pool.length === 0) pool = carData;
+      if (target && Math.random() < 0.55) {
+        const tPool = carData.filter((c: any) => c.type === target || allowed.has(c.type));
+        if (tPool.length > 0) pool = tPool;
+      }
+      const idx = Math.floor(Math.random() * pool.length);
+      const car = pool[idx];
       let isNeonCar = false;
       let isUltraNeon = false;
       if (roll < 0.10) {
-        // ULTRA RARE gold/orange neon
-        idx = Math.floor(Math.random() * carNames.length);
         isUltraNeon = true;
         isNeonCar = true;
       } else if (roll < 0.35) {
-        // Regular neon
-        idx = Math.floor(Math.random() * carNames.length);
         isNeonCar = true;
-      } else {
-        idx = Math.floor(Math.random() * carNames.length);
       }
-      const neonValue = isUltraNeon ? Math.floor(carPrices[idx] * (2000 + Math.floor(Math.random() * 8000))) : isNeonCar ? Math.floor(carPrices[idx] * (100 + Math.floor(Math.random() * 400))) : carPrices[idx];
+      const neonValue = isUltraNeon ? Math.floor(car.price * (2000 + Math.floor(Math.random() * 8000))) : isNeonCar ? Math.floor(car.price * (100 + Math.floor(Math.random() * 400))) : car.price;
       vehicleId = await ctx.db.insert("vehicles", {
         userId: userId,
-        name: carNames[idx],
-        type: carData[idx].type,
-        speed: carSpeeds[idx],
-        storage: carStorages[idx],
-        armored: carData[idx].armored,
+        name: car.name,
+        type: car.type,
+        speed: car.speed,
+        storage: car.storage,
+        armored: car.armored,
         stolen: true,
         purchasePrice: neonValue,
       });

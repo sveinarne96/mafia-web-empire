@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Home, Shield, Skull, Star, Zap, Clock, Trophy, Lock, Car, AlertTriangle, Users, Ban, Heart, Target, Coins, ChevronRight, Gift, ShieldCheck, Crosshair, Swords, Bomb, Eye, LockKeyhole, MapPin } from "lucide-react";
 import { maybeDropEasterEgg, maybeDropEventGift } from "../lib/easterEgg";
 import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
+import { GTA_TIERS, GTA_TIER_CARS, gtaTierWeights, type GtaTierId } from "@/data/gtaTiers";
 
 function LoadingPage() {
   return <div className="flex items-center justify-center h-64"><div className="size-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
@@ -144,24 +145,10 @@ export function GtaCarTheftPage() {
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [now, setNow] = useState(() => Date.now());
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTier, setSelectedTier] = useState<GtaTierId | null>(null);
   const cooldown = Math.max(0, Math.ceil((cooldownUntil - now) / 1000));
-
-  const carCategories = [
-    { id: "economy", name: "🚗 Economy Street", desc: "Cheap cars from parking lots", icon: "🚗", color: "text-gray-400", priceRange: "$4K-$10K", chance: "Common" },
-    { id: "compact", name: "🚙 Compact District", desc: "Suburban driveways & office parks", icon: "🚙", color: "text-blue-400", priceRange: "$16K-$26K", chance: "Common" },
-    { id: "sedan", name: "🚕 Sedan Row", desc: "Business district & downtown", icon: "🚕", color: "text-green-400", priceRange: "$22K-$50K", chance: "Uncommon" },
-    { id: "sports", name: "🏎️ Sports Strip", desc: "Luxury neighborhoods & car shows", icon: "🏎️", color: "text-yellow-400", priceRange: "$40K-$120K", chance: "Uncommon" },
-    { id: "luxury", name: "💎 Luxury Boulevard", desc: "Beverly Hills & penthouse garages", icon: "💎", color: "text-purple-400", priceRange: "$55K-$110K", chance: "Rare" },
-    { id: "suv", name: "🛻 SUV Territory", desc: "Suburban estates & dealer lots", icon: "🛻", color: "text-orange-400", priceRange: "$42K-$180K", chance: "Rare" },
-    { id: "electric", name: "⚡ Electric Avenue", desc: "Tech campuses & charging stations", icon: "⚡", color: "text-cyan-400", priceRange: "$50K-$140K", chance: "Rare" },
-    { id: "muscle", name: "🔥 Muscle Alley", desc: "Hot rod meets & race strips", icon: "🔥", color: "text-red-400", priceRange: "$35K-$95K", chance: "Uncommon" },
-    { id: "supercar", name: "🏆 Supercar Row", desc: "Dealerships & VIP events", icon: "🏆", color: "text-amber-400", priceRange: "$95K-$380K", chance: "Very Rare" },
-    { id: "hypercar", name: "👑 Hypercar Vault", desc: "Private collections & museums", icon: "👑", color: "text-yellow-300", priceRange: "$1.2M-$5.8M", chance: "Ultra Rare" },
-    { id: "legendary", name: "🌟 Legendary Lot", desc: "Fortune 500 CEOs & royalty", icon: "🌟", color: "text-rose-400", priceRange: "$2M-$40M", chance: "Legendary" },
-    { id: "neon", name: "🌈 Neon Underground", desc: "Street racers & underground shows", icon: "🌈", color: "text-pink-400", priceRange: "$50M-$500M", chance: "35% Neon" },
-    { id: "ultra", name: "👑✨ Ultra Neon", desc: "Cartel bosses & arms dealers", icon: "👑✨", color: "text-amber-300", priceRange: "$100M-$5B", chance: "10% Ultra" },
-  ];
+  const level = player?.level ?? 1;
+  const weights = useMemo(() => gtaTierWeights(level), [level]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 250);
@@ -170,11 +157,11 @@ export function GtaCarTheftPage() {
 
   if (!player) return <LoadingPage />;
 
-  const doTheft = async () => {
+  const doTheft = async (tier: GtaTierId | null) => {
     setLoading(true);
     setResult(null);
     try {
-      const res = await gtaCarTheft();
+      const res = await gtaCarTheft({ tier: tier ?? undefined });
       await maybeDropEasterEgg(grantEgg2, res.success);
       await maybeDropEventGift(grantGift2, res.success);
       setResult(res);
@@ -187,33 +174,76 @@ export function GtaCarTheftPage() {
 
   return (
     <div className="animate-fade-in space-y-6">
-      <ActionHero eyebrow="Vehicle acquisition network" title="GTA Car Theft" description="Scout the city, pick your mark, and disappear before the sirens arrive. Every stolen vehicle is routed to your Garage." icon="🚗" accent="cyan" right={<div className="rounded-xl border border-cyan-400/25 bg-black/30 px-3 py-2 text-right"><div className="text-[9px] uppercase tracking-widest text-cyan-200/60">Heat status</div><div className="text-lg font-black text-cyan-300">MOVING</div></div>} />
+      <ActionHero eyebrow="Vehicle acquisition network" title="GTA Car Theft" description="Scout the city, target a tier or a specific car, and disappear before the sirens arrive. Every stolen vehicle is routed to your Garage." icon="🚗" accent="cyan" right={<div className="rounded-xl border border-cyan-400/25 bg-black/30 px-3 py-2 text-right"><div className="text-[9px] uppercase tracking-widest text-cyan-200/60">Heat status</div><div className="text-lg font-black text-cyan-300">MOVING</div></div>} />
 
       <div className="grid grid-cols-3 gap-2"><ActionStat icon="💰" label="Cash" value={`$${(player.money ?? 0).toLocaleString()}`} tone="green" /><ActionStat icon="🔥" label="Street heat" value="Low" tone="red" /><ActionStat icon="🚘" label="Garage route" value="Active" tone="blue" /></div>
 
-      <ActionCard className="border-cyan-500/20 bg-gradient-to-br from-cyan-950/20 to-slate-950/70"><div className="flex items-center justify-between gap-3"><div><div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">Vehicle scouting</div><div className="mt-1 text-sm font-bold text-white">Choose a district before you take the wheel.</div></div><span className="rounded-full bg-cyan-400/10 px-2 py-1 text-[9px] font-bold text-cyan-300">13 districts</span></div></ActionCard>
-      
-      {/* Car Categories Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {carCategories.map((cat) => (
-          <ActionCard key={cat.id} active={selectedCategory === cat.id}>
-            <button
-              type="button"
-              onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-              className="w-full text-left"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{cat.icon}</span>
-                <div className="min-w-0">
-                  <div className={`truncate text-xs font-bold ${cat.color}`}>{cat.name}</div>
-                  <div className="truncate text-[9px] text-muted-foreground">{cat.desc}</div>
+      {/* Tier odds — level scaling shifts odds toward the top tiers */}
+      <ActionCard className="border-cyan-500/20 bg-gradient-to-br from-cyan-950/20 to-slate-950/70">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-cyan-300">Tier odds</div>
+            <div className="mt-1 text-sm font-bold text-white">Every 10 levels shifts odds from Budget/Standard into the top tiers.</div>
+          </div>
+          <span className="rounded-full bg-cyan-400/10 px-2 py-1 text-[9px] font-bold text-cyan-300">Lv.{level}</span>
+        </div>
+        <div className="mt-3 grid grid-cols-3 md:grid-cols-6 gap-2">
+          {GTA_TIERS.map((t) => (
+            <div key={t.id} className="rounded-lg border border-white/5 bg-black/30 px-2 py-1.5 text-center">
+              <div className="text-sm">{t.icon}</div>
+              <div className={`text-[10px] font-black ${t.color}`}>{t.name}</div>
+              <div className="text-[11px] font-black tabular-nums text-white">{weights[t.id]}%</div>
+            </div>
+          ))}
+        </div>
+      </ActionCard>
+
+      {/* Tier cards with targetable cars — press a car to steal it */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {GTA_TIERS.map((tier) => {
+          const isOpen = selectedTier === tier.id;
+          return (
+            <ActionCard key={tier.id} active={isOpen}>
+              <button type="button" onClick={() => setSelectedTier(isOpen ? null : tier.id)} className="w-full text-left">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">{tier.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm font-black ${tier.color}`}>{tier.name}</span>
+                      <span className="rounded-full bg-white/5 px-1.5 py-0.5 text-[9px] font-black tabular-nums text-amber-200/80">{weights[tier.id]}%</span>
+                    </div>
+                    <div className="truncate text-[10px] text-muted-foreground">{tier.desc}</div>
+                  </div>
+                  <span className={`text-[9px] font-bold ${isOpen ? "text-amber-300" : "text-slate-500"}`}>{isOpen ? "▲" : "▼"}</span>
                 </div>
-              </div>
-            </button>
-          </ActionCard>
-        ))}
+              </button>
+              {isOpen && (
+                <div className="mt-2 space-y-1">
+                  {GTA_TIER_CARS[tier.id].map((car) => (
+                    <button
+                      key={car.name}
+                      type="button"
+                      disabled={loading || cooldown > 0}
+                      onClick={() => doTheft(tier.id)}
+                      className="flex w-full items-center justify-between gap-2 rounded-lg border border-white/5 bg-black/25 px-2.5 py-1.5 text-left transition hover:border-amber-400/40 hover:bg-amber-400/5 disabled:opacity-50"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-[11px] font-bold text-white">{car.name}</span>
+                        <span className="block text-[9px] text-muted-foreground">⚡ {car.speed} speed · 📦 {car.storage}{car.armored ? " · 🛡️ armored" : ""}</span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="block text-[11px] font-black text-green-400">${car.price.toLocaleString()}</span>
+                        <span className="block text-[8px] font-bold uppercase tracking-widest text-amber-300/70">steal →</span>
+                      </span>
+                    </button>
+                  ))}
+                  <div className="pt-1 text-center text-[8px] text-muted-foreground">Targeting {tier.name} heavily biases the roll toward this tier — random cars can still appear.</div>
+                </div>
+              )}
+            </ActionCard>
+          );
+        })}
       </div>
-      <div className="text-[9px] text-muted-foreground text-center">Categories show where stolen vehicles come from — all cars go to your Garage</div>
 
       {cooldown > 0 ? (
         <div className="mafia-card rounded-xl p-6 text-center">
@@ -229,11 +259,11 @@ export function GtaCarTheftPage() {
         </div>
       ) : (
         <button
-          onClick={doTheft}
+          onClick={() => doTheft(selectedTier)}
           disabled={loading}
           className="w-full py-4 bg-gradient-to-r from-cyan-600 to-blue-500 text-white font-bold text-lg rounded-xl hover:from-cyan-500 hover:to-blue-400 transition-all disabled:opacity-50 shadow-lg shadow-cyan-900/30"
         >
-          {loading ? "🚗 Hot-wiring..." : "🚗 Steal Vehicle"}
+          {loading ? "🚗 Hot-wiring..." : selectedTier ? `🚗 Steal in ${GTA_TIERS.find((t) => t.id === selectedTier)?.name}` : "🚗 Steal Vehicle (random tier)"}
         </button>
       )}
 
