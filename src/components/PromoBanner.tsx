@@ -1,10 +1,25 @@
-import { useState } from "react";
+import { useState, Component, type ReactNode } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 
 const nf = (n: number) => Math.floor(n).toLocaleString();
 
+/** Fail-safe wrapper: a promo glitch must never take down the game UI. */
+class PromoErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
 export function PromoBanner() {
+  return (
+    <PromoErrorBoundary>
+      <PromoBannerInner />
+    </PromoErrorBoundary>
+  );
+}
+
+function PromoBannerInner() {
   const promo = useQuery(api.empireSystem.getActivePromo);
   const redeem = useMutation(api.empireSystem.redeemPromoCode);
   const [code, setCode] = useState("");
