@@ -372,8 +372,8 @@ export const sendPoints = mutation({
     const fee = 1;
     const total = amount + fee;
     if (n(player.points, 0) < total) throw new Error(`Need ${total} points (${amount} + ${fee} fee)`);
-    const target = await ctx.db.query("users").withIndex("by_username", (q) => q.eq("username", args.username.trim())).unique()
-      ?? await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.username.trim())).unique();
+    const target = (await ctx.db.query("users").withIndex("by_username", (q) => q.eq("username", args.username.trim())).collect())[0]
+      ?? (await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.username.trim())).collect())[0];
     if (!target) throw new Error("Player not found");
     if (target._id === player._id) throw new Error("Cannot send points to yourself");
     await ctx.db.patch(player._id, { points: n(player.points, 0) - total, pointsSent: n(player.pointsSent, 0) + amount });

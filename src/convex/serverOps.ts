@@ -262,16 +262,34 @@ export const startNewSeason = mutation({
 export const setSeasonPlannedEnd = mutation({
   args: { plannedEndsAt: v.number() },
   handler: async (ctx, args) => {
-    await requireAdmin(ctx);
+    const admin = await requireAdmin(ctx);
+    const now = Date.now();
     const seasons = await ctx.db
       .query("seasonState")
       .withIndex("by_number", (q: any) => q.gte("seasonNumber", 0))
       .order("desc")
       .take(1);
-    const current = seasons[0];
-    if (!current) throw new Error("No season started yet — start a season first.");
+    let current = seasons[0];
+    // No season row yet (Public Alpha state): auto-create Season 01 so admins
+    // can still set its planned end instead of hitting a dead end.
+    if (!current) {
+      await ctx.db.insert("seasonState", {
+        seasonNumber: 1,
+        name: "Season 01",
+        startedAt: now,
+        plannedEndsAt: now + 100 * 86400000,
+        days: 100,
+        createdAt: now,
+        startedBy: admin.nickname ?? admin.username ?? "Admin",
+      });
+      current = (await ctx.db
+        .query("seasonState")
+        .withIndex("by_number", (q: any) => q.gte("seasonNumber", 0))
+        .order("desc")
+        .take(1))[0];
+    }
     const end = finite(args.plannedEndsAt, 0);
-    if (!end || end <= Date.now()) throw new Error("Planned end must be in the future");
+    if (!end || end <= now) throw new Error("Planned end must be in the future");
     await ctx.db.patch(current._id, { plannedEndsAt: end, days: Math.max(1, Math.round((end - current.startedAt) / 86400000)) });
     return { success: true };
   },

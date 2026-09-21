@@ -47,9 +47,9 @@ export const performAction = mutation({
 
     /* ── cooldown ── */
     const cdTable = (ctx.db.query as any)("actionCooldowns");
-    const prior = await cdTable
+    const prior = (await cdTable
       .withIndex("by_player_action", (q: any) => q.eq("playerId", player._id).eq("actionKey", args.actionKey))
-      .unique();
+      .collect())[0];
     const now = Date.now();
     if (prior && prior.readyAt > now) {
       const secs = Math.ceil((prior.readyAt - now) / 1000);

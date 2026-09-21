@@ -42,10 +42,10 @@ export const getMyStatus = query({
     const users = await ctx.db.query("users").collect();
     const user = users.find((u: any) => u.tokenIdentifier === identity.tokenIdentifier || u.username === identity.name);
     if (!user) return null;
-    const participant = await ctx.db
+    const participant = (await ctx.db
       .query("lmsParticipants")
       .withIndex("by_user", (q: any) => q.eq("userId", user._id))
-      .unique();
+      .collect())[0] ?? null;
     return participant ?? null;
   },
 });
@@ -115,10 +115,10 @@ export const joinEvent = mutation({
     if (user.inPrison) throw new Error("You can't join from prison!");
     if (user.isDead) throw new Error("You're dead! Respawn first.");
 
-    const existing = await ctx.db
+    const existing = (await ctx.db
       .query("lmsParticipants")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
-      .unique();
+      .collect())[0];
 
     if (existing) {
       if (existing.alive) throw new Error("You're already in the fight!");
@@ -170,19 +170,19 @@ export const attack = mutation({
     if (user.inPrison) throw new Error("You can't fight from prison!");
     if (user.isDead) throw new Error("You're dead!");
 
-    const attackerParticipant = await ctx.db
+    const attackerParticipant = (await ctx.db
       .query("lmsParticipants")
       .withIndex("by_user", (q: any) => q.eq("userId", userId))
-      .unique();
+      .collect())[0];
     if (!attackerParticipant || !attackerParticipant.alive) throw new Error("You're eliminated!");
 
     const target = await ctx.db.get(args.targetId);
     if (!target) throw new Error("Target not found!");
 
-    const targetParticipant = await ctx.db
+    const targetParticipant = (await ctx.db
       .query("lmsParticipants")
       .withIndex("by_user", (q: any) => q.eq("userId", args.targetId))
-      .unique();
+      .collect())[0];
     if (!targetParticipant || !targetParticipant.alive) throw new Error("Target already eliminated!");
 
     // Combat

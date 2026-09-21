@@ -174,7 +174,7 @@ export const getPlayersInLocation = query({
 export const checkNickname = query({
   args: { nickname: v.string() },
   handler: async (ctx, args) => {
-    const taken = await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).unique();
+    const taken = (await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).collect())[0];
     return { taken: !!taken };
   },
 });
@@ -200,7 +200,7 @@ export const registerPlayer = mutation({
       }
       // If user already has username (registered via Auth page), just set nickname and class
       const stats = classStats[args.playerClass];
-      const nicknameTaken = await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).unique();
+      const nicknameTaken = (await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).collect())[0];
       if (nicknameTaken) throw new Error("Nickname already taken!");
       await ctx.db.patch(existing._id, {
         nickname: args.nickname, playerClass: args.playerClass,
@@ -249,10 +249,10 @@ export const claimExistingAccount = mutation({
     if (!me) throw new Error("Not authenticated");
     const name = args.nickname.trim();
     if (!name) throw new Error("Type your nickname to continue.");
-    const existing = await ctx.db
+    const existing = (await ctx.db
       .query("users")
       .withIndex("by_nickname", (q) => q.eq("nickname", name))
-      .unique();
+      .collect())[0];
     if (!existing) throw new Error(`No criminal named "${name}" was found. Check the spelling.`);
     if (existing.isBanned) throw new Error("That account is banned and cannot be recovered here.");
     if ((existing as any)._id === (me as any)._id) return { success: true, alreadyYours: true };
