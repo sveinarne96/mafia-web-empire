@@ -180,7 +180,8 @@ export const stealFromHouse = mutation({
 
     const baseRate = 0.75;
     const levelBonus = Math.min(0.20, ((player.level ?? 1) * 0.004));
-    const successRate = Math.min(0.95, baseRate + levelBonus);
+    const gtaRarityBoost = Date.now() < ((player as any).gtaRarityUntil ?? 0) ? 0.15 : 0;
+    const successRate = Math.min(0.98, baseRate + levelBonus + gtaRarityBoost);
     const succeeded = Math.random() < successRate;
 
     const difficultyMultipliers: Record<string, number> = {
@@ -302,7 +303,8 @@ export const stealFromHouse = mutation({
       if (Math.random() < 0.025) { itemsStolen.push("SECRET CHEST FOUND!"); }
     } else {
       damageTaken = Math.floor(Math.random() * 25 + 5);
-      arrested = Math.random() > 0.25;
+      // Bust Boost perk cuts arrest chance while active (75% -> 25%).
+      arrested = Math.random() > (Date.now() < ((player as any).bustBoostUntil ?? 0) ? 0.25 : 0.75);
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
@@ -395,7 +397,8 @@ export const gtaCarTheft = mutation({
 
     const baseRate = 0.75;
     const levelBonus = Math.min(0.20, ((player.level ?? 1) * 0.004));
-    const successRate = Math.min(0.95, baseRate + levelBonus);
+    const gtaRarityBoost = Date.now() < ((player as any).gtaRarityUntil ?? 0) ? 0.15 : 0;
+    const successRate = Math.min(0.98, baseRate + levelBonus + gtaRarityBoost);
     const succeeded = Math.random() < successRate;
 
     // Realistic car names, values, and stats
@@ -679,12 +682,15 @@ export const gtaCarTheft = mutation({
       }
       const idx = Math.floor(Math.random() * pool.length);
       const car = pool[idx];
+      const rarityBoost = Date.now() < ((player as any).gtaRarityUntil ?? 0);
+      const ultraCutoff = rarityBoost ? 0.15 : 0.10;
+      const neonCutoff = rarityBoost ? 0.50 : 0.35;
       let isNeonCar = false;
       let isUltraNeon = false;
-      if (roll < 0.10) {
+      if (roll < ultraCutoff) {
         isUltraNeon = true;
         isNeonCar = true;
-      } else if (roll < 0.35) {
+      } else if (roll < neonCutoff) {
         isNeonCar = true;
       }
       const neonValue = isUltraNeon ? Math.floor(car.price * (2000 + Math.floor(Math.random() * 8000))) : isNeonCar ? Math.floor(car.price * (100 + Math.floor(Math.random() * 400))) : car.price;
@@ -698,17 +704,18 @@ export const gtaCarTheft = mutation({
         stolen: true,
         purchasePrice: neonValue,
       });
-      moneyEarned = neonValue;
+      moneyEarned = Math.floor(neonValue * (Date.now() < ((player as any).cashBoostUntil ?? 0) ? 3 : 1));
     } else {
       damageTaken = Math.floor(Math.random() * 20 + 5);
-      arrested = Math.random() > 0.25;
+      // Bust Boost perk cuts arrest chance while active (75% -> 25%).
+      arrested = Math.random() > (Date.now() < ((player as any).bustBoostUntil ?? 0) ? 0.25 : 0.75);
     }
 
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
         // XP scales with car price + level multiplier
     const levelMult = 1 + ((player.level ?? 1) * 0.05); // +5% per level
     const valueXp = succeeded ? Math.max(20, Math.floor(moneyEarned / 1000)) : 4; // $1 per 1000 value, min 20
-    const xpEarned = Math.floor(valueXp * 11.0 * levelMult);
+    const xpEarned = Math.floor(valueXp * 11.0 * levelMult * (Date.now() < ((player as any).xpBoostUntil ?? 0) ? 3 : 1));
 
     await ctx.db.patch(userId, {
       life: newLife,

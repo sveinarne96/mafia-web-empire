@@ -411,3 +411,174 @@ export const getGameStats = query({
     };
   },
 });
+
+// ===== PERKS & TALENTS ADMIN =====
+
+/** Full perk + talent overview for one player (admin view). */
+export const getPlayerPerks = query({
+  args: { targetId: v.id("users") },
+  handler: async (ctx, args) => {
+    const admin = await getAuthPlayer(ctx);
+    if (!isAdmin(admin)) throw new Error("Admin only!");
+    const t: any = await ctx.db.get(args.targetId);
+    if (!t) throw new Error("Player not found");
+    const now = Date.now();
+    const activeFields: Record<string, string> = {
+      heistTimer: "heistTimerUntil",
+      heistChance: "heistChanceUntil",
+      doublePay: "cashBoostUntil",
+      doubleXp: "xpBoostUntil",
+      bustBoost: "bustBoostUntil",
+      autoRank: "autoRankUntil",
+      meltValue: "meltValueUntil",
+      meltLimit: "meltLimitUntil",
+      gtaRarity: "gtaRarityUntil",
+    };
+    const status: Record<string, { stock: number; active: boolean; until: number }> = {};
+    for (const [perkId, field] of Object.entries(activeFields)) {
+      const until = (t as any)[field] ?? 0;
+      status[perkId] = { stock: (t.perks ?? {})[perkId] ?? 0, active: until > now, until };
+    }
+    for (const p of ["jailImmunity", "supplyUnit"]) {
+      status[p] = { stock: (t.perks ?? {})[p] ?? 0, active: false, until: 0 };
+    }
+    return {
+      nickname: t.nickname ?? t.username ?? "Unknown",
+      perks: (t.perks ?? {}) as Record<string, number>,
+      status,
+      jailImmunityCount: t.jailImmunityCount ?? 0,
+      autoRankUntil: t.autoRankUntil ?? 0,
+      coins: t.coins ?? 0,
+      talentPoints: t.talentPoints ?? 0,
+      globalTalentPoints: t.globalTalentPoints ?? 0,
+      cityTalents: (t.cityTalents ?? {}) as Record<string, number>,
+      globalTalents: (t.globalTalents ?? {}) as Record<string, number>,
+    };
+  },
+});
+
+/** Grant (or remove with negative) perk stock for a player. */
+export const grantPerkStock = mutation({
+  args: { targetId: v.id("users"), perkId: v.string(), amount: v.number() },
+  handler: async (ctx, args) => {
+    const admin = await getAuthPlayer(ctx);
+    if (!isAdmin(admin)) throw new Error("Admin only!");
+    if (!Number.isFinite(args.amount) || args.amount === 0) throw new Error("Amount must be non-zero");
+    if (Math.abs(args.amount) > 1000) throw new Error("Max 1000 per grant");
+    const t: any = await ctx.db.get(args.targetId);
+    if (!t) throw new Error("Player not found");
+    const perks = { ...((t.perks ?? {}) as Record<string, number>) };
+    const next = Math.max(0, (perks[args.perkId] ?? 0) + args.amount);
+    perks[args.perkId] = next;
+    await ctx.db.patch(args.targetId, { perks } as any);
+    try {
+      await ctx.db.insert("notifications", {
+        userId: args.targetId,
+        type: "admin",
+        message: `Admin ${admin.nickname} ${args.amount > 0 ? "granted you" : "removed"} ${Math.abs(args.amount)}x perk (${args.perkId})`,
+        read: false,
+        timestamp: Date.now(),
+      });
+    } catch {}
+    return { success: true, perkId: args.perkId, stock: next };
+  },
+});
+
+/** Grant all perks in stock (handy "give full perk bar" button). */
+export const grantAllPerks = mutation({
+  args: { targetId: v.id("users"), amount: v.number() },
+  handler: async (ctx, args) => {
+    const admin = await getAuthPlayer(ctx);
+    if (!isAdmin(admin)) throw new Error("Admin only!");
+    if (args.amount < 1 || args.amount > 100) throw new Error("Amount must be 1-100");
+    const t: any = await ctx.db.get(args.targetId);
+    if (!t) throw new Error("Player not found");
+    const perks = { ...((t.perks ?? {}) as Record<string, number>) };
+    for (const id of ["heistTimer", "heistChance", "doublePay", "doubleXp", "jailImmunity", "bustBoost", "autoRank", "meltValue", "meltLimit", "gtaRarity", "supplyUnit"]) {
+      perks[id] = Math.max(0, (perks[id] ?? 0) + args.amount);
+    }
+    await ctx.db.patch(args.targetId, { perks } as any);
+    try {
+      await ctx.db.insert("notifications", {
+        userId: args.targetId,
+        type: "admin",
+        message: `Admin ${admin.nickname} granted you ${args.amount}x of every perk!`,
+        read: false,
+        timestamp: Date.now(),
+      });
+    } catch {}
+    return { success: true };
+  },
+});
+
+/** Set a perk's active timer directly (activate / extend / clear with 0). */
+export const setPerkTimer = mutation({
+  args: { targetId: v.id("users"), perkId: v.string(), hours: v.number() },
+  handler: async (ctx, args) => {
+    const admin = await getAuthPlayer(ctx);
+    if (!isAdmin(admin)) throw new Error("Admin only!");
+    if (args.hours < 0 || args.hours > 720) throw new Error("Hours must be 0-720");
+    const t: any = await ctx.db.get(args.targetId);
+    if (!t) throw new Error("Player not found");
+    const now = Date.now();
+    const fieldMap: Record<string, string> = {
+      heistTimer: "heistTimerUntil",
+      heistChance: "heistChanceUntil",
+      doublePay: "cashBoostUntil",
+      doubleXp: "xpBoostUntil",
+      bustBoost: "bustBoostUntil",
+      autoRank: "autoRankUntil",
+      meltValue: "meltValueUntil",
+      meltLimit: "meltLimitUntil",
+      gtaRarity: "gtaRarityUntil",
+    };
+    const field = fieldMap[args.perkId];
+    if (!field) throw new Error("Perk has no timer (instant perks activate on use)");
+    const base = Math.max(now, (t as any)[field] ?? 0);
+    const patch: any = {};
+    patch[field] = args.hours === 0 ? 0 : base + args.hours * 3600000;
+    await ctx.db.patch(args.targetId, patch);
+    try {
+      await ctx.db.insert("notifications", {
+        userId: args.targetId,
+        type: "admin",
+        message: args.hours === 0
+          ? `Admin ${admin.nickname} deactivated your ${args.perkId} boost`
+          : `Admin ${admin.nickname} activated/extended ${args.perkId} for ${args.hours}h`,
+        read: false,
+        timestamp: Date.now(),
+      });
+    } catch {}
+    return { success: true };
+  },
+});
+
+/** Grant or remove talent points (city + global). */
+export const setTalentPoints = mutation({
+  args: { targetId: v.id("users"), cityPoints: v.number(), globalPoints: v.number() },
+  handler: async (ctx, args) => {
+    const admin = await getAuthPlayer(ctx);
+    if (!isAdmin(admin)) throw new Error("Admin only!");
+    const t: any = await ctx.db.get(args.targetId);
+    if (!t) throw new Error("Player not found");
+    const patch: any = {};
+    if (args.cityPoints !== 0) {
+      patch.talentPoints = Math.max(0, (t.talentPoints ?? 0) + args.cityPoints);
+    }
+    if (args.globalPoints !== 0) {
+      patch.globalTalentPoints = Math.max(0, (t.globalTalentPoints ?? 0) + args.globalPoints);
+    }
+    if (Object.keys(patch).length === 0) return { success: true };
+    await ctx.db.patch(args.targetId, patch);
+    try {
+      await ctx.db.insert("notifications", {
+        userId: args.targetId,
+        type: "admin",
+        message: `Admin ${admin.nickname} adjusted your talent points`,
+        read: false,
+        timestamp: Date.now(),
+      });
+    } catch {}
+    return { success: true };
+  },
+});
