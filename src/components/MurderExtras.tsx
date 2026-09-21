@@ -355,7 +355,7 @@ export function BulletFactoryPage() {
 // DETECTIVES — hire investigators to profile a rival
 // ═══════════════════════════════════════════════════════════
 export function DetectivesPage() {
-  const players = useQuery(api.admin.getAllPlayers);
+  const players = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
   const state = useQuery(api.crimeExtras.getDetectiveState);
   const hire = useMutation(api.crimeExtras.hireDetective);
 

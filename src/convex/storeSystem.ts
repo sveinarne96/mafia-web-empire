@@ -1059,6 +1059,7 @@ export const meltCars = mutation({
     await ctx.db.patch(player._id, {
       bullets,
       carsMelted: d.carsMelted + count,
+      totalBulletsMelted: n((player as any).totalBulletsMelted, 0) + bullets, // Game Records counter
       lastAutoMelt: Date.now(),
     });
     return { success: true, bullets, count };
@@ -1090,7 +1091,7 @@ export const autoMelt = mutation({
       count++;
       await ctx.db.delete(veh._id);
     }
-    await ctx.db.patch(player._id, { bullets, carsMelted: d.carsMelted + count, lastAutoMelt: now });
+    await ctx.db.patch(player._id, { bullets, carsMelted: d.carsMelted + count, totalBulletsMelted: n((player as any).totalBulletsMelted, 0) + bullets, lastAutoMelt: now });
     return { success: true, count, bullets, limit };
   },
 });

@@ -66,7 +66,7 @@ export const getGlobalStatistics = query({
       ranking: {
         totalCrimes: sum(reg, "totalCrimes"),
         carsStolen: sum(reg, "totalGta"),
-        totalHeists: sum(reg, "totalHeists"),
+        totalHeists: sum(reg, "heistsTotal") + sum(reg, "totalHeists"),
         totalOCs: sum(reg, "totalOC"),
         totalBusts: sum(reg, "totalBusts"),
         totalAssassinations: sum(reg, "totalAssassinations"),
@@ -175,7 +175,7 @@ export const getPersonalStatistics = query({
       { label: "Total Crimes", value: `${n(p.totalCrimes).toLocaleString()}` },
       { label: "Crimes Earnings", value: `$${n(p.crimesEarnings ?? p.totalEarned).toLocaleString()}` },
       { label: "Total GTAs", value: `${n(p.totalGta).toLocaleString()}` },
-      { label: "Total Heists", value: `${n(p.totalHeists).toLocaleString()}` },
+      { label: "Total Heists", value: `${(n(p.totalHeists) + n(p.heistsTotal)).toLocaleString()}` },
       { label: "Total OCs", value: `${n(p.totalOC).toLocaleString()}` },
       { label: "Total Busts", value: `${n(p.totalBusts).toLocaleString()}` },
       { label: "Total Kills", value: `💀 ${n(p.totalKills).toLocaleString()}` },
@@ -254,5 +254,62 @@ export const getPresenceRoster = query({
       .slice(0, 100)
       .map((u: any) => map(u, false));
     return { onlinePlayers, offlinePlayers, onlineCount: onlinePlayers.length, total: registered.length, updatedAt: now };
+  },
+});
+
+// ───────────────────────── PUBLIC LEADERBOARD ─────────────────────────
+// Game Records pages previously used admin.getAllPlayers (admin-only), so
+// regular players saw empty leaderboards. This query is open to everyone.
+export const getLeaderboard = query({
+  args: { field: v.string(), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const ALLOWED = new Set([
+      "totalKills", "totalCrimes", "totalGta", "pointsSent", "totalBulletsMelted",
+      "totalBusts", "totalStockProfit", "totalBettingProfit", "totalAssassinations",
+      "packsOpened", "totalHeists", "totalSupplyProfit", "totalCasinoWins",
+      "level", "experience", "prestige", "money", "racesWon",
+    ]);
+    if (!ALLOWED.has(args.field)) return [];
+    const all = await ctx.db.query("users").collect();
+    const lim = Math.min(100, Math.max(1, args.limit ?? 50));
+    return all
+      .filter((u: any) => u.nickname && !u.isBanned)
+      .map((u: any) => ({
+        _id: u._id,
+        nickname: u.nickname,
+        level: n(u.level),
+        isBot: !!u.isBotPlayer,
+        value: n((u as any)[args.field]),
+      }))
+      .sort((a: any, b: any) => b.value - a.value)
+      .slice(0, lim);
+  },
+});
+
+// ───────────────────────── PUBLIC PLAYER DIRECTORY ─────────────────────────
+// Player-facing pages (inbox, murder targets, detectives) previously used
+// admin.getAllPlayers, which returns [] for non-admins — so they saw nobody.
+export const getPlayerDirectory = query({
+  args: { search: v.optional(v.string()), limit: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    const all = await ctx.db.query("users").collect();
+    const q = (args.search ?? "").trim().toLowerCase();
+    const lim = Math.min(200, Math.max(1, args.limit ?? 100));
+    return all
+      .filter((u: any) => u.nickname && !u.isBanned && !u.isDead)
+      .filter((u: any) => !q || u.nickname.toLowerCase().includes(q))
+      .sort((a: any, b: any) => (b.lastActive ?? 0) - (a.lastActive ?? 0))
+      .slice(0, lim)
+      .map((u: any) => ({
+        _id: u._id,
+        nickname: u.nickname,
+        level: n(u.level),
+        location: u.location ?? "Unknown",
+        isBot: !!u.isBotPlayer,
+        online: (u.lastActive ?? 0) > Date.now() - 120000,
+        lastActive: u.lastActive ?? 0,
+        defense: n(u.defense),
+        isDead: !!u.isDead,
+      }));
   },
 });

@@ -39,7 +39,7 @@ const PERFECT_EVIDENCE = ["fingerprints_wiped", "dna_burned", "no_witnesses", "c
 
 export function KillExecutionPage() {
   const player = useQuery(api.game.getPlayer);
-  const targets = useQuery(api.admin.getAllPlayers);
+  const targets = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
   const murderStats = useQuery(api.murderSystem.getMurderStats);
   const hack = useMutation(api.empireFeatures.hackPlayerBank);
   const advanceTrial = useMutation(api.empireFeatures.advanceRankTrial);

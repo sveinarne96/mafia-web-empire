@@ -282,6 +282,9 @@ export function CasinosPage() {
 
 export function CasinoBlackjackPage() {
   const player = useQuery(api.game.getPlayer);
+  const bjDeal = useMutation(api.gameExtended.blackjackDeal);
+  const bjHit = useMutation(api.gameExtended.blackjackHit);
+  const bjStand = useMutation(api.gameExtended.blackjackStand);
   const [bet, setBet] = useState(100000);
   const [deck, setDeck] = useState(makeDeck());
   const [playerHand, setPlayerHand] = useState<{ suit: string; rank: string; value: number }[]>([]);
@@ -302,79 +305,59 @@ export function CasinoBlackjackPage() {
     return sum;
   };
 
-  const deal = () => {
+  // Server-authoritative: server deals from a fresh shoe, escrows the bet, and
+  // settles automatically on naturals.
+  const deal = async () => {
     if ((player?.money ?? 0) < bet || bet < 10000) return;
-    const d = [...deck];
-    const p = [d.pop()!, d.pop()!];
-    const dealer = [d.pop()!, d.pop()!];
-    setDeck(d);
-    setPlayerHand(p);
-    setDealerHand(dealer);
-    setGameState("playing");
-    setResult("");
-    setResultType("");
-    setSplitAvailable(p[0].rank === p[1].rank && (player?.money ?? 0) >= bet);
-    setDoubleDownAvailable(true);
-    setInsuranceAvailable(dealer[0].rank === "A");
-  };
-
-  const hit = () => {
-    const d = [...deck];
-    const card = d.pop()!;
-    setDeck(d);
-    const newHand = [...playerHand, card];
-    setPlayerHand(newHand);
-    setDoubleDownAvailable(false);
-    setSplitAvailable(false);
-    if (handValue(newHand) > 21) {
-      endRound(newHand, dealerHand, "bust");
+    try {
+      const r = await bjDeal({ bet });
+      setPlayerHand(r.playerHand.map((c: string) => toCard(c)));
+      setDealerHand(r.dealerHand.map((c: string) => toCard(c)));
+      setGameState(r.gameOver ? "done" : "playing");
+      setResult("");
+      setResultType("");
+      setDoubleDownAvailable(false);
+      setInsuranceAvailable(false);
+      if (r.result === "blackjack") { setResult("BLACKJACK! Paid 3:2"); setResultType("win"); setGameState("done"); }
+      else if (r.result === "push") { setResult("Push — both blackjack"); setResultType("push"); setGameState("done"); }
+      else if (r.result === "lose") { setResult("Dealer blackjack"); setResultType("lose"); setGameState("done"); }
+    } catch (e: any) {
+      alert(e?.message ?? "Deal failed");
     }
   };
 
-  const stand = () => {
-    setGameState("dealer");
-    setDoubleDownAvailable(false);
-    setSplitAvailable(false);
-    // Dealer plays automatically
-    const dh = [...dealerHand];
-    let d = [...deck];
-    while (handValue(dh) < 17) {
-      dh.push(d.pop()!);
+  // "10-h" → { suit: "h", rank: "10", value: 10 }
+  const toCard = (code: string) => {
+    const [rank, suit] = code.split("-");
+    const value = rank === "A" ? 11 : ["K", "Q", "J", "10"].includes(rank) ? 10 : parseInt(rank, 10) || 10;
+    return { suit, rank, value };
+  };
+
+  const hit = async () => {
+    try {
+      const r = await bjHit({});
+      setPlayerHand(r.playerHand.map((c: string) => toCard(c)));
+      if (r.result === "bust") { setResult("BUST — You went over 21!"); setResultType("lose"); setGameState("done"); }
+    } catch (e: any) {
+      alert(e?.message ?? "Hit failed");
     }
-    setDeck(d);
-    setDealerHand(dh);
-
-    const pVal = handValue(playerHand);
-    const dVal = handValue(dh);
-    if (dVal > 21) endRound(playerHand, dh, "dealer-bust");
-    else if (pVal > dVal) endRound(playerHand, dh, "win");
-    else if (pVal < dVal) endRound(playerHand, dh, "lose");
-    else endRound(playerHand, dh, "push");
   };
 
-  const doubleDown = () => {
-    if ((player?.money ?? 0) < bet * 2) return;
-    const d = [...deck];
-    const card = d.pop()!;
-    setDeck(d);
-    const newHand = [...playerHand, card];
-    setPlayerHand(newHand);
-    setDoubleDownAvailable(false);
-    setSplitAvailable(false);
-    // Dealer plays after double
-    const dh = [...dealerHand];
-    while (handValue(dh) < 17) dh.push(d.pop()!);
-    setDeck(d);
-    setDealerHand(dh);
-
-    const pVal = handValue(newHand);
-    const dVal = handValue(dh);
-    if (pVal > 21) endRound(newHand, dh, "bust");
-    else if (dVal > 21) endRound(newHand, dh, "dealer-bust");
-    else if (pVal > dVal) endRound(newHand, dh, "win");
-    else if (pVal < dVal) endRound(newHand, dh, "lose");
-    else endRound(newHand, dh, "push");
+  const stand = async () => {
+    try {
+      const r = await bjStand({});
+      setDealerHand(r.dealerHand.map((c: string) => toCard(c)));
+      const label = r.result === "win" ? `You win ${r.winnings > 0 ? `+$${r.winnings.toLocaleString()}` : ""}` : r.result === "push" ? "Push — bet returned" : "Dealer wins";
+      setResult(label);
+      setResultType(r.result === "win" ? "win" : r.result === "push" ? "push" : "lose");
+      setGameState("done");
+    } catch (e: any) {
+      alert(e?.message ?? "Stand failed");
+    }
   };
+
+  // Double down / split / insurance are not part of the server table rules.
+  const doubleDown = () => {};
 
   const buyInsurance = () => {
     setInsuranceBet(Math.floor(bet / 2));
@@ -684,6 +667,8 @@ export function CasinoDicePage() {
 
 export function CasinoRoulettePage() {
   const player = useQuery(api.game.getPlayer);
+  const playRoulette = useMutation(api.casinoSystem.playRoulette);
+  const city = (player as any)?.location ?? "New York";
   const [bet, setBet] = useState(50000);
   const [betType, setBetType] = useState<"red" | "black" | "green" | number | null>(null);
   const [spinning, setSpinning] = useState(false);
@@ -704,29 +689,30 @@ export function CasinoRoulettePage() {
     setSpinning(true);
     setResult(null);
 
-    // Spin animation
-    const num = Math.floor(Math.random() * 37);
-    const color = numberColors[num];
-    const targetRotation = rotation + 1440 + (num / 37) * 360; // 4 full spins + offset
-    setRotation(targetRotation);
+    try {
+      // Server decides the outcome and moves real money; we animate what it returns.
+      const r = await playRoulette({ city, bet, betType: betType as any });
+      const num = r.number;
+      const color = r.color;
 
-    await new Promise(r => setTimeout(r, 4000));
+      // Spin animation
+      const targetRotation = rotation + 1440 + (num / 37) * 360; // 4 full spins + offset
+      setRotation(targetRotation);
+      await new Promise(res => setTimeout(res, 4000));
 
-    let won = false;
-    if (typeof betType === "string") {
-      won = betType === color;
-    } else {
-      won = betType === num;
+      const won = r.won;
+      const winnings = r.net;
+      setResult({ number: num, color });
+      setStats(s => ({
+        ...s, played: s.played + 1, profit: s.profit + winnings,
+        won: s.won + (won ? 1 : 0), lost: s.lost + (won ? 0 : 1),
+        last10: [...s.last10, num].slice(-10),
+      }));
+      setHistory(h => [{ number: num, color, betOn: typeof betType === "string" ? betType : String(betType), won, amount: winnings }, ...h].slice(0, 30));
+    } catch (e: any) {
+      setStats(s => ({ ...s }));
+      alert(e?.message ?? "Spin failed");
     }
-
-    const winnings = won ? (typeof betType === "number" ? bet * 35 : bet * (betType === "green" ? 14 : 2)) : -bet;
-    setResult({ number: num, color });
-    setStats(s => ({
-      ...s, played: s.played + 1, profit: s.profit + winnings,
-      won: s.won + (won ? 1 : 0), lost: s.lost + (won ? 0 : 1),
-      last10: [...s.last10, num].slice(-10),
-    }));
-    setHistory(h => [{ number: num, color, betOn: typeof betType === "string" ? betType : String(betType), won, amount: winnings }, ...h].slice(0, 30));
     setSpinning(false);
   };
 
@@ -843,6 +829,8 @@ export function CasinoRoulettePage() {
 
 export function CasinoRacetrackPage() {
   const player = useQuery(api.game.getPlayer);
+  const playHorseRace = useMutation(api.casinoSystem.playHorseRace);
+  const city = (player as any)?.location ?? "New York";
   const [selectedHorse, setSelectedHorse] = useState<number | null>(null);
   const [bet, setBet] = useState(50000);
   const [racing, setRacing] = useState(false);
@@ -864,50 +852,48 @@ export function CasinoRacetrackPage() {
 
   const multipliers = [2, 3, 5, 7, 13, 21, 41];
 
-  const race = () => {
+  const race = async () => {
     if ((player?.money ?? 0) < bet || racing || selectedHorse === null || bet < 10000) return;
     setRacing(true);
     setWinner(null);
     setPositions([0, 0, 0, 0, 0, 0, 0]);
 
-    // Determine winner based on weighted chances
-    const rand = Math.random() * 100;
-    let cumulative = 0;
-    let winnerIdx = 0;
-    for (let i = 0; i < horses.length; i++) {
-      cumulative += horses[i].chance;
-      if (rand < cumulative) { winnerIdx = i; break; }
-    }
+    try {
+      // Server picks the winner and moves real money; we animate what it returns.
+      const r = await playHorseRace({ city, bet, horse: selectedHorse });
+      const winnerIdx = r.winnerIdx;
 
-    // Animate
-    const pos = [0, 0, 0, 0, 0, 0, 0];
-    let tick = 0;
-    raceRef.current = setInterval(() => {
-      tick++;
-      for (let i = 0; i < 7; i++) {
-        if (pos[i] < 100) {
-          const speed = i === winnerIdx ? (0.8 + Math.random() * 0.6) : (0.3 + Math.random() * 0.5);
-          pos[i] = Math.min(100, pos[i] + speed * (1 + Math.random() * 0.5));
+      const pos = [0, 0, 0, 0, 0, 0, 0];
+      let tick = 0;
+      raceRef.current = setInterval(() => {
+        tick++;
+        for (let i = 0; i < 7; i++) {
+          if (pos[i] < 100) {
+            const speed = i === winnerIdx ? (0.8 + Math.random() * 0.6) : (0.3 + Math.random() * 0.5);
+            pos[i] = Math.min(100, pos[i] + speed * (1 + Math.random() * 0.5));
+          }
         }
-      }
-      setPositions([...pos]);
-      if (pos.every((p) => p >= 100) || tick > 200) {
-        clearInterval(raceRef.current);
-        pos[winnerIdx] = 100;
         setPositions([...pos]);
-        setWinner(winnerIdx);
-        setRacing(false);
+        if (pos.every((p) => p >= 100) || tick > 200) {
+          clearInterval(raceRef.current);
+          pos[winnerIdx] = 100;
+          setPositions([...pos]);
+          setWinner(winnerIdx);
+          setRacing(false);
 
-        const won = selectedHorse === winnerIdx;
-        const multiplier = multipliers[selectedHorse];
-        const winnings = won ? bet * multiplier - bet : -bet;
-        setStats(s => ({
-          ...s, played: s.played + 1, profit: s.profit + winnings,
-          won: s.won + (won ? 1 : 0), lost: s.lost + (won ? 0 : 1),
-        }));
-        setHistory(h => [{ winner: winnerIdx, bet, won, amount: winnings }, ...h].slice(0, 20));
-      }
-    }, 50);
+          const won = r.won;
+          const winnings = r.net;
+          setStats(s => ({
+            ...s, played: s.played + 1, profit: s.profit + winnings,
+            won: s.won + (won ? 1 : 0), lost: s.lost + (won ? 0 : 1),
+          }));
+          setHistory(h => [{ winner: winnerIdx, bet, won, amount: winnings }, ...h].slice(0, 20));
+        }
+      }, 50);
+    } catch (e: any) {
+      setRacing(false);
+      alert(e?.message ?? "Race failed");
+    }
   };
 
   useEffect(() => { return () => { if (raceRef.current) clearInterval(raceRef.current); }; }, []);
@@ -1018,6 +1004,9 @@ export function CasinoRacetrackPage() {
 
 export function CasinoVideoPokerPage() {
   const player = useQuery(api.game.getPlayer);
+  const pokerDeal = useMutation(api.casinoSystem.videoPokerDeal);
+  const pokerDraw = useMutation(api.casinoSystem.videoPokerDraw);
+  const city = (player as any)?.location ?? "New York";
   const [bet, setBet] = useState(50000);
   const [hand, setHand] = useState<{ suit: string; rank: string; value: number }[]>([]);
   const [held, setHeld] = useState<boolean[]>([false, false, false, false, false]);
@@ -1073,15 +1062,19 @@ export function CasinoVideoPokerPage() {
     return ranks.join(",") === ["A", "2", "3", "4", "5"].join(",");
   };
 
-  const deal = () => {
+  const deal = async () => {
     if ((player?.money ?? 0) < bet || bet < 50000) return;
-    const d = makeDeck();
-    const newHand = d.splice(0, 5);
-    setHand(newHand);
-    setHeld([false, false, false, false, false]);
-    setGameState("dealt");
-    setResult("");
-    setResultMult(0);
+    try {
+      // Server deals and escrows the bet.
+      const r = await pokerDeal({ city, bet });
+      setHand(r.hand);
+      setHeld([false, false, false, false, false]);
+      setGameState("dealt");
+      setResult("");
+      setResultMult(0);
+    } catch (e: any) {
+      alert(e?.message ?? "Deal failed");
+    }
   };
 
   const toggleHold = (idx: number) => {
@@ -1091,28 +1084,26 @@ export function CasinoVideoPokerPage() {
     setHeld(h);
   };
 
-  const draw = () => {
+  const draw = async () => {
     if (gameState !== "dealt") return;
-    const newHand = [...hand];
-    const d = makeDeck();
-    let di = 0;
-    for (let i = 0; i < 5; i++) {
-      if (!held[i]) { newHand[i] = d[di++]; }
+    try {
+      // Server replaces unheld cards, evaluates, and settles real money.
+      const r = await pokerDraw({ holds: held });
+      setHand(r.hand);
+      const handName = r.handName;
+      const pt = r.mult;
+      setResultMult(pt);
+      setResult(handName);
+
+      const winnings = r.net;
+      setStats(s => ({
+        ...s, played: s.played + 1, profit: s.profit + winnings,
+        won: s.won + (pt > 0 ? 1 : 0), lost: s.lost + (pt > 0 ? 0 : 1),
+      }));
+      setGameState("drawn");
+    } catch (e: any) {
+      alert(e?.message ?? "Draw failed");
     }
-    setHand(newHand);
-    setGameState("done");
-
-    const handName = evaluateHand(newHand);
-    const pt = paytable.find(p => p.name === handName)!;
-    setResultMult(pt.mult);
-    setResult(handName);
-
-    const winnings = Math.floor(bet * pt.mult) - bet;
-    setStats(s => ({
-      ...s, played: s.played + 1, profit: s.profit + winnings,
-      won: s.won + (pt.mult > 0 ? 1 : 0), lost: s.lost + (pt.mult > 0 ? 0 : 1),
-    }));
-    setGameState("drawn");
   };
 
   if (!player) return <div className="animate-pulse py-10 text-center text-muted-foreground">Loading...</div>;
@@ -1194,6 +1185,7 @@ export function CasinoVideoPokerPage() {
 
 export function CasinoScratchcardsPage() {
   const player = useQuery(api.game.getPlayer);
+  const playScratch = useMutation(api.casinoSystem.scratchCardPlay);
   const [cardType, setCardType] = useState<"cash" | "points" | "lucky" | "coins">("cash");
   const [card, setCard] = useState<{ symbol: string; label: string; prize: number }[] | null>(null);
   const [revealed, setRevealed] = useState<boolean[]>([]);
@@ -1201,6 +1193,7 @@ export function CasinoScratchcardsPage() {
   const [result, setResult] = useState<string>("");
   const [totalWon, setTotalWon] = useState(0);
   const [stats, setStats] = useState({ played: 0, won: 0, lost: 0, profit: 0 });
+  const pendingResult = useRef<{ won: boolean; total: number } | null>(null);
 
   const cardTypes = {
     cash: { name: "Cash Scratchcard", cost: "10 Laptops", costDisplay: "10 Laptops", icon: "💰", prizes: [
@@ -1236,25 +1229,18 @@ export function CasinoScratchcardsPage() {
     ]},
   };
 
-  const scratch = () => {
-    const ct = cardTypes[cardType];
-    const symbols = ct.prizes.map(p => ({ ...p }));
-    // Build weighted deck
-    const deck: { symbol: string; label: string; prize: number }[] = [];
-    for (const p of ct.prizes) {
-      const count = Math.round(p.chance * 10);
-      for (let i = 0; i < count; i++) deck.push({ symbol: p.symbol, label: p.label, prize: p.prize });
+  const scratch = async () => {
+    try {
+      // Server draws the 9 symbols, charges the card cost, and pays wins.
+      const r = await playScratch({ cardType });
+      setCard(r.symbols);
+      setRevealed(new Array(9).fill(false));
+      setScratching(false);
+      setResult("");
+      pendingResult.current = r;
+    } catch (e: any) {
+      alert(e?.message ?? "Scratch failed");
     }
-    // Shuffle
-    for (let i = deck.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [deck[i], deck[j]] = [deck[j], deck[i]];
-    }
-    const newCard = deck.slice(0, 9);
-    setCard(newCard);
-    setRevealed(new Array(9).fill(false));
-    setScratching(false);
-    setResult("");
   };
 
   const revealNext = async () => {
@@ -1267,18 +1253,17 @@ export function CasinoScratchcardsPage() {
 
     // Check if all revealed
     if (newRevealed.every(Boolean)) {
-      const revealedCards = card.filter((_, i) => newRevealed[i]);
-      const matchingCount = revealedCards.filter(c => c.symbol === revealedCards[0].symbol && c.symbol !== "❌").length;
-      if (matchingCount >= 3) {
-        const total = revealedCards.filter(c => c.symbol !== "❌").reduce((s, c) => s + c.prize, 0);
-        setResult(`Matching ${matchingCount}! You win $${total.toLocaleString()}`);
-        setTotalWon(total);
+      // Money was already settled server-side — just display it.
+      const pr = pendingResult.current;
+      if (pr && pr.won) {
+        setResult(`You win $${pr.total.toLocaleString()}!`);
+        setTotalWon(pr.total);
       } else {
         setResult("No matching symbols. Try again!");
         setTotalWon(0);
       }
       setScratching(true);
-      setStats(s => ({ ...s, played: s.played + 1, won: s.won + (totalWon > 0 ? 1 : 0), profit: s.profit + totalWon }));
+      setStats(s => ({ ...s, played: s.played + 1, won: s.won + (pr?.won ? 1 : 0), profit: s.profit + (pr?.total ?? 0) }));
     }
   };
 

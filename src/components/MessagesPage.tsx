@@ -5,7 +5,7 @@ import { MessageSquare, Send, User, Shield } from "lucide-react";
 
 function MessagesPage() {
   const messages = useQuery(api.game.getMessages);
-  const players = useQuery(api.admin.getAllPlayers);
+  const players = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
   const sendMsg = useMutation(api.game.sendMessage);
   const [composeOpen, setComposeOpen] = useState(false);
   const [recipient, setRecipient] = useState("");

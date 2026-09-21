@@ -438,7 +438,7 @@ export const sellSupplies = mutation({
     sp.day = day;
     ws.supply = sp;
     ws.supplyStats = sp;
-    await ctx.db.patch(player._id, { money: n(player.money, 0) + revenue, worldState: ws, supplyRuns: n((player as any).supplyRuns, 0) + 1 } as any);
+    await ctx.db.patch(player._id, { money: n(player.money, 0) + revenue, worldState: ws, supplyRuns: n((player as any).supplyRuns, 0) + 1, totalSupplyProfit: n((player as any).totalSupplyProfit, 0) + revenue } as any);
     return { success: true, qty, revenue };
   },
 });

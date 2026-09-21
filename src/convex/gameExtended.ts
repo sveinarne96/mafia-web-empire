@@ -962,14 +962,92 @@ export const getBusinessShop = query({ args: {}, handler: async () => {
   ];
 } });
 export const buyLottoTicket = mutation({ args: { type: v.string(), numbers: v.array(v.number()) }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const winning = Array.from({ length: 5 }, () => Math.floor(Math.random() * 30) + 1); const matches = args.numbers.filter(n => winning.includes(n)).length; const prize = matches >= 3 ? matches * 10000 : 0; if (prize > 0 && p) await ctx.db.patch(p._id, { money: (p.money ?? 0) + prize, energy: Math.max(0, ((p as any).energy ?? 100) - 3) }); else if (p) await ctx.db.patch(p._id, { experience: ((p as any).experience ?? 0) + Math.floor(10 * (1 + Math.floor((p.level ?? 1) / 10) * 0.25)) }); return { winning, matches, prize }; } });
-export const blackjackDeal = mutation({ args: { bet: v.number() }, handler: async (ctx, args) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); return { playerHand: ['A', 'K'], dealerHand: ['10', '7'], playerCards: ['A', 'K'], dealerCards: ['10', '7'], gameOver: false, result: '', winnings: 0 }; } });
+// ── BLACKJACK — real shoe, real money. Bet escrowed at deal, settled at stand.
+// Server keeps authoritative hand state (client can't cheat by passing hands).
+const BJ_SUITS = ["h", "d", "c", "s"];
+const BJ_RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
+function bjDraw(): string { return `${BJ_RANKS[Math.floor(Math.random() * BJ_RANKS.length)]}-${BJ_SUITS[Math.floor(Math.random() * BJ_SUITS.length)]}`; }
+function bjCardValue(card: string): number { const r = card.split("-")[0]; if (r === "A") return 11; if (["K", "Q", "J", "10"].includes(r)) return 10; const n = parseInt(r, 10); return Number.isFinite(n) ? n : 10; }
+function bjHandTotal(hand: string[]): number { let t = 0, aces = 0; for (const c of hand) { t += bjCardValue(c); if (c.startsWith("A")) aces++; } while (t > 21 && aces > 0) { t -= 10; aces--; } return t; }
 
-export const blackjackHit = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async () => { return { card: '5', bust: false, playerHand: ['A', 'K', '5'], result: '', winnings: 0 }; } });
+async function bjSettleStand(ctx: any, p: any, st: any, playerHand: string[]) {
+  const bet = st.bet;
+  const dealer = [...st.dealerHand];
+  while (bjHandTotal(dealer) < 17) dealer.push(bjDraw());
+  const pt = bjHandTotal(playerHand), dt = bjHandTotal(dealer);
+  let payout = 0, result = "lose", winnings = 0;
+  if (dt > 21 || pt > dt) { payout = bet * 2; result = "win"; winnings = bet; }
+  else if (pt === dt) { payout = bet; result = "push"; winnings = 0; }
+  if (payout > 0) await ctx.db.patch(p._id, { money: (p.money ?? 0) + payout } as any);
+  await ctx.db.patch(p._id, { blackjackState: undefined } as any);
+  return { playerHand, dealerHand: dealer, gameOver: true, result, winnings };
+}
 
-export const blackjackStand = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async () => { return { dealerFinal: 19, won: true, dealerHand: ['10', '7', '2'], result: 'win', winnings: 100 }; } });
+export const blackjackDeal = mutation({ args: { bet: v.number() }, handler: async (ctx, args) => {
+  const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated");
+  const bet = Math.floor(args.bet);
+  if (!Number.isFinite(bet) || bet < 10) throw new Error("Minimum bet is $10");
+  if ((p.money ?? 0) < bet) throw new Error("Not enough cash!");
+  const playerHand = [bjDraw(), bjDraw()];
+  const dealerHand = [bjDraw(), bjDraw()];
+  await ctx.db.patch(p._id, { money: (p.money ?? 0) - bet } as any);
+  const playerBJ = bjHandTotal(playerHand) === 21, dealerBJ = bjHandTotal(dealerHand) === 21;
+  if (playerBJ || dealerBJ) {
+    let payout = 0, result = "lose", winnings = 0;
+    if (playerBJ && dealerBJ) { payout = bet; result = "push"; }
+    else if (playerBJ) { payout = bet + Math.floor(bet * 1.5); result = "blackjack"; winnings = Math.floor(bet * 1.5); }
+    if (payout > 0) await ctx.db.patch(p._id, { money: (p.money ?? 0) - bet + payout } as any);
+    await ctx.db.patch(p._id, { blackjackState: undefined } as any);
+    return { playerHand, dealerHand, gameOver: true, result, winnings };
+  }
+  await ctx.db.patch(p._id, { blackjackState: { bet, playerHand, dealerHand, active: true } } as any);
+  return { playerHand, dealerHand: [dealerHand[0]], gameOver: false, result: "", winnings: 0 };
+} });
 
-export const searchForumPosts = query({ args: { query: v.string() }, handler: async (ctx, args) => { return await ctx.db.query("forumPosts").collect(); } });
-export const submitSupportTicket = mutation({ args: { subject: v.string(), body: v.string() }, handler: async (ctx, args) => { return { success: true }; } });
+export const blackjackHit = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async (ctx) => {
+  const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated");
+  const st = (p as any).blackjackState;
+  if (!st || !st.active) throw new Error("No active hand — deal first!");
+  const hand = [...(st.playerHand as string[]), bjDraw()];
+  const total = bjHandTotal(hand);
+  if (total > 21) {
+    await ctx.db.patch(p._id, { blackjackState: undefined } as any);
+    return { playerHand: hand, dealerHand: st.dealerHand, gameOver: true, result: "bust", winnings: 0 };
+  }
+  if (total === 21) return await bjSettleStand(ctx, p, st, hand);
+  await ctx.db.patch(p._id, { blackjackState: { ...st, playerHand: hand } } as any);
+  return { playerHand: hand, dealerHand: [st.dealerHand[0]], gameOver: false, result: "", winnings: 0 };
+} });
+
+export const blackjackStand = mutation({ args: { hand: v.optional(v.array(v.string())), bet: v.optional(v.number()) }, handler: async (ctx) => {
+  const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated");
+  const st = (p as any).blackjackState;
+  if (!st || !st.active) throw new Error("No active hand — deal first!");
+  return await bjSettleStand(ctx, p, st, st.playerHand as string[]);
+} });
+
+export const searchForumPosts = query({ args: { query: v.string() }, handler: async (ctx, args) => {
+  const q = (args.query ?? "").trim().toLowerCase();
+  const posts = await ctx.db.query("forumPosts").withIndex("by_timestamp").order("desc").take(200);
+  if (!q) return posts.slice(0, 50);
+  return posts.filter((p: any) => (p.title ?? "").toLowerCase().includes(q) || (p.body ?? "").toLowerCase().includes(q)).slice(0, 50);
+} });
+
+export const submitSupportTicket = mutation({ args: { subject: v.string(), body: v.string() }, handler: async (ctx, args) => {
+  const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated");
+  const now = Date.now();
+  const ticketId = await ctx.db.insert("supportTickets", {
+    userId: p._id,
+    playerName: p.nickname ?? "Player",
+    subject: args.subject.slice(0, 200),
+    category: "general",
+    status: "open",
+    messages: [{ sender: p.nickname ?? "Player", senderRole: "player", message: args.body.slice(0, 4000), timestamp: now }],
+    createdAt: now,
+    updatedAt: now,
+  });
+  return { success: true, ticketId };
+} });
 
 export const claimDailyReward = mutation({ args: {}, handler: async (ctx) => { const p = await getPlayer(ctx); if (!p) throw new Error("Not authenticated"); const now = Date.now(); const lastClaim = (p as any).lastDailyClaim ?? 0; const TWELVE_HOURS = 43200000; if (lastClaim && (now - lastClaim) < TWELVE_HOURS) { const remaining = Math.ceil((TWELVE_HOURS - (now - lastClaim)) / 1000); const h = Math.floor(remaining / 3600); const m = Math.floor((remaining % 3600) / 60); const s = remaining % 60; return { success: false, message: `Locked! Wait ${h}h ${m}m ${s}s` }; } const streak = ((p as any).dailyStreak ?? 0) + 1; const rewards = [100000, 350000, 700000, 1400000, 2800000, 6000000, 12000000]; const dayIdx = ((streak - 1) % 7); const reward = rewards[dayIdx]; const isBonusDay = streak % 7 === 0; const xpBonus = isBonusDay ? 500 : Math.floor(75 * (1 + Math.floor((p.level ?? 1) / 10) * 0.25)); await ctx.db.patch(p._id, { money: (p.money ?? 0) + reward, dailyStreak: streak, lastDailyClaim: now, energy: Math.max(0, ((p as any).energy ?? 100) - 5), experience: ((p as any).experience ?? 0) + xpBonus }); return { success: true, reward, streak, day: dayIdx + 1, message: isBonusDay ? `🎁 DAY 7 BONUS! $${reward.toLocaleString()} + 500 XP! Streak resets!` : `🎁 Day ${dayIdx + 1}! $${reward.toLocaleString()} + ${xpBonus} XP! Come back in 12 hours!` }; } });
 

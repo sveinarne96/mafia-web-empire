@@ -10,8 +10,8 @@ interface GameRecordProps {
 }
 
 function GameRecordPage({ title, icon, field, label }: GameRecordProps) {
-  const allPlayers = useQuery(api.admin.getAllPlayers);
-  if (allPlayers === undefined) {
+  const leaders = useQuery(api.statistics.getLeaderboard, { field, limit: 50 });
+  if (leaders === undefined) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin size-6 border-2 border-primary border-t-transparent rounded-full" />
@@ -19,10 +19,7 @@ function GameRecordPage({ title, icon, field, label }: GameRecordProps) {
     );
   }
 
-  const sorted = [...allPlayers]
-    .filter((p: any) => p.nickname)
-    .sort((a: any, b: any) => (b[field] ?? 0) - (a[field] ?? 0))
-    .slice(0, 50);
+  const sorted = leaders;
 
   return (
     <div className="animate-fade-in space-y-4">
@@ -35,7 +32,7 @@ function GameRecordPage({ title, icon, field, label }: GameRecordProps) {
       </div>
       <div className="space-y-1">
         {sorted.map((p: any, i: number) => {
-          const value = p[field] ?? 0;
+          const value = p.value ?? 0;
           const isTop3 = i < 3;
           const medalColors = ["text-yellow-400", "text-gray-300", "text-orange-400"];
           return (
@@ -53,7 +50,8 @@ function GameRecordPage({ title, icon, field, label }: GameRecordProps) {
                 #{i + 1}
               </span>
               <span className="text-sm font-bold flex-1">
-                {p.nickname || p.username || "Unknown"}
+                {p.nickname || "Unknown"}
+                {p.isBot ? <span className="ml-2 text-[9px] text-slate-500">·</span> : null}
               </span>
               <span className="text-xs text-muted-foreground">
                 Lv.{p.level ?? 0}

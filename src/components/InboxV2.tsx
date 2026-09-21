@@ -32,7 +32,7 @@ export function InboxV2() {
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
-  const players = useQuery(api.admin.getAllPlayers);
+  const players = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
 
   const show = (t: string) => { setFlash(t); setTimeout(() => setFlash(null), 2500); };
 

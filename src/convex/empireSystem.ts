@@ -392,6 +392,7 @@ export const bustBot = mutation({
       stats.profit = n(stats.profit, 0) + reward;
       patch.money = n(player.money, 0) + reward;
       patch.bustStats = stats;
+      patch.totalBusts = n((player as any).totalBusts, 0) + 1; // Game Records counter
       await ctx.db.patch(bot._id, { active: false });
       const xp = await addXpAndCheckLevel(ctx, player, 100 + Math.floor(reward / 10_000));
       Object.assign(patch, xp);

@@ -161,7 +161,7 @@ export function ArenaHubPage({ initialTab = "duel" }: { initialTab?: string }) {
 
   const player = useQuery(api.game.getPlayer);
   const duels = useQuery(api.game.getPendingDuels);
-  const players = useQuery(api.admin.getAllPlayers);
+  const players = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
   const matches = useQuery(api.allFeatures.getFightClubMatches);
   const rankings = useQuery(api.allFeatures.getArenaRankings);
   const contracts = useQuery(api.gameFeatures.getOpenContracts);
@@ -578,7 +578,7 @@ export function CrimeOpsHubPage({ initialTab = "counterfeit" }: { initialTab?: s
   const [tab, setTab] = useState(initialTab);
   const { busy, msg, run } = useRun();
   const player = useQuery(api.game.getPlayer);
-  const targets = useQuery(api.admin.getAllPlayers);
+  const targets = useQuery(api.statistics.getPlayerDirectory, { limit: 200 });
   const market = useQuery(api.underground.getBlackMarketItems);
 
   const counterfeiting = useMutation(api.underground.counterfeiting);

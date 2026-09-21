@@ -3,6 +3,8 @@ import { query, mutation } from "./_generated/server";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
+const n = (val: any, d: number = 0) => (typeof val === "number" && Number.isFinite(val) ? val : d);
+
 // Helper: get authenticated player by auth userId (works with all auth providers)
 async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
   const userId = await getAuthUserId(ctx);
@@ -434,11 +436,12 @@ export const sellStock = mutation({
     const held = holdings.find(s => s.stockId === args.stockId);
     if (!held || held.shares < args.shares) throw new Error("Not enough shares!");
     const revenue = stock.price * args.shares;
+    const profit = revenue - held.buyPrice * args.shares; // vs purchase cost
     const newShares = held.shares - args.shares;
     if (newShares <= 0) await ctx.db.delete(held._id);
     else await ctx.db.patch(held._id, { shares: newShares });
-    await ctx.db.patch(player._id, { money: player.money + revenue });
-    return { sold: args.shares, at: stock.price, revenue };
+    await ctx.db.patch(player._id, { money: player.money + revenue, totalStockProfit: n((player as any).totalStockProfit, 0) + Math.round(profit) } as any);
+    return { sold: args.shares, at: stock.price, revenue, profit: Math.round(profit) };
   },
 });
 

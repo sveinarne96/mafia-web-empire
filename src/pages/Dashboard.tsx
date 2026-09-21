@@ -2364,8 +2364,8 @@ function GenericStub({ title, icon }: { title: string; icon: string }) {
 }
 
 function LeaderboardPage({ title, icon }: { title: string; icon: string }) {
-  const players = useQuery(api.admin.getAllPlayers);
-  const sorted = [...(players || [])].sort((a: any, b: any) => (b.level || 0) - (a.level || 0)).slice(0, 50);
+  const players = useQuery(api.statistics.getLeaderboard, { field: "level", limit: 50 });
+  const sorted = players || []; // already sorted server-side by level
   return (
     <div className="animate-fade-in space-y-4">
       <div className="flex items-center gap-3"><span className="text-3xl">{icon}</span><h2 className="text-2xl font-bold">{title}</h2></div>

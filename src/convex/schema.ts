@@ -223,6 +223,12 @@ const schema = defineSchema({
     rareRepaired: v.optional(v.number()),
     commonRepaired: v.optional(v.number()),
     totalRepairSpent: v.optional(v.number()),
+    // ── Runtime-fix fields (were written by mutations but missing from schema →
+    // Convex write-validation crashed the action at runtime). All optional.
+    totalGta: v.optional(v.number()),
+    totalGtaRare: v.optional(v.number()),
+    burglaries: v.optional(v.number()),
+    racesWon: v.optional(v.number()),
     lastAutoMelt: v.optional(v.number()),
     meltLimitLevel: v.optional(v.number()),
     starterClaimed: v.optional(v.boolean()),
@@ -307,6 +313,18 @@ const schema = defineSchema({
     swissLimit: v.optional(v.number()),
     worldState: v.optional(v.any()),
     worldRentAt: v.optional(v.number()),
+    // Game Records counters (were displayed but never written → always 0).
+    totalBets: v.optional(v.number()),
+    betsWon: v.optional(v.number()),
+    betsLost: v.optional(v.number()),
+    totalBettingProfit: v.optional(v.number()),
+    totalCasinoWins: v.optional(v.number()),
+    totalStockProfit: v.optional(v.number()),
+    totalSupplyProfit: v.optional(v.number()),
+    totalAssassinations: v.optional(v.number()),
+    totalBulletsMelted: v.optional(v.number()),
+    blackjackState: v.optional(v.any()),
+    pokerState: v.optional(v.any()),
     // ═══ NEW FRONTIERS (business, retention, cosmetics) ═══
     loginStreak: v.optional(v.number()),
     lastLoginDay: v.optional(v.string()),
@@ -524,6 +542,10 @@ const schema = defineSchema({
     price: v.number(),
     income: v.number(),
     ownerId: v.optional(v.id("users")),
+    // Runtime-fix: businessSystem buyProperty / seedNewFrontiers write these.
+    renovationLevel: v.optional(v.number()),
+    rentedTo: v.optional(v.union(v.id("users"), v.null())),
+    lastRentAt: v.optional(v.number()),
   }).index("by_owner", ["ownerId"]).index("by_city", ["city"]),
 
   businesses: defineTable({
@@ -1142,6 +1164,11 @@ const schema = defineSchema({
     lastCrimeDrugTime: v.number(),
     originalThc: v.number(),
     drugType: v.optional(v.string()),
+    // Runtime-fix: grow-op upgrades write these (were missing → write crash).
+    greenhouseTier: v.optional(v.string()),
+    growingSlots: v.optional(v.array(v.any())),
+    upgrades: v.optional(v.array(v.any())),
+    workers: v.optional(v.array(v.any())),
   }).index("by_user", ["userId"]),
   qsOffers: defineTable({
     userId: v.id("users"),
