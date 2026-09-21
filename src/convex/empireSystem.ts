@@ -446,8 +446,12 @@ export const getActivePromo = query({
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
     const now = Date.now();
-    const promos = await ctx.db.query("promoCodes").withIndex("by_code", (q: any) => q.gt("expiresAt", now)).collect();
-    const active = promos.filter((p: any) => p.active).sort((a: any, b: any) => b.createdAt - a.createdAt)[0];
+    // promoCodes is tiny — full scan + JS filter (the by_code index only covers
+    // the code field, so it cannot filter on expiresAt).
+    const promos = await ctx.db.query("promoCodes").collect();
+    const active = promos
+      .filter((p: any) => p.active && p.expiresAt > now)
+      .sort((a: any, b: any) => b.createdAt - a.createdAt)[0];
     if (!active) return null;
     // Hide the code from players who already redeemed it.
     if (player && Array.isArray((player as any).redeemedPromos) && (player as any).redeemedPromos.includes(active.code)) {
@@ -462,8 +466,8 @@ export const getMyPromos = query({
   handler: async (ctx) => {
     const player = await getCurrentUser(ctx);
     const now = Date.now();
-    const promos = await ctx.db.query("promoCodes").withIndex("by_code", (q: any) => q.gt("expiresAt", now)).collect();
-    const active = promos.filter((p: any) => p.active).sort((a: any, b: any) => b.createdAt - a.createdAt)[0] ?? null;
+    const promos = await ctx.db.query("promoCodes").collect();
+    const active = promos.filter((p: any) => p.active && p.expiresAt > now).sort((a: any, b: any) => b.createdAt - a.createdAt)[0] ?? null;
     const history = player ? ((player as any).promoHistory ?? []) : [];
     return { active, history };
   },
@@ -476,10 +480,10 @@ export const redeemPromoCode = mutation({
     if (!player) throw new Error("Not authenticated");
     const code = args.code.trim().toUpperCase();
     if (!code) throw new Error("Enter a code");
-    const promo = await ctx.db
-      .query("promoCodes")
-      .withIndex("by_code", (q: any) => q.eq("code", code))
-      .unique();
+    // collect + find (NOT .unique(): unique() throws a raw Convex error when no
+    // row matches, which would mask the friendly "Invalid code" message).
+    const all = await ctx.db.query("promoCodes").withIndex("by_code", (q: any) => q.eq("code", code)).collect();
+    const promo = all[0];
     if (!promo || !promo.active) throw new Error("Invalid code");
     if (promo.expiresAt < Date.now()) throw new Error("This code has expired");
 
@@ -560,8 +564,8 @@ export const createPromoCode = mutation({
     const existing = await ctx.db
       .query("promoCodes")
       .withIndex("by_code", (q: any) => q.eq("code", code))
-      .unique();
-    if (existing) throw new Error(`Code ${code} already exists`);
+      .collect();
+    if (existing.length > 0) throw new Error(`Code ${code} already exists`);
     await ctx.db.insert("promoCodes", {
       code,
       message: args.message || `Redeem ${code} for free rewards!`,
