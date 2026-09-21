@@ -174,6 +174,7 @@ import {
 } from "@/components/WorldPages";
 import { CarDealerPage } from "@/components/CarDealerPage";
 import { RIGHT_MENU_SECTIONS, LEFT_MENU_SECTIONS } from "@/data/menuSections";
+import { SidebarSection } from "@/components/SidebarSection";
 import { ObjectivesPage, PointStorePage, CoinStorePage, ObjectivesPanel } from "@/components/StorePages";
 import { InventoryPage } from "@/components/InventoryPage";
 import { PromoCodesPage } from "@/components/PromoCodesPage";
@@ -2084,29 +2085,16 @@ export default function Dashboard() {
               )}
             </div>
           </div>
-          <nav className="pb-20">
+          <nav className="pb-20 px-1.5">
             {getLeftMenuSections().filter(section => !leftSearch || section.title.toLowerCase().includes(leftSearch.toLowerCase()) || section.items.some(item => (item.label || "").toLowerCase().includes(leftSearch.toLowerCase()))).map(section => (
-              <div key={section.title}>
-                <button onClick={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(s => s !== section.title) : [...prev, section.title])}
-                  className="w-full px-4 py-2.5 flex items-center gap-2 text-xs font-bold text-slate-400 hover:text-amber-300 hover:bg-amber-500/5 transition-all duration-300 group">
-                  <section.icon className="size-3.5 group-hover:animate-float" />
-                  <span className="flex-1 text-left group-hover:animate-color-cycle">{section.title}</span>
-                  {leftExpanded.includes(section.title) ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-                </button>
-                {leftExpanded.includes(section.title) && (
-                  <div className="pl-4 space-y-0.5 pb-1">
-                    {section.items.map(item => (
-                      <button key={item.page} onClick={() => { setPage(item.page); setMobileMenuOpen(false); }}
-                        className={`w-full px-3 py-1.5 flex items-center gap-2 text-xs rounded-lg transition-all ${
-                          activePage === item.page ? "bg-primary/20 text-primary font-bold" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
-                        }`}>
-                        <span>{item.icon}</span>
-                        <span>{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <SidebarSection
+                key={section.title}
+                section={section}
+                expanded={leftExpanded.includes(section.title)}
+                onToggle={() => setLeftExpanded(prev => prev.includes(section.title) ? prev.filter(s => s !== section.title) : [...prev, section.title])}
+                activePage={activePage}
+                onNavigate={(p) => { setPage(p as any); setMobileMenuOpen(false); }}
+              />
             ))}
           </nav>
         </aside>
@@ -2197,30 +2185,19 @@ export default function Dashboard() {
                 } catch { return null; }
               })()}
 
-              {/* Right Menu Sections */}
-              {getRightMenuSections().map(section => (
-                <div key={section.title}>
-                  <button onClick={() => setRightExpanded(prev => prev.includes(section.title) ? prev.filter(s => s !== section.title) : [...prev, section.title])}
-                    className="w-full px-2 py-2 flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-slate-300 transition-all">
-                    <section.icon className="size-3" />
-                    <span className="flex-1 text-left">{section.title}</span>
-                    {rightExpanded.includes(section.title) ? <ChevronDown className="size-2.5" /> : <ChevronRight className="size-2.5" />}
-                  </button>
-                  {rightExpanded.includes(section.title) && (
-                    <div className="pl-3 space-y-0.5 pb-1">
-                      {section.items.map(item => (
-                        <button key={item.page} onClick={() => setPage(item.page)}
-                          className={`w-full px-2 py-1 flex items-center gap-1.5 text-[10px] rounded transition-all ${
-                            activePage === item.page ? "bg-primary/20 text-primary font-bold" : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/30"
-                          }`}>
-                          <span>{item.icon}</span><span>{item.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+              {/* Right Menu Sections — same premium section renderer */}
+              <div className="px-1 -mx-1">
+                {getRightMenuSections().map(section => (
+                  <SidebarSection
+                    key={section.title}
+                    section={section}
+                    expanded={rightExpanded.includes(section.title)}
+                    onToggle={() => setRightExpanded(prev => prev.includes(section.title) ? prev.filter(s => s !== section.title) : [...prev, section.title])}
+                    activePage={activePage}
+                    onNavigate={(p) => setPage(p as any)}
+                  />
+                ))}
+              </div>            </div>
           </aside>
         )}
       </div>
