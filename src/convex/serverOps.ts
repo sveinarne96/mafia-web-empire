@@ -410,6 +410,26 @@ export const getGameBalancePublic = query({
   },
 });
 
+/** Public (any signed-in player): the server-managed LIVE EVENT banner data.
+ *  Returns active:false when no event runs so the UI can hide the banner. */
+export const getLiveEventPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return { active: false, multiplier: 0, endsAt: 0, label: "" };
+    const doc = await getConfigDoc(ctx);
+    const mult = finite(doc?.rankEventMultiplier, 0);
+    const endsAt = finite(doc?.rankEventEndsAt, 0);
+    const active = mult >= 2 && Date.now() < endsAt;
+    return {
+      active,
+      multiplier: active ? clamp(mult, 2, 10) : 0,
+      endsAt: active ? endsAt : 0,
+      label: active ? (doc?.rankEventLabel ?? "Ranking Event") : "",
+    };
+  },
+});
+
 /* ══════════════════ 5. SERVER FUNCTIONS ══════════════════ */
 
 export const setMurderSystem = mutation({

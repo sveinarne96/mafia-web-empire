@@ -123,9 +123,7 @@ createRoot(document.getElementById("root")!).render(
                 path="/dashboard"
                 element={
                   <RequireAuth>
-                    <RulesGate>
-                      <Dashboard />
-                    </RulesGate>
+                    <Dashboard />
                   </RequireAuth>
                 }
               />

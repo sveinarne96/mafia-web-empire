@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Zap, Clock, Flame, Shield, Skull, Trophy, Star, Swords, Target, Bomb, Crown, Gift, Heart, AlertTriangle } from "lucide-react";
 
@@ -73,91 +75,56 @@ function getTimeRemaining(endTime: number) {
 }
 
 export function LiveEventBanner() {
-  const [activeEvents, setActiveEvents] = useState<GameEvent[]>([]);
-  const [currentEventIndex, setCurrentEventIndex] = useState(0);
-  const [tick, setTick] = useState(0);
+  // REAL server-managed LIVE EVENT (admin Live Event panel). Shows nothing
+  // while no event is active — no more fake random events.
+  const liveEvent = useQuery(api.serverOps.getLiveEventPublic);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
-    // Initialize with random active events
-    const now = Date.now();
-    const numActive = 3 + Math.floor(Math.random() * 4); // 3-6 active events
-    const shuffled = [...ALL_EVENTS].sort(() => Math.random() - 0.5);
-    const selected = shuffled.slice(0, numActive).map((e) => ({
-      ...e,
-      startTime: now - Math.floor(Math.random() * e.duration * 0.5), // Started sometime during duration
-    }));
-    setActiveEvents(selected);
-
-    // Cycle through events
-    const cycleTimer = setInterval(() => {
-      setCurrentEventIndex((prev) => (prev + 1) % selected.length);
-    }, 5000);
-
-    // Tick timer
-    const tickTimer = setInterval(() => setTick((t) => t + 1), 1000);
-
-    // Replace expired events with new ones
-    const expireTimer = setInterval(() => {
-      const now2 = Date.now();
-      setActiveEvents((prev) => {
-        const stillActive = prev.filter((e) => now2 < e.startTime + e.duration * 1000);
-        if (stillActive.length < 3) {
-          const used = new Set(stillActive.map((e) => e.id));
-          const available = ALL_EVENTS.filter((e) => !used.has(e.id));
-          if (available.length > 0) {
-            const newEvent = available[Math.floor(Math.random() * available.length)];
-            stillActive.push({ ...newEvent, startTime: now2 });
-          }
-        }
-        return stillActive;
-      });
-    }, 30000);
-
-    return () => { clearInterval(cycleTimer); clearInterval(tickTimer); clearInterval(expireTimer); };
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const currentEvent = activeEvents[currentEventIndex % activeEvents.length];
-  if (!currentEvent) return null;
+  if (!liveEvent || !liveEvent.active) return null;
 
-  const timeLeft = getTimeRemaining(currentEvent.startTime + currentEvent.duration * 1000);
-  const progress = 1 - timeLeft.total / (currentEvent.duration * 1000);
+  const msLeft = Math.max(0, liveEvent.endsAt - now);
+  const totalSec = Math.floor(msLeft / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const minutes = Math.floor((totalSec % 3600) / 60);
+  const seconds = totalSec % 60;
+  // Assume a 7-day default window for the progress bar when we don't know the start.
+  const progress = Math.min(1, Math.max(0, 1 - msLeft / (7 * 86400 * 1000)));
 
   return (
     <div className="space-y-2">
-      {/* Active Events Ticker */}
-      <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${currentEvent.bgColor} ${currentEvent.borderColor} overflow-hidden`}>
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          <span className="text-lg animate-pulse">{currentEvent.emoji}</span>
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-500/50 bg-amber-950/40 overflow-hidden relative"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-transparent to-amber-500/10 animate-pulse pointer-events-none" />
+        <div className="flex items-center gap-2 min-w-0 flex-1 relative">
+          <span className="text-lg animate-pulse">⚡</span>
           <div className="min-w-0">
-            <AnimatePresence mode="wait">
-              <motion.div key={currentEvent.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="flex items-center gap-2">
-                <span className={`text-xs font-bold ${currentEvent.color}`}>{currentEvent.name}</span>
-                <span className="text-[10px] text-muted-foreground truncate">{currentEvent.description}</span>
-              </motion.div>
-            </AnimatePresence>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black text-amber-300">{liveEvent.label}</span>
+              <span className="text-[10px] font-black text-yellow-300 bg-yellow-950/60 px-1.5 py-0.5 rounded">{liveEvent.multiplier.toFixed(1)}x RANK XP</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-amber-400/70 hidden sm:inline">LIVE</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground truncate">All rank XP from crime, car theft, missions and film production is multiplied server-wide.</div>
           </div>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {currentEvent.multiplier && (
-            <span className="text-[10px] font-bold text-yellow-400 bg-yellow-950/50 px-1.5 py-0.5 rounded">{currentEvent.multiplier}x</span>
-          )}
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+        <div className="flex items-center gap-2 shrink-0 relative">
+          <div className="flex items-center gap-1 text-[10px] font-bold text-amber-200 tabular-nums">
             <Clock className="size-3" />
-            <span>{timeLeft.hours > 0 ? `${timeLeft.hours}h ` : ""}{timeLeft.minutes}m {timeLeft.seconds}s</span>
+            <span>{days > 0 ? `${days}d ` : ""}{hours > 0 || days > 0 ? `${hours}h ` : ""}{minutes}m {String(seconds).padStart(2, "0")}s</span>
           </div>
           <div className="w-16 h-1.5 bg-background/50 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full transition-all duration-1000 ${currentEvent.type === "boost" ? "bg-green-500" : currentEvent.type === "danger" ? "bg-red-500" : currentEvent.type === "raid" ? "bg-yellow-500" : "bg-blue-500"}`} style={{ width: `${progress * 100}%` }} />
+            <div className="h-full rounded-full bg-amber-400 transition-all duration-1000" style={{ width: `${progress * 100}%` }} />
           </div>
         </div>
-      </div>
-
-      {/* Event Dots */}
-      <div className="flex justify-center gap-1">
-        {activeEvents.map((e, i) => (
-          <button key={e.id} onClick={() => setCurrentEventIndex(i)}
-            className={`size-1.5 rounded-full transition-all ${i === currentEventIndex ? "bg-primary w-4" : "bg-muted-foreground/30"}`} />
-        ))}
-      </div>
+      </motion.div>
     </div>
   );
 }
