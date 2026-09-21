@@ -48,6 +48,7 @@ import { AdminPanel } from "@/components/AdminPanel";
 import { MyProfilePage } from "@/components/MyProfile";
 import CrimeHub from "@/components/CrimeHub";
 import { LiveEventBanner } from "@/components/EventBanner";
+import { SeasonBanner } from "@/components/SeasonBanner";
 import { EventsPage } from "@/components/EventsPage";
 import { ALL_GAME_EVENTS } from "@/data/events";
 import { OnlineList } from "@/components/OnlineList";
@@ -2062,6 +2063,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
+      <SeasonBanner />
       <LiveGameBanner />
       <PromoBanner />
       <div className="flex flex-1 overflow-hidden">

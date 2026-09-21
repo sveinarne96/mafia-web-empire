@@ -451,6 +451,33 @@ export const getLiveEventPublic = query({
   },
 });
 
+/** Public (any signed-in player): current season + live countdown to its end.
+ *  Drives the always-on season banner at the top of the game. */
+export const getSeasonPublic = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return null;
+    const seasons = await ctx.db
+      .query("seasonState")
+      .withIndex("by_number", (q: any) => q.gte("seasonNumber", 0))
+      .order("desc")
+      .take(1);
+    const s = seasons[0];
+    if (!s) {
+      return { number: 1, name: "Public Alpha", startedAt: 0, plannedEndsAt: 0, days: 0, hasEnd: false };
+    }
+    return {
+      number: s.seasonNumber ?? 1,
+      name: s.name ?? `Season ${s.seasonNumber ?? 1}`,
+      startedAt: s.startedAt ?? 0,
+      plannedEndsAt: s.plannedEndsAt ?? 0,
+      days: s.days ?? 0,
+      hasEnd: (s.plannedEndsAt ?? 0) > Date.now(),
+    };
+  },
+});
+
 /** Server-side helper: prison sentence (ms) for a crime id or category.
  *  Reads the admin GAME BALANCE panel — falls back to fallbackMs when unset. */
 export async function getJailMs(ctx: any, crimeIdOrCategory: string, fallbackMs: number): Promise<number> {
