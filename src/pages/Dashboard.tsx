@@ -2421,53 +2421,125 @@ function UndergroundPage() {
   );
 }
 
-// ===== REGISTER PLAYER =====
+// ===== REGISTER / RECOVER PLAYER =====
+// One screen, three paths — no more duplicate characters:
+//  1. "Continue as X" — one click back into the character you played last time
+//     (saved locally; merges your old profile into this session).
+//  2. Recover — type any nickname to claim an existing character.
+//  3. New character — only when you actually want a fresh start.
 function RegisterPlayer({ onComplete }: { onComplete: () => void }) {
+  const [mode, setMode] = useState<"resume" | "form">(() => {
+    try { return localStorage.getItem("se_lastNickname") ? "resume" : "form"; } catch { return "form"; }
+  });
+  const savedName = (() => { try { return localStorage.getItem("se_lastNickname") || ""; } catch { return ""; } })();
   const [nickname, setNickname] = useState("");
   const [playerClass, setPlayerClass] = useState<"hitter" | "thief" | "enforcer" | "hustler">("enforcer");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const register = useMutation(api.game.registerPlayer);
+  const claim = useMutation(api.game.claimExistingAccount);
 
-  const handle = async () => {
-    if (!nickname.trim()) {
-      setMsg("Nickname is required"); return;
-    }
+  const finish = (name?: string) => {
+    try { if (name) localStorage.setItem("se_lastNickname", name); } catch {}
+    onComplete();
+  };
+
+  const handleNew = async () => {
+    if (!nickname.trim()) { setMsg("Nickname is required"); return; }
     setLoading(true);
     try {
       await register({ nickname: nickname.trim(), playerClass });
-      onComplete();
+      finish(nickname.trim());
     } catch (e: any) { setMsg(e.message || "Registration failed"); }
+    setLoading(false);
+  };
+
+  const handleResume = async () => {
+    if (!savedName) return;
+    setLoading(true);
+    try {
+      await claim({ nickname: savedName });
+      finish(savedName);
+    } catch (e: any) {
+      setMsg(e.message || "Could not resume — try recovering manually.");
+      setMode("form");
+    }
+    setLoading(false);
+  };
+
+  const handleRecover = async () => {
+    if (!nickname.trim()) { setMsg("Type the nickname of your existing character"); return; }
+    setLoading(true);
+    try {
+      await claim({ nickname: nickname.trim() });
+      finish(nickname.trim());
+    } catch (e: any) { setMsg(e.message || "Recovery failed"); }
     setLoading(false);
   };
 
   return (
     <div className="mafia-card rounded-2xl p-6 space-y-4">
-      <div className="space-y-2">
-        <label className="text-xs font-bold text-muted-foreground">Nickname</label>
-        <input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Your street name..."
-          className="w-full bg-[oklch(0.10_0.012_35)] border border-border rounded-lg px-3 py-2 text-sm" />
-      </div>
-
-      <div className="space-y-2">
-        <label className="text-xs font-bold text-muted-foreground">Class</label>
-        <div className="grid grid-cols-3 gap-2">
-          {[{ id: "enforcer" as const, label: "Enforcer", icon: "👊" }, { id: "hustler" as const, label: "Hustler", icon: "💰" }, { id: "thief" as const, label: "Thief", icon: "🪪" }].map(c => (
-            <button key={c.id} onClick={() => setPlayerClass(c.id)}
-              className={`p-3 rounded-lg text-center text-xs font-bold transition border ${
-                playerClass === c.id ? "border-primary bg-primary/20 text-primary" : "border-border hover:border-primary/30"
-              }`}>
-              <div className="text-xl mb-1">{c.icon}</div>
-              <div>{c.label}</div>
+      {mode === "resume" && savedName ? (
+        <>
+          <div className="text-center space-y-1">
+            <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Welcome back</div>
+            <div className="text-lg font-black text-amber-300">{savedName}</div>
+          </div>
+          <button onClick={handleResume} disabled={loading}
+            className="w-full px-4 py-4 bg-primary text-primary-foreground rounded-xl font-black text-base hover:opacity-90 disabled:opacity-50 transition">
+            {loading ? "Opening the doors..." : "▶ Continue as " + savedName}
+          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => { setNickname(savedName); setMode("form"); }} disabled={loading}
+              className="px-3 py-2 border border-border rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">
+              Different character
             </button>
-          ))}
-        </div>
-      </div>
-      {msg && <div className="text-xs text-red-400 text-center">{msg}</div>}
-      <button onClick={handle} disabled={loading}
-        className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 disabled:opacity-50 transition">
-        {loading ? "Creating..." : "🎮 Enter the Underworld"}
-      </button>
+            <button onClick={() => { try { localStorage.removeItem("se_lastNickname"); } catch {} setMode("form"); }} disabled={loading}
+              className="px-3 py-2 border border-border rounded-lg text-xs font-bold text-muted-foreground hover:text-foreground hover:border-primary/40 transition">
+              New character
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-muted-foreground">Nickname</label>
+            <input value={nickname} onChange={e => setNickname(e.target.value)} placeholder="Your street name..."
+              className="w-full bg-[oklch(0.10_0.012_35)] border border-border rounded-lg px-3 py-2 text-sm" />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-muted-foreground">Class <span className="text-muted-foreground/50 font-normal">(new characters only)</span></label>
+            <div className="grid grid-cols-3 gap-2">
+              {[{ id: "enforcer" as const, label: "Enforcer", icon: "👊" }, { id: "hustler" as const, label: "Hustler", icon: "💰" }, { id: "thief" as const, label: "Thief", icon: "🪪" }].map(c => (
+                <button key={c.id} onClick={() => setPlayerClass(c.id)}
+                  className={`p-3 rounded-lg text-center text-xs font-bold transition border ${
+                    playerClass === c.id ? "border-primary bg-primary/20 text-primary" : "border-border hover:border-primary/30"
+                  }`}>
+                  <div className="text-xl mb-1">{c.icon}</div>
+                  <div>{c.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          {msg && <div className="text-xs text-red-400 text-center">{msg}</div>}
+          <button onClick={handleNew} disabled={loading}
+            className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 disabled:opacity-50 transition">
+            {loading ? "Creating..." : "🎮 Enter the Underworld"}
+          </button>
+          <div className="relative flex items-center justify-center">
+            <div className="h-px w-full bg-border" />
+            <span className="absolute px-3 bg-card text-[10px] uppercase tracking-widest text-muted-foreground">or</span>
+          </div>
+          <button onClick={handleRecover} disabled={loading || !nickname.trim()}
+            className="w-full px-4 py-3 border border-amber-500/40 bg-amber-500/10 text-amber-300 rounded-lg font-bold hover:bg-amber-500/20 disabled:opacity-40 transition">
+            ♻️ I already have a character with this name
+          </button>
+          <p className="text-[10px] text-center text-muted-foreground">
+            Recovering keeps all your money, items and progress — you will never need a second account.
+          </p>
+        </>
+      )}
     </div>
   );
 }

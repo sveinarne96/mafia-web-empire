@@ -237,6 +237,52 @@ export const registerPlayer = mutation({
   },
 });
 
+// ===== ACCOUNT RECOVERY =====
+// A player signs in with a fresh auth identity (new anonymous/email session) but
+// their old criminal is still alive in the database. Instead of forcing a brand
+// new character, let them claim their existing one by nickname — this moves the
+// old profile onto the current session and frees its old auth email.
+export const claimExistingAccount = mutation({
+  args: { nickname: v.string() },
+  handler: async (ctx, args) => {
+    const me = await getCurrentUser(ctx);
+    if (!me) throw new Error("Not authenticated");
+    const name = args.nickname.trim();
+    if (!name) throw new Error("Type your nickname to continue.");
+    const existing = await ctx.db
+      .query("users")
+      .withIndex("by_nickname", (q) => q.eq("nickname", name))
+      .unique();
+    if (!existing) throw new Error(`No criminal named "${name}" was found. Check the spelling.`);
+    if (existing.isBanned) throw new Error("That account is banned and cannot be recovered here.");
+    if ((existing as any)._id === (me as any)._id) return { success: true, alreadyYours: true };
+    // Guard: someone else may already be signed in on that profile (session link).
+    // Auth identity rows point at the user; count sessions claiming it.
+    const sessions = await ctx.db
+      .query("authSessions")
+      .withIndex("userId", (q) => q.eq("userId", (existing as any)._id))
+      .collect();
+    if (sessions.length > 1) throw new Error("That account is currently linked to another active session.");
+    // Merge the old character ONTO this session's profile row (keeps the auth
+    // session valid) and delete the old shell row so nickname uniqueness holds.
+    // ALL progression — money, bank, level, items, vehicles, perks — carries over.
+    const old = existing as any;
+    const cur = me as any;
+    const carry = { ...old } as Record<string, unknown>;
+    delete carry._id;
+    delete carry._creationTime;
+    delete carry.email;
+    delete carry.emailVerificationTime;
+    delete carry.tokenIdentifier;
+    delete carry.isAnonymous;
+    delete carry.authAccountIds;
+    delete carry.sessions;
+    await ctx.db.patch(cur._id, carry as any);
+    await ctx.db.delete(old._id);
+    return { success: true, playerId: cur._id };
+  },
+});
+
 export const awardActionXp = mutation({
   args: { amount: v.optional(v.number()) },
   handler: async (ctx, args) => {
