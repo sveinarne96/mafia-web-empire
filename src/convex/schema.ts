@@ -157,6 +157,11 @@ const schema = defineSchema({
     robotBodyguards: v.optional(v.array(v.any())),
     accountUpgrades: v.optional(v.any()),
     perks: v.optional(v.any()),
+    // ═══ TALENTS (permanent per-city + global upgrades) ═══
+    talentPoints: v.optional(v.number()),
+    globalTalentPoints: v.optional(v.number()),
+    cityTalents: v.optional(v.any()), // { "city:<name>": { influential: n, distance: n, bumper: n } }
+    globalTalents: v.optional(v.any()), // { warehouse: n, hardy: n, bulk: n }
     seasonXp: v.optional(v.number()),
     seasonTiersClaimed: v.optional(v.array(v.number())),
     vipUntil: v.optional(v.number()),

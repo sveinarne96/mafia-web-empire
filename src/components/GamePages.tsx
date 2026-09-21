@@ -132,7 +132,7 @@ export function PointsShopPage() {
       </div>
 
       <div className="flex gap-1.5 bg-background/50 rounded-xl p-1.5 overflow-x-auto border border-yellow-500/15">
-        {[...categories, { id: "gear", name: "🗡️ Gear", icon: "🗡️", color: "text-indigo-400", count: 0 }, { id: "prestige", name: "👑 Prestige", icon: "👑", color: "text-amber-400", count: 0 }].map(t => (
+        {[...categories, { id: "gear", name: "🗡️ Gear", icon: "🗡️", color: "text-indigo-400", count: 0 }, { id: "prestige", name: "👑 Prestige", icon: "👑", color: "text-amber-400", count: 0 }, { id: "talents", name: "🌟 Talents", icon: "🌟", color: "text-emerald-400", count: 0 }].map(t => (
           <button key={t.id} onClick={() => setTab(t.id)} className={`px-3 py-2 text-[10px] font-black rounded-lg transition-all whitespace-nowrap tracking-wide ${tab === t.id ? "bg-gradient-to-r from-yellow-500/30 to-amber-500/30 text-yellow-300 border border-yellow-400/50 shadow-[0_0_12px_rgba(251,191,36,0.2)]" : "text-muted-foreground hover:text-yellow-200 hover:bg-yellow-500/5 border border-transparent"}`}>
             {t.name}
           </button>
@@ -279,8 +279,117 @@ export function PointsShopPage() {
         </div>
       )}
 
+      {tab === "talents" && <TalentsPanel />}
+
       {msg && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
         className={`rounded-xl p-3 text-xs font-bold ${msg.includes("Bought") || msg.includes("✅") ? "bg-green-950/30 text-green-400 border border-green-500/30" : "bg-red-950/30 text-red-400 border border-red-500/30"}`}>{msg}</motion.div>}
+    </div>
+  );
+}
+
+// ===== TALENTS (city + global) =====
+export function TalentsPanel() {
+  const talents = useQuery(api.empireSystem.TALENTS);
+  const spend = useMutation(api.empireSystem.spendTalentPoint);
+  const convert = useMutation(api.empireSystem.convertTalentPoints);
+  const [scope, setScope] = useState<"local" | "global">("local");
+  const [convertAmount, setConvertAmount] = useState(1);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  if (!talents) return <LoadingPage />;
+
+  const defs = scope === "local" ? talents.cityDefs : talents.globalDefs;
+  const levels = scope === "local" ? talents.cityLevels : talents.globalLevels;
+  const points = scope === "local" ? talents.cityPoints : talents.globalPoints;
+
+  const doSpend = async (talentId: string) => {
+    setBusy(talentId); setMsg(null);
+    try { await spend({ scope: scope === "local" ? "city" : "global", talentId }); setMsg({ ok: true, text: "✅ Talent upgraded — it's permanent." }); }
+    catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }
+    setBusy(null);
+  };
+  const doConvert = async () => {
+    setBusy("convert"); setMsg(null);
+    try { const r = await convert({ amount: convertAmount }); setMsg({ ok: true, text: `✅ Converted — +${r.globalPoints} global talent point${r.globalPoints === 1 ? "" : "s"} (−${convertAmount * 5} city points).` }); }
+    catch (e: any) { setMsg({ ok: false, text: e.message || "Failed" }); }
+    setBusy(null);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-1.5 rounded-xl bg-background/50 p-1.5 border border-yellow-500/15">
+          {(["local", "global"] as const).map(s => (
+            <button key={s} onClick={() => setScope(s)}
+              className={`px-4 py-2 text-[10px] font-black rounded-lg uppercase tracking-wide transition-all ${scope === s ? "bg-gradient-to-r from-emerald-500/30 to-green-500/30 text-emerald-300 border border-emerald-400/40" : "text-muted-foreground hover:text-emerald-200 border border-transparent"}`}>
+              {s === "local" ? `🏙️ Local — ${talents.city}` : "🌍 Global"}
+            </button>
+          ))}
+        </div>
+        <div className={`px-4 py-2 rounded-xl border ${points > 0 ? "border-emerald-400/50 bg-emerald-500/10 shadow-[0_0_16px_rgba(52,211,153,0.15)]" : "border-slate-700/40 bg-slate-900/30"}`}>
+          <span className="text-[9px] uppercase tracking-widest text-muted-foreground font-black">Unassigned</span>
+          <span className="ml-2 text-lg font-black text-emerald-300">{points} talent point{points === 1 ? "" : "s"}</span>
+        </div>
+      </div>
+
+      {points > 0 && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-950/20 p-3 text-xs font-bold text-emerald-300">
+          You have unassigned talent points — click a talent below to spend them.
+        </div>
+      )}
+
+      {msg && <div className={`rounded-xl p-3 text-xs font-bold ${msg.ok ? "bg-green-950/30 text-green-400 border border-green-500/30" : "bg-red-950/30 text-red-400 border border-red-500/30"}`}>{msg.ok ? "" : "⚠️ "}{msg.text}</div>}
+
+      <div className="grid gap-2 md:grid-cols-3">
+        {defs.map((t: any) => {
+          const lv = (levels as Record<string, number>)[t.id] ?? 0;
+          const maxed = lv >= t.max;
+          const canBuy = !maxed && points > 0 && busy === null;
+          return (
+            <div key={t.id} className={`rounded-xl border p-4 ${maxed ? "border-amber-500/40 bg-amber-950/10" : canBuy ? "border-emerald-500/30 bg-slate-900/30 hover:border-emerald-400/60" : "border-slate-700/40 bg-slate-900/30"} transition-all`}>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <div className="text-xs font-black">{t.icon} {t.name}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 leading-4">{t.desc}</div>
+                </div>
+                <div className={`text-right ${maxed ? "text-amber-400" : "text-emerald-300"}`}>
+                  <div className="text-[8px] uppercase tracking-widest text-muted-foreground">Level</div>
+                  <div className="text-sm font-black">{lv} / {t.max}</div>
+                </div>
+              </div>
+              <div className="mt-2.5 h-1.5 rounded-full bg-background/60 overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${maxed ? "bg-gradient-to-r from-amber-500 to-yellow-400" : "bg-gradient-to-r from-emerald-500 to-green-400"}`} style={{ width: `${(lv / t.max) * 100}%` }} />
+              </div>
+              <button onClick={() => doSpend(t.id)} disabled={!canBuy}
+                className={`mt-3 w-full rounded-lg px-3 py-2 text-[10px] font-black transition-all disabled:opacity-40 disabled:cursor-not-allowed ${maxed ? "bg-amber-900/40 text-amber-400" : "bg-gradient-to-r from-emerald-500 to-green-500 text-black hover:brightness-110"}`}>
+                {maxed ? "★ MAXED" : busy === t.id ? "..." : points > 0 ? `Upgrade to Lv.${lv + 1} — 1 point` : "No points"}
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {scope === "local" ? (
+        <div className="mafia-card rounded-xl p-4 border border-purple-500/20 bg-gradient-to-r from-purple-950/20 to-pink-950/10">
+          <div className="text-xs font-black text-purple-300">🔄 Convert talent points</div>
+          <div className="text-[10px] text-muted-foreground mt-0.5">Turn 5 city talent points into 1 global talent point. Global talents apply in every city and survive death.</div>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <input type="number" min={1} max={Math.max(1, Math.floor(talents.cityPoints / 5))} value={convertAmount}
+              onChange={(e) => setConvertAmount(Math.max(1, parseInt(e.target.value || "1", 10)))}
+              className="w-20 rounded-lg border border-purple-500/30 bg-black/40 px-2 py-1.5 text-center text-xs font-bold text-purple-200" />
+            <button onClick={doConvert} disabled={busy !== null || talents.cityPoints < 5}
+              className="rounded-lg bg-gradient-to-r from-purple-500 to-fuchsia-500 px-4 py-1.5 text-[10px] font-black text-white hover:brightness-110 disabled:opacity-40">
+              {busy === "convert" ? "..." : `Convert ${convertAmount} → global (−${convertAmount * 5} city)`}
+            </button>
+            <span className="text-[10px] text-muted-foreground">City points: {talents.cityPoints} · Global points: {talents.globalPoints}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-slate-700/40 bg-slate-900/30 p-3 text-[10px] text-muted-foreground">
+          🌍 Global talents apply in <span className="text-white font-bold">all cities</span> and are kept even if you die. Convert city points into global points from the Local tab.
+        </div>
+      )}
     </div>
   );
 }
