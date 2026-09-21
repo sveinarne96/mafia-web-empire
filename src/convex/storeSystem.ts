@@ -758,10 +758,10 @@ export const usePerk = mutation({
         patch.energy = Math.min(100, n((player as any).energy, 100) + 25);
         break;
       // Auto Rank is now a timed perk: activating grants an instant +1 rank,
-      // then keeps ranking you +1 every 10 minutes throughout the active
-      // 1-hour window. The extra ranks are applied lazily via processAutoRank
-      // (called on every action tick, the autoRankTick mutation, and the
-      // global heartbeat below).
+      // then keeps ranking you +100 every 10 minutes (10 ranks/min) throughout
+      // the active 1-hour window. The extra ranks are applied lazily via
+      // processAutoRank (called on every action tick, the autoRankTick
+      // mutation, and the global heartbeat below).
       case "autoRank": {
         const prevUntil = Math.max(d.autoRankUntil, now);
         patch.autoRankUntil = prevUntil + 3600000;
@@ -786,8 +786,8 @@ export const usePerk = mutation({
   },
 });
 
-// Auto Rank accrual — ~3500 ranks per hour (≈1 rank every 1.03 s).
-const AUTO_RANK_MS = 60000 / 5; // 5 ranks per minute (1 rank every 12s)
+// Auto Rank accrual — 100 ranks every 10 minutes (10 ranks/min, 1 rank per 6 s).
+const AUTO_RANK_MS = 60000 / 10; // 10 ranks per minute (1 rank every 6s)
 
 // Apply any elapsed Auto Rank ranks inside the active window. Idempotent &
 // lazy: safe to call on every action or tick; it only advances the
