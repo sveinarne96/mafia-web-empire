@@ -192,6 +192,9 @@ const schema = defineSchema({
     // Armoury locker & quicktrade stats (nested objects)
     armoury: v.optional(v.any()),
     quicktrade: v.optional(v.any()),
+    // ═══ EMPIRE FEATURES (bot players, rank trials) ═══
+    isBotPlayer: v.optional(v.boolean()),
+    rankTrials: v.optional(v.any()),
     // ═══ MURDER NETWORK (kill ops & morgue) ═══
     killOpCooldownUntil: v.optional(v.number()),
     reviveProtectionUntil: v.optional(v.number()),
@@ -2233,7 +2236,19 @@ const schema = defineSchema({
     .index("by_time", ["createdAt"])
     .index("by_category", ["category"]),
   // Season state — one row per started season (server ops panel).
-  seasonState: defineTable({
+    // ===== SUPPORT TICKETS — real conversation threads =====
+  supportTickets: defineTable({
+    userId: v.id("users"),
+    playerName: v.string(),
+    subject: v.string(),
+    category: v.string(),
+    status: v.string(),
+    messages: v.array(v.any()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+seasonState: defineTable({
     seasonNumber: v.number(),
     name: v.string(),
     startedAt: v.number(),

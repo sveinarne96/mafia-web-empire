@@ -203,6 +203,10 @@ import { ArmouryPage } from "@/components/ArmouryPage";
 import { DemolitionDerbyPage } from "@/components/DemolitionDerbyPage";
 import { BoxingGymPage, ChasePage, ScrapyardPage, VaultPage } from "@/components/CrimeExtras";
 import { AssassinatePage, BulletCalculatorPage, BulletFactoryPage, DetectivesPage, ShootingRangePage } from "@/components/MurderExtras";
+import { KillExecutionPage, MurderLeaderboardPage } from "@/components/MurderSystemV2";
+import { RankTrialsPage, BankHackPage } from "@/components/RankTrialsUI";
+import { OnlinePlayersPage } from "@/components/OnlinePlayersV2";
+import { InboxV2 } from "@/components/InboxV2";
 
 
 // ===== RANK SYSTEM =====
@@ -1936,7 +1940,7 @@ export default function Dashboard() {
       case "dynamic_events": return <WorldHubPage initialTab="events" />;
       case "event_calendar": return <LiveEventCalendar />;
       case "messages": return <MessagesPage />;
-      case "inbox": return <InboxPage />;
+      case "inbox": return <InboxV2 />;
       case "notifications_page": return <NotificationsPage />;
       case "forum_general": return <ForumPage forum="general" />;
       case "forum_sales": return <ForumPage forum="sales" />;
@@ -2005,7 +2009,11 @@ export default function Dashboard() {
       case "record_heists": return <RecordHeistsPage />;
       case "record_supply": return <RecordSupplyPage />;
       case "record_casino": return <RecordCasinoPage />;
-      case "online_players": return <PresencePage />;
+      case "online_players": return <OnlinePlayersPage onViewProfile={(pid, name) => setPage("view_profile")} />;
+      case "kill_execution": return <KillExecutionPage />;
+      case "murder_leaderboard": return <MurderLeaderboardPage />;
+      case "rank_trials": return <RankTrialsPage />;
+      case "bank_hack": return <BankHackPage />;
       case "poker_texas": return <PokerTexasPage />;
       case "craps": return <CrapsPage />;
       case "blackjack": return <BlackjackPage />;
