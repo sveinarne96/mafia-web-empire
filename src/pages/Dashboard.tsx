@@ -140,7 +140,7 @@ import { EmpireTopBar, CityPulsePanel } from "@/components/EmpireTopBar";
 import { StreetCrimesPage } from "@/components/StreetCrimesPage";
 import { CriminalOperationsPage } from "@/components/CriminalOperationsPage";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { MurderPage } from "@/components/MurderPage";
+import { MurderPage, MorgueGate } from "@/components/MurderPage";
 import { MessagesPage } from "@/components/MessagesPage";
 import { InboxPage } from "@/components/InboxPage";
 import { FAQPage } from "@/components/FAQPageComponent";
@@ -2064,6 +2064,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground">
       <SeasonBanner />
+      <MorgueGate />
       <LiveGameBanner />
       <PromoBanner />
       <div className="flex flex-1 overflow-hidden">

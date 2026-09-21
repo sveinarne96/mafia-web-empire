@@ -151,6 +151,9 @@ const schema = defineSchema({
     lastStaminaRegen: v.number(),
     lastFocusRegen: v.number(),
     referralMilestones: v.optional(v.any()),
+    // ═══ MURDER NETWORK (kill ops & morgue) ═══
+    killOpCooldownUntil: v.optional(v.number()),
+    reviveProtectionUntil: v.optional(v.number()),
     // ═══ STORES & OBJECTIVES (added later) ═══
     coins: v.optional(v.number()),
     bullets: v.optional(v.number()),
@@ -2198,6 +2201,70 @@ const schema = defineSchema({
     createdAt: v.number(),
     startedBy: v.optional(v.string()),
   }).index("by_number", ["seasonNumber"]),
+  // ===== MURDER NETWORK - darknet contracts, kill ops, forensics, morgue =====
+  murderContracts: defineTable({
+    posterId: v.id("users"),
+    posterName: v.string(),
+    targetId: v.id("users"),
+    targetName: v.string(),
+    bounty: v.number(),
+    fee: v.number(),
+    status: v.string(),
+    killerId: v.optional(v.id("users")),
+    killerName: v.optional(v.string()),
+    assignedAt: v.optional(v.number()),
+    deadline: v.optional(v.number()),
+    fulfilledAt: v.optional(v.number()),
+    fulfilledBy: v.optional(v.id("users")),
+    createdAt: v.number(),
+  })
+    .index("by_status", ["status"])
+    .index("by_target", ["targetId"])
+    .index("by_poster", ["posterId"]),
+  killOps: defineTable({
+    killerId: v.id("users"),
+    targetId: v.id("users"),
+    targetName: v.string(),
+    weaponId: v.string(),
+    methodId: v.string(),
+    status: v.string(),
+    surveillanceBonus: v.number(),
+    surveillanceReadyAt: v.optional(v.number()),
+    intel: v.optional(v.string()),
+    plannedAt: v.number(),
+    executedAt: v.optional(v.number()),
+    success: v.optional(v.boolean()),
+    evidenceStrength: v.number(),
+    cleaned: v.boolean(),
+    detectiveResolvesAt: v.optional(v.number()),
+  }).index("by_killer", ["killerId"]),
+  forensics: defineTable({
+    opId: v.id("killOps"),
+    killerId: v.id("users"),
+    scene: v.string(),
+    evidenceType: v.string(),
+    strength: v.number(),
+    resolved: v.boolean(),
+    resolvedAt: v.optional(v.number()),
+    outcome: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_op", ["opId"])
+    .index("by_killer", ["killerId"]),
+  morgueDeaths: defineTable({
+    userId: v.id("users"),
+    victimName: v.optional(v.string()),
+    killerId: v.optional(v.id("users")),
+    killerName: v.string(),
+    cause: v.string(),
+    deathAt: v.number(),
+    reviveAt: v.number(),
+    revived: v.boolean(),
+    cashLost: v.number(),
+    contractPaid: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_revived", ["revived"]),
 }, {
   schemaValidation: false,
 });
