@@ -152,7 +152,46 @@ const schema = defineSchema({
     lastEnergyRegen: v.number(),
     lastStaminaRegen: v.number(),
     lastFocusRegen: v.number(),
+    // Regeneration bookkeeping for heat/adrenaline/morale (resourceSystem)
+    lastHeatUpdate: v.optional(v.number()),
+    lastAdrenalineUpdate: v.optional(v.number()),
+    lastMoraleUpdate: v.optional(v.number()),
+    // Lifetime counters
+    propertiesBought: v.optional(v.number()),
+    // Rolling window of action timestamps (1 hour) used by the XP Volume system.
+    // Written by every top-bar action (crimes, fights, GTA, training, casino…).
+    actionTimestamps: v.optional(v.array(v.number())),
     referralMilestones: v.optional(v.any()),
+    // ═══ SYSTEM FIELDS WRITTEN BY FEATURE MODULES (server-validated) ═══
+    // Crime Extras — shooting range, bullet factory, chop shop, vault, detectives
+    accuracy: v.optional(v.number()),
+    rangeShots: v.optional(v.number()),
+    rangeDrillsToday: v.optional(v.number()),
+    bulletFactoryLevel: v.optional(v.number()),
+    bulletsCrafted: v.optional(v.number()),
+    chasesWon: v.optional(v.number()),
+    chasesLost: v.optional(v.number()),
+    detectivesHired: v.optional(v.number()),
+    lead: v.optional(v.any()),
+    scrapMetal: v.optional(v.number()),
+    rareParts: v.optional(v.number()),
+    wrecksStripped: v.optional(v.number()),
+    vaultCash: v.optional(v.number()),
+    vaultLevel: v.optional(v.number()),
+    // Retention — daily login tracking (streaks/playtime/badges defined below)
+    dailyLoginStreak: v.optional(v.number()),
+    lastDailyLogin: v.optional(v.number()),
+    supplyRuns: v.optional(v.number()),
+    // Casino rounds played & demolition derby entries
+    casinoRounds: v.optional(v.number()),
+    derby: v.optional(v.any()),
+    derbyStats: v.optional(v.any()),
+    // Store purchases, reputation boost
+    bulletsBought: v.optional(v.number()),
+    repBoostUntil: v.optional(v.number()),
+    // Armoury locker & quicktrade stats (nested objects)
+    armoury: v.optional(v.any()),
+    quicktrade: v.optional(v.any()),
     // ═══ MURDER NETWORK (kill ops & morgue) ═══
     killOpCooldownUntil: v.optional(v.number()),
     reviveProtectionUntil: v.optional(v.number()),

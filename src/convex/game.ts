@@ -341,6 +341,18 @@ export const acknowledgeLevelUp = mutation({
   },
 });
 
+// Helper: record a player action for the XP Volume system (rolling 1h window).
+// Called by addXpAndCheckLevel, so every action that grants XP counts toward volume.
+export async function recordPlayerAction(ctx: any, player: any): Promise<number[]> {
+  const now = Date.now();
+  const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
+    ? ((player as any).actionTimestamps as unknown[]).filter((t): t is number => typeof t === "number" && Number.isFinite(t) && now - t < 3600000)
+    : [];
+  const trimmed = [...timestamps, now].slice(-1000);
+  (player as any).actionTimestamps = trimmed;
+  return trimmed;
+}
+
 // Helper: add XP and check for level-up
 export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   // SERVER OPS: LIVE EVENT — 2x to 10x Ranking. Doubles-to-10xs all
@@ -348,13 +360,10 @@ export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number
   const { getRankEventMultiplier } = await import("./serverOps");
   const rankEventMult = await getRankEventMultiplier(ctx);
   // XP Volume Bonus: more actions in the last hour = higher multiplier.
-  // Use only valid timestamps so legacy records cannot make the counter display 0 incorrectly.
-  const now = Date.now();
-  const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
-    ? (player as any).actionTimestamps.filter((timestamp: unknown): timestamp is number => typeof timestamp === "number" && Number.isFinite(timestamp))
-    : [];
-  const recent = timestamps.filter((t: number) => now - t < 3600000);
-  const actionCount = recent.length;
+  // This call also RECORDS the action (pushes now into the rolling window), so
+  // every XP-granting action across all modules automatically counts toward volume.
+  const recent = await recordPlayerAction(ctx, player);
+  const actionCount = recent.length - 1; // exclude the action being recorded right now
   let volMult = 1.0;
   if (actionCount >= 500) volMult = 8.0;
   else if (actionCount >= 300) volMult = 6.0;
@@ -385,9 +394,9 @@ export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number
     updates.energy = 100;
   }
   if (leveled) {
-    return { experience: remaining, level: lvl, levelUpPending: false, highestLevel: Math.max(player.highestLevel ?? 0, lvl), ...updates };
+    return { experience: remaining, level: lvl, levelUpPending: false, highestLevel: Math.max(player.highestLevel ?? 0, lvl), actionTimestamps: (player as any).actionTimestamps, ...updates };
   }
-  return { experience: remaining, life: (player.life ?? 100) };
+  return { experience: remaining, life: (player.life ?? 100), actionTimestamps: (player as any).actionTimestamps };
 }
 
 export const commitCrime = mutation({
@@ -758,7 +767,8 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const existingTs: number[] = Array.isArray((player as any).actionTimestamps)
     ? ((player as any).actionTimestamps as number[]).filter((t: unknown): t is number => typeof t === "number" && Number.isFinite(t))
     : [];
-  const _newTs = [...existingTs.filter((t: number) => t > _now - 3600000), _now];
+  const _newTs = await recordPlayerAction(ctx, player);
+  void existingTs;
   await ctx.db.patch(player._id, { money: Math.max(0, (player.money ?? 0) + moneyEarned), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, energy: levelUpNow ? 100 : effectiveEnergy, inPrison: arrested, prisonTime: arrested ? jailFor(args.crimeId, 15000) : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)), lastCrimeAt: _now, crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 3), crimeCooldowns: cooldowns, crimeCompleted: allDone ? { ...newCompleted, [categoryId || '']: [] } : newCompleted, points: (player.points ?? 0) + pointsEarned, bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: _now, actionTimestamps: _newTs } as any);
   await applyWeekendDrops(ctx, player, _sbRoll);
   try { await ctx.db.insert('crimes', { userId: player._id, type: args.crimeId, target: 'environment', success: succeeded, moneyEarned: succeeded ? moneyEarned : 0, pointsEarned: xpEarned, damageTaken: lifeDamage, timestamp: Date.now() }); } catch (_logErr) { /* log must never cancel the crime */ }

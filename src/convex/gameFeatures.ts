@@ -15,13 +15,11 @@ async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
 // ===== #23 DEATH MATCH MODE =====
 // Helper: add XP and check for level-up
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
-  // XP Volume Bonus: more actions in the last hour = higher multiplier
-  const now = Date.now();
-  const timestamps: number[] = Array.isArray((player as any).actionTimestamps)
-    ? ((player as any).actionTimestamps as number[]).filter((t: unknown): t is number => typeof t === "number" && Number.isFinite(t))
-    : [];
-  const recent = timestamps.filter((t: number) => now - t < 3600000);
-  const actionCount = recent.length;
+  // XP Volume Bonus: more actions in the last hour = higher multiplier.
+  // This also records the action into the rolling 1h window (shared helper).
+  const { recordPlayerAction } = await import("./game");
+  const recent = await recordPlayerAction(ctx, player);
+  const actionCount = recent.length - 1;
   let volMult = 1.0;
   if (actionCount >= 500) volMult = 8.0;
   else if (actionCount >= 300) volMult = 6.0;
@@ -38,7 +36,7 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   const xpNeeded = 2000;
   const levelUpNow = newXP >= xpNeeded;
   if (!levelUpNow) {
-    return { experience: newXP };
+    return { experience: newXP, actionTimestamps: (player as any).actionTimestamps };
   }
   // Level up! Apply all stats immediately
   return {
@@ -51,6 +49,7 @@ async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
     life: (player.maxLife ?? 100) + 75,
     skillPoints: (player.skillPoints ?? 0) + 1,
     highestLevel: Math.max(player.highestLevel ?? 0, (player.level ?? 1) + 1),
+    actionTimestamps: (player as any).actionTimestamps,
   };
 }
 
