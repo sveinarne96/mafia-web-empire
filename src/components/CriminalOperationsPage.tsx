@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Clock, Lock, ShieldAlert, Sparkles, Zap } from "lucide-react";
-import { ActionCard, ActionHero, ActionStat, ExecuteButton, SafetyNote } from "@/components/ActionVisuals";
+import { ActionCard, ActionHero, ActionStat, SafetyNote } from "@/components/ActionVisuals";
 import { StreetCrimesPage } from "@/components/StreetCrimesPage";
 import { crimeCategories } from "@/data/crimes";
 import { RESOURCE_COSTS } from "@/data/resourceCosts";
@@ -113,15 +113,19 @@ function CriminalOperationsContent({ category }: { category: string }) {
   const cdTotal = Math.max(3, Math.round(selected.risk / 3));
   const rewardRange = `${shortCash(Math.min(...crimes.map((c) => c.reward)))} – ${shortCash(Math.max(...crimes.map((c) => c.reward)))}`;
 
-  const run = async () => {
-    if (busy || selectedLocked || energyBlocked || cooldown > 0) return;
+  const run = async (crimeOverride?: typeof crimes[number]) => {
+    const target = crimeOverride ?? selected;
+    if (busy) return;
+    if (level < target.levelRequired) return;
+    if (energyBlocked && !crimeOverride) return;
+    if ((cooldowns[target.id] ?? 0) > 0) return;
     setBusy(true); setResult(undefined);
     try {
-      const response = await executeCrime({ crimeId: selected.id, reward: selected.reward, risk: selected.risk, xp: selected.xp });
+      const response = await executeCrime({ crimeId: target.id, reward: target.reward, risk: target.risk, xp: target.xp });
       setResult({ success: Boolean(response.success), money: response.moneyEarned ?? 0, xp: response.xpEarned ?? 0 });
       const rec = await recordCrime({ category: definition.id, reward: Math.max(0, response.moneyEarned ?? 0), xp: response.xpEarned ?? 0 }).catch(() => null);
       if (rec && rec.coinDrop) setResult((r) => (r ? { ...r, coins: rec.coinDrop } : r));
-      setCooldowns((current) => ({ ...current, [selected.id]: cdTotal }));
+      setCooldowns((current) => ({ ...current, [target.id]: cdTotal }));
     } catch (error) {
       setResult({ success: false, money: 0, xp: 0, message: error instanceof Error ? error.message : "Operation unavailable." });
     } finally { setBusy(false); }
@@ -159,26 +163,33 @@ function CriminalOperationsContent({ category }: { category: string }) {
       {/* ── Info strip ── */}
       <div className="grid grid-cols-3 gap-2"><ActionStat icon="🎯" label="Operations" value={`${unlocked}/${crimes.length} unlocked`} tone="blue" /><ActionStat icon="💰" label="Payout range" value={rewardRange} tone="green" /><ActionStat icon="⚡" label="Energy" value={`${energy}/${maxEnergy}`} tone="amber" /></div>
 
-      {/* ── Crime category grid (GTA Car Theft layout) ── */}
+      {/* ── Crime grid — each card IS the action button (press to do it) ── */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {crimes.map((crime) => {
           const locked = level < crime.levelRequired;
           const active = crime.id === selected.id;
           const tier = riskTier(crime.risk);
           const onCd = (cooldowns[crime.id] ?? 0) > 0;
+          const busyThis = busy && active;
           return (
-            <ActionCard key={crime.id} active={active} className={locked ? "opacity-40 cursor-not-allowed" : ""}>
-              <button onClick={() => !locked && setSelectedId(crime.id)} disabled={locked} className="w-full text-left">
+            <ActionCard key={crime.id} active={active} className={locked ? "opacity-40" : ""}>
+              <button
+                onClick={() => { setSelectedId(crime.id); if (!locked && !onCd && !busy) run(crime); }}
+                disabled={locked || busy}
+                className={`w-full text-left ${locked ? "cursor-not-allowed" : onCd ? "cursor-wait" : "cursor-pointer active:scale-[0.97] transition-transform"}`}
+              >
               <div className="flex items-center gap-2">
-                <span className="text-lg">{locked ? "🔒" : meta.icon}</span>
+                <span className="text-lg">{locked ? "🔒" : busyThis ? "⏳" : onCd ? "⏱️" : meta.icon}</span>
                 <div className="min-w-0">
                   <div className={`text-xs font-bold ${locked ? "text-muted-foreground" : tone.text} truncate`}>{crime.name}</div>
-                  <div className="text-[9px] text-muted-foreground truncate">{crime.description}</div>
+                  <div className="text-[9px] text-muted-foreground truncate">
+                    {busyThis ? "In motion..." : locked ? crime.description : crime.description}
+                  </div>
                 </div>
               </div>
               <div className="flex justify-between mt-1.5">
                 <span className="text-[8px] text-muted-foreground">{locked ? `Lv.${crime.levelRequired}` : shortCash(crime.reward)}</span>
-                <span className={`text-[8px] font-bold ${tier.cls}`}>{tier.label}</span>
+                <span className={`text-[8px] font-bold ${tier.cls}`}>{locked ? `Lv.${crime.levelRequired}` : busyThis ? "..." : onCd ? `${cooldowns[crime.id]}s` : tier.label}</span>
               </div>
               {onCd && (
                 <div className="mt-1 h-1 rounded-full bg-black/40 overflow-hidden">
@@ -190,26 +201,27 @@ function CriminalOperationsContent({ category }: { category: string }) {
         })}
       </div>
 
-      {/* ── Execute panel (GTA-style big button + cooldown bar) ── */}
+      {/* ── Status strip (replaces the old Execute panel — cards ARE the buttons) ── */}
       {selectedLocked ? (
         <div className="rounded-xl border border-slate-700/50 bg-slate-900/70 p-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Lock className="size-4" /> Reach level {selected.levelRequired} to unlock {selected.name}.
         </div>
+      ) : energyBlocked && cooldown <= 0 ? (
+        <div className="rounded-xl border border-yellow-500/30 bg-yellow-950/20 p-3 flex items-center justify-center gap-2 text-xs text-yellow-300">
+          ⚡ {energy < 5 ? "Recovering to 5 energy…" : `Need ${Math.max(5, cost)} energy for ${selected.name}`}
+        </div>
       ) : cooldown > 0 ? (
-        <div className="mafia-card rounded-xl p-6 text-center">
-          <Clock className="size-8 mx-auto mb-2 animate-pulse text-muted-foreground" />
+        <div className="mafia-card rounded-xl p-4 text-center">
           <div className="text-sm font-bold">Laying low... {cooldown}s</div>
           <div className="h-2 bg-background/60 rounded-full mt-3 overflow-hidden">
             <motion.div
-              className={`h-full rounded-full bg-gradient-to-r ${tone.btn.split(" ").filter((c) => c.startsWith("from-") || c.startsWith("to-")).join(" ")}`}
+              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-red-500"
               animate={{ width: `${(cooldown / cdTotal) * 100}%` }}
               transition={{ duration: 1 }}
             />
           </div>
         </div>
-      ) : (
-        <ExecuteButton onClick={run} disabled={busy || energyBlocked}>{busy ? "Executing..." : energyBlocked ? (energy < 5 ? "Recovering to 5 ⚡" : `Need ${Math.max(5, cost)} ⚡ Energy`) : `${meta.icon} Execute ${selected.name} · -${cost} ⚡`}</ExecuteButton>
-      )}
+      ) : null}
 
       {/* ── Selected op detail ── */}
       <div className="rounded-xl border border-border/50 bg-card/50 p-4">

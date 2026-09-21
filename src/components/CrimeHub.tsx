@@ -204,15 +204,15 @@ export default function CrimeHub() {
           const levelGap = crime.level - playerLevel;
 
           return (
-            <div key={crime.id} onClick={() => !locked && setSelectedCrime(isSelected ? null : crime)}
+            <div key={crime.id} onClick={() => { if (!locked && !onCooldown && !loading) { setSelectedCrime(crime); executeCrime(crime); } else if (!locked) setSelectedCrime(crime); }}
               className={`rounded-xl border p-3 transition-all ${
                 locked ? "bg-slate-900/30 border-slate-800/50 opacity-50" :
-                onCooldown ? "bg-slate-900/30 border-slate-700/30 opacity-60" :
+                onCooldown ? "bg-slate-900/30 border-slate-700/30 opacity-60 cursor-wait" :
                 isSelected ? "bg-red-950/30 border-red-500/40" :
-                "bg-slate-900/50 border-slate-700/50 hover:border-red-500/30 cursor-pointer"
+                "bg-slate-900/50 border-slate-700/50 hover:border-red-500/40 hover:bg-red-950/10 cursor-pointer active:scale-[0.99]"
               }`}>
               <div className="flex items-center gap-3">
-                <span className="text-xl">{crime.icon}</span>
+                <span className="text-xl">{loading && isSelected ? "⏳" : crime.icon}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-white truncate">{crime.name}</span>
