@@ -905,17 +905,114 @@ function HospitalPage() {
   );
 }
 
-function NotificationsPage() {  const notifications = useQuery(api.game.getNotifications);
+/* ═════════════ ALERTS CENTER — every game alert in one live feed ═════════════ */
+const ALERT_STYLES: Record<string, { icon: string; ring: string; tint: string }> = {
+  prison: { icon: "🔒", ring: "border-sky-500/40", tint: "bg-sky-500/5" },
+  crime: { icon: "🔪", ring: "border-emerald-500/40", tint: "bg-emerald-500/5" },
+  crime_success: { icon: "✅", ring: "border-emerald-500/40", tint: "bg-emerald-500/5" },
+  crime_fail: { icon: "❌", ring: "border-rose-500/40", tint: "bg-rose-500/5" },
+  death: { icon: "💀", ring: "border-rose-600/50", tint: "bg-rose-950/20" },
+  kill: { icon: "🎯", ring: "border-red-500/40", tint: "bg-red-500/5" },
+  fight: { icon: "🥊", ring: "border-orange-500/40", tint: "bg-orange-500/5" },
+  hack: { icon: "🏦", ring: "border-cyan-500/40", tint: "bg-cyan-500/5" },
+  hack_success: { icon: "🏦", ring: "border-cyan-500/40", tint: "bg-cyan-500/5" },
+  hack_fail: { icon: "⚠️", ring: "border-amber-500/40", tint: "bg-amber-500/5" },
+  gta: { icon: "🚗", ring: "border-orange-500/40", tint: "bg-orange-500/5" },
+  heist: { icon: "💰", ring: "border-amber-500/40", tint: "bg-amber-500/5" },
+  family: { icon: "👨‍👩‍👦", ring: "border-violet-500/40", tint: "bg-violet-500/5" },
+  message: { icon: "✉️", ring: "border-blue-500/40", tint: "bg-blue-500/5" },
+  admin: { icon: "🛡️", ring: "border-yellow-500/40", tint: "bg-yellow-500/5" },
+  season: { icon: "🌅", ring: "border-fuchsia-500/40", tint: "bg-fuchsia-500/5" },
+  event: { icon: "🎆", ring: "border-purple-500/40", tint: "bg-purple-500/5" },
+};
+function alertStyle(type: string | undefined) {
+  return ALERT_STYLES[type ?? ""] ?? { icon: "📣", ring: "border-slate-600/40", tint: "" };
+}
+
+function NotificationsPage() {
+  const notifications = useQuery(api.game.getNotifications);
+  const markAllRead = useMutation(api.empireFeatures.markAllNotificationsRead);
+  const [filter, setFilter] = useState<string>("all");
+
+  const unread = (notifications ?? []).filter((n: any) => !n?.read);
+  const types = useMemo(() => {
+    const s = new Set<string>();
+    for (const n of notifications ?? []) if (n?.type) s.add(n.type);
+    return Array.from(s);
+  }, [notifications]);
+  const shown = (notifications ?? []).filter((n: any) => filter === "all" || n?.type === filter || (filter === "unread" && !n?.read));
+
   return (
     <div className="animate-fade-in space-y-4">
-      <div className="flex items-center gap-3"><Bell className="size-7 text-primary" /><h2 className="text-2xl font-bold">Notifications</h2></div>
-      {(!notifications || notifications.length === 0) ? <div className="mafia-card rounded-xl p-6 text-center text-muted-foreground text-sm">No notifications</div> : (
-        <div className="space-y-2">{notifications.map((n: any) => (
-          <div key={n._id} className={`mafia-card rounded-xl p-3 ${!n.read ? "border-yellow-500/30" : ""}`}>
-            <div className="text-sm">{n.message}</div>
-            <div className="text-[10px] text-muted-foreground">{new Date(n.timestamp).toLocaleString()}</div>
-          </div>
-        ))}</div>
+      <div className="flex items-center gap-3 flex-wrap">
+        <Bell className="size-7 text-amber-400" />
+        <h2 className="text-2xl font-black tracking-tight">Alerts Center</h2>
+        <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-black text-amber-400">LIVE</span>
+        <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
+          {unread.length} unread
+        </span>
+        {unread.length > 0 && (
+          <button
+            onClick={() => markAllRead().catch(() => {})}
+            className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-wider text-amber-300 transition hover:bg-amber-500/20"
+          >
+            ✓ Mark all read
+          </button>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-1.5">
+        {["all", "unread", ...types].map((tp) => (
+          <button
+            key={tp}
+            onClick={() => setFilter(tp)}
+            className={`rounded-lg px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider transition ${
+              filter === tp
+                ? "bg-amber-500/20 border border-amber-500/40 text-amber-300"
+                : "bg-slate-900/50 border border-slate-800 text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            {tp === "all" ? "🌐 All" : tp === "unread" ? "🔔 Unread" : `${alertStyle(tp).icon} ${tp}`}
+          </button>
+        ))}
+      </div>
+
+      {notifications === undefined ? (
+        <div className="animate-pulse py-12 text-center text-sm text-muted-foreground">Tuning into the wire…</div>
+      ) : shown.length === 0 ? (
+        <div className="mafia-card rounded-xl p-8 text-center">
+          <div className="mb-2 text-4xl">🔔</div>
+          <div className="text-sm font-bold">No alerts here</div>
+          <div className="text-xs text-muted-foreground mt-1">Crime results, hits, hacks, family news and admin broadcasts all land in this feed.</div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {shown.map((n: any) => {
+            const st = alertStyle(n?.type);
+            return (
+              <div
+                key={n._id}
+                className={`relative overflow-hidden rounded-xl border p-3 transition ${st.ring} ${st.tint} ${!n.read ? "border-l-4 border-l-amber-400" : "opacity-80"}`}
+              >
+                {!n.read && (
+                  <span className="absolute right-2 top-2 size-2 rounded-full bg-amber-400 animate-pulse" title="Unread" />
+                )}
+                <div className="flex items-start gap-3">
+                  <span className="text-xl leading-none pt-0.5">{st.icon}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className={`text-sm ${!n.read ? "font-bold text-slate-100" : "text-slate-300"}`}>{n.message}</div>
+                    <div className="mt-0.5 flex items-center gap-2 text-[9px] uppercase tracking-wider text-muted-foreground">
+                      <span className="rounded bg-slate-800/80 px-1.5 py-0.5 font-bold text-slate-400">{n.type ?? "system"}</span>
+                      <span>{new Date(n.timestamp).toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -1739,6 +1836,7 @@ function OffshorePage() { return <MoneyHubPage initialTab="offshore" />; }
 
 export default function Dashboard() {
   const [activePage, setActivePage] = useState<GamePage>("headquarters");
+  const [profileTarget, setProfileTarget] = useState<{ id: string; name: string } | null>(null);
   const player = useQuery(api.game.getPlayer);
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
@@ -2009,7 +2107,10 @@ export default function Dashboard() {
       case "record_heists": return <RecordHeistsPage />;
       case "record_supply": return <RecordSupplyPage />;
       case "record_casino": return <RecordCasinoPage />;
-      case "online_players": return <OnlinePlayersPage onViewProfile={(pid, name) => setPage("view_profile")} />;
+      case "online_players": return <OnlinePlayersPage onViewProfile={(pid, name) => { setProfileTarget({ id: pid, name }); setPage("view_profile"); }} />;
+      case "view_profile": return profileTarget
+        ? <PlayerProfilePage playerId={profileTarget.id} playerName={profileTarget.name} onBack={() => setPage("online_players")} />
+        : <OnlinePlayersPage onViewProfile={(pid, name) => { setProfileTarget({ id: pid, name }); setPage("view_profile"); }} />;
       case "kill_execution": return <KillExecutionPage />;
       case "murder_leaderboard": return <MurderLeaderboardPage />;
       case "rank_trials": return <RankTrialsPage />;

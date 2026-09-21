@@ -3,8 +3,9 @@ import { api } from "@/convex/_generated/api";
 import { User, MapPin, Shield, Swords, Trophy, Clock, Star, Heart } from "lucide-react";
 
 export function PlayerProfilePage({ playerId, playerName, onBack }: { playerId: string; playerName: string; onBack?: () => void }) {
-  const allPlayers = useQuery(api.admin.getAllPlayers);
-  const player = allPlayers?.find((p: any) => p._id === playerId);
+  // Works for everyone: bots + real players are public rows (bots have no
+  // auth email), so the public by-id query shows any profile including bots.
+  const player = useQuery(api.game.getPlayerById, { playerId: playerId as any });
 
   if (!player) {
     return (

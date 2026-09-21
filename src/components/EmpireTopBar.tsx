@@ -45,6 +45,7 @@ const OPS: Op[] = [
   { icon: "🎭", label: "Org Crime", desc: "Coordinate · split the take", page: "organized_crime", nominalCd: 900, rgb: "147,51,234", prefixes: ["oc_", "organized_"] },
   { icon: "💀", label: "Murder", desc: "Lethal contract · exposure", page: "murder", nominalCd: 1800, rgb: "185,28,28", prefixes: ["murder", "hit_", "assassin"] },
   { icon: "💰", label: "Heist", desc: "Build the plan · big score", page: "heist", nominalCd: 3600, rgb: "245,158,11", prefixes: ["heist"] },
+  { icon: "🏦", label: "Bank Hack", desc: "Breach a vault · cyber", page: "bank_hack", nominalCd: 600, rgb: "34,211,238", prefixes: ["bank_hack"] },
 ];
 
 function fmtCountdown(s: number): string {

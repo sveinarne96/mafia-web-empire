@@ -25,6 +25,18 @@ function getRankInfo(level: number) {
   return RANK_TIERS.find((r) => level >= r.min) ?? RANK_TIERS[RANK_TIERS.length - 1];
 }
 
+/* Neon colors: admins get the full neon rainbow, everyone else neon blue. */
+const ADMIN_NEON = ["#ff073a", "#39ff14", "#ffdd00", "#ff9500", "#ff6ec7", "#00fff7"];
+const NEON_BLUE = "#00c3ff";
+function adminNeon(name: string) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return ADMIN_NEON[h % ADMIN_NEON.length];
+}
+function neon(color: string) {
+  return { color, textShadow: `0 0 6px ${color}, 0 0 14px ${color}55` } as const;
+}
+
 export function OnlineList({ onViewProfile }: { onViewProfile?: (playerId: string, nickname: string) => void } = {}) {
   const onlinePlayers = useQuery(api.admin.getOnlinePlayers);
   const onlineCount = useQuery(api.admin.getOnlineCount);
@@ -197,6 +209,8 @@ export function OnlineList({ onViewProfile }: { onViewProfile?: (playerId: strin
         <AnimatePresence>
           {filtered.map((p: any, i: number) => {
             const rank = getRankInfo(p.level ?? 0);
+            const isAdmin = p.role === "admin";
+            const nameColor = isAdmin ? adminNeon(p.nickname ?? "") : NEON_BLUE;
             return (
               <motion.div
                 key={p._id}
@@ -216,18 +230,19 @@ export function OnlineList({ onViewProfile }: { onViewProfile?: (playerId: strin
                 >
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className={`size-10 rounded-full flex items-center justify-center text-sm font-bold ${rank.bg} border-2 ${rank.border}`}>
-                        {p.role === "admin" ? <Shield className="size-4 text-yellow-400" /> :
+                      <div className="size-10 rounded-full flex items-center justify-center text-sm font-bold border-2"
+                        style={{ borderColor: `${nameColor}66`, background: `${nameColor}14`, boxShadow: `0 0 10px ${nameColor}44` }}>
+                        {isAdmin ? <Shield className="size-4" style={neon(nameColor)} /> :
                          p.level >= 20 ? <Crown className={`size-4 ${rank.color}`} /> :
                          <Users className={`size-4 ${rank.color}`} />}
                       </div>
-                      <span className="absolute -bottom-0.5 -right-0.5 size-3 bg-green-400 rounded-full border-2 border-background" />
+                      <span className="absolute -bottom-0.5 -right-0.5 size-3 bg-green-400 rounded-full border-2 border-background animate-pulse" />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm truncate">{p.nickname}</span>
-                        {p.role === "admin" && (
+                        <span className="font-bold text-sm truncate" style={neon(nameColor)}>{p.nickname}</span>
+                        {isAdmin && (
                           <span className="px-1 py-0.5 bg-yellow-500/20 text-yellow-400 text-[8px] font-bold rounded">ADMIN</span>
                         )}
                         {p.wantedLevel > 0 && (

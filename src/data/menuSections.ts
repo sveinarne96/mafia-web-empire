@@ -69,6 +69,8 @@ export const LEFT_MENU_SECTIONS = [
       { label: "Murder", page: "murder", icon: "💀" },
       { label: "Cocaine", page: "drug_trade", icon: "❄️" },
       { label: "Heist", page: "heist", icon: "💰" },
+      { label: "Bank Hack", page: "bank_hack", icon: "🏦" },
+      { label: "Rank Trials", page: "rank_trials", icon: "🧪" },
       { label: "Crime Operations", page: "crime_ops", icon: "🕶️" },
       { label: "Supply Running", page: "supply_running", icon: "📦" },
       { label: "Demolition Derby", page: "demolition_derby", icon: "💥" },
