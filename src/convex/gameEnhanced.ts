@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { getJailMs } from "./serverOps";
 
 
 // ===== READ-ONLY DEFAULTS (safe for queries) =====
@@ -323,7 +324,7 @@ export const stealFromHouse = mutation({
       experience: levelUpNow ? 0 : newXP,
       levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
       inPrison: arrested,
-      prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
+      prisonTime: arrested ? await getJailMs(ctx, "gta_theft", 15000) : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 1 : 0)),
       lastCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 4),
     });
@@ -722,7 +723,7 @@ export const gtaCarTheft = mutation({
       totalCrimes: (player.totalCrimes ?? 0) + 1,
       ...(await addXpAndCheckLevel(ctx, player, xpEarned)),
       inPrison: arrested,
-      prisonTime: arrested ? 15000 : (player.prisonTime ?? 0),
+      prisonTime: arrested ? await getJailMs(ctx, "gta_theft", 15000) : (player.prisonTime ?? 0),
       wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (succeeded ? 2 : 0)),
       lastCrimeAt: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 4),
     });
@@ -1098,7 +1099,7 @@ export const fbiRaid = mutation({
         money: Math.max(0, (player.money ?? 0) - moneyLoss),
         wantedLevel: arrested ? 0 : Math.max(0, wanted - 1),
         inPrison: arrested,
-        prisonTime: arrested ? 15000 : 0,
+        prisonTime: arrested ? await getJailMs(ctx, "robbery", 15000) : 0,
         lastCrimeAt: Date.now(),
       });
 

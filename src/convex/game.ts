@@ -742,15 +742,13 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const oldCooldowns: Record<string, number> = ((player as any).crimeCooldowns ?? {}) as Record<string, number>;
     // SERVER OPS GAME BALANCE: global crime cooldown (10–3600s) applies after every
   // crime attempt; super-boost still shortens it (25%).
-  const { getGlobalCrimeCooldown, getCrimeJailTimes } = await import("./serverOps");
+  const { getGlobalCrimeCooldown, getJailMs } = await import("./serverOps");
   const globalCd = await getGlobalCrimeCooldown(ctx);
   const cdMs = globalCd * 1000;
-  const jailTimes = await getCrimeJailTimes(ctx);
-  const jailFor = (id: string, fallbackMs: number): number => {
-    const t = jailTimes[id];
-    if (typeof t === "number" && Number.isFinite(t) && t > 0) return Math.max(1000, t * 1000);
-    return fallbackMs;
-  };
+  // Jail times come from the admin GAME BALANCE panel (per real category:
+  // street/robbery/fraud/burglary/drugs/organized/underground/gta_theft/steal_house/murder).
+  const jailForMs = await getJailMs(ctx, args.crimeId, 15000);
+  const jailFor = (_id: string, fallbackMs: number): number => jailForMs || fallbackMs;
   const cooldowns: Record<string, number> = { ...oldCooldowns, [args.crimeId]: _now + (liveCfg.superBoostActive ? Math.ceil(cdMs * 0.25) : cdMs), ["__global"]: _now + (liveCfg.superBoostActive ? Math.ceil(cdMs * 0.25) : cdMs) };
   const categoryId = args.crimeId.split('_')[0];
   const oldCompleted: Record<string, string[]> = ((player as any).crimeCompleted ?? {}) as Record<string, string[]>;

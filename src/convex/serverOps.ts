@@ -360,9 +360,12 @@ export const deactivateAnnouncement = mutation({
 
 /* ══════════════════ 4. GAME BALANCE ══════════════════ */
 
-export const CRIME_KEYS = [
-  "old_lady", "slot_machine", "gas_station", "post_office",
-  "value_transport", "prime_minister", "bank",
+/** The REAL crime categories in the game — the admin GAME BALANCE panel
+ *  controls global cooldown + per-category imprisonment for exactly these.
+ *  Keys match: crimeCategory ids, crimeCooldowns prefixes and the crime engine. */
+export const GAME_CRIME_CATEGORIES = [
+  "street", "robbery", "fraud", "burglary", "drugs",
+  "organized", "underground", "gta_theft", "steal_house", "murder",
 ] as const;
 
 export const setGameBalance = mutation({
@@ -447,6 +450,19 @@ export const getLiveEventPublic = query({
     };
   },
 });
+
+/** Server-side helper: prison sentence (ms) for a crime id or category.
+ *  Reads the admin GAME BALANCE panel — falls back to fallbackMs when unset. */
+export async function getJailMs(ctx: any, crimeIdOrCategory: string, fallbackMs: number): Promise<number> {
+  try {
+    const times = await getCrimeJailTimes(ctx);
+    const id = String(crimeIdOrCategory || "");
+    const cat = GAME_CRIME_CATEGORIES.find((c) => id === c || id.startsWith(c + "_"));
+    const t = (cat ? times[cat] : undefined) ?? times[id];
+    if (typeof t === "number" && Number.isFinite(t) && t > 0) return Math.max(1000, t * 1000);
+    return fallbackMs;
+  } catch { return fallbackMs; }
+}
 
 /* ══════════════════ 5. SERVER FUNCTIONS ══════════════════ */
 

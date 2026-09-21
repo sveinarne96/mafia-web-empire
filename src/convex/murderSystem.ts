@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { getJailMs } from "./serverOps";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { getRankEventMultiplier } from "./serverOps";
@@ -293,7 +294,7 @@ export const commitMurder = mutation({
         experience: levelUpNow ? 0 : newXP,
         levelUpPending: levelUpNow ? true : (player.levelUpPending ?? false),
         inPrison: goesToPrison,
-        prisonTime: goesToPrison ? 15000 : (player.prisonTime ?? 0),
+        prisonTime: goesToPrison ? await getJailMs(ctx, "murder", 15000) : (player.prisonTime ?? 0),
         lastCrimeAt: Date.now(),
       };
       if (newLife <= 0) {

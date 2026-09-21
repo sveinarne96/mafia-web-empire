@@ -78,13 +78,16 @@ function StatusPill({ on, onText, offText }: { on: boolean; onText: string; offT
 }
 
 const CRIME_LABELS: Record<string, string> = {
-  old_lady: "Robbed an old lady",
-  slot_machine: "Break open a slot machine",
-  gas_station: "Robbed a gas station",
-  post_office: "Robbed a post office",
-  value_transport: "Robbery of a transport of value",
-  prime_minister: "Kidnap the prime minister",
-  bank: "Rob a bank",
+  street: "🔪 Street",
+  robbery: "💰 Robbery",
+  fraud: "🃏 Fraud",
+  burglary: "🏠 Burglary",
+  drugs: "💊 Drugs",
+  organized: "🕵️ Organized Crime",
+  underground: "🕳️ Underground",
+  gta_theft: "🚗 GTA Car Theft",
+  steal_house: "🔑 Burglarize Houses",
+  murder: "💀 Murder",
 };
 
 const ANN_TYPES = [
