@@ -1,0 +1,386 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap');
+/* Shadow Empire global command-center skin */
+.event-calendar-command { position: relative; isolation: isolate; }
+.event-calendar-command::before { content: ""; position: absolute; inset: -2rem; z-index: -1; pointer-events: none; opacity: .32; background: radial-gradient(circle at 15% 0%, rgba(245,158,11,.16), transparent 22rem), radial-gradient(circle at 92% 35%, rgba(59,130,246,.12), transparent 20rem); }
+.event-calendar-command > div:first-child { position: relative; overflow: hidden; background: linear-gradient(110deg, rgba(69,39,10,.55), rgba(20,8,3,.88) 48%, rgba(30,27,75,.46)); box-shadow: 0 18px 48px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,235,180,.1); }
+.event-calendar-command > div:first-child::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 24%, rgba(255,220,130,.08) 50%, transparent 74%); transform: translateX(-110%); animation: calendar-scan 7s ease-in-out infinite; }
+.event-calendar-command > div:first-child > * { position: relative; z-index: 1; }
+.event-calendar-command .event-calendar-brief { color: rgba(203,213,225,.68); }
+.event-calendar-command button { transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease; }
+.event-calendar-command button:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+.event-calendar-command [class*="grid-cols-7"] > div { min-width: 0; }
+.event-calendar-command [class*="grid-cols-7"] > div:not(:empty) { transition: background .18s ease, box-shadow .18s ease; }
+.event-calendar-command [class*="grid-cols-7"] > div:hover { box-shadow: inset 0 0 0 1px rgba(245,158,11,.24), inset 0 0 18px rgba(245,158,11,.05); }
+.event-calendar-command [class*="grid-cols-7"] .rounded { overflow: hidden; text-overflow: ellipsis; }
+@keyframes calendar-scan { 0%, 55% { transform: translateX(-110%); } 78%, 100% { transform: translateX(110%); } }
+@media (prefers-reduced-motion: reduce) { .event-calendar-command > div:first-child::after { animation: none; } }
+
+.greenhouse-command { position: relative; isolation: isolate; }
+.greenhouse-command::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .28; background-image: linear-gradient(rgba(110,231,183,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(110,231,183,.08) 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(135deg, black, transparent 72%); animation: greenhouse-grid-drift 18s linear infinite; }
+.greenhouse-command::after { content: ""; position: absolute; top: 0; right: 8%; width: 16rem; height: 8rem; z-index: -1; pointer-events: none; background: radial-gradient(ellipse, rgba(16,185,129,.18), transparent 68%); filter: blur(18px); animation: greenhouse-breathe 5s ease-in-out infinite; }
+.greenhouse-command > div:first-child { background: linear-gradient(110deg, rgba(6,78,59,.22), rgba(2,6,23,.06) 52%, rgba(16,185,129,.10)); }
+.greenhouse-command > div:first-child h2 { letter-spacing: -.04em; }
+.greenhouse-command > div:first-child .rounded-full { box-shadow: 0 0 18px rgba(52,211,153,.16), inset 0 1px 0 rgba(255,255,255,.12); }
+.greenhouse-command > div:nth-child(2) { background: rgba(2,6,23,.38); }
+.greenhouse-command > div:nth-child(2) button { position: relative; border: 1px solid transparent; }
+.greenhouse-command > div:nth-child(2) button::after { content: ""; position: absolute; right: 10%; bottom: 3px; left: 10%; height: 2px; border-radius: 99px; background: currentColor; opacity: 0; transform: scaleX(.2); transition: opacity .2s ease, transform .2s ease; }
+.greenhouse-command > div:nth-child(2) button:hover::after, .greenhouse-command > div:nth-child(2) button[class*="bg-emerald"]::after { opacity: .8; transform: scaleX(1); }
+.greenhouse-command button { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease, filter .2s ease; }
+.greenhouse-command button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.08); }
+.greenhouse-command button:active:not(:disabled) { transform: translateY(0) scale(.985); }
+.greenhouse-command .bg-black\/20, .greenhouse-command .bg-black\/25 { border-color: rgba(52,211,153,.17); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.12); }
+@keyframes greenhouse-grid-drift { from { background-position: 0 0; } to { background-position: 56px 56px; } }
+@keyframes greenhouse-breathe { 0%, 100% { opacity: .55; transform: scale(.95); } 50% { opacity: 1; transform: scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .greenhouse-command::before, .greenhouse-command::after { animation: none; } }
+
+.syndicate-main { position: relative; isolation: isolate; }
+.syndicate-main::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .42; background: radial-gradient(circle at 12% 12%, rgba(245,158,11,.09), transparent 22rem), radial-gradient(circle at 88% 78%, rgba(127,29,29,.10), transparent 26rem), linear-gradient(115deg, transparent 0 48%, rgba(255,205,116,.018) 50%, transparent 52%); }
+.syndicate-main .animate-fade-in, .syndicate-main .animate-page-enter { animation: empire-page-arrive .42s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes empire-page-arrive { from { opacity: 0; transform: translateY(10px); filter: blur(2px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+.syndicate-main .mafia-card, .syndicate-main .action-card, .syndicate-main .victorian-card { border-color: rgba(186,128,55,.24); background: linear-gradient(145deg, rgba(31,13,5,.86), rgba(8,3,2,.94)), radial-gradient(circle at 100% 0%, rgba(245,158,11,.08), transparent 14rem); box-shadow: 0 14px 34px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,231,180,.07); transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease; }
+.syndicate-main .mafia-card:hover, .syndicate-main .victorian-card:hover { transform: translateY(-2px); border-color: rgba(245,181,75,.42); box-shadow: 0 20px 42px rgba(0,0,0,.30), 0 0 24px rgba(245,158,11,.07), inset 0 1px 0 rgba(255,231,180,.11); }
+.syndicate-main .mafia-card::after, .syndicate-main .action-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(115deg, transparent 22%, rgba(255,221,151,.055) 48%, transparent 72%); transform: translateX(-120%); transition: transform .7s ease; }
+.syndicate-main .mafia-card:hover::after, .syndicate-main .action-card:hover::after { transform: translateX(120%); }
+.syndicate-main main h1, .syndicate-main main h2, .syndicate-main main h3 { text-wrap: balance; letter-spacing: -.025em; }
+.syndicate-main main h1 { text-shadow: 0 0 22px rgba(245,158,11,.13); }
+.syndicate-main main h2 { color: rgba(255,239,199,.96); }
+.syndicate-main main h3 { color: rgba(253,230,138,.88); }
+.syndicate-main main .text-muted-foreground { color: rgba(180,163,136,.78); }
+.syndicate-main main button:not([disabled]), .syndicate-main main [role="button"]:not([disabled]) { transition: transform .18s ease, filter .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.syndicate-main main button:not([disabled]):hover, .syndicate-main main [role="button"]:not([disabled]):hover { filter: brightness(1.08) saturate(1.08); }
+.syndicate-main main button:not([disabled]):active, .syndicate-main main [role="button"]:not([disabled]):active { transform: translateY(1px) scale(.985); }
+.syndicate-main main input, .syndicate-main main textarea, .syndicate-main main select { border-color: rgba(186,128,55,.24); background-color: rgba(7,3,2,.72); box-shadow: inset 0 1px 3px rgba(0,0,0,.22); transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
+.syndicate-main main input:focus, .syndicate-main main textarea:focus, .syndicate-main main select:focus { border-color: rgba(245,181,75,.65); background-color: rgba(18,7,3,.88); box-shadow: 0 0 0 3px rgba(245,158,11,.09), 0 0 20px rgba(245,158,11,.08); }
+.syndicate-main main table { border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid rgba(186,128,55,.18); border-radius: .75rem; background: rgba(8,3,2,.42); }
+.syndicate-main main th { color: rgba(253,230,138,.76); background: rgba(120,53,15,.14); font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; }
+.syndicate-main main td, .syndicate-main main th { border-color: rgba(186,128,55,.13); }
+.syndicate-main main tbody tr { transition: background .18s ease; }
+.syndicate-main main tbody tr:hover { background: rgba(245,158,11,.055); }
+.syndicate-main main .stat-bar, .syndicate-main main [role="progressbar"] { box-shadow: inset 0 1px 4px rgba(0,0,0,.38), 0 0 12px rgba(245,158,11,.06); }
+.syndicate-main aside { background: linear-gradient(180deg, rgba(11,4,2,.98), rgba(5,2,1,.98)) !important; border-color: rgba(186,128,55,.16) !important; }
+.syndicate-main aside nav button, .syndicate-main aside > div > button { border-left: 2px solid transparent; transition: padding-left .18s ease, color .18s ease, background .18s ease, border-color .18s ease; }
+.syndicate-main aside nav button:hover, .syndicate-main aside > div > button:hover { border-left-color: rgba(245,181,75,.55); background: linear-gradient(90deg, rgba(245,158,11,.10), transparent); padding-left: calc(1rem + 3px); }
+@media (max-width: 640px) { .syndicate-main main > div:last-child { padding-inline: .75rem; } .syndicate-main main .mafia-card, .syndicate-main main .action-card { border-radius: .8rem; } .syndicate-main main h1 { font-size: 1.55rem; } }
+@media (prefers-reduced-motion: reduce) { .syndicate-main .animate-fade-in, .syndicate-main .animate-page-enter, .syndicate-main .mafia-card::after, .syndicate-main .action-card::after { animation: none; transition: none; } }
+
+/* Shadow Empire: global second-pass art direction. This targets the existing
+   dashboard shell so every route inherits the same visual language. */
+.min-h-screen.flex.flex-col.bg-background.text-foreground { min-height: 100svh; color-scheme: dark; background: radial-gradient(circle at 50% -18%, rgba(245,158,11,.14), transparent 34rem), linear-gradient(118deg, #050201 0%, #120703 46%, #050201 100%) !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 { min-height: 0; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside { backdrop-filter: blur(18px); scrollbar-width: thin; scrollbar-color: rgba(245,158,11,.28) transparent; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child { background: linear-gradient(180deg, rgba(13,5,2,.98), rgba(4,2,1,.99)) !important; box-shadow: inset -1px 0 rgba(245,158,11,.10), 12px 0 36px rgba(0,0,0,.16); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child { background: linear-gradient(180deg, rgba(12,4,2,.98), rgba(4,2,1,.99)) !important; box-shadow: inset 1px 0 rgba(245,158,11,.10), -12px 0 36px rgba(0,0,0,.16); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div { border-bottom: 1px solid rgba(245,158,11,.06); padding-bottom: .3rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > button { min-height: 2.55rem; border-radius: .72rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div { margin: 0 .5rem .25rem; padding: .25rem .35rem .4rem .7rem; border-left: 1px solid rgba(245,158,11,.16); border-radius: 0 0 .75rem .75rem; background: linear-gradient(90deg, rgba(120,53,15,.08), transparent); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button { min-height: 2rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button:hover { transform: translateX(2px); background: rgba(245,158,11,.08); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button[class*="bg-primary"] { box-shadow: inset 3px 0 rgba(251,191,36,.85), 0 0 20px rgba(245,158,11,.08); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main { min-width: 0; background: linear-gradient(180deg, rgba(12,4,2,.72), rgba(4,2,1,.94)) !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child { position: sticky; top: 0; z-index: 20; overflow: hidden; border-color: rgba(245,158,11,.22); background: linear-gradient(135deg, rgba(19,7,2,.97), rgba(38,16,5,.94) 50%, rgba(10,4,2,.98)) !important; box-shadow: 0 14px 32px rgba(0,0,0,.22), inset 0 -1px rgba(255,229,169,.08); backdrop-filter: blur(18px); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) { min-height: 3.35rem; gap: .7rem; padding-block: .55rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div { border-radius: 999px; border: 1px solid rgba(245,158,11,.14); background: rgba(5,2,1,.36); padding: .28rem .55rem; box-shadow: inset 0 1px rgba(255,255,255,.05); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) { padding: .45rem .6rem .55rem; background: linear-gradient(180deg, rgba(0,0,0,.16), rgba(0,0,0,.32)); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) > div:first-child { gap: .42rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button { min-height: 2.25rem; border-radius: .72rem; border-color: rgba(245,158,11,.10); padding-inline: .7rem; background: rgba(255,255,255,.018); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button:hover { border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.08); transform: translateY(-1px); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button[class*="shadow-md"] { box-shadow: 0 0 0 1px rgba(245,158,11,.12), 0 8px 18px rgba(0,0,0,.28), 0 0 20px rgba(245,158,11,.10); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child { position: relative; width: min(100%, 1240px); margin-inline: auto; padding-top: 1.35rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child::before { content: ""; position: absolute; inset: 0 1rem auto; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(245,158,11,.32), rgba(255,255,255,.08), rgba(245,158,11,.32), transparent); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > .mafia-card:first-child { border-color: rgba(245,158,11,.24); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card, .min-h-screen.flex.flex-col.bg-background.text-foreground .action-card { overflow: hidden; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card > *, .min-h-screen.flex.flex-col.bg-background.text-foreground .action-card > * { position: relative; z-index: 1; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-primary"]:not([disabled]), .min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-green-"]:not([disabled]), .min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-red-"]:not([disabled]) { box-shadow: 0 8px 22px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.16); }
+@media (max-width: 768px) { .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child { padding: .9rem .75rem 1.25rem; } .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; } .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2)::-webkit-scrollbar { display: none; } }
+@media (prefers-reduced-motion: reduce) { .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button:hover, .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button:hover { transform: none; } }
+
+/* Final global polish: the whole game reads as one premium command center. */
+.syndicate-shell { min-height: 100vh; color-scheme: dark; }
+.syndicate-shell > .flex-1 { min-height: 0; }
+.syndicate-shell main { min-width: 0; }
+.syndicate-shell main > div:first-child { backdrop-filter: blur(18px); }
+.syndicate-shell main > div:last-child { position: relative; }
+.syndicate-shell main > div:last-child::before { content: ""; position: absolute; inset: 0 1rem auto; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(245,158,11,.28), rgba(255,255,255,.08), rgba(245,158,11,.28), transparent); }
+.syndicate-shell aside { backdrop-filter: blur(16px); }
+.syndicate-shell aside > div:first-child { position: sticky; top: 0; z-index: 2; }
+.syndicate-sidebar { scrollbar-width: thin; scrollbar-color: rgba(245,158,11,.3) transparent; }
+.syndicate-sidebar input { border-radius: .85rem; background: linear-gradient(135deg, rgba(15,23,42,.7), rgba(7,3,2,.72)); }
+.syndicate-sidebar nav > div > button { min-height: 2.45rem; border-radius: .7rem; }
+.syndicate-sidebar nav > div > div { margin: 0 .5rem .25rem; padding: .25rem .35rem .4rem .75rem; border-left: 1px solid rgba(245,158,11,.12); border-radius: 0 0 .75rem .75rem; background: linear-gradient(90deg, rgba(120,53,15,.07), transparent); }
+.syndicate-sidebar nav > div > div button { min-height: 2rem; }
+.syndicate-sidebar nav > div > div button:hover { transform: translateX(2px); }
+.syndicate-sidebar nav > div > div button[class*="bg-primary"] { box-shadow: inset 3px 0 0 rgba(251,191,36,.8), 0 0 18px rgba(245,158,11,.08); }
+.syndicate-sidebar-right > div > div:first-child { border-color: rgba(245,158,11,.28); background: linear-gradient(145deg, rgba(69,39,10,.3), rgba(8,3,2,.82)); box-shadow: 0 14px 32px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.06); }
+.syndicate-main main, .syndicate-main > div { min-width: 0; }
+.syndicate-main .mafia-card, .syndicate-main .action-card, .syndicate-main [class*="rounded-xl"][class*="border"] { overflow: hidden; }
+.syndicate-main .mafia-card > *, .syndicate-main .action-card > * { position: relative; z-index: 1; }
+.syndicate-main .mafia-card h1, .syndicate-main .mafia-card h2, .syndicate-main .mafia-card h3 { color: #ffedb0; }
+.syndicate-main button[class*="bg-primary"]:not([disabled]), .syndicate-main button[class*="bg-green-"]:not([disabled]), .syndicate-main button[class*="bg-red-"]:not([disabled]) { box-shadow: 0 8px 20px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.15); }
+.syndicate-main button[class*="bg-primary"]:hover:not([disabled]), .syndicate-main button[class*="bg-green-"]:hover:not([disabled]), .syndicate-main button[class*="bg-red-"]:hover:not([disabled]) { box-shadow: 0 12px 26px rgba(0,0,0,.28), 0 0 18px rgba(245,158,11,.1), inset 0 1px 0 rgba(255,255,255,.18); }
+@media (max-width: 768px) {
+  .syndicate-shell main > div:last-child { padding: .9rem; }
+  .syndicate-sidebar:not(.syndicate-sidebar-right) { width: min(22rem, 88vw); box-shadow: 18px 0 50px rgba(0,0,0,.45); }
+  .syndicate-shell main > div:first-child > div:nth-child(2) { justify-content: flex-start; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .syndicate-shell main > div:first-child > div:nth-child(2)::-webkit-scrollbar { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .syndicate-sidebar nav > div > div button:hover { transform: none; }
+}
+
+/* NOIR OPERATIONS REDESIGN
+   A deliberately different visual system from the old brown/gold skin. */
+.min-h-screen.flex.flex-col.bg-background.text-foreground {
+  --noir-cyan: #67e8f9;
+  --noir-blue: #38bdf8;
+  --noir-red: #fb7185;
+  --noir-ink: #030712;
+  --font-display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --font-ui: "Rajdhani", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  background: #020617 !important;
+  background-image: radial-gradient(circle at 50% -20%, rgba(14,116,144,.30), transparent 36rem), radial-gradient(circle at 100% 80%, rgba(127,29,29,.22), transparent 28rem), linear-gradient(135deg, #020617, #0b1120 48%, #030712) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground::before {
+  opacity: .48 !important;
+  background-image: linear-gradient(rgba(103,232,249,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(103,232,249,.045) 1px, transparent 1px) !important;
+  background-size: 36px 36px !important;
+  mask-image: linear-gradient(to bottom, black, transparent 90%) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 { gap: 0; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child,
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child {
+  background: linear-gradient(180deg, rgba(3,7,18,.98), rgba(2,6,23,.96)) !important;
+  border-color: rgba(103,232,249,.13) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.04), inset 0 0 44px rgba(14,116,144,.07) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child { width: 18rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child { width: 18rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before {
+  content: "SHADOW EMPIRE / NETWORK";
+  display: block;
+  margin: .9rem .9rem .45rem;
+  padding: .65rem .7rem;
+  border: 1px solid rgba(103,232,249,.2);
+  border-radius: .8rem;
+  background: linear-gradient(135deg, rgba(8,47,73,.54), rgba(3,7,18,.7));
+  color: rgba(165,243,252,.72);
+  font: 900 .58rem/1.2 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .18em;
+  box-shadow: 0 0 26px rgba(14,116,144,.12), inset 0 1px rgba(255,255,255,.07);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child > div:first-child { padding-top: .25rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside input {
+  border-color: rgba(56,189,248,.22) !important;
+  background: rgba(2,6,23,.8) !important;
+  color: #bae6fd !important;
+  border-radius: .65rem !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div { border-color: rgba(56,189,248,.08); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > button {
+  color: #94a3b8;
+  border-radius: .55rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-size: .62rem;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > button:hover { color: var(--noir-cyan); background: rgba(14,116,144,.12); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div {
+  border-left-color: rgba(56,189,248,.22);
+  background: linear-gradient(90deg, rgba(14,116,144,.11), transparent);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button { color: #64748b; border-radius: .45rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button:hover { color: #e0f2fe; background: rgba(56,189,248,.1); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside nav > div > div button[class*="bg-primary"] { color: #a5f3fc !important; background: linear-gradient(90deg, rgba(8,145,178,.3), rgba(14,116,144,.08)) !important; box-shadow: inset 3px 0 #22d3ee, 0 0 24px rgba(34,211,238,.1); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main {
+  background: linear-gradient(180deg, rgba(2,6,23,.72), rgba(2,6,23,.96)) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child {
+  background: linear-gradient(180deg, rgba(3,7,18,.98), rgba(8,21,38,.94)) !important;
+  border-color: rgba(56,189,248,.22) !important;
+  box-shadow: 0 16px 40px rgba(0,0,0,.34), inset 0 -1px rgba(103,232,249,.15) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:first-child { background: linear-gradient(90deg, transparent, rgba(34,211,238,.75), rgba(59,130,246,.5), transparent) !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) { justify-content: space-between; background: linear-gradient(90deg, rgba(8,47,73,.22), transparent, rgba(127,29,29,.16)); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div { border-color: rgba(103,232,249,.17); background: rgba(2,6,23,.56); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) .text-amber-300,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) .text-amber-400 { color: #a5f3fc !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) { background: rgba(2,6,23,.72); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button {
+  min-height: 2.8rem;
+  border-color: rgba(148,163,184,.13);
+  background: linear-gradient(180deg, rgba(15,23,42,.8), rgba(2,6,23,.72));
+  box-shadow: inset 0 1px rgba(255,255,255,.05);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button:hover { border-color: rgba(103,232,249,.45); background: rgba(8,47,73,.5); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button[class*="shadow-md"] { border-color: rgba(103,232,249,.7); box-shadow: 0 0 0 1px rgba(103,232,249,.18), 0 0 28px rgba(34,211,238,.16), inset 0 1px rgba(255,255,255,.12); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(3) button[class*="shadow-md"] span { color: #cffafe !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child { max-width: 1240px; padding-top: 2rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child::before { background: linear-gradient(90deg, transparent, rgba(34,211,238,.42), rgba(255,255,255,.13), rgba(251,113,133,.35), transparent); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card {
+  border-color: rgba(103,232,249,.16) !important;
+  background: linear-gradient(145deg, rgba(15,23,42,.78), rgba(2,6,23,.9)) !important;
+  box-shadow: 0 18px 40px rgba(0,0,0,.27), inset 0 1px rgba(255,255,255,.06) !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card:hover,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card:hover { border-color: rgba(103,232,249,.42) !important; box-shadow: 0 22px 44px rgba(0,0,0,.36), 0 0 28px rgba(34,211,238,.08) !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h1,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h2 { color: #e0f2fe !important; text-shadow: 0 0 24px rgba(34,211,238,.15); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h3 { color: #bae6fd !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main .text-primary { color: #67e8f9 !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main .text-muted-foreground { color: #7c8da6 !important; }
+@media (max-width: 768px) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child { width: min(22rem, 88vw); }
+  .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before { margin-top: 3.6rem; }
+}
+
+/* CINEMATIC LAYER — typography, HUD chrome, ambient depth */
+.min-h-screen.flex.flex-col.bg-background.text-foreground,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside {
+  font-family: var(--font-ui);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h1,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h2 {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+  letter-spacing: .02em;
+  line-height: 1.04;
+  color: #f0f9ff !important;
+  text-shadow: 0 0 30px rgba(34,211,238,.22), 0 2px 12px rgba(0,0,0,.6);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main h3 { font-family: var(--font-display); font-size: 1.12rem; letter-spacing: .045em; text-transform: uppercase; color: #bae6fd !important; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside nav > div > button { font-family: var(--font-display); letter-spacing: .14em; font-size: .72rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2),
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) span { font-family: var(--font-mono); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div {
+  position: relative;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child {
+  position: relative;
+  padding-top: 2.4rem;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 118%, rgba(14,116,144,.20), transparent 44%),
+    radial-gradient(ellipse at 50% 50%, transparent 58%, rgba(0,0,0,.42) 100%);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > * { position: relative; z-index: 2; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card {
+  border-radius: .55rem !important;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1), border-color .22s, box-shadow .22s, filter .22s;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card:hover,
+.min-h-screen.flex.flex-col.bg-background.text-foreground .action-card:hover { transform: translateY(-3px); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main table { font-family: var(--font-mono); font-size: .72rem; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main table th { font-family: var(--font-display); letter-spacing: .16em; color: #67e8f9; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-primary"],
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-green-"],
+.min-h-screen.flex.flex-col.bg-background.text-foreground button[class*="bg-red-"] {
+  font-family: var(--font-display);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  border-radius: .45rem !important;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground input,
+.min-h-screen.flex.flex-col.bg-background.text-foreground textarea,
+.min-h-screen.flex.flex-col.bg-background.text-foreground select { font-family: var(--font-mono); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:first-child::before { font-family: var(--font-mono); }
+@supports (backdrop-filter: blur(1px)) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div { backdrop-filter: blur(10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card:hover,
+  .min-h-screen.flex.flex-col.bg-background.text-foreground .action-card:hover { transform: none; }
+}
+
+/* Re-skin the live operation rail too, including its injected inline surfaces. */
+[data-operation-section] { color: #67e8f9 !important; border-color: rgba(103,232,249,.32) !important; background: rgba(8,47,73,.34) !important; text-shadow: 0 0 12px rgba(34,211,238,.5) !important; font-family: var(--font-mono) !important; }
+[data-operation-rail] { border-color: rgba(103,232,249,.2) !important; background: linear-gradient(145deg, rgba(8,47,73,.58), rgba(2,6,23,.94)) !important; box-shadow: inset 0 1px rgba(255,255,255,.08), 0 10px 24px rgba(0,0,0,.34) !important; clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); }
+[data-operation-rail]:hover { border-color: rgba(103,232,249,.62) !important; box-shadow: inset 0 0 22px rgba(34,211,238,.1), 0 12px 30px rgba(0,0,0,.4), 0 0 18px rgba(34,211,238,.13) !important; }
+[data-operation-rail] [data-operation-cooldown] { color: #67e8f9 !important; }
+[data-operation-rail] [data-operation-description] { color: #7dd3fc !important; }
+[data-operation-rail] [data-operation-progress] { background: linear-gradient(90deg, #22d3ee, #3b82f6, #fb7185) !important; }
+[data-operation-rail] [data-operation-intel] { border-top-color: rgba(103,232,249,.15) !important; }
+
+/* Console scrollbars + top-bar scan sweep */
+.min-h-screen.flex.flex-col.bg-background.text-foreground main::-webkit-scrollbar,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside::-webkit-scrollbar { width: 9px; height: 9px; }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main::-webkit-scrollbar-thumb,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(34,211,238,.35), rgba(59,130,246,.25)); border-radius: 99px; border: 2px solid rgba(2,6,23,.9); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main::-webkit-scrollbar-track,
+.min-h-screen.flex.flex-col.bg-background.text-foreground aside::-webkit-scrollbar-track { background: rgba(2,6,23,.6); }
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:first-child > div {
+  animation: noir-scan 6s linear infinite;
+}
+@keyframes noir-scan { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+@media (prefers-reduced-motion: reduce) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:first-child > div { animation: none; }
+}
+
+/* FINISHERS — dossier panels, tabular numerics, film grain, cinematic header frame */
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child {
+  position: sticky;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.014) 0 1px, transparent 1px 3px);
+  mix-blend-mode: overlay;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2),
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) * {
+  font-variant-numeric: tabular-nums;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div:first-child,
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div:nth-child(3) {
+  border-color: rgba(103,232,249,.24);
+  background: linear-gradient(120deg, rgba(8,47,73,.5), rgba(2,6,23,.66));
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child > div:nth-child(2) > div:last-child {
+  border-color: rgba(251,113,133,.26);
+  background: linear-gradient(120deg, rgba(127,29,29,.3), rgba(2,6,23,.66));
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child > div > div:first-child {
+  position: relative;
+  border-color: rgba(103,232,249,.22) !important;
+  background: linear-gradient(145deg, rgba(8,47,73,.4), rgba(2,6,23,.86)) !important;
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside:last-child > div > div:first-child::before {
+  content: "AGENT DOSSIER";
+  display: block;
+  margin-bottom: .55rem;
+  color: rgba(103,232,249,.6);
+  font: 700 .5rem/1 var(--font-mono);
+  letter-spacing: .22em;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground .mafia-card {
+  font-variant-numeric: tabular-nums;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > div:first-child {
+  position: relative;
+  padding: 1px;
+  background: linear-gradient(120deg, rgba(103,232,249,.35), transparent 30%, transparent 70%, rgba(251,113,133,.3));
+  border-radius: .65rem;
+}
+.min-h-screen.flex.flex-col.bg-background.text-foreground main > div:last-child > div:first-child > * {
+  border-radius: calc(.65rem - 1px);
+  background: rgba(2,6,23,.88);
+}
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .min-h-screen.flex.flex-col.bg-background.text-foreground main > div:first-child,
+  .min-h-screen.flex.flex-col.bg-background.text-foreground > .flex-1 > aside {
+    -webkit-backdrop-filter: blur(14px);
+  }
+}

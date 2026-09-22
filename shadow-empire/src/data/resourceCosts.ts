@@ -1,0 +1,271 @@
+import { crimeCategories } from "./crimes";
+
+// Shared resource costs - used by both client and server
+export const RESOURCE_COSTS: Record<string, { energy: number; stamina: number; focus: number; morale: number; heat: number }> = {
+  // ===== STREET CRIMES (low cost) =====
+  pickpocket: { energy: 5, stamina: 0, focus: 3, morale: 0, heat: 2 },
+  mugging: { energy: 10, stamina: 8, focus: 0, morale: 0, heat: 8 },
+  shoplifting: { energy: 5, stamina: 2, focus: 3, morale: 0, heat: 3 },
+  phone_snatch: { energy: 6, stamina: 5, focus: 0, morale: 0, heat: 4 },
+  bicycle_theft: { energy: 4, stamina: 3, focus: 0, morale: 0, heat: 2 },
+  purse_snatch: { energy: 7, stamina: 6, focus: 0, morale: 0, heat: 5 },
+  car_breakin: { energy: 8, stamina: 5, focus: 5, morale: 0, heat: 6 },
+  drug_rip: { energy: 10, stamina: 8, focus: 3, morale: 0, heat: 10 },
+  scrap_metal: { energy: 5, stamina: 4, focus: 0, morale: 0, heat: 1 },
+  garbage_scavenge: { energy: 3, stamina: 2, focus: 0, morale: 0, heat: 0 },
+  ticket_scalp: { energy: 4, stamina: 0, focus: 5, morale: 0, heat: 2 },
+  scam_call: { energy: 3, stamina: 0, focus: 5, morale: 0, heat: 2 },
+  panhandle: { energy: 2, stamina: 0, focus: 1, morale: 0, heat: 0 },
+  vandalism: { energy: 5, stamina: 3, focus: 0, morale: 0, heat: 5 },
+  egg_smuggle: { energy: 8, stamina: 6, focus: 3, morale: 0, heat: 4 },
+  bootlegging: { energy: 7, stamina: 5, focus: 3, morale: 0, heat: 3 },
+  fence_stolen: { energy: 4, stamina: 0, focus: 3, morale: 0, heat: 3 },
+  dumpster_dive: { energy: 2, stamina: 2, focus: 0, morale: 0, heat: 0 },
+  sneak_bus: { energy: 2, stamina: 1, focus: 0, morale: 0, heat: 1 },
+  atm_skim: { energy: 8, stamina: 3, focus: 10, morale: 0, heat: 5 },
+
+  // ===== ROBBERIES & HEISTS (medium-high cost) =====
+  breaking_entering: { energy: 15, stamina: 10, focus: 12, morale: 0, heat: 10 },
+  smash_grab: { energy: 18, stamina: 15, focus: 8, morale: 0, heat: 15 },
+  convenience_store: { energy: 12, stamina: 10, focus: 5, morale: 0, heat: 12 },
+  gas_station: { energy: 15, stamina: 12, focus: 8, morale: 0, heat: 12 },
+  pawn_shop: { energy: 18, stamina: 15, focus: 12, morale: 0, heat: 15 },
+  pharmacy_robbery: { energy: 20, stamina: 18, focus: 15, morale: 0, heat: 18 },
+  atm_bombing: { energy: 22, stamina: 20, focus: 10, morale: 0, heat: 25 },
+  construction_theft: { energy: 15, stamina: 12, focus: 5, morale: 0, heat: 8 },
+  electronics_heist: { energy: 25, stamina: 20, focus: 18, morale: 0, heat: 20 },
+  credit_fraud: { energy: 12, stamina: 0, focus: 18, morale: 0, heat: 15 },
+  identity_theft: { energy: 15, stamina: 0, focus: 20, morale: 0, heat: 18 },
+  armed_robbery: { energy: 25, stamina: 22, focus: 10, morale: 5, heat: 25 },
+  jewelry_blitz: { energy: 30, stamina: 25, focus: 15, morale: 0, heat: 30 },
+  art_gallery: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 25 },
+  museum_heist: { energy: 35, stamina: 25, focus: 30, morale: 0, heat: 30 },
+  armored_car: { energy: 35, stamina: 30, focus: 15, morale: 5, heat: 35 },
+  bank_vault: { energy: 40, stamina: 35, focus: 30, morale: 0, heat: 40 },
+  casino_heist: { energy: 45, stamina: 35, focus: 35, morale: 0, heat: 45 },
+  yacht_theft: { energy: 35, stamina: 30, focus: 25, morale: 0, heat: 30 },
+  diamond_raid: { energy: 45, stamina: 35, focus: 35, morale: 0, heat: 45 },
+  train_robbery: { energy: 40, stamina: 35, focus: 20, morale: 0, heat: 35 },
+  cargo_hijack: { energy: 40, stamina: 35, focus: 25, morale: 0, heat: 40 },
+  drug_lab_raid: { energy: 30, stamina: 25, focus: 15, morale: 0, heat: 30 },
+  luxury_car_theft: { energy: 25, stamina: 20, focus: 15, morale: 0, heat: 20 },
+  power_plant: { energy: 25, stamina: 20, focus: 15, morale: 0, heat: 25 },
+  warehouse_raid: { energy: 20, stamina: 18, focus: 10, morale: 0, heat: 15 },
+  hospital_theft: { energy: 18, stamina: 15, focus: 10, morale: 0, heat: 12 },
+  charity_embezzle: { energy: 10, stamina: 0, focus: 15, morale: 0, heat: 10 },
+  church_theft: { energy: 8, stamina: 5, focus: 3, morale: 0, heat: 5 },
+  school_theft: { energy: 8, stamina: 5, focus: 3, morale: 0, heat: 5 },
+
+  // ===== FRAUD & SCAMS (mental heavy) =====
+  lottery_scam: { energy: 8, stamina: 0, focus: 12, morale: 0, heat: 8 },
+  tax_evasion: { energy: 12, stamina: 0, focus: 18, morale: 0, heat: 15 },
+  car_insurance: { energy: 10, stamina: 0, focus: 15, morale: 0, heat: 10 },
+  romance_scam: { energy: 8, stamina: 0, focus: 15, morale: 0, heat: 5 },
+  extortion: { energy: 15, stamina: 10, focus: 12, morale: 0, heat: 15 },
+  kidnapping: { energy: 35, stamina: 30, focus: 20, morale: 0, heat: 35 },
+  counterfeit: { energy: 15, stamina: 0, focus: 20, morale: 0, heat: 18 },
+  insurance_fraud: { energy: 12, stamina: 0, focus: 18, morale: 0, heat: 15 },
+  wire_fraud: { energy: 12, stamina: 0, focus: 20, morale: 0, heat: 15 },
+  money_laundering: { energy: 15, stamina: 0, focus: 22, morale: 0, heat: 12 },
+  ponzi: { energy: 20, stamina: 0, focus: 25, morale: 0, heat: 25 },
+  insider_trading: { energy: 12, stamina: 0, focus: 22, morale: 0, heat: 18 },
+  corp_espionage: { energy: 20, stamina: 10, focus: 25, morale: 0, heat: 22 },
+  ransomware: { energy: 18, stamina: 0, focus: 28, morale: 0, heat: 25 },
+
+  // ===== BURGLARY =====
+  suburban_casing: { energy: 10, stamina: 5, focus: 10, morale: 0, heat: 5 },
+  apartment_ransack: { energy: 15, stamina: 10, focus: 8, morale: 0, heat: 10 },
+  easy_house: { energy: 12, stamina: 8, focus: 5, morale: 0, heat: 8 },
+  average_house: { energy: 15, stamina: 12, focus: 10, morale: 0, heat: 10 },
+  vacation_home: { energy: 20, stamina: 15, focus: 12, morale: 0, heat: 12 },
+  luxury_villa: { energy: 28, stamina: 22, focus: 18, morale: 0, heat: 18 },
+  penthouse_raid: { energy: 30, stamina: 25, focus: 20, morale: 0, heat: 22 },
+  mansion: { energy: 35, stamina: 28, focus: 25, morale: 0, heat: 25 },
+
+  // ===== DRUG OPERATIONS =====
+  corner_deal: { energy: 5, stamina: 3, focus: 0, morale: 0, heat: 5 },
+  drug_running: { energy: 15, stamina: 12, focus: 5, morale: 0, heat: 15 },
+  cook_operation: { energy: 20, stamina: 10, focus: 15, morale: 0, heat: 20 },
+  precursor_theft: { energy: 15, stamina: 12, focus: 8, morale: 0, heat: 12 },
+  manufacturing: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 18 },
+  distribution: { energy: 18, stamina: 15, focus: 8, morale: 0, heat: 20 },
+  lab_expansion: { energy: 25, stamina: 20, focus: 15, morale: 0, heat: 22 },
+  bulk_intercept: { energy: 22, stamina: 18, focus: 12, morale: 0, heat: 18 },
+  underground_lab: { energy: 30, stamina: 22, focus: 20, morale: 0, heat: 25 },
+  smuggling_ring: { energy: 25, stamina: 20, focus: 15, morale: 0, heat: 22 },
+  intl_supply: { energy: 30, stamina: 25, focus: 18, morale: 0, heat: 28 },
+  cartel_partner: { energy: 35, stamina: 28, focus: 22, morale: 0, heat: 30 },
+
+  // ===== ORGANIZED CRIME =====
+  extortion_racket: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 15 },
+  loan_sharking: { energy: 15, stamina: 10, focus: 12, morale: 0, heat: 10 },
+  protection: { energy: 18, stamina: 15, focus: 5, morale: 0, heat: 12 },
+  smuggling: { energy: 22, stamina: 18, focus: 12, morale: 0, heat: 18 },
+  hijacking: { energy: 25, stamina: 22, focus: 10, morale: 0, heat: 22 },
+  contract_killing: { energy: 40, stamina: 30, focus: 25, morale: 5, heat: 40 },
+  money_laundering_2: { energy: 15, stamina: 0, focus: 22, morale: 0, heat: 12 },
+  arms_dealing: { energy: 20, stamina: 15, focus: 15, morale: 0, heat: 20 },
+  car_jacking: { energy: 18, stamina: 15, focus: 8, morale: 0, heat: 18 },
+  human_trafficking: { energy: 35, stamina: 28, focus: 20, morale: 0, heat: 35 },
+  political_corruption: { energy: 15, stamina: 0, focus: 25, morale: 0, heat: 15 },
+  cyber_crime: { energy: 12, stamina: 0, focus: 28, morale: 0, heat: 18 },
+
+  // ===== UNDERGROUND =====
+  underground_fight: { energy: 20, stamina: 25, focus: 0, morale: 5, heat: 5 },
+  illegal_betting: { energy: 5, stamina: 0, focus: 10, morale: 0, heat: 3 },
+  street_racing: { energy: 18, stamina: 15, focus: 12, morale: 0, heat: 12 },
+  dog_fighting: { energy: 12, stamina: 10, focus: 5, morale: 0, heat: 8 },
+  illegal_gaming: { energy: 8, stamina: 0, focus: 10, morale: 0, heat: 5 },
+  underground_market: { energy: 10, stamina: 5, focus: 8, morale: 0, heat: 8 },
+  back_alley_surgery: { energy: 25, stamina: 20, focus: 18, morale: 0, heat: 15 },
+  organ_harvesting: { energy: 30, stamina: 25, focus: 15, morale: 0, heat: 25 },
+  counterfeiting_ring: { energy: 18, stamina: 10, focus: 22, morale: 0, heat: 18 },
+  weapons_cache: { energy: 15, stamina: 12, focus: 10, morale: 0, heat: 12 },
+  safe_cracking: { energy: 15, stamina: 10, focus: 20, morale: 0, heat: 10 },
+  jailbreak: { energy: 35, stamina: 30, focus: 25, morale: 0, heat: 40 },
+  prison_fight: { energy: 20, stamina: 25, focus: 0, morale: 5, heat: 5 },
+  prison_job: { energy: 10, stamina: 8, focus: 3, morale: 0, heat: 0 },
+
+  // ===== CAR THEFT / BURGLARIZE / ORGANIZED =====
+  car_theft: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 12 },
+  burglarize: { energy: 18, stamina: 12, focus: 15, morale: 0, heat: 10 },
+  organized_crime: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
+  steal_house: { energy: 18, stamina: 12, focus: 15, morale: 0, heat: 10 },
+
+  // ===== MURDER =====
+  murder: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 35 },
+
+  // ===== COMBAT =====
+  fight: { energy: 15, stamina: 20, focus: 0, morale: 5, heat: 0 },
+  duel: { energy: 20, stamina: 25, focus: 10, morale: 8, heat: 0 },
+  arena: { energy: 25, stamina: 30, focus: 15, morale: 10, heat: 0 },
+  spar: { energy: 10, stamina: 15, focus: 0, morale: 3, heat: 0 },
+
+  // ===== GAMBLING (focus heavy) =====
+  gamble: { energy: 5, stamina: 0, focus: 10, morale: 0, heat: 0 },
+  gambleDice: { energy: 5, stamina: 0, focus: 10, morale: 0, heat: 0 },
+  gambleCoinToss: { energy: 5, stamina: 0, focus: 8, morale: 0, heat: 0 },
+  gambleRoulette: { energy: 5, stamina: 0, focus: 10, morale: 0, heat: 0 },
+  poker: { energy: 8, stamina: 0, focus: 15, morale: 0, heat: 0 },
+  blackjack: { energy: 5, stamina: 0, focus: 12, morale: 0, heat: 0 },
+  lotto: { energy: 3, stamina: 0, focus: 5, morale: 0, heat: 0 },
+
+  // ===== MISSIONS / WORK =====
+  mission: { energy: 15, stamina: 10, focus: 8, morale: 0, heat: 0 },
+  work: { energy: 10, stamina: 8, focus: 5, morale: 0, heat: 0 },
+  daily_raid: { energy: 25, stamina: 20, focus: 15, morale: 0, heat: 15 },
+
+  // ===== RECOVERY (negative costs = restore) =====
+  hospital: { energy: 30, stamina: 25, focus: 20, morale: 0, heat: -20 },
+  rehab: { energy: 20, stamina: 15, focus: 10, morale: 20, heat: -10 },
+  sleep: { energy: 50, stamina: 40, focus: 30, morale: 10, heat: -15 },
+
+  // ===== BUSINESS / ASSET actions =====
+  buy_vehicle: { energy: 5, stamina: 0, focus: 5, morale: 5, heat: 0 },
+  buy_property: { energy: 5, stamina: 0, focus: 8, morale: 5, heat: 0 },
+  buy_business: { energy: 5, stamina: 0, focus: 10, morale: 5, heat: 0 },
+  craft: { energy: 10, stamina: 8, focus: 12, morale: 0, heat: 0 },
+  trade_stock: { energy: 3, stamina: 0, focus: 8, morale: 0, heat: 0 },
+  trade_crypto: { energy: 3, stamina: 0, focus: 8, morale: 0, heat: 0 },
+  bank_deposit: { energy: 2, stamina: 0, focus: 3, morale: 0, heat: -2 },
+  bank_withdraw: { energy: 2, stamina: 0, focus: 3, morale: 0, heat: 2 },
+
+  // ===== SOCIAL / MISC =====
+  send_message: { energy: 1, stamina: 0, focus: 1, morale: 0, heat: 0 },
+  place_bounty: { energy: 3, stamina: 0, focus: 5, morale: 0, heat: 3 },
+  claim_bounty: { energy: 15, stamina: 12, focus: 8, morale: 5, heat: 5 },
+  mentor: { energy: 5, stamina: 0, focus: 5, morale: 10, heat: 0 },
+  gift: { energy: 2, stamina: 0, focus: 0, morale: 8, heat: 0 },
+
+  // ===== ALL STREET CRIME CATEGORY IDs =====
+  street_pickpocket: { energy: 5, stamina: 0, focus: 3, morale: 0, heat: 2 },
+  street_mugging: { energy: 10, stamina: 8, focus: 0, morale: 0, heat: 8 },
+  street_shoplifting: { energy: 5, stamina: 2, focus: 3, morale: 0, heat: 3 },
+  street_phone_snatch: { energy: 6, stamina: 5, focus: 0, morale: 0, heat: 4 },
+  street_bicycle_theft: { energy: 4, stamina: 3, focus: 0, morale: 0, heat: 2 },
+  street_purse_snatch: { energy: 7, stamina: 6, focus: 0, morale: 0, heat: 5 },
+  street_car_breakin: { energy: 8, stamina: 5, focus: 5, morale: 0, heat: 6 },
+  street_drug_rip: { energy: 10, stamina: 8, focus: 3, morale: 0, heat: 10 },
+  street_scrap_metal: { energy: 5, stamina: 4, focus: 0, morale: 0, heat: 1 },
+  street_garbage_scavenge: { energy: 3, stamina: 2, focus: 0, morale: 0, heat: 0 },
+  street_ticket_scalp: { energy: 4, stamina: 0, focus: 5, morale: 0, heat: 2 },
+  street_scam_call: { energy: 3, stamina: 0, focus: 5, morale: 0, heat: 2 },
+  street_panhandle: { energy: 2, stamina: 0, focus: 1, morale: 0, heat: 0 },
+  street_vandalism: { energy: 5, stamina: 3, focus: 0, morale: 0, heat: 5 },
+  street_egg_smuggle: { energy: 8, stamina: 6, focus: 3, morale: 0, heat: 4 },
+  street_bootlegging: { energy: 7, stamina: 5, focus: 3, morale: 0, heat: 3 },
+  street_fence_stolen: { energy: 4, stamina: 0, focus: 3, morale: 0, heat: 3 },
+  street_dumpster_dive: { energy: 2, stamina: 2, focus: 0, morale: 0, heat: 0 },
+  street_sneak_bus: { energy: 2, stamina: 1, focus: 0, morale: 0, heat: 1 },
+  street_atm_skim: { energy: 8, stamina: 3, focus: 10, morale: 0, heat: 5 },
+
+  // Default fallback for any unknown action
+  // Explicit costs for every top-bar criminal action.
+  gta: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 12 },
+  gta_theft: { energy: 20, stamina: 15, focus: 10, morale: 0, heat: 12 },
+  organized: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
+  org_crime: { energy: 30, stamina: 20, focus: 25, morale: 0, heat: 20 },
+
+  // GTA THEFT (40 energy each)
+  gta_junk_car: { energy: 40, stamina: 30, focus: 20, morale: 0, heat: 15 },
+  gta_parked_car: { energy: 40, stamina: 30, focus: 20, morale: 0, heat: 18 },
+  gta_delivery_van: { energy: 40, stamina: 35, focus: 20, morale: 0, heat: 20 },
+  gta_sports_car: { energy: 40, stamina: 35, focus: 25, morale: 0, heat: 25 },
+  gta_luxury_suv: { energy: 40, stamina: 35, focus: 25, morale: 0, heat: 28 },
+  gta_supercar: { energy: 40, stamina: 35, focus: 30, morale: 0, heat: 35 },
+  gta_armored_truck: { energy: 40, stamina: 35, focus: 30, morale: 5, heat: 40 },
+  gta_helicopter: { energy: 40, stamina: 35, focus: 35, morale: 5, heat: 45 },
+  // STEAL FROM HOUSE (40 energy each)
+  sh_easy_home: { energy: 40, stamina: 25, focus: 15, morale: 0, heat: 10 },
+  sh_poor_apartment: { energy: 40, stamina: 25, focus: 15, morale: 0, heat: 12 },
+  sh_average_house: { energy: 40, stamina: 30, focus: 20, morale: 0, heat: 15 },
+  sh_suburban_mansion: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 20 },
+  sh_penthouse: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 28 },
+  sh_rich_estate: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 35 },
+  sh_ceo_condo: { energy: 40, stamina: 30, focus: 35, morale: 0, heat: 40 },
+  sh_villa_heist: { energy: 40, stamina: 30, focus: 35, morale: 5, heat: 45 },
+  // MURDER (40 energy each)
+  mur_back_alley: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 20 },
+  mur_drug_dealer: { energy: 40, stamina: 30, focus: 25, morale: 0, heat: 25 },
+  mur_witness: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 30 },
+  mur_businessman: { energy: 40, stamina: 30, focus: 30, morale: 5, heat: 35 },
+  mur_politician: { energy: 40, stamina: 30, focus: 35, morale: 5, heat: 45 },
+  mur_sniper: { energy: 40, stamina: 30, focus: 35, morale: 0, heat: 35 },
+  mur_car_bomb: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 40 },
+  mur_poison: { energy: 40, stamina: 30, focus: 30, morale: 0, heat: 30 },
+  mur_mass_hit: { energy: 40, stamina: 30, focus: 35, morale: 10, heat: 50 },
+  mur_donor_removal: { energy: 40, stamina: 30, focus: 35, morale: 5, heat: 40 },
+
+  // Safe fallback for legacy action IDs.
+  default: { energy: 5, stamina: 3, focus: 3, morale: 0, heat: 0 },
+};
+
+// ═══ AUTO-SCALED TOP-BAR ENERGY COSTS (5 ⚡ → 100 ⚡ by tier) ═══
+// Every top-bar criminal category scales its energy cost from cheap (5 ⚡)
+// for low-level jobs up to 100 ⚡ for the most serious operations.
+const TOP_BAR_ENERGY_SCALE: Record<string, { min: number; max: number }> = {
+  street: { min: 5, max: 20 },
+  robbery: { min: 10, max: 60 },
+  fraud: { min: 8, max: 50 },
+  burglary: { min: 10, max: 70 },
+  drugs: { min: 10, max: 65 },
+  organized: { min: 20, max: 85 },
+  underground: { min: 10, max: 95 },
+  gta_theft: { min: 15, max: 100 },
+  steal_house: { min: 10, max: 80 },
+  murder: { min: 25, max: 100 },
+};
+
+for (const category of crimeCategories) {
+  const scale = TOP_BAR_ENERGY_SCALE[category.id];
+  if (!scale) continue;
+  const levels = category.crimes.map((crime) => crime.levelRequired);
+  const minLevel = Math.min(...levels);
+  const maxLevel = Math.max(...levels);
+  const span = maxLevel - minLevel;
+  for (const crime of category.crimes) {
+    const t = span === 0 ? 1 : (crime.levelRequired - minLevel) / span;
+    const energy = Math.min(scale.max, Math.max(scale.min, Math.round(scale.min + t * (scale.max - scale.min))));
+    RESOURCE_COSTS[crime.id] = { ...(RESOURCE_COSTS[crime.id] ?? {}), energy };
+  }
+}
