@@ -6,7 +6,7 @@ import {
   Crosshair, Shield, Users, Banknote, Swords, Skull,  Crown, ChevronRight,
   Flame, Target, Eye, Zap, Lock, Heart, MapPin, Star, Trophy, Bomb,
   Building2, Car, Gem, Clock, TrendingUp, AlertTriangle,
-  Megaphone, Siren, Gavel, Radio, Map,
+  Megaphone, Siren, Gavel, Radio, Map, Download,
 } from "lucide-react";
 
 // ===== ANIMATED COUNTER =====
@@ -112,6 +112,16 @@ export default function Landing() {
   const { scrollYProgress } = useScroll();
   const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.9]);
+
+  // Secret: tap the footer crown 5x to reveal the source-code download
+  const [secretTaps, setSecretTaps] = useState(0);
+  const [showSourceDownload, setShowSourceDownload] = useState(false);
+  const revealSourceDownload = () => {
+    setSecretTaps((t) => {
+      if (t + 1 >= 5) setShowSourceDownload(true);
+      return t + 1;
+    });
+  };
 
   const features = [
     { icon: Crosshair, title: "Street Crimes", desc: "Mugging, pickpocketing, shoplifting, car theft — 100+ criminal actions across 10 cities.", color: "text-red-400", bg: "from-red-900/20 to-red-950/10", border: "border-red-500/20" },
@@ -457,10 +467,15 @@ export default function Landing() {
       <footer className="py-12 px-4 border-t border-border/50">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
-            <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={revealSourceDownload}
+              aria-label="Shadow Empire"
+              className="flex items-center gap-3 cursor-default select-none"
+            >
               <Crown className="size-6 text-primary" />
               <span className="text-xl font-black">SHADOW<span className="text-red-400">EMPIRE</span></span>
-            </div>
+            </button>
             <div className="flex items-center gap-6 text-xs text-muted-foreground">
               <span>Terms of Service</span>
               <span>Privacy Policy</span>
@@ -468,6 +483,23 @@ export default function Landing() {
               <span>Discord</span>
             </div>
           </div>
+          {showSourceDownload && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-center mb-6"
+            >
+              <a
+                href="/shadow-empire.zip"
+                download="shadow-empire.zip"
+                title="Download the full Shadow Empire source code"
+                className="inline-flex items-center gap-2 rounded-lg border border-primary/20 bg-secondary/40 px-4 py-2 text-xs font-semibold text-muted-foreground transition-all hover:border-primary/40 hover:text-primary"
+              >
+                <Download className="size-3.5" />
+                Download Source
+              </a>
+            </motion.div>
+          )}
           <div className="text-center text-[10px] text-muted-foreground/40">
             A text-based mafia game. Not affiliated with any real criminal organizations. Play responsibly.
           </div>
