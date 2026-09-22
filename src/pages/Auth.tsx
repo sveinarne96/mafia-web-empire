@@ -21,8 +21,6 @@ import {
 } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
 
 interface AuthProps {
   redirectAfterAuth?: string;
@@ -47,9 +45,6 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     redirectAfterAuth,
   );
 
-  const registerMutation = useMutation(api.authCustom.register);
-  const loginMutation = useMutation(api.authCustom.login);
-
   const [mode, setMode] = useState<"menu" | "register" | "login">("menu");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -70,18 +65,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     setSuccess(null);
     try {
-      // First sign in anonymously to create a Convex Auth session
-      await signIn("anonymous");
-      // Then register the username/password
-      const result = await registerMutation({
-        username,
-        password,
-      });
-      setSuccess(result.message + " Welcome to the underworld!");
-      setTimeout(() => navigate(redirect), 1000);
+      await signIn("password", { username, password, flow: "signUp" });
+      setSuccess("Account created! Welcome to the underworld.");
+      setTimeout(() => navigate(redirect), 600);
     } catch (err) {
       console.error("Register error:", err);
-      setError(err instanceof Error ? err.message : "Registration failed");
+      const msg = err instanceof Error ? err.message : "Registration failed";
+      setError(msg.replace(/^[A-Z]+:?\s*/, "") || msg);
       setIsLoading(false);
     }
   };
@@ -92,18 +82,13 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     setError(null);
     setSuccess(null);
     try {
-      // First sign in anonymously to create a Convex Auth session
-      await signIn("anonymous");
-      // Then verify credentials
-      const result = await loginMutation({
-        username,
-        password,
-      });
-      setSuccess(result.message + " Welcome back!");
-      setTimeout(() => navigate(redirect), 1000);
+      await signIn("password", { username, password, flow: "signIn" });
+      setSuccess("Welcome back!");
+      setTimeout(() => navigate(redirect), 600);
     } catch (err) {
       console.error("Login error:", err);
-      setError(err instanceof Error ? err.message : "Login failed");
+      const msg = err instanceof Error ? err.message : "Login failed";
+      setError(msg.replace(/^[A-Z]+:?\s*/, "") || msg);
       setIsLoading(false);
     }
   };

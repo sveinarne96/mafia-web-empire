@@ -4,6 +4,7 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import { RESOURCE_COSTS } from "../data/resourceCosts"; // costs
 import { GTA_LOOT, SH_LOOT } from "../data/crimes"; // specific vehicles/loot per job
 import { getLiveModifiers } from "./gameControl"; // live admin console multipliers
+import { getSchoolBonuses } from "./school"; // High School permanent + timed study buffs
 
 // ===== SUPER BOOST WEEKEND LOOT HELPERS =====
 // While the weekend boost is live every successful crime can drop extra cash,
@@ -230,9 +231,12 @@ export const registerPlayer = mutation({
       });
       return { success: true };
     } catch (e) {
-      // Never crash — return success so the user can proceed
+      // Surface real problems (taken nickname, closed registration, auth
+      // hiccups) instead of pretending success — a silent "success" here is
+      // what bounced players back to the registration screen forever.
       console.error("registerPlayer error:", e);
-      return { success: true };
+      const message = e instanceof Error ? e.message : "Registration failed";
+      return { success: false, error: message };
     }
   },
 });
@@ -470,6 +474,7 @@ export const commitCrime = mutation({
     let moneyEarned = 0, pointsEarned = 0, damageTaken = 0;
     // Base success chance + any live crime-success bonus from the admin console
     const success = Math.random() < 0.95 + (liveCfg.crimeSuccessBonus ?? 0);
+    const school = getSchoolBonuses(player);
     // Mission-board action counters for street ops (GTA / burglary)
     const missionCounters: Record<string, number> = success
       ? args.type === "car_theft"
@@ -492,8 +497,8 @@ export const commitCrime = mutation({
     const arrested = !success && Math.random() < 0.10;
     await ctx.db.insert("crimes", { userId: player._id, type: args.type, target: args.type === "rob_player" ? (args.targetId ?? "unknown") : "environment", success, moneyEarned, pointsEarned, damageTaken, timestamp: Date.now() });
     const newLife = Math.max(0, (player.life ?? 100) - damageTaken);
-        const xpUpdate = await addXpAndCheckLevel(ctx, player, Math.floor((success ? 75 : 15) * liveCfg.xpMultiplier));
-    await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + moneyEarned : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), energy: Math.max(0, regeneratedEnergy - (liveCfg.superBoostActive ? 2 : 5)), bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5), actionTimestamps: [...(Array.isArray((player as any).actionTimestamps) ? ((player as any).actionTimestamps as number[]).filter((t: number) => typeof t === "number" && Number.isFinite(t) && Date.now() - t < 3600000).slice(-999) : []), Date.now()] } as any);
+        const xpUpdate = await addXpAndCheckLevel(ctx, player, Math.floor((success ? 75 : 15) * liveCfg.xpMultiplier * school.crimeXpMult));
+    await ctx.db.patch(player._id, { money: success ? (player.money ?? 0) + Math.floor(moneyEarned * school.cashMult) : (player.money ?? 0), points: (player.points ?? 0) + pointsEarned * (Date.now() < ((player as any).pointsBoostUntil ?? 0) ? 3 : 1), life: newLife, totalCrimes: (player.totalCrimes ?? 0) + 1, ...missionCounters, ...xpUpdate, levelUpPending: false, inPrison: arrested, prisonTime: arrested ? 15000 : (player.prisonTime ?? 0), wantedLevel: arrested ? 0 : Math.min(20, (player.wantedLevel ?? 0) + (success ? 1 : 0)), lastCrimeAt: Date.now(), lastStreetCrimeAt: Date.now(), energy: Math.max(0, regeneratedEnergy - (liveCfg.superBoostActive ? 2 : 5)), bullets: (player.bullets ?? 0) + bulletDrop, lastEnergyRegen: Date.now(), crimeMomentum: Math.min(100, (player.crimeMomentum ?? 0) + 5), actionTimestamps: [...(Array.isArray((player as any).actionTimestamps) ? ((player as any).actionTimestamps as number[]).filter((t: number) => typeof t === "number" && Number.isFinite(t) && Date.now() - t < 3600000).slice(-999) : []), Date.now()] } as any);
     await applyWeekendDrops(ctx, player, _sbRoll);
     if (arrested) await ctx.db.insert("notifications", { userId: player._id, type: "prison", message: "You were arrested during a crime!", read: false, timestamp: Date.now() });
     return { success, moneyEarned, pointsEarned, damageTaken, arrested, bulletDrop, bonusCash: _sbRoll.bonusCash, bonusPoints: _sbRoll.bonusPoints, packsDropped: _sbRoll.packs, scrapsDropped: _sbRoll.scraps };
@@ -859,10 +864,12 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const effectiveEnergy = Math.max(0, regeneratedEnergy - energyCost);
   const _now = Date.now();
   const riskRoll = Math.random() * 100;
-  const arrested = succeeded && riskRoll < (100 - args.risk);
+  // HIGH SCHOOL: +2%/grade crime XP, 2x cash, 3x points, half-arrest-risk.
+  const school = getSchoolBonuses(player);
+  const arrested = succeeded && riskRoll < (100 - args.risk) * school.riskFactor;
   const lifeDamage = succeeded ? Math.floor(Math.random() * 20) + 5 : Math.floor(Math.random() * 40) + 10;
   const newLife = Math.max(0, (player.life ?? 100) - lifeDamage);
-  const moneyEarned = succeeded ? Math.floor(args.reward * (1 + 0.1) * liveCfg.cashMultiplier) : 0;
+  const moneyEarned = succeeded ? Math.floor(args.reward * (1 + 0.1) * liveCfg.cashMultiplier * school.cashMult) : 0;
   // SUPER BOOST: 75% chance to loot bullets on every criminal action (scaled to the crime, capped)
   const bulletDrop = succeeded && liveCfg.superBoostActive && Math.random() < 0.75
     ? Math.min(10000, Math.max(1, Math.floor(args.reward / 25)))
@@ -870,8 +877,8 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const _missionGta = succeeded && args.crimeId.startsWith('gta_');
   const missionCounters: Record<string, number> = _missionGta ? { totalGta: ((player as any).totalGta ?? 0) + 1 } : {};
   if (_missionGta && (GTA_LOOT[args.crimeId]?.price ?? args.reward) >= 500000) missionCounters.totalGtaRare = ((player as any).totalGtaRare ?? 0) + 1;
-  const xpEarned = succeeded ? Math.floor(args.xp * liveCfg.xpMultiplier) : Math.floor(args.xp * 0.3);
-  const pointsEarned = succeeded ? Math.floor(args.xp * 0.1 * liveCfg.pointsMultiplier) : 0;
+  const xpEarned = Math.floor((succeeded ? Math.floor(args.xp * liveCfg.xpMultiplier) : Math.floor(args.xp * 0.3)) * school.crimeXpMult);
+  const pointsEarned = Math.floor((succeeded ? Math.floor(args.xp * 0.1 * liveCfg.pointsMultiplier) : 0) * school.pointsMult);
   const _sbRoll = rollWeekendLoot(liveCfg.superBoostActive, succeeded, moneyEarned, pointsEarned, args.reward);
   const xpUpdate = await addXpAndCheckLevel(ctx, player, xpEarned);
   const levelUpNow = (player as any).levelUpPending === true || ((player.experience ?? 0) + xpEarned >= 2000);

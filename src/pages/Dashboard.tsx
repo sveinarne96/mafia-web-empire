@@ -62,6 +62,7 @@ const SeasonStorePanel = lazy(() => import("@/components/SeasonStorePanel").then
 const DailyRewardGame = lazy(() => import("@/components/SeasonStorePanel").then((m) => ({      default: m.DailyRewardGame })));
 const OcFloatingCrew = lazy(() => import("@/components/OcFloatingCrew").then((m) => ({      default: m.OcFloatingCrew })));
 import { LogoDropdown } from "@/components/LogoDropdown";
+import { HighSchoolPanel } from "@/components/HighSchoolPanel";
 import { StealFromHousePage, GtaCarTheftPage } from "@/components/GameEnhanced";
 import { BodyguardsPage } from "@/components/BodyguardsPage";
 import { PacksOverviewPanel, PerksPanel } from "@/components/PacksPerksPanel";
@@ -435,6 +436,9 @@ function HeadquartersPage({ onNavigate }: { onNavigate?: (page: string) => void 
           ))}
         </div>
       </div>
+
+      {/* 🏫 HIGH SCHOOL — study for permanent +2%/grade crime XP & surprise bonuses */}
+      <HighSchoolPanel />
 
       <ObjectivesPanel />
       <RanksPanel />
@@ -2537,7 +2541,14 @@ function RegisterPlayer({ onComplete }: { onComplete: () => void }) {
     if (!nickname.trim()) { setMsg("Nickname is required"); return; }
     setLoading(true);
     try {
-      await register({ nickname: nickname.trim(), playerClass });
+      const r = await register({ nickname: nickname.trim(), playerClass });
+      // registerPlayer reports soft failures (taken nickname, closed
+      // registration) via success:false instead of throwing — show them.
+      if (r && (r as any).success === false) {
+        setMsg((r as any).error || "Registration failed");
+        setLoading(false);
+        return;
+      }
       finish(nickname.trim());
     } catch (e: any) { setMsg(e.message || "Registration failed"); }
     setLoading(false);

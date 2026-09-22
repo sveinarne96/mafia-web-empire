@@ -1,6 +1,7 @@
 import { convexAuth } from "@convex-dev/auth/server";
 import { Anonymous } from "@convex-dev/auth/providers/Anonymous";
 import { emailOtp } from "./auth/emailOtp";
+import { credentialsProvider } from "./auth/credentials";
 
 // Default values for all required game fields when a new user is created by auth.
 // This ensures the user document matches the schema immediately.
@@ -36,7 +37,7 @@ const DEFAULT_GAME_FIELDS = {
 };
 
 export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
-  providers: [emailOtp, Anonymous],
+  providers: [credentialsProvider, emailOtp, Anonymous],
   callbacks: {
     createOrUpdateUser: async (ctx, { existingUserId, ...args }) => {
       // If user already exists, just return their ID (profile already set)
