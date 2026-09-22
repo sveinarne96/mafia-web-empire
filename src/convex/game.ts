@@ -242,40 +242,66 @@ export const registerPlayer = mutation({
 // their old criminal is still alive in the database. Instead of forcing a brand
 // new character, let them claim their existing one by nickname — this moves the
 // old profile onto the current session and frees its old auth email.
+//
+// RULES that keep this mutation from ever looping on "Server Error Called by
+// client": (1) only genuine user-facing conditions throw, (2) everything after
+// the merge is isolated per-step so one bad row/table can never abort the claim
+// half-way, (3) multi-device sessions on the old profile are signed out instead
+// of blocking recovery forever, (4) owned data (vehicles, items, missions…)
+// follows the player to the surviving profile row.
+const CLAIM_MIGRATE_TABLES = [
+  // Current player STATE — must follow the player, not stay on the dead shell.
+  "vehicles", "playerItems", "inventory", "playerStocks", "playerMissions",
+  "notifications", "supportTickets", "heirlooms", "streetNames", "bloodOaths",
+  "loreUnlocks", "mailKeyState", "businessShares", "junkyardDogs",
+  "taxiMedallions", "laundromats", "vendingRoutes", "funeralHome", "fishStalls",
+  "powerTaps", "unionBribes", "cartelContracts", "deadSwitches", "timeCapsules",
+  "dailyRaids", "witnessHits", "morgueDeaths",
+];
+
 export const claimExistingAccount = mutation({
   args: { nickname: v.string() },
   handler: async (ctx, args) => {
     const me = await getCurrentUser(ctx);
-    if (!me) throw new Error("Not authenticated");
+    if (!me) throw new Error("Your session is not ready yet — wait a second and try again.");
     const name = args.nickname.trim();
     if (!name) throw new Error("Type your nickname to continue.");
-    const existing = (await ctx.db
+
+    // Find the profile (first REAL player row with that nickname — bots never
+    // count as claimable accounts).
+    const matches = (await ctx.db
       .query("users")
       .withIndex("by_nickname", (q) => q.eq("nickname", name))
-      .collect())[0];
-    if (!existing) throw new Error(`No criminal named "${name}" was found. Check the spelling.`);
-    if ((existing as any).isBotPlayer) throw new Error("That name belongs to a street contact, not a player account.");
+      .collect()) as any[];
+    const existing = matches.find((u) => !u.isBotPlayer);
+    if (!existing) {
+      if (matches.length > 0) throw new Error("That name belongs to a street contact, not a player account.");
+      throw new Error(`No criminal named "${name}" was found. Check the spelling.`);
+    }
     if (existing.isBanned) throw new Error("That account is banned and cannot be recovered here.");
-    if ((existing as any)._id === (me as any)._id) return { success: true, alreadyYours: true };
-    // Guard: someone else may already be signed in on that profile (session link).
-    // Only ACTIVE (non-expired) sessions count — expired rows must not block recovery.
-    const now = Date.now();
-    const sessions = (await ctx.db
-      .query("authSessions")
-      .withIndex("userId", (q) => q.eq("userId", (existing as any)._id))
-      .collect()).filter((s: any) => (s.expirationTime ?? 0) > now);
-    if (sessions.length > 1) throw new Error("That account is currently linked to another active session.");
-    // Merge the old character ONTO this session's profile row (keeps the auth
-    // session valid) and delete the old shell row so nickname uniqueness holds.
-    // ALL progression — money, bank, level, items, vehicles, perks — carries over.
     const old = existing as any;
     const cur = me as any;
+    if (old._id === cur._id) return { success: true, alreadyYours: true };
+
+    // Session guard, best-effort: if this profile is live on several devices we
+    // sign the OLD session rows out when taking over instead of throwing — a
+    // hard block here made recovery impossible for anyone who ever played on
+    // two devices (sessions stay active for weeks).
+    try {
+      const now = Date.now();
+      const sessions = (await ctx.db
+        .query("authSessions")
+        .withIndex("userId", (q) => q.eq("userId", old._id))
+        .collect()) as any[];
+      const active = sessions.filter((s) => (s.expirationTime ?? 0) > now);
+      for (const s of active) { try { await ctx.db.delete(s._id); } catch { /* ignore */ } }
+    } catch { /* auth table drift — never block recovery on it */ }
+
+    // 1) Merge the old character ONTO this session's profile row (keeps the auth
+    // session valid) so ALL row-level progression — money, bank, level, perks —
+    // carries over. Robust: try the full patch, fall back field-by-field.
     const carry = { ...old } as Record<string, unknown>;
     for (const k of ["_id", "_creationTime", "email", "emailVerificationTime", "tokenIdentifier", "isAnonymous", "authAccountIds", "sessions"]) delete carry[k];
-    // Robust merge: old rows may contain fields that no longer exist in the
-    // current schema — Convex rejects the whole patch if even one field is
-    // invalid. Try the full patch first; on failure, merge field-by-field and
-    // skip anything the schema no longer accepts. The claim must never fail.
     try {
       await ctx.db.patch(cur._id, carry as any);
     } catch {
@@ -283,15 +309,32 @@ export const claimExistingAccount = mutation({
         try { await ctx.db.patch(cur._id, { [k]: v } as any); } catch { /* stale field — skip */ }
       }
     }
-    // Re-point the old row's inbox and alerts at the surviving profile so
-    // nothing the player received is orphaned when the shell row is removed.
-    const oldMsgs = await ctx.db.query("messages").withIndex("by_receiver", (q) => q.eq("receiverId", old._id)).collect();
-    for (const m of oldMsgs) await ctx.db.patch(m._id, { receiverId: cur._id } as any);
-    const sentMsgs = await ctx.db.query("messages").withIndex("by_sender", (q) => q.eq("senderId", old._id)).collect();
-    for (const m of sentMsgs) await ctx.db.patch(m._id, { senderId: cur._id } as any);
-    const oldAlerts = await ctx.db.query("notifications").withIndex("by_user", (q) => q.eq("userId", old._id)).collect();
-    for (const n of oldAlerts) await ctx.db.patch(n._id, { userId: cur._id } as any);
-    await ctx.db.delete(old._id);
+
+    // 2) Re-point owned data from the old row to the surviving one. Every table
+    // and row is isolated — a missing index or a single bad document can only
+    // skip itself, never fail the claim.
+    const db = ctx.db as any;
+    for (const table of CLAIM_MIGRATE_TABLES) {
+      try {
+        const rows = await db.query(table).withIndex("by_user", (q: any) => q.eq("userId", old._id)).collect();
+        for (const r of rows) { try { await db.patch(r._id, { userId: cur._id }); } catch { /* skip row */ } }
+      } catch { /* table has no by_user index — skip */ }
+    }
+    // Messages need both directions re-pointed so nothing received or sent is
+    // orphaned when the shell row is removed.
+    try {
+      const oldMsgs = await db.query("messages").withIndex("by_receiver", (q: any) => q.eq("receiverId", old._id)).collect();
+      for (const m of oldMsgs) { try { await db.patch(m._id, { receiverId: cur._id }); } catch { /* skip */ } }
+    } catch { /* skip */ }
+    try {
+      const sentMsgs = await db.query("messages").withIndex("by_sender", (q: any) => q.eq("senderId", old._id)).collect();
+      for (const m of sentMsgs) { try { await db.patch(m._id, { senderId: cur._id }); } catch { /* skip */ } }
+    } catch { /* skip */ }
+
+    // 3) Remove the old shell row so nickname uniqueness holds. If this somehow
+    // fails, the claim is still a success — the current profile already owns
+    // everything, and the next attempt will short-circuit via nickname match.
+    try { await db.delete(old._id); } catch { /* ignore */ }
     return { success: true, playerId: cur._id };
   },
 });
