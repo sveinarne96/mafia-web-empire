@@ -212,22 +212,24 @@ const classStats: Record<string, { attack: number; defense: number; life: number
 };
 
 export const registerPlayer = mutation({
-  args: { nickname: v.string(), playerClass: v.union(v.literal("hitter"), v.literal("thief"), v.literal("enforcer"), v.literal("hustler")) },
+  args: { nickname: v.optional(v.string()), playerClass: v.union(v.literal("hitter"), v.literal("thief"), v.literal("enforcer"), v.literal("hustler")) },
   handler: async (ctx, args) => {
     try {
       const existing = await getCurrentUser(ctx);
       if (!existing) throw new Error("Not authenticated");
       if (existing.nickname) return { success: true, alreadyRegistered: true };
+      // No nickname typed? The username (or a generated street name) becomes it.
+      const finalNickname = (args.nickname ?? "").trim() || existing.username || `Player${Math.floor(1000 + Math.random() * 9000)}`;
       // SERVER OPS: registration gate (admins always pass).
       if (!(await isRegistrationOpen(ctx)) && existing.role !== "admin") {
         throw new Error("🚫 Registration is currently closed by the administration.");
       }
       // If user already has username (registered via Auth page), just set nickname and class
       const stats = classStats[args.playerClass];
-      const nicknameTaken = (await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", args.nickname)).collect())[0];
+      const nicknameTaken = (await ctx.db.query("users").withIndex("by_nickname", (q) => q.eq("nickname", finalNickname)).collect())[0];
       if (nicknameTaken) throw new Error("Nickname already taken!");
       await ctx.db.patch(existing._id, {
-        nickname: args.nickname, playerClass: args.playerClass,
+        nickname: finalNickname, playerClass: args.playerClass,
         money: stats.money, bank: 0, points: 0, life: stats.life, maxLife: stats.life,
         defense: stats.defense, attack: stats.attack, level: 1, experience: 0, location: "New York",
         inPrison: false, prisonTime: 0, isDead: false, totalCrimes: 0, totalFights: 0, totalKills: 0, totalDeaths: 0,

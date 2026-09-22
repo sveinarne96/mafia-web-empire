@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "@/contexts/TranslationContext";
+import { useAuthActions } from "@convex-dev/auth/react";
 // signOut available via auth provider
 import {
   Home, Building2, Wallet, Heart, Shield, MapPin, AlertTriangle, Skull, Gift,
@@ -1845,12 +1846,20 @@ export default function Dashboard() {
   const [registered, setRegistered] = useState(false);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [dismissedAtLevel, setDismissedAtLevel] = useState<number | null>(null);
-  const setPage = useCallback((p: GamePage) => { setActivePage(p); setMobileMenuOpen(false); }, []);
+  const setPage = useCallback((p: GamePage) => {
+    if (p === ("signout" as any)) {
+      try { localStorage.removeItem("se_lastNickname"); } catch {}
+      void signOut().finally(() => { window.location.href = "/"; });
+      return;
+    }
+    setActivePage(p); setMobileMenuOpen(false);
+  }, []);
   const { t } = useTranslation();
   const isRegistered = (player?.nickname && player?.registeredAt) || player?.username || registered;
   const acknowledgeLevelUp = useMutation(api.game.acknowledgeLevelUp);
   const releaseFromPrison = useMutation(api.game.releaseFromPrison);
   const heartbeat = useMutation(api.admin.heartbeat);
+  const { signOut } = useAuthActions();
   const [leftExpanded, setLeftExpanded] = useState<string[]>([]);
   const [rightExpanded, setRightExpanded] = useState<string[]>(["Communication","Forums","Chat","Quick Info","Help & Events","System"]);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

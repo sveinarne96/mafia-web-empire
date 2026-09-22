@@ -371,6 +371,7 @@ export const RIGHT_MENU_SECTIONS = [
     items: [
       { label: "Become Admin", page: "become_admin", icon: "🔑" },
       { label: "Admin", page: "admin_panel", icon: "⚙️" },
+      { label: "Sign Out", page: "signout", icon: "🚪" },
     ],
   },
 ];
