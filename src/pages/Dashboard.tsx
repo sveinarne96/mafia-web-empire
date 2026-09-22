@@ -2531,6 +2531,12 @@ function RegisterPlayer({ onComplete }: { onComplete: () => void }) {
   const [loading, setLoading] = useState(false);
   const register = useMutation(api.game.registerPlayer);
   const claim = useMutation(api.game.claimExistingAccount);
+  // Is the locally-saved name still a real account? Stale names (deleted or
+  // renamed characters) must never auto-loop on failing claims.
+  const savedClaimable = useQuery(
+    api.game.checkClaimable,
+    mode === "resume" && savedName ? { nickname: savedName } : "skip"
+  );
 
   const finish = (name?: string) => {
     try { if (name) localStorage.setItem("se_lastNickname", name); } catch {}
@@ -2558,8 +2564,13 @@ function RegisterPlayer({ onComplete }: { onComplete: () => void }) {
     if (!savedName) return;
     setLoading(true);
     try {
-      await claim({ nickname: savedName });
-      finish(savedName);
+      const r: any = await claim({ nickname: savedName });
+      if (r && r.success === false) {
+        setMsg(r.error || "Could not resume — try recovering manually.");
+        setMode("form");
+      } else {
+        finish(savedName);
+      }
     } catch (e: any) {
       setMsg(e.message || "Could not resume — try recovering manually.");
       setMode("form");
@@ -2571,15 +2582,19 @@ function RegisterPlayer({ onComplete }: { onComplete: () => void }) {
     if (!nickname.trim()) { setMsg("Type the nickname of your existing character"); return; }
     setLoading(true);
     try {
-      await claim({ nickname: nickname.trim() });
-      finish(nickname.trim());
+      const r: any = await claim({ nickname: nickname.trim() });
+      if (r && r.success === false) {
+        setMsg(r.error || "Recovery failed");
+      } else {
+        finish(nickname.trim());
+      }
     } catch (e: any) { setMsg(e.message || "Recovery failed"); }
     setLoading(false);
   };
 
   return (
     <div className="mafia-card rounded-2xl p-6 space-y-4">
-      {mode === "resume" && savedName ? (
+      {mode === "resume" && savedName && savedClaimable !== undefined && (savedClaimable as any)?.claimable !== false ? (
         <>
           <div className="text-center space-y-1">
             <div className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Welcome back</div>

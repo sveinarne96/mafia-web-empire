@@ -180,6 +180,29 @@ export const checkNickname = query({
   },
 });
 
+// Recovery helper for the register screen: does a REAL player (never a bot or
+// street contact) exist with this nickname or username? Used to hide the
+// "Continue as X" button when the locally-saved name no longer matches any
+// account, so a stale name can never loop on failing claims.
+export const checkClaimable = query({
+  args: { nickname: v.string() },
+  handler: async (ctx, args) => {
+    const lower = args.nickname.trim().toLowerCase();
+    if (!lower) return { claimable: false, banned: false };
+    const all = (await ctx.db.query("users").collect()) as any[];
+    const hit = all.find(
+      (u) =>
+        !u.isBotPlayer &&
+        !u.isSystemChar &&
+        (
+          (typeof u.nickname === "string" && u.nickname.trim().toLowerCase() === lower) ||
+          (typeof u.username === "string" && u.username.trim().toLowerCase() === lower)
+        ),
+    );
+    return { claimable: !!hit, banned: !!hit?.isBanned };
+  },
+});
+
 const classStats: Record<string, { attack: number; defense: number; life: number; money: number }> = {
   hitter:    { attack: 18, defense: 6,  life: 80,  money: 800 },
   thief:     { attack: 10, defense: 8,  life: 90,  money: 1500 },
@@ -266,23 +289,48 @@ const CLAIM_MIGRATE_TABLES = [
 export const claimExistingAccount = mutation({
   args: { nickname: v.string() },
   handler: async (ctx, args) => {
-    const me = await getCurrentUser(ctx);
-    if (!me) throw new Error("Your session is not ready yet — wait a second and try again.");
-    const name = args.nickname.trim();
-    if (!name) throw new Error("Type your nickname to continue.");
-
-    // Find the profile (first REAL player row with that nickname — bots never
-    // count as claimable accounts).
-    const matches = (await ctx.db
-      .query("users")
-      .withIndex("by_nickname", (q) => q.eq("nickname", name))
-      .collect()) as any[];
-    const existing = matches.find((u) => !u.isBotPlayer);
-    if (!existing) {
-      if (matches.length > 0) throw new Error("That name belongs to a street contact, not a player account.");
-      throw new Error(`No criminal named "${name}" was found. Check the spelling.`);
+    // NEVER throw user-facing errors here. Every failure is returned as
+    // { success:false, error } so the Convex dashboard shows no
+    // "Server Error Called by client" spam and the client shows one clean
+    // message instead of crashing the flow.
+    try {
+      return await claimAccountImpl(ctx, args.nickname);
+    } catch (e) {
+      console.error("claimExistingAccount error:", e);
+      const message = e instanceof Error ? e.message : "Recovery failed — try again.";
+      return { success: false as const, error: message };
     }
-    if (existing.isBanned) throw new Error("That account is banned and cannot be recovered here.");
+  },
+});
+
+async function claimAccountImpl(ctx: any, rawName: string) {
+    const me = await getCurrentUser(ctx);
+    if (!me) return { success: false as const, error: "Your session is not ready yet — wait a second and try again." };
+    const name = (rawName ?? "").trim();
+    if (!name) return { success: false as const, error: "Type your nickname to continue." };
+
+    // Find the profile. Match real players by nickname (case-insensitive)
+    // or by username, so "run" finds "Run" and login-name recovery works.
+    // Bots and street contacts never count as claimable accounts.
+    const lower = name.toLowerCase();
+    const all = (await ctx.db.query("users").collect()) as any[];
+    const candidates = all.filter(
+      (u) =>
+        !u.isBotPlayer &&
+        !u.isSystemChar &&
+        (
+          (typeof u.nickname === "string" && u.nickname.trim().toLowerCase() === lower) ||
+          (typeof u.username === "string" && u.username.trim().toLowerCase() === lower)
+        ),
+    );
+    const existing: any = candidates[0];
+    if (!existing) {
+      return {
+        success: false as const,
+        error: `No criminal named "${name}" exists. Check the spelling — or create a new character below.`,
+      };
+    }
+    if (existing.isBanned) return { success: false as const, error: "That account is banned and cannot be recovered here." };
     const old = existing as any;
     const cur = me as any;
     if (old._id === cur._id) return { success: true, alreadyYours: true };
@@ -295,7 +343,7 @@ export const claimExistingAccount = mutation({
       const now = Date.now();
       const sessions = (await ctx.db
         .query("authSessions")
-        .withIndex("userId", (q) => q.eq("userId", old._id))
+        .withIndex("userId", (q: any) => q.eq("userId", old._id))
         .collect()) as any[];
       const active = sessions.filter((s) => (s.expirationTime ?? 0) > now);
       for (const s of active) { try { await ctx.db.delete(s._id); } catch { /* ignore */ } }
@@ -340,8 +388,7 @@ export const claimExistingAccount = mutation({
     // everything, and the next attempt will short-circuit via nickname match.
     try { await db.delete(old._id); } catch { /* ignore */ }
     return { success: true, playerId: cur._id };
-  },
-});
+}
 
 export const awardActionXp = mutation({
   args: { amount: v.optional(v.number()) },
