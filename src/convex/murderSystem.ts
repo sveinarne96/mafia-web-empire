@@ -1,8 +1,7 @@
 import { v } from "convex/values";
-import { getJailMs } from "./serverOps";
+import { getJailMs, isMurderEnabled, getRankEventMultiplier } from "./serverOps";
 import { mutation, query } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { getRankEventMultiplier } from "./serverOps";
 
 async function getCurrentUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
@@ -78,7 +77,6 @@ export const commitMurder = mutation({
     if (player.isDead) throw new Error("You are dead!");
 
     // SERVER OPS: murder system master switch.
-    const { isMurderEnabled } = await import("./serverOps");
     if (!(await isMurderEnabled(ctx))) throw new Error("🔪 The murder system is currently disabled by the administration.");
 
     const target = await ctx.db.get(args.targetId);

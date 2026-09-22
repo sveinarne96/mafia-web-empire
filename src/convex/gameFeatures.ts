@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { recordPlayerAction } from "./game"; // static: Convex runtime has no dynamic import()
 
 const n = (val: any, d: number = 0) => (typeof val === "number" && Number.isFinite(val) ? val : d);
 
@@ -19,7 +20,6 @@ async function getAuthPlayer(ctx: QueryCtx | MutationCtx) {
 async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   // XP Volume Bonus: more actions in the last hour = higher multiplier.
   // This also records the action into the rolling 1h window (shared helper).
-  const { recordPlayerAction } = await import("./game");
   const recent = await recordPlayerAction(ctx, player);
   const actionCount = recent.length - 1;
   let volMult = 1.0;

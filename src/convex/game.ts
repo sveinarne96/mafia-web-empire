@@ -5,6 +5,7 @@ import { RESOURCE_COSTS } from "../data/resourceCosts"; // costs
 import { GTA_LOOT, SH_LOOT } from "../data/crimes"; // specific vehicles/loot per job
 import { getLiveModifiers } from "./gameControl"; // live admin console multipliers
 import { getSchoolBonuses } from "./school"; // High School permanent + timed study buffs
+import { isRegistrationOpen, getRankEventMultiplier, getGlobalCrimeCooldown, getJailMs } from "./serverOps"; // static: Convex runtime has no dynamic import()
 
 // ===== SUPER BOOST WEEKEND LOOT HELPERS =====
 // While the weekend boost is live every successful crime can drop extra cash,
@@ -218,7 +219,6 @@ export const registerPlayer = mutation({
       if (!existing) throw new Error("Not authenticated");
       if (existing.nickname) return { success: true, alreadyRegistered: true };
       // SERVER OPS: registration gate (admins always pass).
-      const { isRegistrationOpen } = await import("./serverOps");
       if (!(await isRegistrationOpen(ctx)) && existing.role !== "admin") {
         throw new Error("🚫 Registration is currently closed by the administration.");
       }
@@ -464,7 +464,6 @@ export async function recordPlayerAction(ctx: any, player: any): Promise<number[
 export async function addXpAndCheckLevel(ctx: any, player: any, xpAmount: number) {
   // SERVER OPS: LIVE EVENT — 2x to 10x Ranking. Doubles-to-10xs all
   // server-managed rank XP from crime, car theft, missions, and film production.
-  const { getRankEventMultiplier } = await import("./serverOps");
   const rankEventMult = await getRankEventMultiplier(ctx);
   // XP Volume Bonus: more actions in the last hour = higher multiplier.
   // This call also RECORDS the action (pushes now into the rolling window), so
@@ -932,7 +931,6 @@ export const giveMoney = mutation({ args: { receiverId: v.id("users"), amount: v
   const oldCooldowns: Record<string, number> = ((player as any).crimeCooldowns ?? {}) as Record<string, number>;
     // SERVER OPS GAME BALANCE: global crime cooldown (10–3600s) applies after every
   // crime attempt; super-boost still shortens it (25%).
-  const { getGlobalCrimeCooldown, getJailMs } = await import("./serverOps");
   const globalCd = await getGlobalCrimeCooldown(ctx);
   const cdMs = globalCd * 1000;
   // Jail times come from the admin GAME BALANCE panel (per real category:
