@@ -254,14 +254,16 @@ export const claimExistingAccount = mutation({
       .withIndex("by_nickname", (q) => q.eq("nickname", name))
       .collect())[0];
     if (!existing) throw new Error(`No criminal named "${name}" was found. Check the spelling.`);
+    if ((existing as any).isBotPlayer) throw new Error("That name belongs to a street contact, not a player account.");
     if (existing.isBanned) throw new Error("That account is banned and cannot be recovered here.");
     if ((existing as any)._id === (me as any)._id) return { success: true, alreadyYours: true };
     // Guard: someone else may already be signed in on that profile (session link).
-    // Auth identity rows point at the user; count sessions claiming it.
-    const sessions = await ctx.db
+    // Only ACTIVE (non-expired) sessions count — expired rows must not block recovery.
+    const now = Date.now();
+    const sessions = (await ctx.db
       .query("authSessions")
       .withIndex("userId", (q) => q.eq("userId", (existing as any)._id))
-      .collect();
+      .collect()).filter((s: any) => (s.expirationTime ?? 0) > now);
     if (sessions.length > 1) throw new Error("That account is currently linked to another active session.");
     // Merge the old character ONTO this session's profile row (keeps the auth
     // session valid) and delete the old shell row so nickname uniqueness holds.
@@ -269,15 +271,26 @@ export const claimExistingAccount = mutation({
     const old = existing as any;
     const cur = me as any;
     const carry = { ...old } as Record<string, unknown>;
-    delete carry._id;
-    delete carry._creationTime;
-    delete carry.email;
-    delete carry.emailVerificationTime;
-    delete carry.tokenIdentifier;
-    delete carry.isAnonymous;
-    delete carry.authAccountIds;
-    delete carry.sessions;
-    await ctx.db.patch(cur._id, carry as any);
+    for (const k of ["_id", "_creationTime", "email", "emailVerificationTime", "tokenIdentifier", "isAnonymous", "authAccountIds", "sessions"]) delete carry[k];
+    // Robust merge: old rows may contain fields that no longer exist in the
+    // current schema — Convex rejects the whole patch if even one field is
+    // invalid. Try the full patch first; on failure, merge field-by-field and
+    // skip anything the schema no longer accepts. The claim must never fail.
+    try {
+      await ctx.db.patch(cur._id, carry as any);
+    } catch {
+      for (const [k, v] of Object.entries(carry)) {
+        try { await ctx.db.patch(cur._id, { [k]: v } as any); } catch { /* stale field — skip */ }
+      }
+    }
+    // Re-point the old row's inbox and alerts at the surviving profile so
+    // nothing the player received is orphaned when the shell row is removed.
+    const oldMsgs = await ctx.db.query("messages").withIndex("by_receiver", (q) => q.eq("receiverId", old._id)).collect();
+    for (const m of oldMsgs) await ctx.db.patch(m._id, { receiverId: cur._id } as any);
+    const sentMsgs = await ctx.db.query("messages").withIndex("by_sender", (q) => q.eq("senderId", old._id)).collect();
+    for (const m of sentMsgs) await ctx.db.patch(m._id, { senderId: cur._id } as any);
+    const oldAlerts = await ctx.db.query("notifications").withIndex("by_user", (q) => q.eq("userId", old._id)).collect();
+    for (const n of oldAlerts) await ctx.db.patch(n._id, { userId: cur._id } as any);
     await ctx.db.delete(old._id);
     return { success: true, playerId: cur._id };
   },
