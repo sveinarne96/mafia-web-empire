@@ -6,6 +6,16 @@ import { getAuthUserId } from "@convex-dev/auth/server";
    EMPIRE FEATURES — bot population, bank hack, rank trials, tickets
    ═══════════════════════════════════════════════════════════════════ */
 
+/* ═══════════ 1. BOT POPULATION ═══════════
+   Two-layer design so a 14,000-player city stays cheap:
+   • ~1,500 REAL bot docs in `users` — these chat, send DMs, get hacked,
+     show on leaderboards (every interaction needs a real `_id`).
+   • BOT_ROSTER_SIZE presence slots generated 100% deterministically from
+     the slot number (name, color, level, city, online state). Zero DB
+     reads, zero documents — the full 14,000 roster costs nothing. */
+export const BOT_ROSTER_SIZE = 14000;
+const REAL_BOT_DOCS = 1500;
+
 async function getCurrentUser(ctx: any) {
   const userId = await getAuthUserId(ctx);
   if (!userId) throw new Error("Not authenticated");
@@ -14,11 +24,12 @@ async function getCurrentUser(ctx: any) {
   return player;
 }
 
-/* ═══════════ 1. BOT POPULATION — 1500 "real" players 24/7 ═══════════ */
+/* ═══════════ 1b. SHARED BOT NAME/CITY DATA ═══════════ */
 
 const FIRST = ["Ghost", "Shadow", "Iron", "Blade", "Vito", "Luca", "Marco", "Tony", "Frank", "Sal", "Enzo", "Rocco", "Nico", "Bruno", "Carlo", "Dante", "Silvio", "Aldo", "Emil", "Gino", "Lupo", "Faust", "Vito", "Nero", "Corvo", "Wolf", "Raven", "Viper", "Cobra", "Falcon", "Hawk", "Stone", "Steel", "Cash", "Ace", "King", "Duke", "Baron", "Count", "Lord", "Doc", "Slim", "Tiny", "Big", "Lil", "Mad", "Crazy", "Slick", "Smooth", "Lucky"];
 const LAST = ["Moretti", "Corleone", "Barzini", "Tattaglia", "Cuneo", "Stracci", "Greco", "Falcone", "Maroni", "Penguin", "Riddler", "Vitelli", "Zangara", "DiMarco", "Costello", "Lucchese", "Genovese", "Bonanno", "Colombo", "Gambino", "Mangano", "Inzerillo", "LaBarbera", "Bufalino", "Scaglione", "Santoro", "Randazzo", "Catania", "Messina", "Palermo", "Rizzuto", "Cuntrera", "Caruana", "Ferraro", "Grasso", "Marino", "Russo", "Romano", "Greco", "Conti", "Gallo", "Costa", "Giordano", "Mancuso", "Fontana", "Vitale", "Lombardo", "Pellegrino", "Paris", "Milano"];
 const CITIES = ["New York", "Chicago", "Los Angeles", "Miami", "Las Vegas", "Detroit", "New Orleans", "Atlantic City", "Philadelphia", "Boston"];
+const CLASSES = ["enforcer", "hustler", "thief"];
 
 // Deterministic pseudo-random so bot list is stable per level
 function botName(i: number): string {
@@ -28,9 +39,36 @@ function botName(i: number): string {
   return `${f}${i % 3 === 0 ? "_" : ""}${l}${suffix}`;
 }
 
+/** Names for the 12,500 presence-only slots (never collide with the 1,500
+ *  real docs, which use indices 0..1499). */
+function rosterBotName(slot: number): string {
+  return botName(slot + 1500);
+}
+
+/** Deterministic roster entry for a presence slot — no DB reads. */
+function rosterEntry(slot: number, now: number) {
+  const name = rosterBotName(slot);
+  const level = 1 + ((slot * 37) % 80) + (slot % 5);
+  const online = (slot * 7919 + Math.floor(now / 60000)) % 1000 < 680;
+  const city = CITIES[(slot * 13 + 7) % CITIES.length];
+  const cls = CLASSES[slot % 3];
+  const kills = (slot * 13) % 200;
+  return {
+    slot,
+    name,
+    color: botNeonColor(slot),
+    level,
+    location: city,
+    playerClass: cls,
+    wanted: slot % 7 === 0 ? 1 + (slot % 5) : 0,
+    kills,
+    online,
+  };
+}
+
 /** Ensure bot population exists. Returns count created. */
-export async function ensureBots(ctx: any): Promise<{ created: number; total: number }> {
-  const TARGET = 1500;
+async function ensureBots(ctx: any): Promise<{ created: number; total: number }> {
+  const TARGET = REAL_BOT_DOCS;
   const existing = await ctx.db
     .query("users")
     .filter((q: any) => q.eq(q.field("isBotPlayer"), true))
@@ -38,7 +76,6 @@ export async function ensureBots(ctx: any): Promise<{ created: number; total: nu
   let created = 0;
   const need = TARGET - existing.length;
   if (need <= 0) return { created: 0, total: existing.length };
-
   const usedNames = new Set(existing.map((e: any) => e.nickname));
   const batch: any[] = [];
   for (let i = 0; i < need && i < 60; i++) {
@@ -50,14 +87,17 @@ export async function ensureBots(ctx: any): Promise<{ created: number; total: nu
     const level = 1 + ((idx * 37) % 80) + (idx % 5);
     const money = 5000 + (idx * 8237) % 900000;
     const kills = (idx * 13) % 200;
+    const slot = idx * 13 + 7;
     batch.push({
       nickname: name,
       name,
-      playerClass: ["enforcer", "hustler", "thief"][idx % 3],
+      playerClass: CLASSES[idx % 3],
       role: "user",
       isBotPlayer: true,
       isSystemChar: false,
       systemVisible: true,
+      botSlot: slot,
+      botColor: botNeonColor(slot),
       money,
       bank: money * 2,
       points: (idx * 137) % 50000,
@@ -90,60 +130,121 @@ export async function ensureBots(ctx: any): Promise<{ created: number; total: nu
   return { created, total: existing.length + created };
 }
 
+/** Per-bot neon color: every bot gets its own hue, stable for its whole life.
+ *  Derived from the bot's roster slot, so recoloring = one tiny patch. */
+export function botNeonColor(slot: number): string {
+  const hue = (slot * 137.508) % 360; // golden-angle distribution
+  return hslToHex(hue, 100, 62);
+}
+
+export function hslToHex(h: number, s: number, l: number): string {
+  s /= 100; l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const toHex = (x: number) => Math.round(255 * x).toString(16).padStart(2, "0");
+  return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
 /** Public: trigger population check (called on dashboard load / heartbeat). */
 export const populateBots = mutation({
   args: {},
   handler: async (ctx) => {
-    return await ensureBots(ctx);
+    const res = await ensureBots(ctx);
+    // Paint every bot that doesn't have its neon color yet (max 200/run so
+    // backfilling 1.5k colors takes ~8 calls, spread over a few minutes).
+    const unpainted = await ctx.db
+      .query("users")
+      .withIndex("by_bot_slot", (q: any) => q.eq("isBotPlayer", true))
+      .take(400);
+    let painted = 0;
+    for (const b of unpainted) {
+      if (b.botColor && b.botSlot !== undefined) continue;
+      const slot = b.botSlot ?? Math.floor(Math.random() * 100000);
+      await ctx.db.patch(b._id, { botSlot: slot, botColor: botNeonColor(slot) });
+      painted++;
+      if (painted >= 200) break;
+    }
+    return { ...res, painted };
   },
 });
 
-/** Internal: called by heartbeat to keep bots fresh (lastActive jitter, XP gain). */
+/** Internal: called every minute by cron. Slot-based — touches at most a
+ *  few hundred bots per run instead of reading & rewriting all docs. */
 export const tickBots = internalMutation({
   args: {},
   handler: async (ctx) => {
     const now = Date.now();
     const bots = await ctx.db
       .query("users")
-      .filter((q: any) => q.eq(q.field("isBotPlayer"), true))
-      .collect();
-    // Keep 60-75% of bots "online" (lastActive within last 2 minutes)
-    const onlineTarget = Math.floor(bots.length * 0.68);
-    let shuffled = bots.slice();
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = (i * 7919 + now) % (i + 1);
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
+      .withIndex("by_bot_slot", (q: any) => q.eq("isBotPlayer", true))
+      .take(500);
+    // Deterministic rotation: each minute a different slice of the roster is
+    // the "active shift", so over an hour every bot gets touched ~2x.
+    const minute = Math.floor(now / 60000);
+    let ticked = 0;
     for (let i = 0; i < bots.length; i++) {
       const b = bots[i];
-      const shouldOnline = i < onlineTarget;
+      const slot = b.botSlot ?? i;
+      const rot = (slot * 7919 + minute) % 1000;
+      const shouldOnline = rot < 680;
       const lastActive = shouldOnline
-        ? now - 30000 - ((b.experience ?? i) % 60000)
-        : now - 600000 - ((b.experience ?? i) % 3600000) * 30;
-      // Slow progress: xp trickle, occasional money change
-      const xpTick = (now % 7 === 0) ? 1 : 0;
+        ? now - 30000 - (slot % 60000)
+        : now - 600000 - (slot % 3600000) * 30;
       const patch: any = { lastActive };
-      if (xpTick) patch.experience = (b.experience ?? 0) + 1;
-      if ((i + now / 60000) % 17 < 1) patch.money = Math.max(0, (b.money ?? 0) + Math.floor(Math.random() * 5000 - 2000));
+      if (rot % 7 === 0) patch.experience = (b.experience ?? 0) + 1;
+      if (rot % 17 === 0) patch.money = Math.max(0, (b.money ?? 0) + Math.floor(Math.random() * 5000 - 2000));
       await ctx.db.patch(b._id, patch);
+      ticked++;
     }
-    return { ticked: bots.length };
+    return { ticked };
   },
 });
 
-/** Public: how many bots exist. */
+/** Public: how many bots exist (no full scan). */
 export const botStats = query({
   args: {},
   handler: async (ctx) => {
     const bots = await ctx.db
       .query("users")
-      .filter((q: any) => q.eq(q.field("isBotPlayer"), true))
-      .collect();
+      .withIndex("by_bot_slot", (q: any) => q.eq("isBotPlayer", true))
+      .take(REAL_BOT_DOCS + 1);
     const now = Date.now();
+    let online = 0;
+    for (const b of bots) if ((b.lastActive ?? 0) > now - 120000) online++;
+    const minutes = Math.floor(now / 60000);
+    // Deterministic presence across all 14,000 slots (matches getBotRoster)
+    let rosterOnline = 0;
+    for (let s = 0; s < BOT_ROSTER_SIZE; s++) {
+      if ((s * 7919 + minutes) % 1000 < 680) rosterOnline++;
+    }
     return {
-      total: bots.length,
-      online: bots.filter((b: any) => (b.lastActive ?? 0) > now - 120000).length,
+      total: BOT_ROSTER_SIZE,
+      docs: bots.length,
+      online: online + rosterOnline,
     };
+  },
+});
+
+/** Public: deterministic bot roster for the Online Players page.
+ *  Returns presence slots computed purely from the slot number — no DB reads,
+ *  so 14,000 bots cost the same as 10. */
+export const getBotRoster = query({
+  args: {
+    offset: v.optional(v.number()),
+    take: v.optional(v.number()),
+  },
+  handler: async (_ctx, args) => {
+    const now = Date.now();
+    const offset = Math.max(0, args.offset ?? 0);
+    const take = Math.min(300, Math.max(1, args.take ?? 100));
+    const bots = [];
+    for (let i = 0; i < take; i++) {
+      const slot = offset + i;
+      if (slot >= BOT_ROSTER_SIZE) break;
+      bots.push(rosterEntry(slot, now));
+    }
+    return { total: BOT_ROSTER_SIZE, offset, bots };
   },
 });
 
@@ -260,9 +361,14 @@ export const botSendRandomMessage = internalMutation({
   args: {},
   handler: async (ctx) => {
     const bots = await ctx.db.query("users")
-      .filter((q: any) => q.eq(q.field("isBotPlayer"), true))
-      .collect();
+      .withIndex("by_bot_slot", (q: any) => q.eq("isBotPlayer", true))
+      .take(200);
     if (bots.length === 0) return { sent: 0 };
+    // Random slice of the bot roster so different bots talk each run.
+    const minute = Math.floor(Date.now() / 60000);
+    const start = (minute * 37) % Math.max(1, bots.length - 20);
+    const pool = bots.slice(start, start + 20);
+    const bot = pool[Math.floor(Math.random() * pool.length)];
     const humans = await ctx.db.query("users")
       .filter((q: any) => q.neq(q.field("isBotPlayer"), true))
       .filter((q: any) => q.neq(q.field("isBanned"), true))
@@ -270,7 +376,6 @@ export const botSendRandomMessage = internalMutation({
     const real = humans.filter((h: any) => h.nickname && !h.isBotPlayer);
     if (real.length === 0) return { sent: 0 };
     const target = real[Math.floor(Math.random() * real.length)];
-    const bot = bots[Math.floor(Math.random() * bots.length)];
     await ctx.db.insert("messages", {
       senderId: bot._id,
       receiverId: target._id,

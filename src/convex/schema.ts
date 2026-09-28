@@ -194,6 +194,8 @@ const schema = defineSchema({
     quicktrade: v.optional(v.any()),
     // ═══ EMPIRE FEATURES (bot players, rank trials) ═══
     isBotPlayer: v.optional(v.boolean()),
+    botSlot: v.optional(v.number()),  // stable roster slot 0..BOT_ROSTER_SIZE-1
+    botColor: v.optional(v.string()), // per-bot neon color (hex)
     rankTrials: v.optional(v.any()),
     // ═══ MURDER NETWORK (kill ops & morgue) ═══
     killOpCooldownUntil: v.optional(v.number()),
@@ -359,7 +361,8 @@ const schema = defineSchema({
     .index("by_nickname", ["nickname"])
     .index("email", ["email"])
     .index("by_username", ["username"])
-    .index("by_referral_code", ["referralCode"]),
+    .index("by_referral_code", ["referralCode"])
+    .index("by_bot_slot", ["isBotPlayer"]),
 
   // ===== Convex Auth tables (required by @convex-dev/auth) =====
   authSessions: defineTable({

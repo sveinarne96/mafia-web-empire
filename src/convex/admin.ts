@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { processAutoRank } from "./storeSystem";
+import { BOT_ROSTER_SIZE } from "./empireFeatures";
 
 // Helper: get authenticated player
 async function getAuthPlayer(ctx: any) {
@@ -44,8 +45,9 @@ export const getOnlinePlayers = query({
     const now = Date.now();
     const twoMinutesAgo = now - 120000;
     const all = await ctx.db.query("users").collect();
+    // REAL humans only — bots have their own dedicated neon list.
     return all
-      .filter((u: any) => (u.lastActive ?? 0) > twoMinutesAgo && u.nickname && !u.isBanned)
+      .filter((u: any) => !u.isBotPlayer && (u.lastActive ?? 0) > twoMinutesAgo && u.nickname && !u.isBanned)
       .map((u: any) => ({
         _id: u._id,
         nickname: u.nickname ?? "Unknown",
@@ -58,6 +60,7 @@ export const getOnlinePlayers = query({
         defense: u.defense ?? 0,
         familyId: u.familyId,
         playerClass: u.playerClass,
+        isBot: false,
       }))
       .sort((a: any, b: any) => b.lastActive - a.lastActive);
   },
@@ -69,7 +72,18 @@ export const getOnlineCount = query({
     const now = Date.now();
     const twoMinutesAgo = now - 120000;
     const all = await ctx.db.query("users").collect();
-    return all.filter((u: any) => (u.lastActive ?? 0) > twoMinutesAgo && u.nickname && !u.isBanned).length;
+    // Humans actually online + deterministic presence across the 14,000-slot
+    // bot roster (same formula as empireFeatures.getBotRoster) — combined
+    // this is the headline "online now" (~9,500+ at any minute).
+    const humansOnline = all.filter(
+      (u: any) => !u.isBotPlayer && (u.lastActive ?? 0) > twoMinutesAgo && u.nickname && !u.isBanned,
+    ).length;
+    const minute = Math.floor(now / 60000);
+    let botsOnline = 0;
+    for (let s = 0; s < BOT_ROSTER_SIZE; s++) {
+      if ((s * 7919 + minute) % 1000 < 680) botsOnline++;
+    }
+    return humansOnline + botsOnline;
   },
 });
 
